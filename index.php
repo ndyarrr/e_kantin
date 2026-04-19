@@ -2,10 +2,7 @@
 session_start();
 
 // Kalau udah login, langsung redirect ke dashboard
-if (isset($_SESSION['user_id'])) {
-    header('Location: dashboard.php');
-    exit;
-}
+
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -20,8 +17,8 @@ if (isset($_SESSION['user_id'])) {
     <h1>e-Kantin</h1>
     <p>Selamat datang di e-Kantin SMKN 1 Boyolangu</p>
 
-    <a href="login.php">Login</a> |
-    <a href="register.php">Daftar</a>
+    <a href="./auth/login.php">Login</a> |
+    <a href="./auth/register.php">Daftar</a>
 
 </body>
 

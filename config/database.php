@@ -2,7 +2,7 @@
 $host = 'localhost';
 $user = 'root';
 $pass = '';
-$db   = 'e_kantin';
+$db   = 'e_kantin_a1';
 
 $conn = mysqli_connect($host, $user, $pass, $db);
 
