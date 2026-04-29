@@ -1,0 +1,42 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.test {
+    background: red;
+    width: 100px;
+    height: 999px;
+}
+
+.btn-wrapper {
+    display: table;
+    border: 3px dashed #000000;
+    border-radius: 12px;
+    padding: 5px;
+    margin: 10rem auto;
+    transition: all 0.3s ease;
+}
+
+.btn-login {
+    display: block;
+    padding: 12px 100px;
+    background: #5c6bc0;
+    color: #fff;
+    border-radius: 12px;
+    font-size: 28px;
+    font-weight: 500;
+    font-family: poppins, sans-serif;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+    background: #000000;
+}
+
+.btn-wrapper:hover {
+    border-color: #5c6bc0;
+}

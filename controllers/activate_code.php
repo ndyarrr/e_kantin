@@ -46,7 +46,18 @@ function generateKode($role = 'guru')
 function semuaKode()
 {
     global $conn;
-    $result = mysqli_query($conn, "SELECT * FROM kode_aktivasi ORDER BY created_at DESC");
+    $result = mysqli_query($conn, "
+        SELECT k.*, u.nama as nama_pemakai 
+        FROM kode_aktivasi k
+        LEFT JOIN users u ON k.used_by = u.id
+        ORDER BY k.created_at DESC
+    ");
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
 
+function resetKode($kode)
+{
+    global $conn;
+    $kodeEsc = mysqli_real_escape_string($conn, $kode);
+    mysqli_query($conn, "UPDATE kode_aktivasi SET dipakai = 0, used_by = NULL WHERE kode = '$kodeEsc'");
+}
