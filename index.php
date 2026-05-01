@@ -13,22 +13,41 @@
     <?php include 'views/layouts/navbar.php'; ?>
     <section id="home">
         <?php include 'views/layouts/hero.php'; ?>
-        <div class="btn-wrapper">
-            <button onclick="window.location.href='./auth/login.php'" class="btn-login">Login</button>
+        <div class="btn-ps">
+            <p>Masuk untuk memulai</p>
+            <div class="btn-wrapper">
+                <button onclick="window.location.href='./auth/login.php'" class="btn-login">Login</button>
+            </div>
+        </div>
+        <div class="collage-wrapper" draggable="false">
+            <div class="collage-grid">
+                <img class="col-img col-1" src="./assets/img/gb1.jpeg" alt="" />
+                <img class="col-img col-2" src="./assets/img/gb2.jpeg" alt="" />
+                <img class="col-img col-3" src="./assets/img/gb3.jpeg" alt="" />
+                <img class="col-img col-4" src="./assets/img/gb4.jpeg" alt="" />
+                <img class="col-img col-5" src="./assets/img/gb5.jpeg" alt="" />
+            </div>
+        </div>
+
+        <div class="deskripsi">
+            <h2>Deskripsi</h2>
+            <p>hdgfhfdhfgdfgsdhvvhfdhsfuryewruiweriewu</p>
         </div>
     </section>
 
-    <section id="kantin" style="min-height: 100vh;">
-        kantin content
+    <section id="kantin">
+        <?php include 'views/layouts/kantin.php'; ?>
     </section>
 
-    <section id="leaderboard" style="min-height: 100vh;">
-        <div class="test">Leaderboard Content</div>
+    <section id="leaderboard">
+        <?php include 'views/layouts/leaderboard.php'; ?>
     </section>
 
-    <section id="about" style="min-height: 100vh;">
-        about content
+    <section id="about">
+        <?php include 'views/layouts/about.php'; ?>
     </section>
+
+    <?php include 'views/layouts/footer.php'; ?>
 
 
     <script>
