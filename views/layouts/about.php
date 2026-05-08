@@ -6,7 +6,7 @@
     }
 
     .ab-hero {
-        background: #6A79DF;
+        background: #79b775;
         border-radius: 16px;
         padding: 2rem;
         color: white;
@@ -81,8 +81,8 @@
 
     .ab-team-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(106, 121, 223, 0.12);
-        border-color: #6A79DF;
+        box-shadow: 0 6px 16px rgba(121, 183, 117, 0.12);
+        border-color: #79b775;
     }
 
     .ab-avatar {
@@ -100,12 +100,12 @@
 
     .av-d {
         background: #E3E8FF;
-        color: #5c6bc0;
+        color: #79b775;
     }
 
     .av-p {
         background: #E8F5E9;
-        color: #388E3C;
+        color: #79b775;
     }
 
     .ab-name {
@@ -150,9 +150,9 @@
     }
 
     .ab-contact-btn:hover {
-        background: #6A79DF;
+        background: #79b775;
         color: #fff;
-        border-color: #6A79DF;
+        border-color: #79b775;
     }
 
     .ab-divider {

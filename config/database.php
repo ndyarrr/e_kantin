@@ -1,8 +1,8 @@
 <?php
-$host = 'localhost';
+$host = '127.0.0.1';
 $user = 'root';
 $pass = '';
-$db   = 'e_kantin_a1';
+$db   = 'e_kantin';
 
 $conn = mysqli_connect($host, $user, $pass, $db);
 

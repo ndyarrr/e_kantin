@@ -11,7 +11,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        background: rgba(106, 121, 223, 0.75);
+        background: rgba(121, 183, 117, 0.75);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border: none;
@@ -86,7 +86,7 @@
         align-items: center;
         gap: 6px;
         background: #fff;
-        color: #5c6bc0;
+        color: #79b775;
         font-size: 13px;
         font-weight: 700;
         font-family: 'Poppins', sans-serif;
@@ -145,7 +145,7 @@
         left: 12px;
         right: 12px;
         /* ga full width, kasih margin kiri kanan */
-        background: rgba(106, 121, 223, 0.6);
+        background: rgba(121, 183, 117, 0.75);
         /* lebih transparan biar keliatan blur */
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);

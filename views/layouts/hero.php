@@ -5,7 +5,7 @@
 
 <style>
     .hero-header {
-        background: #6A79DF;
+        background: #79b775;
         border-radius: 0 0 24px 24px;
         /* padding-top gede biar konten ga ketutupan navbar fixed */
         padding: 90px 32px 40px;
