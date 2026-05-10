@@ -30,8 +30,12 @@
         </div>
 
         <div class="deskripsi">
-            <h2>Deskripsi</h2>
-            <p>hdgfhfdhfgdfgsdhvvhfdhsfuryewruiweriewu</p>
+            <h2>Apa itu E-Kantin?</h2>
+            <p>E-Kantin adalah platform kantin digital sekolah yang dirancang untuk mempermudah proses pemesanan makanan
+                dan minuman secara online dengan sistem yang cepat, aman, dan efisien. Melalui E-Kantin, siswa dan guru
+                dapat melihat menu, melakukan pemesanan tanpa antre, serta memantau transaksi secara real-time. Selain
+                memudahkan pembeli, platform ini juga membantu penjual dan pihak sekolah dalam mengelola data transaksi,
+                menu, dan operasional kantin dengan lebih modern dan terorganisir.</p>
         </div>
     </section>
 

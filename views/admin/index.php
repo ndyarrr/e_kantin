@@ -1,0 +1,326 @@
+<?php
+session_start();
+if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+    header('Location: ../../auth/login.php');
+    exit;
+}
+require_once __DIR__ . '/../../config/database.php';
+
+$adminNama = $_SESSION['user_nama'] ?? 'Super Admin';
+$adminId = (int) ($_SESSION['user_id'] ?? 0);
+
+/* ── helpers ── */
+function generateKodeAktivasi(): string
+{
+    $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    $code = 'EK';
+    for ($i = 0; $i < 6; $i++)
+        $code .= $chars[random_int(0, strlen($chars) - 1)];
+    return $code;
+}
+function generatePassword(int $len = 10): string
+{
+    $chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#';
+    $pass = '';
+    for ($i = 0; $i < $len; $i++)
+        $pass .= $chars[random_int(0, strlen($chars) - 1)];
+    return $pass;
+}
+
+$feedback = null;
+$activeSection = $_POST['_section'] ?? $_GET['section'] ?? 'dashboard';
+
+/* ══ ACTIONS ══ */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+    $activeSection = $_POST['_section'] ?? 'dashboard';
+
+    /* Tambah admin */
+    if ($action === 'admin_tambah') {
+        $nama = trim($_POST['nama'] ?? '');
+        $pass = trim($_POST['password'] ?? '');
+        $kode = generateKodeAktivasi();
+        if ($nama === '' || $pass === '') {
+            $feedback = ['type' => 'error', 'msg' => 'Nama dan password wajib diisi.'];
+        } else {
+            $n = mysqli_real_escape_string($conn, $nama);
+            $h = md5($pass);
+            $k = mysqli_real_escape_string($conn, $kode);
+            if (mysqli_query($conn, "INSERT INTO admin (nama,password,kode_aktivasi) VALUES ('$n','$h','$k')")) {
+                $feedback = ['type' => 'success', 'msg' => "Admin <strong>" . htmlspecialchars($nama) . "</strong> ditambahkan.", "extra" => "Kode Aktivasi: <code>$kode</code>"];
+            } else {
+                $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan admin.'];
+            }
+        }
+    }
+
+    /* Toggle status admin */
+    if ($action === 'admin_toggle') {
+        $id = (int) ($_POST['id'] ?? 0);
+        $status = $_POST['status'] ?? '';
+        if ($id && in_array($status, ['aktif', 'tidak_digunakan'])) {
+            $new = $status === 'aktif' ? 'tidak_digunakan' : 'aktif';
+            mysqli_query($conn, "UPDATE admin SET status='$new' WHERE id_admin=$id");
+        }
+        header("Location: ?section=admin");
+        exit;
+    }
+
+    /* Reset password admin */
+    if ($action === 'admin_reset') {
+        $id = (int) ($_POST['id'] ?? 0);
+        $pass = generatePassword();
+        $hash = md5($pass);
+        if ($id) {
+            mysqli_query($conn, "UPDATE admin SET password='$hash' WHERE id_admin=$id");
+            $nama_admin = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM admin WHERE id_admin=$id"))['nama'] ?? '';
+            $feedback = ['type' => 'success', 'msg' => "Password <strong>" . htmlspecialchars($nama_admin) . "</strong> direset.", "extra" => "Password baru: <code>$pass</code> — Simpan sekarang!"];
+        }
+    }
+
+}
+
+
+/* ══ DATA ══ */
+// Dashboard
+$totalTransaksi = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM pesanan WHERE DATE(waktu_pesan)=CURDATE()"))['c'];
+$totalPembeli = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT (SELECT COUNT(*) FROM murid)+(SELECT COUNT(*) FROM guru) as c"))['c'];
+$tokoAktif = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE status='buka'"))['c'];
+$totalToko = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko"))['c'];
+$totalMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM menu WHERE tersedia=1"))['c'];
+
+$grafikLabels = [];
+$grafikValues = [];
+for ($i = 6; $i >= 0; $i--) {
+    $date = date('Y-m-d', strtotime("-{$i} days"));
+    $grafikLabels[] = date('d/m', strtotime("-{$i} days"));
+    $grafikValues[] = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM pesanan WHERE DATE(waktu_pesan)='$date'"))['c'];
+}
+$proporsiRaw = mysqli_fetch_all(mysqli_query($conn, "SELECT t.nama_toko, COUNT(p.id_pesanan) as total FROM toko t LEFT JOIN pesanan p ON p.id_toko=t.id_toko GROUP BY t.id_toko,t.nama_toko ORDER BY total DESC LIMIT 5"), MYSQLI_ASSOC);
+$proporsiTotal = array_sum(array_column($proporsiRaw, 'total'));
+$proporsiLabels = array_column($proporsiRaw, 'nama_toko');
+$proporsiValues = $proporsiTotal > 0 ? array_map('intval', array_column($proporsiRaw, 'total')) : array_fill(0, count($proporsiRaw), 1);
+$kendala = mysqli_fetch_all(mysqli_query($conn, "SELECT p.id_pesanan,p.waktu_pesan,p.status,COALESCE(m.nama,g.nama,'Unknown') AS pelapor FROM pesanan p LEFT JOIN murid m ON m.nisn=p.nisn_pembeli LEFT JOIN guru g ON g.nuptk=p.nuptk_pembeli WHERE p.status IN ('dibatalkan','menunggu') ORDER BY p.waktu_pesan DESC LIMIT 10"), MYSQLI_ASSOC);
+
+// Admin
+$admins = mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM admin ORDER BY id_admin ASC"), MYSQLI_ASSOC);
+$totalAdmin = count($admins);
+$aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
+?>
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Kantin — Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="../../assets/css/admin.css">
+</head>
+
+<body>
+
+    <div id="overlay" onclick="closeSidebar()"></div>
+
+    <aside id="sidebar">
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-inner">
+                <img src="../../assets/img/logo-esemkita.png" class="logo-badge" onerror="this.style.display='none'">
+                <div class="logo-text">E-Kantin</div>
+            </div>
+            <button class="btn-close-sidebar" onclick="closeSidebar()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <nav class="sidebar-nav">
+            <button class="nav-link active" data-section="dashboard" onclick="switchSection('dashboard')"><i
+                    class="fa-solid fa-border-all"></i> Dashboard</button>
+            <button class="nav-link" data-section="admin" onclick="switchSection('admin')"><i
+                    class="fa-solid fa-user"></i> Admin</button>
+            <button class="nav-link" data-section="kantin" onclick="switchSection('kantin')"><i
+                    class="fa-solid fa-store"></i> Kantin</button>
+            <button class="nav-link" data-section="penjual" onclick="switchSection('penjual')"><i
+                    class="fa-solid fa-user-tag"></i> Penjual</button>
+            <button class="nav-link" data-section="pembeli" onclick="switchSection('pembeli')"><i
+                    class="fa-solid fa-users"></i> Pembeli</button>
+        </nav>
+        <div class="sidebar-bottom">
+            <button class="nav-link"><i class="fa-solid fa-circle-info"></i> Help Centre</button>
+            <a href="../../auth/logout.php" class="nav-link logout"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                Log out</a>
+        </div>
+    </aside>
+
+    <div id="main">
+        <div class="content">
+
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-hamburger" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                    <div class="topbar-title">
+                        <h1 id="pageTitle">Dashboard</h1>
+                        <p id="pageSubtitle">Monitor semua transaksi dan keuangan E-Kantin</p>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <button class="btn-notif"><i class="fa-solid fa-bell"></i><span class="notif-dot"></span></button>
+                    <div class="topbar-user">
+                        <div class="avatar"><?= strtoupper(substr($adminNama, 0, 1)) ?></div>
+                        <div>
+                            <div class="user-name"><?= htmlspecialchars($adminNama) ?></div>
+                            <div class="user-role">Administrator</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <?php if ($feedback): ?>
+                <div class="feedback <?= $feedback['type'] ?>" id="feedbackBanner">
+                    <i
+                        class="fa-solid <?= $feedback['type'] === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation' ?>"></i>
+                    <div>
+                        <div><?= $feedback['msg'] ?></div>
+                        <?php if (!empty($feedback['extra'])): ?>
+                            <div style="margin-top:6px"><?= $feedback['extra'] ?></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- ══════════════ DASHBOARD ══════════════ -->
+            <div class="section active" id="section-dashboard">
+                <?php require __DIR__ . '/sections/dashboard.php'; ?>
+            </div>
+
+            <!-- ══════════════ ADMIN ══════════════ -->
+            <div class="section" id="section-admin">
+                <?php require __DIR__ . '/sections/admin.php'; ?>
+            </div>
+
+            <!-- ══════════════ KANTIN ══════════════ -->
+            <div class="section" id="section-kantin">
+                <div class="placeholder-box">
+                    <i class="fa-solid fa-store"></i>
+                    <p>Halaman Kantin — segera diisi</p>
+                </div>
+            </div>
+
+            <!-- ══════════════ PENJUAL ══════════════ -->
+            <div class="section" id="section-penjual">
+                <div class="placeholder-box">
+                    <i class="fa-solid fa-user-tag"></i>
+                    <p>Halaman Penjual — segera diisi</p>
+                </div>
+            </div>
+
+            <!-- ══════════════ PEMBELI ══════════════ -->
+            <div class="section" id="section-pembeli">
+                <div class="placeholder-box">
+                    <i class="fa-solid fa-users"></i>
+                    <p>Halaman Pembeli — segera diisi</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /* ── sidebar ── */
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        function toggleSidebar() {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('show');
+            } else {
+                const hidden = sidebar.style.marginLeft === '-256px';
+                sidebar.style.marginLeft = hidden ? '0' : '-256px';
+                document.getElementById('main').style.width = hidden ? '' : '100%';
+            }
+        }
+        function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('show'); }
+        window.addEventListener('resize', () => { if (window.innerWidth > 768) closeSidebar(); });
+
+        /* ── section switcher ── */
+        const pageMeta = {
+            dashboard: { title: 'Dashboard', sub: 'Monitor semua transaksi dan keuangan E-Kantin' },
+            admin: { title: 'Admin Management', sub: 'Kelola akun administrator E-Kantin' },
+            kantin: { title: 'Kelola Kantin', sub: 'Manajemen toko dan menu kantin' },
+            penjual: { title: 'Kelola Penjual', sub: 'Manajemen akun penjual' },
+            pembeli: { title: 'Kelola Pembeli', sub: 'Data murid dan guru terdaftar' },
+        };
+
+        function switchSection(name) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-link[data-section]').forEach(l => l.classList.remove('active'));
+            document.getElementById('section-' + name).classList.add('active');
+            document.querySelector('.nav-link[data-section="' + name + '"]').classList.add('active');
+            const meta = pageMeta[name] || {};
+            document.getElementById('pageTitle').textContent = meta.title || '';
+            document.getElementById('pageSubtitle').textContent = meta.sub || '';
+            if (window.innerWidth <= 768) closeSidebar();
+            history.replaceState(null, '', '?section=' + name);
+            if (name === 'admin') regenKode();
+        }
+
+        /* aktifkan section dari URL / POST */
+        const initSection = '<?= htmlspecialchars($activeSection) ?>';
+        if (initSection !== 'dashboard') switchSection(initSection);
+
+        /* ── charts ── */
+        const grafikLabels = <?= json_encode($grafikLabels) ?>;
+        const grafikValues = <?= json_encode($grafikValues) ?>;
+        const proporsiLabels = <?= json_encode($proporsiLabels) ?>;
+        const proporsiValues = <?= json_encode($proporsiValues) ?>;
+        const greens = ['#79b775', '#8cd48a', '#b5d7b4', '#4a9e4a', '#2d7a2d'];
+
+        const ctxL = document.getElementById('lineChart').getContext('2d');
+        const grad = ctxL.createLinearGradient(0, 0, 0, 180);
+        grad.addColorStop(0, 'rgba(121,183,117,.35)');
+        grad.addColorStop(1, 'rgba(121,183,117,0)');
+        new Chart(ctxL, { type: 'line', data: { labels: grafikLabels, datasets: [{ data: grafikValues, borderColor: '#79b775', borderWidth: 2.5, backgroundColor: grad, fill: true, tension: 0.4, pointBackgroundColor: '#79b775', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { grid: { color: '#e5e7eb' }, ticks: { display: false }, beginAtZero: true, border: { display: false } } } } });
+
+        const ctxD = document.getElementById('donutChart').getContext('2d');
+        new Chart(ctxD, { type: 'doughnut', data: { labels: proporsiLabels, datasets: [{ data: proporsiValues, backgroundColor: greens.slice(0, proporsiLabels.length), borderWidth: 3, borderColor: '#f8f9fa' }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { display: false } } } });
+        const legend = document.getElementById('legend');
+        proporsiLabels.forEach((label, i) => { legend.innerHTML += `<div class="legend-item"><span class="legend-dot" style="background:${greens[i]}"></span>${label}</div>`; });
+
+        /* ── kode aktivasi ── */
+        function randomKode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let c = 'EK';
+            for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
+            return c;
+        }
+        function regenKode() {
+            const k = randomKode();
+            document.getElementById('kodePreview').textContent = k;
+            document.getElementById('kodeHidden').value = k;
+        }
+
+        /* ── toggle password ── */
+        function togglePass() {
+            const inp = document.getElementById('inputPass');
+            const ico = document.getElementById('eyeIcon');
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+            ico.className = inp.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+        }
+
+        /* ── reveal kode di tabel ── */
+        function revealKode(id) {
+            const el = document.getElementById('kode-' + id);
+            const eye = document.getElementById('eye-' + id);
+            if (el.dataset.hidden === '1') {
+                el.textContent = el.dataset.plain;
+                el.dataset.hidden = '0';
+                eye.className = 'fa-solid fa-eye-slash';
+            } else {
+                const p = el.dataset.plain;
+                el.textContent = p.substring(0, 2) + '•'.repeat(Math.max(0, p.length - 2));
+                el.dataset.hidden = '1';
+                eye.className = 'fa-solid fa-eye';
+            }
+        }
+    </script>
+</body>
+
+</html>
