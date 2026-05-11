@@ -136,7 +136,7 @@ function login()
             $_SESSION['user_nama'] = $user['nama'];
             $_SESSION['user_role'] = 'admin';
 
-            header('Location: ../views/admin/dashboard.php');
+            header('Location: ../views/admin/?section=dashboard');
             exit;
 
         default:

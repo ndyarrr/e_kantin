@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../config/database.php';
 
 $adminNama = $_SESSION['user_nama'] ?? 'Super Admin';
 $adminId = (int) ($_SESSION['user_id'] ?? 0);
-
+$profilAdmin = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM admin WHERE id_admin=$adminId"));
 /* ── helpers ── */
 function generateKodeAktivasi(): string
 {
@@ -30,10 +30,87 @@ function generatePassword(int $len = 10): string
 $feedback = null;
 $activeSection = $_POST['_section'] ?? $_GET['section'] ?? 'dashboard';
 
+
 /* ══ ACTIONS ══ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $activeSection = $_POST['_section'] ?? 'dashboard';
+
+    if ($action === 'admin_profil') {
+        $nama_baru = trim($_POST['nama_baru'] ?? '');
+        $foto_baru = null;
+
+        // hapus foto
+        if (isset($_POST['hapus_foto']) && $_POST['hapus_foto'] === '1') {
+            $fotoLama = $profilAdmin['foto_profil'] ?? '';
+            if ($fotoLama) {
+                foreach (['jpg', 'jpeg', 'png', 'webp'] as $e) {
+                    $lama = __DIR__ . '/../../assets/img/admin/admin_' . $adminId . '.' . $e;
+                    if (file_exists($lama))
+                        unlink($lama);
+                }
+                mysqli_query($conn, "UPDATE admin SET foto_profil=NULL WHERE id_admin=$adminId");
+            }
+            $foto_baru = null;
+        }
+        // upload foto baru
+        elseif (!empty($_FILES['foto_profil']['name'])) {
+            $ext = pathinfo($_FILES['foto_profil']['name'], PATHINFO_EXTENSION);
+            $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+            if (in_array(strtolower($ext), $allowed)) {
+                $namaFile = 'admin_' . $adminId . '.' . strtolower($ext);
+                $tujuan = __DIR__ . '/../../assets/img/admin/' . $namaFile;
+                foreach (['jpg', 'jpeg', 'png', 'webp'] as $e) {
+                    $lama = __DIR__ . '/../../assets/img/admin/admin_' . $adminId . '.' . $e;
+                    if (file_exists($lama))
+                        unlink($lama);
+                }
+                if (move_uploaded_file($_FILES['foto_profil']['tmp_name'], $tujuan)) {
+                    $foto_baru = $namaFile;
+                } else {
+                    $feedback = ['type' => 'error', 'msg' => 'Gagal upload foto.'];
+                }
+            }
+        }
+
+        if ($nama_baru !== '' && $adminId) {
+            $n = mysqli_real_escape_string($conn, $nama_baru);
+            if ($foto_baru !== null) {
+                $f = mysqli_real_escape_string($conn, $foto_baru);
+                mysqli_query($conn, "UPDATE admin SET nama='$n', foto_profil='$f' WHERE id_admin=$adminId");
+            } else {
+                mysqli_query($conn, "UPDATE admin SET nama='$n' WHERE id_admin=$adminId");
+            }
+            $_SESSION['user_nama'] = $nama_baru;
+            $adminNama = $nama_baru;
+            // refresh profilAdmin biar foto baru ke-load
+            $profilAdmin = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM admin WHERE id_admin=$adminId"));
+            $feedback = ['type' => 'success', 'msg' => 'Profil berhasil diperbarui.'];
+        }
+
+        // ubah password
+        $pw_lama = $_POST['pw_lama'] ?? '';
+        $pw_baru = $_POST['pw_baru'] ?? '';
+        $pw_konfirmasi = $_POST['pw_konfirmasi'] ?? '';
+
+        if ($pw_lama !== '' || $pw_baru !== '' || $pw_konfirmasi !== '') {
+            if ($pw_lama === '') {
+                $feedback = ['type' => 'error', 'msg' => 'Password lama wajib diisi untuk mengubah password.'];
+            } elseif (md5($pw_lama) !== $profilAdmin['password']) {
+                $feedback = ['type' => 'error', 'msg' => 'Password lama salah.'];
+            } elseif (strlen($pw_baru) < 8) {
+                $feedback = ['type' => 'error', 'msg' => 'Password baru minimal 8 karakter.'];
+            } elseif ($pw_baru !== $pw_konfirmasi) {
+                $feedback = ['type' => 'error', 'msg' => 'Konfirmasi password tidak cocok.'];
+            } else {
+                $hash_baru = md5($pw_baru);
+                mysqli_query($conn, "UPDATE admin SET password='$hash_baru' WHERE id_admin=$adminId");
+                $feedback = ['type' => 'success', 'msg' => 'Password berhasil diubah.'];
+            }
+        }
+
+        $activeSection = $_POST['_section'] ?? 'dashboard';
+    }
 
     /* Tambah admin */
     if ($action === 'admin_tambah') {
@@ -163,8 +240,15 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
                 </div>
                 <div class="topbar-right">
                     <button class="btn-notif"><i class="fa-solid fa-bell"></i><span class="notif-dot"></span></button>
-                    <div class="topbar-user">
-                        <div class="avatar"><?= strtoupper(substr($adminNama, 0, 1)) ?></div>
+                    <div class="topbar-user" onclick="bukaProfil()" style="cursor:pointer">
+                        <div class="avatar">
+                            <?php if (!empty($profilAdmin['foto_profil'])): ?>
+                                <img src="../../assets/img/admin/<?= htmlspecialchars($profilAdmin['foto_profil']) ?>?v=<?= time() ?>"
+                                    style="width:100%;height:100%;object-fit:cover;border-radius:10px">
+                            <?php else: ?>
+                                <?= strtoupper(substr($adminNama, 0, 1)) ?>
+                            <?php endif; ?>
+                        </div>
                         <div>
                             <div class="user-name"><?= htmlspecialchars($adminNama) ?></div>
                             <div class="user-role">Administrator</div>
@@ -185,6 +269,8 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
                     </div>
                 </div>
             <?php endif; ?>
+
+            <?php require __DIR__ . '/sections/profile.php'; ?>
 
             <!-- ══════════════ DASHBOARD ══════════════ -->
             <div class="section active" id="section-dashboard">
@@ -319,6 +405,50 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
                 el.dataset.hidden = '1';
                 eye.className = 'fa-solid fa-eye';
             }
+        }
+
+        /* ── modal profil ── */
+        function bukaProfil() {
+            const modal = document.getElementById('modalProfil');
+            modal.style.display = 'flex';
+            document.getElementById('profilSection').value =
+                document.querySelector('.nav-link.active[data-section]')?.dataset.section || 'dashboard';
+        }
+        function tutupProfil() {
+            document.getElementById('modalProfil').style.display = 'none';
+        }
+        function revealModalKode() {
+            const el = document.getElementById('modalKode');
+            const eye = document.getElementById('modalKodeEye').querySelector('i');
+            if (el.dataset.hidden === '1') {
+                el.textContent = el.dataset.plain;
+                el.dataset.hidden = '0';
+                eye.className = 'fa-solid fa-eye-slash';
+            } else {
+                const p = el.dataset.plain;
+                el.textContent = p.substring(0, 2) + '•'.repeat(Math.max(0, p.length - 2));
+                el.dataset.hidden = '1';
+                eye.className = 'fa-solid fa-eye';
+            }
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') tutupProfil(); });
+
+        /* ── auto dismiss feedback ── */
+        const feedbackEl = document.getElementById('feedbackBanner');
+        if (feedbackEl) {
+            setTimeout(() => {
+                feedbackEl.style.transition = 'opacity .5s';
+                feedbackEl.style.opacity = '0';
+                setTimeout(() => feedbackEl.remove(), 500);
+            }, 4000); // hilang setelah 4 detik
+        }
+
+        function togglePw(inputId, iconId) {
+            const inp = document.getElementById(inputId);
+            const ico = document.getElementById(iconId);
+            if (!inp) return;
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+            ico.className = inp.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
         }
     </script>
 </body>
