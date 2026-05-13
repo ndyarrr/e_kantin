@@ -81,15 +81,20 @@ e-kantin/
 │   ├── css/
 │   ├── js/
 │   └── img/
-├── 📂 config/
-│   └── db.php
-├── 📂 database/
-│   └── ekantin.sql
-├── 📂 pages/
+├── 📂 auth/
 │   ├── login.php
-│   ├── menu.php
-│   ├── order.php
-│   └── dashboard.php
+│   └── logout.php
+├── 📂 backend/
+│   └── admin.php
+├── 📂 config/
+│   └── database.php
+├── 📂 controllers/
+│   └── auth.php
+├── 📂 views/
+│   ├── admin/
+│   ├── layouts/
+│   └── siswa/
+├── hash.php
 └── index.php
 ```
 
