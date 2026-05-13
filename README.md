@@ -1,1 +1,1 @@
-ini kantin
+ini kantin error 404
