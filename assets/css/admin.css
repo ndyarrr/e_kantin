@@ -825,8 +825,13 @@
             position: fixed;
             inset: 0;
             z-index: 100;
-            align-items: center;
+            align-items: flex-start;
+            /* ← ganti center jadi flex-start */
             justify-content: center;
+            overflow-y: auto;
+            /* ← tambah ini */
+            padding: 20px 0;
+            /* ← tambah ini biar ada jarak atas bawah */
         }
 
         .modal-backdrop {
@@ -843,14 +848,19 @@
             padding: 28px;
             width: 90%;
             max-width: 400px;
-            max-height: 90vh;
-            /* ← tambah ini */
+            max-height: 90dvh;
+            /* pakai dvh bukan vh */
             overflow-y: auto;
-            /* ← tambah ini */
+            scrollbar-width: thin;
+            scrollbar-color: var(--green-muted) transparent;
             box-shadow: 0 8px 32px rgba(0, 0, 0, .15);
         }
 
-        
+        .modal-box::-webkit-scrollbar-track {
+            margin: 16px 0;
+        }
+
+
         .modal-header {
             display: flex;
             align-items: center;

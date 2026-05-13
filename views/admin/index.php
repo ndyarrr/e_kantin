@@ -155,6 +155,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    $allowedActions = ['kantin_tambah', 'kantin_edit', 'kantin_hapus', 'kantin_assign_penjual', 'kantin_lepas_penjual'];
+    if (str_starts_with($action, 'kantin_') || str_starts_with($action, 'menu_')) {
+        // menu_tambah & menu_hapus hanya boleh jika ada flag _menu_edit_mode
+        if (
+            in_array($action, $allowedActions) ||
+            (in_array($action, ['menu_tambah', 'menu_hapus']) && !empty($_POST['_menu_edit_mode']))
+        ) {
+            require __DIR__ . '/actions/kantin.php';
+        } else {
+            $feedback = ['type' => 'error', 'msg' => 'Aksi tidak diizinkan.'];
+        }
+    }
+
 }
 
 
@@ -194,6 +207,7 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="../../assets/css/admin.css">
+    <link rel="stylesheet" href="../../assets/css/admin_kantin.css">
 </head>
 
 <body>
@@ -284,10 +298,11 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
 
             <!-- ══════════════ KANTIN ══════════════ -->
             <div class="section" id="section-kantin">
-                <div class="placeholder-box">
-                    <i class="fa-solid fa-store"></i>
-                    <p>Halaman Kantin — segera diisi</p>
-                </div>
+
+                <?php
+                require __DIR__ . '/sections/kantin_data.php'; // ← TAMBAH INI
+                require __DIR__ . '/sections/kantin.php';
+                ?>
             </div>
 
             <!-- ══════════════ PENJUAL ══════════════ -->
@@ -450,6 +465,27 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
             inp.type = inp.type === 'password' ? 'text' : 'password';
             ico.className = inp.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
         }
+
+        function selectToko(id) {
+            window.location.href = '?section=kantin&toko=' + id;
+        }
+        function tutupDetailToko() {
+            window.location.href = '?section=kantin';
+        }
+        function toggleTambahMenu() {
+            const el = document.getElementById('formTambahMenu');
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+
+
+        }
+
+        console.log('lineChart el:', document.getElementById('lineChart'));
+        console.log('donutChart el:', document.getElementById('donutChart'));
+        console.log('Chart.js loaded:', typeof Chart);
+        console.log('grafikLabels:', grafikLabels);
+        console.log('grafikValues:', grafikValues);
+        console.log('proporsiLabels:', proporsiLabels);
+        console.log('proporsiValues:', proporsiValues);
     </script>
 </body>
 

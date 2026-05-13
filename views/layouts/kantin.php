@@ -6,10 +6,14 @@ $kantins = mysqli_fetch_all(mysqli_query(
             COUNT(DISTINCT tp.id_penjual) as jumlah_penjual
     FROM toko t
     LEFT JOIN toko_penjual tp ON tp.id_toko = t.id_toko AND tp.status = 'aktif'
-    WHERE t.status = 'buka'
     GROUP BY t.id_toko
     ORDER BY t.dibuat_pada ASC"
 ), MYSQLI_ASSOC);
+?>
+
+<?php
+var_dump(mysqli_error($conn));
+var_dump(count($kantins));
 ?>
 
 <div class="section-label">List Kantin</div>
