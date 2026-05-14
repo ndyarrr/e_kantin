@@ -11,11 +11,6 @@ $kantins = mysqli_fetch_all(mysqli_query(
 ), MYSQLI_ASSOC);
 ?>
 
-<?php
-var_dump(mysqli_error($conn));
-var_dump(count($kantins));
-?>
-
 <div class="section-label">List Kantin</div>
 <div class="kantin-grid">
     <?php foreach ($kantins as $kantin): ?>

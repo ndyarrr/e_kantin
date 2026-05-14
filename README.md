@@ -35,9 +35,9 @@
 | Fitur | Deskripsi |
 |-------|-----------|
 | 🔐 **Login & Register** | Autentikasi pengguna & admin |
-| 🍜 **Menu Makanan** | Tampilan menu lengkap dengan harga |
+| 🍜 **Menu Makanan** | Tampilan menu clean |
 | 🛒 **Order** | Pemesanan makanan secara online |
-| 📊 **Dashboard Admin** | Kelola menu, order, dan transaksi |
+| 📊 **Dashboard Admin** | Kelola admin, kantin, penjual, pembeli |
 
 ---
 
@@ -51,24 +51,59 @@ Database  → MySQL
 
 ---
 
-## 🚀 Instalasi
+## 🚀 Cara Install (Pertama Kali)
+
+### Prasyarat
+- XAMPP / Laragon sudah terinstall
+- PHP >= 7.4
+- Git
+
+### Langkah-langkah
 
 ```bash
-# 1. Clone repo ini
+# Verivikasi contibuttor
+git config --global user.name "nama lu"
+git config --global user.email "email_lu_@example.com"
+
+# 1. Clone repo ke folder htdocs/www
 git clone https://github.com/ndyarrr/e-kantin.git
 
-# 2. Masuk ke folder
+# 2. Masuk ke folder project
 cd e-kantin
+```
 
-# 3. Import database
-# Buka phpMyAdmin → import file database/ekantin.sql
+3. **Import database** → buka phpMyAdmin → import file `database/ekantin.sql`
+4. **Konfigurasi DB** → edit `config/database.php` sesuai settingan lokal
+5. Buka browser → `http://localhost/e-kantin`
 
-# 4. Konfigurasi koneksi DB
-# Edit file config/db.php sesuaikan dengan settingan lokal kamu
 
-# 5. Jalankan di localhost
-# Taruh di folder htdocs (XAMPP) atau www (Laragon)
-# Buka browser → http://localhost/e-kantin
+---
+
+## 🔄 Workflow Sebelum Ngoding
+
+> Wajib dilakukan setiap kali mau mulai kerja!
+
+```bash
+# Cek apakah ada perubahan dari contributor lain
+git status
+
+# Kalau ada update, pull dulu sebelum mulai ngoding
+git pull origin master
+```
+
+---
+
+## 📤 Upload Perubahan
+
+```bash
+# 1. Tambahkan semua file yang berubah
+git add .
+
+# 2. Tulis pesan commit yang jelas
+git commit -m "tambah fitur"
+
+# 3. Push ke repository
+git push -u origin master
 ```
 
 ---
@@ -76,26 +111,63 @@ cd e-kantin
 ## 📁 Struktur Folder
 
 ```
-e-kantin/
-├── 📂 assets/
-│   ├── css/
-│   ├── js/
-│   └── img/
-├── 📂 auth/
+tree
+.
+├── assets
+│   ├── css
+│   │   ├── admin.css
+│   │   ├── admin_kantin.css
+│   │   ├── auth.css
+│   │   └── styles.css
+│   └── img
+│       ├── admin
+│       │   └── admin_2.jpg
+│       ├── colase.png
+│       ├── gb1.jpeg
+│       ├── gb2.jpeg
+│       ├── gb3.jpeg
+│       ├── kantin
+│       │   ├── toko_3.jpeg
+│       │   └── toko_4.jpeg
+│       ├── kls.png
+│       ├── kolase.png
+│       ├── logo-esemkita.png
+│       ├── menu
+│       └── pak-fajar.png
+├── auth
 │   ├── login.php
 │   └── logout.php
-├── 📂 backend/
+├── backend
 │   └── admin.php
-├── 📂 config/
+├── config
 │   └── database.php
-├── 📂 controllers/
+├── controllers
 │   └── auth.php
-├── 📂 views/
-│   ├── admin/
-│   ├── layouts/
-│   └── siswa/
 ├── hash.php
-└── index.php
+├── index.php
+├── README.md
+└── views
+    ├── admin
+    │   ├── actions
+    │   │   └── kantin.php
+    │   ├── index.php
+    │   └── sections
+    │       ├── admin.php
+    │       ├── dashboard.php
+    │       ├── kantin_data.php
+    │       ├── kantin.php
+    │       └── profile.php
+    ├── layouts
+    │   ├── about.php
+    │   ├── footer.php
+    │   ├── hero.php
+    │   ├── kantin.php
+    │   ├── leaderboard.php
+    │   └── navbar.php
+    └── siswa
+        └── dashboard.php
+
+17 directories, 37 files
 ```
 
 ---
@@ -104,6 +176,6 @@ e-kantin/
 
 <div align="center">
 
-**Error 404** — *We didn't find success, we built it.*
+**Error 404** — *damn.*
 
 </div>
