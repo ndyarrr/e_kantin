@@ -56,9 +56,6 @@
 
 
     <script>
-        history.scrollRestoration = 'manual';
-        window.scrollTo(0, 0);
-
         const pills = document.querySelectorAll('.nav-pill');
         const sections = document.querySelectorAll('section[id]');
 

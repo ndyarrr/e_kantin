@@ -34,6 +34,7 @@
             color: var(--text);
             display: flex;
             height: 100vh;
+            height: 100dvh;
             overflow: hidden
         }
 
@@ -54,6 +55,7 @@
         #sidebar {
             width: var(--sidebar-w);
             height: 100vh;
+            height: 100dvh;
             background: var(--green-light);
             border-right: 1px solid var(--border);
             display: flex;
@@ -621,9 +623,9 @@
             justify-content: center
         }
 
-        .btn-aksi.reset {
+        /* .btn-aksi.reset {
             color: var(--green-dark)
-        }
+        } */
 
         .btn-aksi.reset:hover {
             background: var(--green-light)
@@ -1054,5 +1056,64 @@
         @media(max-width:480px) {
             .col-hide {
                 display: none
+            }
+        }
+
+        /* ── Modal Foto ── */
+        .modal-foto {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-out;
+            animation: fadeIn .2s ease;
+        }
+
+        .modal-foto img {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 12px;
+            object-fit: contain;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
+            animation: zoomIn .2s ease;
+            cursor: default;
+            /* ← tambah ini */
+        }
+
+        .modal-foto.show {
+            display: flex;
+        }
+
+        .modal-foto img {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 12px;
+            object-fit: contain;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
+            animation: zoomIn .2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(.92);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
             }
         }

@@ -8,7 +8,9 @@
         <div class="modal-avatar-wrap">
             <div class="modal-avatar">
                 <?php if (!empty($profilAdmin['foto_profil'])): ?>
-                    <img src="../../assets/img/admin/<?= htmlspecialchars($profilAdmin['foto_profil']) ?>?v=<?= time() ?>">
+                    <img src="../../assets/img/admin/<?= htmlspecialchars($profilAdmin['foto_profil']) ?>?v=<?= time() ?>"
+                        style="width:100%;height:100%;object-fit:cover;border-radius:10px;cursor:zoom-in"
+                        onclick="event.stopPropagation();bukaFotoAdmin(this.src)">
                 <?php else: ?>
                     <?= strtoupper(substr($adminNama, 0, 1)) ?>
                 <?php endif; ?>

@@ -168,6 +168,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Redirect bersih setelah action kantin
+    if (str_starts_with($action, 'kantin_') || str_starts_with($action, 'menu_')) {
+        $selToko = (int) ($_POST['_selected_toko'] ?? 0);
+        header("Location: ?section=kantin" . ($selToko ? "&toko=$selToko" : ""));
+        exit;
+    }
+
 }
 
 
@@ -210,9 +217,14 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
     <link rel="stylesheet" href="../../assets/css/admin_kantin.css">
 </head>
 
-<body>
 
-    <div id="overlay" onclick="closeSidebar()"></div>
+
+<body>
+    <div id="modalFotoAdmin" class="modal-foto" onclick="tutupFotoAdmin()">
+        <img id="modalFotoAdminImg" src="" onclick="event.stopPropagation()">
+    </div>
+    <div id="overlay" onclick="closeSidebar()">
+    </div>
 
     <aside id="sidebar">
         <div class="sidebar-logo">
@@ -258,7 +270,7 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
                         <div class="avatar">
                             <?php if (!empty($profilAdmin['foto_profil'])): ?>
                                 <img src="../../assets/img/admin/<?= htmlspecialchars($profilAdmin['foto_profil']) ?>?v=<?= time() ?>"
-                                    style="width:100%;height:100%;object-fit:cover;border-radius:10px">
+                                    style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
                             <?php else: ?>
                                 <?= strtoupper(substr($adminNama, 0, 1)) ?>
                             <?php endif; ?>
@@ -361,6 +373,10 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
             if (window.innerWidth <= 768) closeSidebar();
             history.replaceState(null, '', '?section=' + name);
             if (name === 'admin') regenKode();
+        }
+
+        if (window.location.search.includes('toko=')) {
+            history.replaceState(null, '', '?section=kantin');
         }
 
         /* aktifkan section dari URL / POST */
@@ -466,17 +482,16 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
             ico.className = inp.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
         }
 
-        function selectToko(id) {
-            window.location.href = '?section=kantin&toko=' + id;
-        }
-        function tutupDetailToko() {
-            window.location.href = '?section=kantin';
-        }
-        function toggleTambahMenu() {
-            const el = document.getElementById('formTambahMenu');
-            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        // HAPUS fungsi selectToko dan tutupDetailToko yang lama (yang pertama)
+        // Pakai ini saja:
 
 
+        function bukaFotoAdmin(src) {
+            document.getElementById('modalFotoAdminImg').src = src;
+            document.getElementById('modalFotoAdmin').classList.add('show');
+        }
+        function tutupFotoAdmin() {
+            document.getElementById('modalFotoAdmin').classList.remove('show');
         }
 
         console.log('lineChart el:', document.getElementById('lineChart'));

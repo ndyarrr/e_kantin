@@ -51,7 +51,8 @@
                                     <div class="toko-name-cell">
                                         <?php if (!empty($t['foto_toko'])): ?>
                                             <img src="../../assets/img/kantin/<?= htmlspecialchars($t['foto_toko']) ?>"
-                                                class="toko-thumb">
+                                                class="toko-thumb" onclick="event.stopPropagation();bukaFotoKantin(this.src)"
+                                                style="cursor:zoom-in">
                                         <?php else: ?>
                                             <div class="toko-thumb-placeholder">
                                                 <i class="fa-solid fa-store"></i>
@@ -71,10 +72,7 @@
                                     </span>
                                 </td>
                                 <td class="center" style="white-space:nowrap">
-                                    <button class="btn-aksi reset"
-                                        onclick="event.stopPropagation();selectToko(<?= $t['id_toko'] ?>)" title="Edit">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </button>
+
                                     <form method="POST" style="display:inline"
                                         onsubmit="event.stopPropagation();return confirm('Hapus toko <?= htmlspecialchars($t['nama_toko']) ?>?')">
                                         <input type="hidden" name="action" value="kantin_hapus">
@@ -162,7 +160,7 @@
                         <?php if (!empty($detailToko['foto_toko'])): ?>
                             <div class="foto-preview-wrap">
                                 <img src="../../assets/img/kantin/<?= htmlspecialchars($detailToko['foto_toko']) ?>?v=<?= time() ?>"
-                                    class="foto-preview-thumb">
+                                    class="foto-preview-thumb" onclick="bukaFotoKantin(this.src)">
                                 <label class="hapus-foto-label">
                                     <input type="checkbox" name="hapus_foto" value="1" style="accent-color:var(--red)">
                                     Hapus foto
@@ -345,8 +343,13 @@
         </div>
 
     </div>
-<?php endif; ?>
 
+<?php endif; ?>
+<!-- Modal foto kantin -->
+<div id="modalFotoKantin" onclick="tutupFotoKantin()"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out">
+    <img id="modalFotoImg" src="" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain">
+</div>
 <script>
     let menuEditMode = false;
 
@@ -389,4 +392,31 @@
             if (btnTambah) btnTambah.remove();
         }
     }
+
+    function bukaFotoKantin(src) {
+        const modal = document.getElementById('modalFotoKantin');
+        document.getElementById('modalFotoImg').src = src;
+        modal.style.display = 'flex';
+    }
+
+    function tutupFotoKantin() {
+        document.getElementById('modalFotoKantin').style.display = 'none';
+    }
+
+    // Tutup dengan ESC
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') tutupFotoKantin();
+    });
+
+    // HAPUS semua ini
+    function selectToko(id) {
+        sessionStorage.setItem('adminScrollPos', window.scrollY);
+        window.location.href = '?section=kantin&toko=' + id;
+    }
+
+    function tutupDetailToko() {
+        window.location.href = '?section=kantin';
+    }
+
+
 </script>
