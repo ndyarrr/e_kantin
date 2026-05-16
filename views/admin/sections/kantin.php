@@ -73,12 +73,13 @@
                                 </td>
                                 <td class="center" style="white-space:nowrap">
 
-                                    <form method="POST" style="display:inline"
-                                        onsubmit="event.stopPropagation();return confirm('Hapus toko <?= htmlspecialchars($t['nama_toko']) ?>?')">
+                                    <form method="POST" action="?section=kantin" style="display:inline"
+                                        id="form-hapus-<?= $t['id_toko'] ?>">
                                         <input type="hidden" name="action" value="kantin_hapus">
                                         <input type="hidden" name="id_toko" value="<?= $t['id_toko'] ?>">
                                         <input type="hidden" name="_section" value="kantin">
-                                        <button type="submit" class="btn-aksi danger" title="Hapus">
+                                        <button type="button" class="btn-aksi danger" title="Hapus"
+                                            onclick="event.stopPropagation(); if(confirm('Hapus toko <?= htmlspecialchars($t['nama_toko']) ?>?')) document.getElementById('form-hapus-<?= $t['id_toko'] ?>').submit()">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </form>

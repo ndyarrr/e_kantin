@@ -47,6 +47,11 @@ if ($selectedToko) {
 
     $semuaPenjual = mysqli_fetch_all(mysqli_query(
         $conn,
-        "SELECT * FROM penjual WHERE status='aktif' ORDER BY nama ASC"
+        "SELECT * FROM penjual 
+WHERE status='aktif' 
+AND id_penjual NOT IN (
+    SELECT id_penjual FROM toko_penjual WHERE status='aktif'
+)
+ORDER BY nama ASC"
     ), MYSQLI_ASSOC);
 }

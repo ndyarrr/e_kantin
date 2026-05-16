@@ -1,77 +1,57 @@
 <?php
-// leaderboard.php
-// TODO: ganti query ini sesuai struktur DB lo
-/*
-    Contoh struktur tabel yang diasumsikan:
-    - tabel: kantin, orders (atau transaksi)
-    - kolom: kantin.id, kantin.nama, kantin.foto, COUNT(orders.id) as total_pembeli
-*/
+// Ambil data kantin
+$rowsKantin = mysqli_fetch_all(mysqli_query(
+    $conn,
+    "SELECT t.id_toko as id, t.nama_toko as nama, t.foto_toko as foto,
+    COUNT(DISTINCT p.nisn_pembeli) + COUNT(DISTINCT p.nuptk_pembeli) as total_pembeli
+    FROM toko t
+    LEFT JOIN pesanan p ON p.id_toko = t.id_toko
+    WHERE t.status = 'buka'
+    GROUP BY t.id_toko
+    ORDER BY total_pembeli DESC
+    LIMIT 10"
+), MYSQLI_ASSOC);
 
-// $db = ...; // koneksi DB lo
-// $query = "
-//     SELECT k.id, k.nama, k.foto, COUNT(o.id) as total_pembeli
-//     FROM kantin k
-//     LEFT JOIN orders o ON o.kantin_id = k.id
-//     GROUP BY k.id
-//     ORDER BY total_pembeli DESC
-//     LIMIT 10
-// ";
-// $rows = $db->query($query)->fetchAll();
+// Ambil data menu
+$rowsMenu = mysqli_fetch_all(mysqli_query(
+    $conn,
+    "SELECT m.id_menu as id, m.nama_menu as nama, m.foto_menu as foto,
+    COUNT(dp.id_detail_pesanan) as total_pembeli
+    FROM menu m
+    LEFT JOIN detail_pesanan dp ON dp.id_menu = m.id_menu
+    GROUP BY m.id_menu
+    ORDER BY total_pembeli DESC
+    LIMIT 10"
+), MYSQLI_ASSOC);
 
-// DUMMY DATA — hapus kalau udah ada DB
-$rows = [
-    ['id' => 1, 'nama' => 'Pak Fajar', 'foto' => null, 'total_pembeli' => 36],
-    ['id' => 2, 'nama' => 'Pak Fajar', 'foto' => null, 'total_pembeli' => 36],
-    ['id' => 3, 'nama' => 'Pak Fajar', 'foto' => null, 'total_pembeli' => 36],
-    ['id' => 4, 'nama' => 'Pak Fajar', 'foto' => null, 'total_pembeli' => 36],
-    ['id' => 5, 'nama' => 'Pak Fajar', 'foto' => null, 'total_pembeli' => 36],
-    ['id' => 6, 'nama' => 'Pak Fajar', 'foto' => null, 'total_pembeli' => 36],
-];
-
-// ambil top 3 buat podium
-$top3 = array_slice($rows, 0, 3);
-?>
-
-<div class="lb-header">
-    <span class="section-label">Leaderboard</span>
-    <select class="lb-select">
-        <option value="kantin">Kantin</option>
-        <!-- TODO: tambah opsi filter lain kalau perlu -->
-    </select>
-</div>
-
-<div class="lb-body">
-
-    <!-- PODIUM -->
+function renderLb($rows, $type)
+{
+    $top3 = array_slice($rows, 0, 3);
+    $podium_order = [1, 0, 2];
+    ob_start();
+    ?>
     <div class="podium">
-        <!-- Urutan tampilan: rank 2, rank 1, rank 3 -->
-        <?php
-        $podium_order = [1, 0, 2]; // index di $top3
-        foreach ($podium_order as $i):
+        <?php foreach ($podium_order as $i):
             if (!isset($top3[$i]))
                 continue;
             $k = $top3[$i];
-            $rank = $i + 1;
-            ?>
+            $rank = $i + 1; ?>
             <div class="pod">
                 <div class="pod-photo rank-<?= $rank ?>">
                     <?php if (!empty($k['foto'])): ?>
-                        <img src="./assets/img/kantin/<?= htmlspecialchars($k['foto']) ?>"
-                            alt="<?= htmlspecialchars($k['nama']) ?>" />
+                        <img src="./assets/img/<?= $type ?>/<?= htmlspecialchars($k['foto']) ?>" alt="">
                     <?php endif; ?>
                 </div>
                 <div class="pod-stand rank-<?= $rank ?>"><?= $rank ?></div>
             </div>
         <?php endforeach; ?>
     </div>
-
-    <!-- TABEL -->
     <div class="lb-table-wrap">
         <table class="lb-table">
             <thead>
                 <tr>
                     <th>No</th>
-                    <th>Nama Kantin</th>
+                    <th>Nama <?= $type === 'menu' ? 'Menu' : 'Kantin' ?></th>
                     <th>Total Pembeli</th>
                 </tr>
             </thead>
@@ -86,5 +66,31 @@ $top3 = array_slice($rows, 0, 3);
             </tbody>
         </table>
     </div>
+    <?php
+    return ob_get_clean();
+}
+?>
 
+<div class="lb-header">
+    <span class="section-label">Leaderboard</span>
+    <select class="lb-select" onchange="gantiFilterLb(this.value)">
+        <option value="kantin">Kantin</option>
+        <option value="menu">Menu</option>
+    </select>
 </div>
+
+<div class="lb-body">
+    <div id="lb-kantin">
+        <?= renderLb($rowsKantin, 'kantin') ?>
+    </div>
+    <div id="lb-menu" style="display:none">
+        <?= renderLb($rowsMenu, 'menu') ?>
+    </div>
+</div>
+
+<script>
+    function gantiFilterLb(filter) {
+        document.getElementById('lb-kantin').style.display = filter === 'kantin' ? 'flex' : 'none';
+        document.getElementById('lb-menu').style.display = filter === 'menu' ? 'flex' : 'none';
+    }
+</script>

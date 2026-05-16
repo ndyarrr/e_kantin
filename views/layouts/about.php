@@ -187,17 +187,27 @@
     }
 </style>
 
+<?php
+// Ambil stats dari DB
+$statKantin = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko"))['c'];
+$statMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM menu WHERE tersedia=1"))['c'];
+?>
+
 <div class="ab-hero">
     <h2>E-Kantin Esemkita</h2>
     <p>Platform digital pemesanan kantin sekolah yang memudahkan siswa memesan makanan tanpa antri panjang. Dibuat oleh
         tim ERROR 404.</p>
     <div class="ab-stats">
         <div class="ab-stat">
-            <div class="ab-stat-num">12+</div>
+            <div class="ab-stat-num">
+                <?= $statKantin ?>+
+            </div>
             <div class="ab-stat-label">Kantin</div>
         </div>
         <div class="ab-stat">
-            <div class="ab-stat-num">240+</div>
+            <div class="ab-stat-num">
+                <?= $statMenu ?>+
+            </div>
             <div class="ab-stat-label">Menu</div>
         </div>
         <div class="ab-stat">

@@ -81,18 +81,32 @@ if ($action === 'kantin_edit') {
     }
 }
 
-/* Hapus toko */
 if ($action === 'kantin_hapus') {
     $id = (int) ($_POST['id_toko'] ?? 0);
     if ($id) {
         // hapus foto dulu
         $fotoLama = mysqli_fetch_assoc(mysqli_query($conn, "SELECT foto_toko FROM toko WHERE id_toko=$id"))['foto_toko'] ?? '';
-        if ($fotoLama && file_exists(__DIR__ . '/../../assets/img/kantin/' . $fotoLama)) {
-            unlink(__DIR__ . '/../../assets/img/kantin/' . $fotoLama);
+        if ($fotoLama && file_exists(__DIR__ . '/../../../assets/img/kantin/' . $fotoLama)) {
+            unlink(__DIR__ . '/../../../assets/img/kantin/' . $fotoLama);
         }
-        mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_toko=$id");
+
+        // hapus detail_pesanan dulu (anak dari pesanan)
+        mysqli_query($conn, "DELETE dp FROM detail_pesanan dp 
+            JOIN pesanan p ON p.id_pesanan = dp.id_pesanan 
+            WHERE p.id_toko = $id");
+
+        // hapus pesanan
+        mysqli_query($conn, "DELETE FROM pesanan WHERE id_toko=$id");
+
+        // hapus menu
         mysqli_query($conn, "DELETE FROM menu WHERE id_toko=$id");
+
+        // hapus toko_penjual
+        mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_toko=$id");
+
+        // baru hapus toko
         mysqli_query($conn, "DELETE FROM toko WHERE id_toko=$id");
+
         $feedback = ['type' => 'success', 'msg' => 'Kantin berhasil dihapus.'];
         $selectedToko = 0;
     }

@@ -428,11 +428,7 @@ body {
 }
 
 .lb-body {
-    display: flex;
-    gap: 12px;
-    /* kecilkan gap */
-    align-items: flex-end;
-    flex-wrap: wrap;
+    width: 100%;
 }
 
 .podium {
@@ -567,6 +563,22 @@ body {
     font-weight: 600;
 }
 
+#lb-kantin,
+#lb-menu {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    width: 100%;
+}
+
+#lb-menu {
+    display: none;
+}
+
+.lb-table-wrap {
+    flex: 1;
+}
+
 /* ===================== RESPONSIVE ===================== */
 @media (max-width: 768px) {
     .kantin-grid {
@@ -596,6 +608,13 @@ body {
         padding: 12px 48px;
         font-size: 20px;
     }
+
+    #lb-kantin,
+    #lb-menu {
+        flex-direction: column;
+        align-items: center;
+    }
+
 }
 
 @media (max-width: 480px) {
