@@ -176,6 +176,6 @@ tree
 
 <div align="center">
 
-**Error 404** — *damn.*
+**Error 404** — *damn bro.*
 
 </div>
