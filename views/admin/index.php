@@ -1,5 +1,11 @@
 <?php
 session_start();
+$feedback = null;
+
+if (isset($_SESSION['feedback'])) {
+    $feedback = $_SESSION['feedback'];
+    unset($_SESSION['feedback']);
+}
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
     header('Location: ../../auth/login.php');
     exit;
@@ -27,7 +33,6 @@ function generatePassword(int $len = 10): string
     return $pass;
 }
 
-$feedback = null;
 $activeSection = $_POST['_section'] ?? $_GET['section'] ?? 'dashboard';
 
 
@@ -155,21 +160,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    $allowedActions = ['kantin_tambah', 'kantin_edit', 'kantin_hapus', 'kantin_assign_penjual', 'kantin_lepas_penjual'];
-    if (str_starts_with($action, 'kantin_') || str_starts_with($action, 'menu_')) {
-        // menu_tambah & menu_hapus hanya boleh jika ada flag _menu_edit_mode
-        if (
-            in_array($action, $allowedActions) ||
-            (in_array($action, ['menu_tambah', 'menu_hapus']) && !empty($_POST['_menu_edit_mode']))
-        ) {
-            require __DIR__ . '/actions/kantin.php';
-        } else {
-            $feedback = ['type' => 'error', 'msg' => 'Aksi tidak diizinkan.'];
-        }
+    if (
+        str_starts_with($action, 'penjual_')
+        || $action === 'kantin_assign_penjual'
+        || $action === 'kantin_lepas_penjual'
+    ) {
+        require __DIR__ . '/actions/penjual.php';
     }
 
-    // Redirect bersih setelah action kantin
+    if (
+        (str_starts_with($action, 'kantin_') || str_starts_with($action, 'menu_'))
+        && $action !== 'kantin_assign_penjual'
+        && $action !== 'kantin_lepas_penjual'
+    ) {
+        require __DIR__ . '/actions/kantin.php';
+    }
+
     if (str_starts_with($action, 'kantin_') || str_starts_with($action, 'menu_')) {
+        if ($feedback) $_SESSION['feedback'] = $feedback;
         $selToko = (int) ($_POST['_selected_toko'] ?? 0);
         header("Location: ?section=kantin" . ($selToko ? "&toko=$selToko" : ""));
         exit;
@@ -319,10 +327,10 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
 
             <!-- ══════════════ PENJUAL ══════════════ -->
             <div class="section" id="section-penjual">
-                <div class="placeholder-box">
-                    <i class="fa-solid fa-user-tag"></i>
-                    <p>Halaman Penjual — segera diisi</p>
-                </div>
+                <?php
+                require __DIR__ . '/sections/penjual_data.php';
+                require __DIR__ . '/sections/penjual.php';
+                ?>
             </div>
 
             <!-- ══════════════ PEMBELI ══════════════ -->
@@ -494,13 +502,13 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
             document.getElementById('modalFotoAdmin').classList.remove('show');
         }
 
-        console.log('lineChart el:', document.getElementById('lineChart'));
-        console.log('donutChart el:', document.getElementById('donutChart'));
-        console.log('Chart.js loaded:', typeof Chart);
-        console.log('grafikLabels:', grafikLabels);
-        console.log('grafikValues:', grafikValues);
-        console.log('proporsiLabels:', proporsiLabels);
-        console.log('proporsiValues:', proporsiValues);
+        // console.log('lineChart el:', document.getElementById('lineChart'));
+        // console.log('donutChart el:', document.getElementById('donutChart'));
+        // console.log('Chart.js loaded:', typeof Chart);
+        // console.log('grafikLabels:', grafikLabels);
+        // console.log('grafikValues:', grafikValues);
+        // console.log('proporsiLabels:', proporsiLabels);
+        // console.log('proporsiValues:', proporsiValues);
     </script>
 </body>
 
