@@ -6,7 +6,6 @@ $rowsKantin = mysqli_fetch_all(mysqli_query(
     COUNT(DISTINCT p.nisn_pembeli) + COUNT(DISTINCT p.nuptk_pembeli) as total_pembeli
     FROM toko t
     LEFT JOIN pesanan p ON p.id_toko = t.id_toko
-    WHERE t.status = 'buka'
     GROUP BY t.id_toko
     ORDER BY total_pembeli DESC
     LIMIT 10"

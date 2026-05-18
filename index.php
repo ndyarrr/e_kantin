@@ -1,4 +1,6 @@
-<?php require_once 'config/database.php'; ?>
+<?php require_once 'config/database.php';
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -76,6 +78,15 @@
                 if (pill.dataset.target === current) pill.classList.add('active');
             });
         }
+
+        document.querySelector('.hero-search input').addEventListener('input', function () {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll('.kantin-card').forEach(card => {
+                const nama = card.querySelector('.kantin-card-badge').textContent.toLowerCase();
+                const desc = card.querySelector('.kantin-card-desc').textContent.toLowerCase();
+                card.style.display = (nama.includes(q) || desc.includes(q)) ? '' : 'none';
+            });
+        });
 
         window.addEventListener('scroll', updateActive);
         updateActive();
