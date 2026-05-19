@@ -210,11 +210,37 @@ body {
     background: #000;
 }
 
+
+/* Foto makanan mengambang */
+/* Foto makanan mengambang */
+.col-food {
+    position: absolute;
+    width: clamp(200px, 18vw, 280px);
+    height: clamp(200px, 18vw, 280px);
+    object-fit: cover;
+    border-radius: 50%;
+    z-index: 2;
+    filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.18));
+    pointer-events: none;
+}
+
+.col-food-left {
+    left: calc(50% - 38vw);
+    top: clamp(-40px, -5vw, -80px);
+    transform: rotate(-6deg);
+}
+
+.col-food-right {
+    right: calc(50% - 38vw);
+    top: clamp(10px, -1vw, -10px);
+    transform: rotate(6deg);
+}
+
 /* ===================== COLLAGE ===================== */
 .collage-wrapper {
     position: relative;
     width: 100%;
-    overflow: hidden;
+    overflow: visible;
     margin-top: 2rem;
     z-index: -1;
     padding-bottom: 2rem;

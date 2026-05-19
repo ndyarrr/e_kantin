@@ -22,7 +22,10 @@
                 <button onclick="window.location.href='./auth/login.php'" class="btn-login">Login</button>
             </div>
         </div>
-        <div class="collage-wrapper" draggable="false">
+        <div class="collage-wrapper">
+            <!-- Foto makanan mengambang -->
+            <img class="col-food col-food-left" src="./assets/img/ayam.png" alt="" />
+            <img class="col-food col-food-right" src="./assets/img/soto.png" alt="" />
             <div class="collage-grid">
                 <img class="col-img col-1" src="./assets/img/gb1.jpeg" alt="" />
                 <img class="col-img col-2" src="./assets/img/gb2.jpeg" alt="" />
