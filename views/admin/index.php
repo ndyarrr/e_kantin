@@ -186,6 +186,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // ── ACTION PEMBELI ──
+    if (str_starts_with($action, 'pembeli_')) {
+        require __DIR__ . '/actions/pembeli.php';
+        if ($feedback)
+            $_SESSION['feedback'] = $feedback;
+        header("Location: ?section=pembeli");
+        exit;
+    }
+
 }
 
 
@@ -338,9 +347,10 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
 
             <!-- ══════════════ PEMBELI ══════════════ -->
             <div class="section" id="section-pembeli">
-                <div class="placeholder-box">
-                    <i class="fa-solid fa-users"></i>
-                    <p>Halaman Pembeli — segera diisi</p>
+                <?php
+                
+                require __DIR__ . '/sections/pembeli.php';
+                ?>
                 </div>
             </div>
 
