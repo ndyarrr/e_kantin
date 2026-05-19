@@ -36,10 +36,18 @@
     </div>
     <div class="card">
         <div class="card-title">Proporsi Pesanan per Toko</div>
-        <div class="donut-wrap">
-            <div class="donut-canvas-wrap"><canvas id="donutChart"></canvas></div>
-            <div class="legend" id="legend"></div>
-        </div>
+        <?php if ($proporsiTotal == 0): ?>
+            <div style="text-align:center;padding:40px 20px;color:var(--text-light);font-size:13px">
+                <i class="fa-solid fa-chart-pie"
+                    style="font-size:28px;display:block;margin-bottom:8px;color:var(--green-muted)"></i>
+                Belum ada pesanan
+            </div>
+        <?php else: ?>
+            <div class="donut-wrap">
+                <div class="donut-canvas-wrap"><canvas id="donutChart"></canvas></div>
+                <div class="legend" id="legend"></div>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -91,3 +99,4 @@
         </table>
     </div>
 </div>
+

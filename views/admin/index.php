@@ -407,11 +407,19 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
         grad.addColorStop(1, 'rgba(121,183,117,0)');
         new Chart(ctxL, { type: 'line', data: { labels: grafikLabels, datasets: [{ data: grafikValues, borderColor: '#79b775', borderWidth: 2.5, backgroundColor: grad, fill: true, tension: 0.4, pointBackgroundColor: '#79b775', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { grid: { color: '#e5e7eb' }, ticks: { display: false }, beginAtZero: true, border: { display: false } } } } });
 
-        const ctxD = document.getElementById('donutChart').getContext('2d');
-        new Chart(ctxD, { type: 'doughnut', data: { labels: proporsiLabels, datasets: [{ data: proporsiValues, backgroundColor: greens.slice(0, proporsiLabels.length), borderWidth: 3, borderColor: '#f8f9fa' }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { display: false } } } });
-        const legend = document.getElementById('legend');
-        proporsiLabels.forEach((label, i) => { legend.innerHTML += `<div class="legend-item"><span class="legend-dot" style="background:${greens[i]}"></span>${label}</div>`; });
-
+        const ctxD = document.getElementById('donutChart');
+        if (ctxD) {
+            const greens = ['#79b775', '#8cd48a', '#b5d7b4', '#4a9e4a', '#2d7a2d'];
+            new Chart(ctxD, {
+                type: 'doughnut',
+                data: { labels: proporsiLabels, datasets: [{ data: proporsiValues, backgroundColor: greens.slice(0, proporsiLabels.length), borderWidth: 3, borderColor: '#f8f9fa' }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { display: false } } }
+            });
+            const legend = document.getElementById('legend');
+            proporsiLabels.forEach((label, i) => {
+                legend.innerHTML += `<div class="legend-item"><span class="legend-dot" style="background:${greens[i]}"></span>${label}</div>`;
+            });
+        }
         /* ── kode aktivasi ── */
         function randomKode() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
