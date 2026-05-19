@@ -10,11 +10,7 @@
 ```
 
 # 🍽️ E-Kantin
-<<<<<<< HEAD
 ### *by Error 404 varo*
-=======
-### *by Error 40424*
->>>>>>> fa7f5c9b5b8db3a3afc2c60fce659dbf80cbc576
 
 > Sistem manajemen kantin digital — order makanan jadi lebih mudah, cepat, dan modern.
 
