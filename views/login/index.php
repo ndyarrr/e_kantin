@@ -1,5 +1,5 @@
 <?php
-// File ini diletakkan di: views/login_view.php
+// File ini diletakkan di: views/login/login.php
 
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -8,7 +8,11 @@ if (session_status() === PHP_SESSION_NONE) {
 $error = $_SESSION['login_error'] ?? '';
 unset($_SESSION['login_error']);
 
-
+require_once __DIR__ . '/../../config/database.php';
+$daftarToko = mysqli_fetch_all(mysqli_query(
+    $conn,
+    "SELECT id_toko, nama_toko FROM toko ORDER BY nama_toko ASC"
+), MYSQLI_ASSOC);
 
 $roles = [
     [
@@ -30,6 +34,7 @@ $roles = [
         'img' => '../../assets/img/role_penjual.jpg',
         'color' => '#FF9800',
         'has_activation' => false,
+        'has_toko' => true, // ← tambah ini
     ],
     [
         'key' => 'admin',
@@ -100,7 +105,7 @@ $roles = [
                 </button>
 
 
-                
+
             </div>
 
             <!-- Panel kanan — form -->
@@ -121,6 +126,16 @@ $roles = [
                         <label id="fieldLabel">NISN</label>
                         <input type="text" id="fieldInput" name="identifier" placeholder="Masukkan NISN" required
                             autocomplete="off">
+                    </div>
+
+                    <div class="form-group" id="tokoGroup" style="margin-top:12px;display:none">
+                        <label>Nama Kantin</label>
+                        <select name="id_toko" id="tokoSelect" class="input-select">
+                            <option value="">Pilih kantin...</option>
+                            <?php foreach ($daftarToko as $t): ?>
+                                <option value="<?= $t['id_toko'] ?>"><?= htmlspecialchars($t['nama_toko']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
 
                     <div class="form-group" style="margin-top:12px">
@@ -198,6 +213,8 @@ $roles = [
         const rolePanel = document.getElementById('rolePanel');
         const activationGroup = document.getElementById('activationGroup');
         const activationCode = document.getElementById('activationCode');
+        const tokoGroup = document.getElementById('tokoGroup');
+        const tokoSelect = document.getElementById('tokoSelect');
 
         function updateRole() {
             const r = roles[current];
@@ -221,6 +238,8 @@ $roles = [
             activationGroup.style.display = isAdmin ? 'block' : 'none';
             activationCode.required = isAdmin;
             if (!isAdmin) activationCode.value = '';
+            tokoGroup.style.display = r.has_toko ? 'block' : 'none';
+            tokoSelect.required = r.has_toko ?? false;
         }
 
         function nextRole() {

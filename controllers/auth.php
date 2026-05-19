@@ -109,28 +109,39 @@ function login()
             exit;
 
         case 'penjual':
-            $username = trim($_POST['username'] ?? '');
-            if (empty($username))
-                return "Username wajib diisi.";
-            $pass = $_POST['password'] ?? '';
-            if (empty($pass))
-                return "Password wajib diisi.";
+            $nama = trim($_POST['username'] ?? ''); // field_name di form masih 'username'
+            $id_toko = (int) ($_POST['id_toko'] ?? 0);
 
-            $u = mysqli_real_escape_string($conn, $username);
-            $res = mysqli_query($conn, "SELECT * FROM penjual WHERE username = '$u' AND status = 'aktif' LIMIT 1");
+            if (empty($nama))
+                return "Nama wajib diisi.";
+            if (!$id_toko)
+                return "Pilih kantin terlebih dahulu.";
+
+            $n = mysqli_real_escape_string($conn, $nama);
+            $res = mysqli_query($conn, "SELECT * FROM penjual WHERE nama = '$n' AND status = 'aktif' LIMIT 1");
             $user = mysqli_fetch_assoc($res);
 
             if (!$user)
-                return "Username tidak ditemukan.";
+                return "Nama tidak ditemukan.";
             if ($user['password'] !== md5($pass))
                 return "Password salah.";
 
-            $upd_id = (int) $user['id_penjual'];
-            mysqli_query($conn, "UPDATE penjual SET terakhir_login = NOW() WHERE id_penjual = $upd_id");
+            // validasi toko
+            $pid = (int) $user['id_penjual'];
+            $cek = mysqli_fetch_assoc(mysqli_query(
+                $conn,
+                "SELECT id FROM toko_penjual WHERE id_penjual=$pid AND id_toko=$id_toko AND status='aktif' LIMIT 1"
+            ));
+            if (!$cek)
+                return "Kamu tidak terdaftar di kantin tersebut.";
+
+            mysqli_query($conn, "UPDATE penjual SET terakhir_login = NOW() WHERE id_penjual = $pid");
 
             $_SESSION['user_id'] = $user['id_penjual'];
             $_SESSION['user_nama'] = $user['nama'];
             $_SESSION['user_role'] = 'penjual';
+            $_SESSION['user_foto'] = $user['foto_profil'];
+            $_SESSION['id_toko'] = $id_toko;
 
             header('Location: ../views/penjual/dashboard.php');
             exit;
