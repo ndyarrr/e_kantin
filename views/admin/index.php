@@ -151,12 +151,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     /* Reset password admin */
     if ($action === 'admin_reset') {
         $id = (int) ($_POST['id'] ?? 0);
-        $pass = generatePassword();
-        $hash = md5($pass);
-        if ($id) {
-            mysqli_query($conn, "UPDATE admin SET password='$hash' WHERE id_admin=$id");
+        $pw_reset = trim($_POST['pw_reset'] ?? '');
+        if ($id && $pw_reset !== '') {
+            $hash = md5($pw_reset);
             $nama_admin = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM admin WHERE id_admin=$id"))['nama'] ?? '';
-            $feedback = ['type' => 'success', 'msg' => "Password <strong>" . htmlspecialchars($nama_admin) . "</strong> direset.", "extra" => "Password baru: <code>$pass</code> — Simpan sekarang!"];
+            mysqli_query($conn, "UPDATE admin SET password='$hash' WHERE id_admin=$id");
+            $feedback = ['type' => 'success', 'msg' => "Password <strong>" . htmlspecialchars($nama_admin) . "</strong> berhasil direset."];
+        } elseif ($id && $pw_reset === '') {
+            $feedback = ['type' => 'error', 'msg' => 'Password baru wajib diisi.'];
         }
     }
 
@@ -177,7 +179,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (str_starts_with($action, 'kantin_') || str_starts_with($action, 'menu_')) {
-        if ($feedback) $_SESSION['feedback'] = $feedback;
+        if ($feedback)
+            $_SESSION['feedback'] = $feedback;
         $selToko = (int) ($_POST['_selected_toko'] ?? 0);
         header("Location: ?section=kantin" . ($selToko ? "&toko=$selToko" : ""));
         exit;
