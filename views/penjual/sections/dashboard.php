@@ -1,0 +1,228 @@
+<?php // sections/dashboard.php ?>
+
+<!-- STATS -->
+<div class="stats-grid col4">
+    <div class="stat-card">
+        <div class="stat-label">Ringkasan Pendapatan Hari ini</div>
+        <div class="stat-row">
+            <div class="stat-value" style="font-size:20px">
+                Rp <?= number_format($pendapatanHariIni, 0, ',', '.') ?>
+            </div>
+            <i class="fa-solid fa-hand-holding-dollar stat-icon"></i>
+        </div>
+        <div class="stat-desc <?= $trendPendapatan < 0 ? 'neg' : '' ?>">
+            <i class="fa-solid fa-arrow-<?= $trendPendapatan >= 0 ? 'trend-up' : 'trend-down' ?>"></i>
+            <?= ($trendPendapatan >= 0 ? '+' : '') . $trendPendapatan ?>% dari kemarin
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Pesanan Selesai Hari ini</div>
+        <div class="stat-row">
+            <div class="stat-value"><?= $pesananSelesai ?></div>
+            <i class="fa-solid fa-cart-shopping stat-icon"></i>
+        </div>
+        <div class="stat-desc <?= $trendPesanan < 0 ? 'neg' : '' ?>">
+            <i class="fa-solid fa-arrow-<?= $trendPesanan >= 0 ? 'trend-up' : 'trend-down' ?>"></i>
+            <?= ($trendPesanan >= 0 ? '+' : '') . $trendPesanan ?>% dari kemarin
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Item Terlaris Harian</div>
+        <div class="stat-row">
+            <?php if ($itemTerlaris): ?>
+                <div>
+                    <div class="stat-value" style="font-size:15px;line-height:1.3">
+                        <?= htmlspecialchars($itemTerlaris['nama_menu']) ?>
+                    </div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+                        <?= $itemTerlaris['total_jual'] ?> Porsi Terjual
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="stat-value" style="font-size:14px;color:var(--text-muted)">Belum ada</div>
+            <?php endif; ?>
+            <i class="fa-solid fa-star stat-icon"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Saldo Buku Kas (Dompet)</div>
+        <div class="stat-row">
+            <div class="stat-value" style="font-size:18px">
+                Rp <?= number_format($saldoKas, 0, ',', '.') ?>
+            </div>
+            <i class="fa-solid fa-wallet stat-icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- CHARTS -->
+<div class="chart-grid">
+    <div class="chart-card">
+        <h3>Tren Penjualan Minggu Ini</h3>
+        <div class="chart-wrap">
+            <canvas id="lineChartPenjual"></canvas>
+        </div>
+    </div>
+    <div class="chart-card">
+        <h3>Distribusi Pesanan Produk</h3>
+        <div class="chart-wrap" style="height:150px">
+            <canvas id="donutChartPenjual"></canvas>
+        </div>
+        <div class="legend" id="legendPenjual"></div>
+    </div>
+</div>
+
+<!-- TABEL PESANAN TERBARU -->
+<div class="table-card">
+    <div class="table-card-header">
+        <h2>Pesanan Terbaru</h2>
+        <button onclick="switchSection('inbox')"
+            style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1.5px solid var(--green);background:transparent;color:var(--green);font-size:12px;font-weight:700;cursor:pointer">
+            <i class="fa-solid fa-inbox"></i> Lihat Inbox
+        </button>
+    </div>
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Waktu</th>
+                    <th>Pembeli</th>
+                    <th class="col-hide">Total</th>
+                    <th>Status</th>
+                    <th class="center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($pesananTerbaru)): ?>
+                    <tr class="empty-row">
+                        <td colspan="5">
+                            <i class="fa-solid fa-inbox" style="color:var(--green-muted);font-size:22px;display:block;margin-bottom:8px"></i>
+                            Belum ada pesanan
+                        </td>
+                    </tr>
+                <?php else: foreach ($pesananTerbaru as $ps):
+                    $statusClass = match($ps['status']) {
+                        'selesai'    => 'badge-selesai',
+                        'menunggu'   => 'badge-proses',
+                        'dibatalkan' => 'badge-batal',
+                        default      => 'badge-proses',
+                    };
+                    $statusLabel = match($ps['status']) {
+                        'selesai'    => 'Selesai',
+                        'menunggu'   => 'Proses',
+                        'dibatalkan' => 'Batal',
+                        default      => ucfirst($ps['status']),
+                    };
+                    $statusIcon = match($ps['status']) {
+                        'selesai'    => 'fa-circle-check',
+                        'dibatalkan' => 'fa-circle-xmark',
+                        default      => 'fa-clock',
+                    };
+                ?>
+                <tr>
+                    <td style="white-space:nowrap;font-size:12px;color:var(--text-muted)">
+                        <?= date('H:i', strtotime($ps['waktu_pesan'])) ?>
+                    </td>
+                    <td style="font-weight:600"><?= htmlspecialchars($ps['nama_pembeli']) ?></td>
+                    <td class="col-hide" style="font-weight:700;color:var(--green-dark)">
+                        Rp <?= number_format($ps['total_harga'], 0, ',', '.') ?>
+                    </td>
+                    <td>
+                        <span class="badge <?= $statusClass ?>">
+                            <i class="fa-solid <?= $statusIcon ?>"></i>
+                            <?= $statusLabel ?>
+                        </span>
+                    </td>
+                    <td class="center">
+                        <button class="btn-aksi" title="Inbox" onclick="switchSection('inbox')">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+                <?php endforeach; endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+(function() {
+    const labels    = <?= json_encode($grafikLabels) ?>;
+    const values    = <?= json_encode($grafikValues) ?>;
+    const distribusi = <?= json_encode($distribusi) ?>;
+
+    /* Line chart */
+    const ctxL = document.getElementById('lineChartPenjual').getContext('2d');
+    const grad = ctxL.createLinearGradient(0, 0, 0, 180);
+    grad.addColorStop(0, 'rgba(90,171,85,.35)');
+    grad.addColorStop(1, 'rgba(90,171,85,0)');
+    new Chart(ctxL, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                data: values,
+                borderColor: '#5aab55',
+                borderWidth: 2.5,
+                backgroundColor: grad,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#5aab55',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                y: {
+                    grid: { color: '#e5e7eb' },
+                    ticks: {
+                        font: { size: 10 },
+                        callback: v => v >= 1000 ? 'Rp' + (v/1000).toFixed(0) + 'k' : v
+                    },
+                    beginAtZero: true,
+                    border: { display: false }
+                }
+            }
+        }
+    });
+
+    /* Donut chart */
+    const colors = ['#3b82f6','#06b6d4','#f97316','#5aab55','#a78bfa'];
+    const noData = distribusi.length === 0;
+    const distLabels = noData ? ['Belum ada data'] : distribusi.map(d => d.kategori);
+    const distValues = noData ? [1] : distribusi.map(d => parseInt(d.total));
+
+    new Chart(document.getElementById('donutChartPenjual'), {
+        type: 'doughnut',
+        data: {
+            labels: distLabels,
+            datasets: [{
+                data: distValues,
+                backgroundColor: noData ? ['#e5e7eb'] : colors.slice(0, distLabels.length),
+                borderWidth: 3,
+                borderColor: '#f8f9fa'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            cutout: '55%',
+            plugins: { legend: { display: false }, tooltip: { enabled: !noData } }
+        }
+    });
+
+    if (!noData) {
+        const legend = document.getElementById('legendPenjual');
+        distLabels.forEach((label, i) => {
+            legend.innerHTML += `<div class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${label}</div>`;
+        });
+    }
+})();
+</script>
