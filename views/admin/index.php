@@ -348,7 +348,7 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
             <!-- ══════════════ PEMBELI ══════════════ -->
             <div class="section" id="section-pembeli">
                 <?php
-                
+                require __DIR__ . '/sections/pembeli_data.php'; // ← harus ada ini dulu
                 require __DIR__ . '/sections/pembeli.php';
                 ?>
                 </div>
