@@ -106,7 +106,7 @@ function login()
             $_SESSION['user_foto'] = $user['foto_profil'];
             $_SESSION['id_toko'] = $id_toko;
 
-            header('Location: ../views/penjual/dashboard.php');
+            header('Location: ../views/penjual/index.php');
             exit;
 
         // ----------------------------------------
