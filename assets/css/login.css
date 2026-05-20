@@ -16,12 +16,12 @@
 
 body {
   font-family: 'Poppins', sans-serif;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: linear-gradient(160deg, #79b775 0%, #b8ddb6 50%, #e8f5e9 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow-y: auto;
   position: relative;
 }
 
@@ -118,7 +118,7 @@ body {
   z-index: 1;
   width: 100%;
   max-width: 860px;
-  padding: 24px 16px;
+  padding: 24px 16px 40px;
   display: flex;
   flex-direction: column;
   align-items: center;

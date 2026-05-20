@@ -1,8 +1,9 @@
 <?php // sections/dashboard_data.php
 
 /* ── Pendapatan hari ini ── */
-$pendapatanHariIni = (float)(mysqli_fetch_assoc(mysqli_query($conn,
-    "SELECT COALESCE(SUM(dp.subtotal),0) AS total
+$pendapatanHariIni = (float) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
+    "SELECT COALESCE(SUM(dp.jumlah * dp.harga_satuan), 0) AS total
      FROM detail_pesanan dp
      JOIN pesanan p ON p.id_pesanan = dp.id_pesanan
      JOIN menu m ON m.id_menu = dp.id_menu
@@ -11,13 +12,15 @@ $pendapatanHariIni = (float)(mysqli_fetch_assoc(mysqli_query($conn,
        AND p.status = 'selesai'"
 ))['total'] ?? 0);
 
-$pendapatanKemarin = (float)(mysqli_fetch_assoc(mysqli_query($conn,
-    "SELECT COALESCE(SUM(dp.subtotal),0) AS total
+/* ── Pendapatan kemarin ── */
+$pendapatanKemarin = (float) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
+    "SELECT COALESCE(SUM(dp.jumlah * dp.harga_satuan), 0) AS total
      FROM detail_pesanan dp
      JOIN pesanan p ON p.id_pesanan = dp.id_pesanan
      JOIN menu m ON m.id_menu = dp.id_menu
      WHERE m.id_toko = $idToko
-       AND DATE(p.waktu_pesan) = DATE_SUB(CURDATE(),INTERVAL 1 DAY)
+       AND DATE(p.waktu_pesan) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
        AND p.status = 'selesai'"
 ))['total'] ?? 0);
 
@@ -26,17 +29,19 @@ $trendPendapatan = $pendapatanKemarin > 0
     : ($pendapatanHariIni > 0 ? 100 : 0);
 
 /* ── Pesanan selesai hari ini ── */
-$pesananSelesai = (int)(mysqli_fetch_assoc(mysqli_query($conn,
+$pesananSelesai = (int) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
     "SELECT COUNT(*) AS c FROM pesanan
      WHERE id_toko = $idToko
        AND DATE(waktu_pesan) = CURDATE()
        AND status = 'selesai'"
 ))['c'] ?? 0);
 
-$pesananSelesaiKemarin = (int)(mysqli_fetch_assoc(mysqli_query($conn,
+$pesananSelesaiKemarin = (int) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
     "SELECT COUNT(*) AS c FROM pesanan
      WHERE id_toko = $idToko
-       AND DATE(waktu_pesan) = DATE_SUB(CURDATE(),INTERVAL 1 DAY)
+       AND DATE(waktu_pesan) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
        AND status = 'selesai'"
 ))['c'] ?? 0);
 
@@ -45,7 +50,8 @@ $trendPesanan = $pesananSelesaiKemarin > 0
     : ($pesananSelesai > 0 ? 100 : 0);
 
 /* ── Item terlaris hari ini ── */
-$itemTerlaris = mysqli_fetch_assoc(mysqli_query($conn,
+$itemTerlaris = mysqli_fetch_assoc(mysqli_query(
+    $conn,
     "SELECT m.nama_menu, SUM(dp.jumlah) AS total_jual
      FROM detail_pesanan dp
      JOIN pesanan p ON p.id_pesanan = dp.id_pesanan
@@ -59,9 +65,13 @@ $itemTerlaris = mysqli_fetch_assoc(mysqli_query($conn,
 ));
 
 /* ── Saldo buku kas ── */
-$saldoKas = (float)(mysqli_fetch_assoc(mysqli_query($conn,
-    "SELECT COALESCE(SUM(CASE WHEN tipe='pemasukan' THEN jumlah ELSE -jumlah END),0) AS saldo
-     FROM pembayaran WHERE id_toko = $idToko"
+// Diubah dari 'jumlah' menjadi 'jumlah_bayar' disesuaikan dengan tabel pembayaran Anda
+$saldoKas = (float) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
+    "SELECT COALESCE(SUM(jumlah_bayar), 0) AS saldo
+     FROM pembayaran pm
+     JOIN pesanan p ON p.id_pesanan = pm.id_pesanan
+     WHERE p.id_toko = $idToko AND pm.status = 'lunas'"
 ))['saldo'] ?? 0);
 
 /* ── Grafik tren 7 hari ── */
@@ -70,8 +80,9 @@ $grafikValues = [];
 for ($i = 6; $i >= 0; $i--) {
     $date = date('Y-m-d', strtotime("-{$i} days"));
     $grafikLabels[] = date('d/m', strtotime("-{$i} days"));
-    $grafikValues[] = (float)(mysqli_fetch_assoc(mysqli_query($conn,
-        "SELECT COALESCE(SUM(dp.subtotal),0) AS total
+    $grafikValues[] = (float) (mysqli_fetch_assoc(mysqli_query(
+        $conn,
+        "SELECT COALESCE(SUM(dp.jumlah * dp.harga_satuan), 0) AS total
          FROM detail_pesanan dp
          JOIN pesanan p ON p.id_pesanan = dp.id_pesanan
          JOIN menu m ON m.id_menu = dp.id_menu
@@ -82,20 +93,24 @@ for ($i = 6; $i >= 0; $i--) {
 }
 
 /* ── Distribusi per kategori minggu ini ── */
-$distribusi = mysqli_fetch_all(mysqli_query($conn,
-    "SELECT COALESCE(m.kategori,'Lainnya') AS kategori, SUM(dp.jumlah) AS total
+// Catatan: Karena di tabel menu tidak ada kolom 'kategori', query ini mengambil default 'Menu' 
+// agar tidak menghasilkan error Unknown Column.
+$distribusi = mysqli_fetch_all(mysqli_query(
+    $conn,
+    "SELECT 'Menu' AS kategori, SUM(dp.jumlah) AS total
      FROM detail_pesanan dp
      JOIN pesanan p ON p.id_pesanan = dp.id_pesanan
      JOIN menu m ON m.id_menu = dp.id_menu
      WHERE m.id_toko = $idToko
        AND WEEK(p.waktu_pesan) = WEEK(CURDATE())
        AND p.status = 'selesai'
-     GROUP BY m.kategori
+     GROUP BY m.id_menu
      ORDER BY total DESC"
 ), MYSQLI_ASSOC);
 
 /* ── Pesanan terbaru ── */
-$pesananTerbaru = mysqli_fetch_all(mysqli_query($conn,
+$pesananTerbaru = mysqli_fetch_all(mysqli_query(
+    $conn,
     "SELECT p.id_pesanan, p.waktu_pesan, p.status, p.total_harga,
             COALESCE(m2.nama, g.nama, 'Unknown') AS nama_pembeli
      FROM pesanan p
@@ -107,7 +122,8 @@ $pesananTerbaru = mysqli_fetch_all(mysqli_query($conn,
 ), MYSQLI_ASSOC);
 
 /* ── Badge inbox ── */
-$totalPesananBaru = (int)(mysqli_fetch_assoc(mysqli_query($conn,
+$totalPesananBaru = (int) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
     "SELECT COUNT(*) AS c FROM pesanan
      WHERE id_toko = $idToko AND status = 'menunggu'"
 ))['c'] ?? 0);

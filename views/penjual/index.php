@@ -1,5 +1,8 @@
 <?php
 session_start();
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 $feedback = null;
 
 if (isset($_SESSION['feedback'])) {
@@ -147,7 +150,9 @@ require __DIR__ . '/sections/dashboard_data.php';
 
         <!-- DASHBOARD -->
         <div class="section active" id="section-dashboard">
-            <?php require __DIR__ . '/sections/dashboard.php'; ?>
+            <?php
+                require __DIR__ . '/sections/dashboard.php';
+                ?>
         </div>
 
         <!-- PLACEHOLDER sections lainnya -->
