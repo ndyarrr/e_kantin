@@ -72,7 +72,7 @@
                     <tr>
                         <th>Nama Pembeli</th>
                         <th class="col-hide">NISN / NUPTK</th>
-                        <th>Kategori</th>
+                        <th>Sub Role</th>
                         <th class="col-hide">Kelas / Jurusan</th>
                         <th class="col-hide">Terakhir Aktif</th>
                         <th>Status</th>
@@ -192,13 +192,14 @@
                 <div class="form-group">
                     <label>NISN</label>
                     <input type="text" name="nisn" placeholder="cth. 0012345678" required autocomplete="off"
-                        maxlength="20">
+                        maxlength="10" minlength="10" pattern="\d{10}" title="NISN harus tepat 10 digit angka">
+
                 </div>
                 <div class="form-group">
                     <label>Password</label>
                     <div class="password-wrap">
-                        <input type="password" name="password" id="inputPassMurid" placeholder="Buat password" required
-                            autocomplete="new-password">
+                        <input type="password" name="password" id="inputPassMurid"
+                            placeholder="Kosongkan = pakai NISN sebagai password" autocomplete="new-password">
                         <button type="button" class="btn-eye" onclick="togglePw('inputPassMurid','eyePassMurid')">
                             <i class="fa-solid fa-eye" id="eyePassMurid"></i>
                         </button>
@@ -242,14 +243,14 @@
                 </div>
                 <div class="form-group">
                     <label>NUPTK</label>
-                    <input type="text" name="nuptk" placeholder="cth. 0012345678" required autocomplete="off"
-                        maxlength="20">
+                    <input type="text" name="nuptk" placeholder="cth. 1234567890123456" required autocomplete="off"
+                        maxlength="16" minlength="16" pattern="\d{16}" title="NUPTK harus tepat 16 digit angka">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
                     <div class="password-wrap">
-                        <input type="password" name="password" id="inputPassGuru" placeholder="Buat password" required
-                            autocomplete="new-password">
+                        <input type="password" name="password" id="inputPassGuru"
+                            placeholder="Kosongkan = pakai NUPTK sebagai password" autocomplete="new-password">
                         <button type="button" class="btn-eye" onclick="togglePw('inputPassGuru','eyePassGuru')">
                             <i class="fa-solid fa-eye" id="eyePassGuru"></i>
                         </button>
