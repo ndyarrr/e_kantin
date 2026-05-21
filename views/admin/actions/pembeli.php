@@ -9,16 +9,19 @@ if ($action === 'pembeli_tambah_murid') {
     $nisn = trim($_POST['nisn'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $id_kelas = (int) ($_POST['id_kelas'] ?? 0);
-    $id_jurusan = (int) ($_POST['id_jurusan'] ?? 0);
 
-    if ($nama === '' || $nisn === '' || !$id_kelas || !$id_jurusan) {
-        $feedback = ['type' => 'error', 'msg' => 'Semua field wajib diisi termasuk kelas dan jurusan.'];
-    } elseif (!ctype_digit($nisn)) {
-        $feedback = ['type' => 'error', 'msg' => 'NISN hanya boleh berisi angka.'];
-    } elseif (strlen($nisn) !== 10) {
-        $feedback = ['type' => 'error', 'msg' => 'NISN harus tepat 10 digit.'];
+    if ($nama === '' || $nisn === '' || !$id_kelas) {
+        $feedback = ['type' => 'error', 'msg' => 'Semua field wajib diisi termasuk kelas.'];
+    } elseif (!ctype_digit($nisn) || strlen($nisn) !== 10) {
+        $feedback = ['type' => 'error', 'msg' => 'NISN harus tepat 10 digit angka.'];
     } else {
-        // Kalau password kosong, pakai NISN sebagai password default
+        // Ambil id_jurusan dari kelas yang dipilih
+        $kelasData = mysqli_fetch_assoc(mysqli_query(
+            $conn,
+            "SELECT id_jurusan FROM kelas WHERE id_kelas=$id_kelas"
+        ));
+        $id_jurusan = $kelasData['id_jurusan'] ?? 0;
+
         $finalPass = $password !== '' ? $password : $nisn;
         $h = md5($finalPass);
         $n = mysqli_real_escape_string($conn, $nama);
@@ -28,17 +31,18 @@ if ($action === 'pembeli_tambah_murid') {
         if ($cek) {
             $feedback = ['type' => 'error', 'msg' => "NISN <strong>$ni</strong> sudah terdaftar."];
         } else {
-            if (mysqli_query($conn, "INSERT INTO murid (nama, nisn, password, id_kelas, id_jurusan, status) VALUES ('$n','$ni','$h',$id_kelas,$id_jurusan,'aktif')")) {
+            if (
+                mysqli_query($conn, "INSERT INTO murid (nama, nisn, password, id_kelas, id_jurusan, status)
+                                     VALUES ('$n','$ni','$h',$id_kelas,$id_jurusan,'aktif')")
+            ) {
                 $defaultInfo = $password === '' ? " (password default: NISN)" : '';
                 $feedback = ['type' => 'success', 'msg' => "Murid <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan.$defaultInfo"];
-                catatLog($conn, 'Tambah Murid', 'Menambahkan data murid baru bernama: ' . $nama);
             } else {
                 $feedback = ['type' => 'error', 'msg' => 'Gagal: ' . mysqli_error($conn)];
             }
         }
     }
 }
-
 /* ══ TAMBAH GURU ══ */
 if ($action === 'pembeli_tambah_guru') {
     $nama = trim($_POST['nama'] ?? '');

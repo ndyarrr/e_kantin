@@ -5,14 +5,20 @@
     <div class="stat-card">
         <div class="stat-label">Total Pembeli</div>
         <div class="stat-row">
-            <div class="stat-value"><?= $totalPembeli ?></div>
+            <div class="stat-value">
+                <?= $totalPembeli ?>
+            </div>
             <i class="fa-solid fa-users stat-icon"></i>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-label">Pembeli Aktif</div>
         <div class="stat-row">
-            <div class="stat-value"><?= $totalAktif ?><span class="sub"> / <?= $totalPembeli ?></span></div>
+            <div class="stat-value">
+                <?= $totalAktif ?><span class="sub"> /
+                    <?= $totalPembeli ?>
+                </span>
+            </div>
             <i class="fa-solid fa-circle-check stat-icon"></i>
         </div>
     </div>
@@ -22,6 +28,8 @@
 <form method="GET" action="" id="formFilterPembeli"
     style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
     <input type="hidden" name="section" value="pembeli">
+
+    <!-- Search -->
     <div style="position:relative;flex:1;min-width:200px">
         <i class="fa-solid fa-magnifying-glass"
             style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px"></i>
@@ -29,29 +37,33 @@
             placeholder="Cari nama atau NISN/NUPTK..."
             style="width:100%;padding:10px 12px 10px 36px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--card-bg);color:var(--text);outline:none;box-sizing:border-box">
     </div>
-    <select name="filter_kategori" class="form-select" onchange="this.form.submit()"
+
+    <!-- Filter Kategori -->
+    <select name="filter_kategori" id="filterKategori"
         style="min-width:130px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--card-bg);color:var(--text)">
         <option value="" <?= $filterKategori === '' ? 'selected' : '' ?>>Semua</option>
         <option value="murid" <?= $filterKategori === 'murid' ? 'selected' : '' ?>>Murid</option>
         <option value="guru" <?= $filterKategori === 'guru' ? 'selected' : '' ?>>Guru</option>
     </select>
 
-    <select name="filter_kelas" id="filterKelas" onchange="this.form.submit()"
+    <!-- Filter Tingkat/Kelas: 10, 11, 12 -->
+    <select id="filterKelas"
         style="min-width:110px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--card-bg);color:var(--text)">
         <option value="">Semua Kelas</option>
-        <?php foreach ($semuaKelas as $k): ?>
-            <option value="<?= $k['id_kelas'] ?>" <?= ($_GET['filter_kelas'] ?? '') == $k['id_kelas'] ? 'selected' : '' ?>>
-                Kelas <?= htmlspecialchars($k['nama_kelas']) ?>
+        <?php foreach ($semuaTingkat as $t): ?>
+            <option value="<?= $t['kelas'] ?>">Kelas
+                <?= $t['kelas'] ?>
             </option>
         <?php endforeach; ?>
     </select>
 
-    <select name="filter_jurusan" id="filterJurusan" onchange="this.form.submit()"
+    <!-- Filter Rombel/Jurusan: dependent ke tingkat -->
+    <select id="filterJurusan"
         style="min-width:130px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--card-bg);color:var(--text)">
         <option value="">Semua Jurusan</option>
-        <?php foreach ($semuaJurusan as $j): ?>
-            <option value="<?= $j['id_jurusan'] ?>" <?= ($_GET['filter_jurusan'] ?? '') == $j['id_jurusan'] ? 'selected' : '' ?>>
-                <?= htmlspecialchars($j['nama_jurusan']) ?>
+        <?php foreach ($semuaKelas as $k): ?>
+            <option value="<?= $k['id_kelas'] ?>" data-tingkat="<?= $k['tingkat'] ?>">
+                <?= htmlspecialchars(trim(implode(' ', array_slice(explode(' ', $k['nama_kelas']), 1)))) ?>
             </option>
         <?php endforeach; ?>
     </select>
@@ -81,48 +93,47 @@
                 <tbody>
                     <?php if (empty($daftarPembeli)): ?>
                         <tr class="empty-row">
-                            <td colspan="5">
+                            <td colspan="7">
                                 <i class="fa-solid fa-users"
                                     style="color:var(--green-muted);font-size:22px;display:block;margin-bottom:8px"></i>
-                                <?= $searchPembeli ? 'Tidak ada hasil untuk "' . htmlspecialchars($searchPembeli) . '"' : 'Belum ada data pembeli' ?>
+                                <?= $searchPembeli
+                                    ? 'Tidak ada hasil untuk "' . htmlspecialchars($searchPembeli) . '"'
+                                    : 'Belum ada data pembeli' ?>
                             </td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($daftarPembeli as $pb):
                             $aktif = $pb['status'] === 'aktif';
                             $isMurid = $pb['kategori'] === 'Murid';
-
                             $idKey = $isMurid ? 'nisn' : 'nuptk';
                             $idVal = htmlspecialchars($pb['nisn_nuptk']);
                             $toggleAct = $isMurid ? 'pembeli_toggle_murid' : 'pembeli_toggle_guru';
                             $hapusAct = $isMurid ? 'pembeli_hapus_murid' : 'pembeli_hapus_guru';
                             $resetAct = $isMurid ? 'pembeli_reset_murid' : 'pembeli_reset_guru';
                             ?>
-                            <tr data-kelas="<?= htmlspecialchars($pb['id_kelas'] ?? '') ?>"
-                                data-jurusan="<?= htmlspecialchars($pb['id_jurusan'] ?? '') ?>">
-                                <td><?= htmlspecialchars($pb['nama']) ?></td>
-                                <td class="col-hide" style="color:var(--text-muted);font-size:12px"><?= $idVal ?></td>
+                            <tr data-kategori="<?= strtolower($pb['kategori']) ?>"
+                                data-tingkat="<?= htmlspecialchars($pb['tingkat'] ?? '') ?>"
+                                data-kelas="<?= htmlspecialchars($pb['id_kelas'] ?? '') ?>">
+                                <td>
+                                    <?= htmlspecialchars($pb['nama']) ?>
+                                </td>
+                                <td class="col-hide" style="color:var(--text-muted);font-size:12px">
+                                    <?= $idVal ?>
+                                </td>
                                 <td>
                                     <span class="badge"
                                         style="background:<?= $isMurid ? 'var(--green-muted)' : '#e8f0fe' ?>;color:<?= $isMurid ? 'var(--green-dark,#2d7a2d)' : '#1a56db' ?>;font-weight:600;font-size:11px;padding:3px 10px;border-radius:20px">
                                         <?= $pb['kategori'] ?>
                                     </span>
                                 </td>
-
                                 <td class="col-hide" style="font-size:12px;color:var(--text-muted)">
-                                    <?php if ($pb['kategori'] === 'Murid'): ?>
-                                        <?= htmlspecialchars($pb['info_tambahan'] ?? '-') ?> /
-                                        <?= htmlspecialchars($pb['info2'] ?? '-') ?>
-                                    <?php else: ?>
-                                        <span style="color:#aaa">—</span>
-                                    <?php endif; ?>
+                                    <?= $isMurid ? htmlspecialchars($pb['info_tambahan'] ?? '-') : '<span style="color:#aaa">—</span>' ?>
                                 </td>
                                 <td class="col-hide" style="font-size:12px;color:var(--text-muted)">
                                     <?= !empty($pb['terakhir_login'])
                                         ? date('d/m/Y H:i', strtotime($pb['terakhir_login']))
                                         : '<span style="color:#aaa">Belum pernah</span>' ?>
                                 </td>
-
                                 <td>
                                     <span class="badge <?= $aktif ? 'badge-aktif' : 'badge-nonaktif' ?>">
                                         <i class="fa-solid <?= $aktif ? 'fa-circle-check' : 'fa-circle-xmark' ?>"></i>
@@ -132,8 +143,9 @@
                                 <td class="center" style="white-space:nowrap">
                                     <!-- Reset Password -->
                                     <button type="button" class="btn-aksi reset" title="Reset Password"
-                                        onclick="bukaResetPembeli('<?= $idKey ?>','<?= $idVal ?>','<?= $resetAct ?>','<?= htmlspecialchars($pb['nama']) ?>')"><i
-                                            class="fa-solid fa-key"></i></button>
+                                        onclick="bukaResetPembeli('<?= $idKey ?>','<?= $idVal ?>','<?= $resetAct ?>','<?= htmlspecialchars($pb['nama'], ENT_QUOTES) ?>')">
+                                        <i class="fa-solid fa-key"></i>
+                                    </button>
 
                                     <!-- Toggle Status -->
                                     <form method="POST" style="display:inline"
@@ -154,7 +166,7 @@
                                         <input type="hidden" name="<?= $idKey ?>" value="<?= $idVal ?>">
                                         <input type="hidden" name="_section" value="pembeli">
                                         <button type="button" class="btn-aksi danger" title="Hapus"
-                                            onclick="if(confirm('Hapus pembeli <?= htmlspecialchars($pb['nama']) ?>?')) this.closest('form').submit()">
+                                            onclick="if(confirm('Hapus pembeli <?= htmlspecialchars($pb['nama'], ENT_QUOTES) ?>?')) this.closest('form').submit()">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </form>
@@ -170,12 +182,14 @@
     <!-- Form Tambah Pembeli -->
     <div class="form-card">
         <div style="display:flex;gap:8px;margin-bottom:18px">
-            <button id="tabMurid" type="button" class="btn-tab active" onclick="switchTabPembeli('murid')"
-                style="flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--green);background:var(--green);color:#fff;font-weight:600;font-size:13px;cursor:pointer;transition:.2s"><i
-                    class="fa-solid fa-graduation-cap" style="margin-right:5px"></i>Murid</button>
-            <button id="tabGuru" type="button" class="btn-tab" onclick="switchTabPembeli('guru')"
-                style="flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-weight:600;font-size:13px;cursor:pointer;transition:.2s"><i
-                    class="fa-solid fa-chalkboard-teacher" style="margin-right:5px"></i>Guru</button>
+            <button id="tabMurid" type="button" onclick="switchTabPembeli('murid')"
+                style="flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--green);background:var(--green);color:#fff;font-weight:600;font-size:13px;cursor:pointer;transition:.2s">
+                <i class="fa-solid fa-graduation-cap" style="margin-right:5px"></i>Murid
+            </button>
+            <button id="tabGuru" type="button" onclick="switchTabPembeli('guru')"
+                style="flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-weight:600;font-size:13px;cursor:pointer;transition:.2s">
+                <i class="fa-solid fa-chalkboard-teacher" style="margin-right:5px"></i>Guru
+            </button>
         </div>
 
         <!-- Form Tambah Murid -->
@@ -192,7 +206,6 @@
                     <label>NISN</label>
                     <input type="text" name="nisn" placeholder="cth. 0012345678" required autocomplete="off"
                         maxlength="10" minlength="10" pattern="\d{10}" title="NISN harus tepat 10 digit angka">
-
                 </div>
                 <div class="form-group">
                     <label>Password</label>
@@ -204,23 +217,25 @@
                         </button>
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label>Kelas</label>
                     <select name="id_kelas" class="form-select" required>
                         <option value="">Pilih kelas...</option>
                         <?php foreach ($semuaKelas as $k): ?>
-                            <option value="<?= $k['id_kelas'] ?>"><?= htmlspecialchars($k['nama_kelas']) ?></option>
+                            <option value="<?= $k['id_kelas'] ?>">
+                                <?= htmlspecialchars($k['nama_kelas']) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label>Jurusan</label>
                     <select name="id_jurusan" class="form-select" required>
                         <option value="">Pilih jurusan...</option>
                         <?php foreach ($semuaJurusan as $j): ?>
-                            <option value="<?= $j['id_jurusan'] ?>"><?= htmlspecialchars($j['nama_jurusan']) ?></option>
+                            <option value="<?= $j['id_jurusan'] ?>">
+                                <?= htmlspecialchars($j['nama_jurusan']) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -303,107 +318,135 @@
 </div>
 
 <script>
-    /* ── Tab switcher Murid / Guru ── */
+    /* ══════════════════════════════════════
+       Tab Switcher Murid / Guru
+    ══════════════════════════════════════ */
     function switchTabPembeli(tab) {
         const isMurid = tab === 'murid';
         document.getElementById('formPanelMurid').style.display = isMurid ? '' : 'none';
         document.getElementById('formPanelGuru').style.display = isMurid ? 'none' : '';
 
-        const tabMurid = document.getElementById('tabMurid');
-        const tabGuru = document.getElementById('tabGuru');
-
-        if (isMurid) {
-            tabMurid.style.cssText = 'flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--green);background:var(--green);color:#fff;font-weight:600;font-size:13px;cursor:pointer;transition:.2s';
-            tabGuru.style.cssText = 'flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-weight:600;font-size:13px;cursor:pointer;transition:.2s';
-        } else {
-            tabGuru.style.cssText = 'flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--green);background:var(--green);color:#fff;font-weight:600;font-size:13px;cursor:pointer;transition:.2s';
-            tabMurid.style.cssText = 'flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-weight:600;font-size:13px;cursor:pointer;transition:.2s';
-        }
+        const on = 'flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--green);background:var(--green);color:#fff;font-weight:600;font-size:13px;cursor:pointer;transition:.2s';
+        const off = 'flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-weight:600;font-size:13px;cursor:pointer;transition:.2s';
+        document.getElementById('tabMurid').style.cssText = isMurid ? on : off;
+        document.getElementById('tabGuru').style.cssText = isMurid ? off : on;
     }
 
-    /* ── Modal Reset Password Pembeli ── */
+    /* ══════════════════════════════════════
+       Modal Reset Password
+    ══════════════════════════════════════ */
     function bukaResetPembeli(idKey, idVal, action, nama) {
         document.getElementById('namaResetPembeli').textContent = nama;
         document.getElementById('resetPembeliAction').value = action;
         document.getElementById('inputPwResetPembeli').value = '';
-
-        // set field name + value untuk id (nisn atau nuptk)
         const field = document.getElementById('resetPembeliIdField');
         field.name = idKey;
         field.value = idVal;
-
         document.getElementById('modalResetPembeli').style.display = 'flex';
     }
-
     function tutupResetPembeli() {
         document.getElementById('modalResetPembeli').style.display = 'none';
     }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') tutupResetPembeli(); });
 
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') tutupResetPembeli();
-    });
+    /* ══════════════════════════════════════
+       Filter Client-Side
+    ══════════════════════════════════════ */
+    const elSearch = document.querySelector('input[name="q_pembeli"]');
+    const elKategori = document.querySelector('select[name="filter_kategori"]');
+    const elKelas = document.getElementById('filterKelas');
+    const elJurusan = document.getElementById('filterJurusan');
 
-    /* ── Filter pembeli client-side ── */
-    const inputSearch = document.querySelector('input[name="q_pembeli"]');
-    const selectKat = document.querySelector('select[name="filter_kategori"]');
+    // Sync opsi jurusan sesuai tingkat yang dipilih
+    // Pertahankan pilihan jurusan kalau masih relevan
+    function syncOpsiJurusan() {
+        const tingkat = elKelas.value;
+        const currentJurusan = elJurusan.value; // simpan pilihan sekarang
 
-    const filterKelasEl = document.getElementById('filterKelas');
-    const filterJurusanEl = document.getElementById('filterJurusan');
+        elJurusan.disabled = false;
 
-    // Sembunyikan filter kelas/jurusan saat pilih Guru
-    function toggleFilterKelasJurusan() {
-        const kat = selectKat.value;
-        const show = kat !== 'guru';
-        filterKelasEl.style.display = show ? '' : 'none';
-        filterJurusanEl.style.display = show ? '' : 'none';
-        if (!show) {
-            filterKelasEl.value = '';
-            filterJurusanEl.value = '';
+        elJurusan.querySelectorAll('option[data-tingkat]').forEach(opt => {
+            opt.style.display = (tingkat === '' || opt.dataset.tingkat === tingkat) ? '' : 'none';
+        });
+
+        // Reset jurusan HANYA kalau pilihan sekarang tidak cocok dengan tingkat baru
+        if (tingkat !== '' && currentJurusan !== '') {
+            const selectedOpt = elJurusan.querySelector(`option[value="${currentJurusan}"]`);
+            if (selectedOpt && selectedOpt.dataset.tingkat !== tingkat) {
+                elJurusan.value = '';
+            }
         }
-        filterPembeli();
     }
 
+    // Sembunyikan filter kelas & jurusan saat pilih Guru
+    // lalu langsung re-filter tabel supaya baris guru/murid ikut update
+    function toggleFilterKelasJurusan() {
+        const isGuru = elKategori.value === 'guru';
+        elKelas.style.display = isGuru ? 'none' : '';
+        elJurusan.style.display = isGuru ? 'none' : '';
+        if (isGuru) {
+            elKelas.value = '';
+            elJurusan.value = '';
+            syncOpsiJurusan();
+        }
+        filterPembeli(); // ← wajib, biar baris tabel ikut ke-filter
+    }
+
+    // Filter baris tabel
     function filterPembeli() {
-        const q = inputSearch.value.toLowerCase();
-        const kat = selectKat.value;
-        const kelasId = filterKelasEl.value;
-        const jurusanId = filterJurusanEl.value;
+        const q = elSearch.value.toLowerCase();
+        const kat = elKategori ? elKategori.value.toLowerCase() : '';
+        const tingkat = elKelas.value;
+        const kelasId = elJurusan.value;
 
         document.querySelectorAll('tbody tr:not(.empty-row)').forEach(row => {
             const nama = row.cells[0]?.textContent.toLowerCase() ?? '';
             const nisn = row.cells[1]?.textContent.toLowerCase() ?? '';
-            const katCell = row.cells[2]?.textContent.trim().toLowerCase() ?? '';
+            const katRow = row.dataset.kategori ?? '';
+            const tingkatRow = row.dataset.tingkat ?? '';
+            const kelasRow = row.dataset.kelas ?? '';
 
-            const matchQ = nama.includes(q) || nisn.includes(q);
-            const matchKat = kat === '' || katCell.includes(kat.toLowerCase());
-
-            // Default filter kelas dan jurusan untuk murid
-            let matchKelas = true;
-            let matchJurusan = true;
-
-            if (katCell.includes('murid')) {
-                if (kelasId) matchKelas = row.dataset.kelas === kelasId;
-                if (jurusanId) matchJurusan = row.dataset.jurusan === jurusanId;
-            } else if (katCell.includes('guru')) {
-                // JIKA baris data adalah Guru, dan ada filter kelas atau jurusan yang dipilih,
-                // maka Guru harus disembunyikan (match harus bernilai false)
-                if (kelasId !== '' || jurusanId !== '') {
-                    matchKelas = false;
-                    matchJurusan = false;
-                }
+            // kalau pilih kelas atau jurusan, guru wajib hidden — tidak peduli kat
+            if ((tingkat || kelasId) && katRow === 'guru') {
+                row.style.display = 'none';
+                return;
             }
 
-            row.style.display = matchQ && matchKat && matchKelas && matchJurusan ? '' : 'none';
+            const matchQ = q === '' || nama.includes(q) || nisn.includes(q);
+            const matchKat = kat === '' || katRow === kat;
+
+            let matchKelas = true, matchJurusan = true;
+            if (katRow === 'murid') {
+                if (tingkat) matchKelas = tingkatRow === tingkat;
+                if (kelasId) matchJurusan = kelasRow === kelasId;
+            }
+
+            row.style.display = (matchQ && matchKat && matchKelas && matchJurusan) ? '' : 'none';
         });
     }
 
-    if (inputSearch) inputSearch.addEventListener('input', filterPembeli);
-    if (selectKat) selectKat.addEventListener('change', toggleFilterKelasJurusan);
-    if (filterKelasEl) filterKelasEl.addEventListener('change', filterPembeli);
-    if (filterJurusanEl) filterJurusanEl.addEventListener('change', filterPembeli);
+    // Event listeners
+    elSearch.addEventListener('input', filterPembeli);
+    elKategori.addEventListener('change', () => { toggleFilterKelasJurusan(); });
+    elKelas.addEventListener('change', () => {
+        // sembunyikan baris guru kalau pilih kelas
+        document.querySelectorAll('tbody tr:not(.empty-row)').forEach(row => {
+            if (row.dataset.kategori === 'guru') row.style.display = 'none';
+        });
+        syncOpsiJurusan();
+        filterPembeli();
+    });
 
-    // Jalankan pengecekan komponen saat pertama kali halaman di-load
+    elJurusan.addEventListener('change', () => {
+        // sembunyikan baris guru kalau pilih jurusan
+        document.querySelectorAll('tbody tr:not(.empty-row)').forEach(row => {
+            if (row.dataset.kategori === 'guru') row.style.display = 'none';
+        });
+        filterPembeli();
+    });
+
+    // Init
     toggleFilterKelasJurusan();
-    filterPembeli(); // <-- Tambahkan baris ini juga di akhir script
-
+    syncOpsiJurusan();
+    filterPembeli();
 </script>
