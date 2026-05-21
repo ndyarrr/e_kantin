@@ -31,6 +31,7 @@ if ($action === 'pembeli_tambah_murid') {
             if (mysqli_query($conn, "INSERT INTO murid (nama, nisn, password, id_kelas, id_jurusan, status) VALUES ('$n','$ni','$h',$id_kelas,$id_jurusan,'aktif')")) {
                 $defaultInfo = $password === '' ? " (password default: NISN)" : '';
                 $feedback = ['type' => 'success', 'msg' => "Murid <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan.$defaultInfo"];
+                catatLog($conn, 'Tambah Murid', 'Menambahkan data murid baru bernama: ' . $nama);
             } else {
                 $feedback = ['type' => 'error', 'msg' => 'Gagal: ' . mysqli_error($conn)];
             }
@@ -64,6 +65,7 @@ if ($action === 'pembeli_tambah_guru') {
             if (mysqli_query($conn, "INSERT INTO guru (nama, nuptk, password, status) VALUES ('$n','$nu','$h','aktif')")) {
                 $defaultInfo = $password === '' ? " (password default: NUPTK)" : '';
                 $feedback = ['type' => 'success', 'msg' => "Guru <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan.$defaultInfo"];
+                catatLog($conn, 'Tambah Guru', 'Menambahkan data guru baru bernama: ' . $nama);
             } else {
                 $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan guru: ' . mysqli_error($conn)];
             }
@@ -78,6 +80,7 @@ if ($action === 'pembeli_toggle_murid') {
     if ($nisn && in_array($status, ['aktif', 'nonaktif'])) {
         $new = $status === 'aktif' ? 'nonaktif' : 'aktif';
         mysqli_query($conn, "UPDATE murid SET status='$new' WHERE nisn='$nisn'");
+        catatLog($conn, 'Toggle Status Murid', 'Mengubah status ID Murid ' . $nisn . ' menjadi ' . $new);
     }
     if ($feedback)
         $_SESSION['feedback'] = $feedback;
@@ -92,6 +95,7 @@ if ($action === 'pembeli_toggle_guru') {
     if ($nuptk && in_array($status, ['aktif', 'nonaktif'])) {
         $new = $status === 'aktif' ? 'nonaktif' : 'aktif';
         mysqli_query($conn, "UPDATE guru SET status='$new' WHERE nuptk='$nuptk'");
+        catatLog($conn, 'Toggle Status Guru', 'Mengubah status ID Guru ' . $nuptk . ' menjadi ' . $new);
     }
     if ($feedback)
         $_SESSION['feedback'] = $feedback;
@@ -106,6 +110,7 @@ if ($action === 'pembeli_reset_murid') {
     if ($nisn && $pw_baru !== '') {
         $h = md5($pw_baru);
         mysqli_query($conn, "UPDATE murid SET password='$h' WHERE nisn='$nisn'");
+        catatLog($conn, 'Reset Password Murid', 'Mereset paksa password untuk murid: ' . $nisn);
         $nama_target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM murid WHERE nisn='$nisn'"))['nama'] ?? '';
         $feedback = ['type' => 'success', 'msg' => "Password <strong>" . htmlspecialchars($nama_target) . "</strong> berhasil direset."];
     } else {
@@ -120,6 +125,7 @@ if ($action === 'pembeli_reset_guru') {
     if ($nuptk && $pw_baru !== '') {
         $h = md5($pw_baru);
         mysqli_query($conn, "UPDATE guru SET password='$h' WHERE nuptk='$nuptk'");
+        catatLog($conn, 'Reset Password Guru', 'Mereset paksa password untuk guru: ' . $nuptk);
         $nama_target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM guru WHERE nuptk='$nuptk'"))['nama'] ?? '';
         $feedback = ['type' => 'success', 'msg' => "Password <strong>" . htmlspecialchars($nama_target) . "</strong> berhasil direset."];
     } else {
@@ -133,6 +139,7 @@ if ($action === 'pembeli_hapus_murid') {
     if ($nisn) {
         $nama_target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM murid WHERE nisn='$nisn'"))['nama'] ?? '';
         mysqli_query($conn, "DELETE FROM murid WHERE nisn='$nisn'");
+        catatLog($conn, 'Hapus Murid', 'Menghapus data murid dengan NISN: ' . $nisn);
         $feedback = ['type' => 'success', 'msg' => "Murid <strong>" . htmlspecialchars($nama_target) . "</strong> berhasil dihapus."];
     }
     if ($feedback)
@@ -146,6 +153,7 @@ if ($action === 'pembeli_hapus_guru') {
     $nuptk = mysqli_real_escape_string($conn, trim($_POST['nuptk'] ?? ''));
     if ($nuptk) {
         $nama_target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM guru WHERE nuptk='$nuptk'"))['nama'] ?? '';
+        catatLog($conn, 'Hapus Guru', 'Menghapus data guru dengan NUPTK: ' . $nuptk);
         mysqli_query($conn, "DELETE FROM guru WHERE nuptk='$nuptk'");
         $feedback = ['type' => 'success', 'msg' => "Guru <strong>" . htmlspecialchars($nama_target) . "</strong> berhasil dihapus."];
     }

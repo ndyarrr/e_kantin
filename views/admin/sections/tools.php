@@ -35,8 +35,9 @@
                 </div>
                 <div class="form-group">
                     <label
-                        style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">
-                        <input type="checkbox" name="skip_duplikat" value="1" checked style="accent-color:var(--green)">
+                        style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);flex-direction:row;">
+                        <input type="checkbox" name="skip_duplikat" value="1" checked
+                            style="accent-color:var(--green);width:16px;height:16px;flex-shrink:0;margin:0;">
                         Lewati NISN yang sudah terdaftar
                     </label>
                 </div>
@@ -65,8 +66,9 @@
                 </div>
                 <div class="form-group">
                     <label
-                        style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">
-                        <input type="checkbox" name="skip_duplikat" value="1" checked style="accent-color:var(--green)">
+                        style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);flex-direction:row;">
+                        <input type="checkbox" name="skip_duplikat" value="1" checked
+                            style="accent-color:var(--green);width:16px;height:16px;flex-shrink:0;margin:0;">
                         Lewati NUPTK yang sudah terdaftar
                     </label>
                 </div>
@@ -182,11 +184,15 @@
                                 </td>
                                 <td style="font-size:13px"><?= htmlspecialchars($log['aksi']) ?></td>
                                 <td class="col-hide"
-                                    style="font-size:12px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                                    style="font-size:12px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer"
+                                    onmouseenter="showTooltip(event, this.dataset.full)" onmouseleave="hideTooltip()"
+                                    data-full="<?= htmlspecialchars($log['keterangan'] ?? '-') ?>">
                                     <?= htmlspecialchars($log['keterangan'] ?? '-') ?>
                                 </td>
                                 <td class="col-hide" style="font-size:12px;color:var(--text-muted)">
-                                    <?= htmlspecialchars($log['ip_address'] ?? '-') ?></td>
+                                    <?= htmlspecialchars($log['ip_address'] ?? '-') ?>
+                                </td>
+
                             </tr>
                         <?php endforeach; endif; ?>
                 </tbody>
@@ -210,6 +216,22 @@
     </div>
 
 </div>
+
+<div id="logTooltip" style="
+    display:none;
+    position:fixed;
+    background:#1f2937;
+    color:#fff;
+    padding:8px 12px;
+    border-radius:8px;
+    font-size:12px;
+    max-width:300px;
+    word-break:break-word;
+    z-index:9999;
+    pointer-events:auto;
+    user-select:text;
+    box-shadow:0 4px 12px rgba(0,0,0,.3);
+"></div>
 
 <!-- CSS khusus tools -->
 <style>
@@ -392,4 +414,30 @@
         document.getElementById('tabCsvMurid').classList.toggle('active', isMurid);
         document.getElementById('tabCsvGuru').classList.toggle('active', !isMurid);
     }
+
+
+
+    const tooltip = document.getElementById('logTooltip');
+    let hideTimer;
+
+    function showTooltip(e, text) {
+        clearTimeout(hideTimer);
+        tooltip.textContent = text;
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.clientX + 12) + 'px';
+        tooltip.style.top = (e.clientY + 12) + 'px';
+    }
+
+    function hideTooltip() {
+        // delay biar sempat hover ke tooltip untuk salin
+        hideTimer = setTimeout(() => {
+            tooltip.style.display = 'none';
+        }, 300);
+    }
+
+    tooltip.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+    tooltip.addEventListener('mouseleave', () => {
+        hideTimer = setTimeout(() => tooltip.style.display = 'none', 300);
+    });
+
 </script>

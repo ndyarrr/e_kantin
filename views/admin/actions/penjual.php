@@ -29,6 +29,8 @@ if ($action === 'penjual_tambah') {
                 mysqli_query($conn, "INSERT INTO toko_penjual (id_toko, id_penjual) VALUES ($id_toko, $id_baru)");
             }
 
+            catatLog($conn, 'Tambah Penjual', 'Menambahkan data penjual baru bernama: ' . $nama_penjual);
+
             $feedback = ['type' => 'success', 'msg' => "Penjual <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan."];
         }
     }
@@ -69,7 +71,7 @@ if ($action === 'penjual_edit') {
         } else {
             mysqli_query($conn, "UPDATE penjual SET nama='$n', username='$u' WHERE id_penjual=$id");
         }
-
+        catatLog($conn, 'Update Penjual', 'Memperbarui data penjual dengan ID: ' . $id);
         $feedback = ['type' => 'success', 'msg' => 'Data penjual berhasil diperbarui.'];
         $selectedPenjual = $id;
     }
@@ -82,6 +84,7 @@ if ($action === 'penjual_toggle') {
     if ($id && in_array($status, ['aktif', 'nonaktif'])) {
         $new = $status === 'aktif' ? 'nonaktif' : 'aktif';
         mysqli_query($conn, "UPDATE penjual SET status='$new' WHERE id_penjual=$id");
+        catatLog($conn, 'Toggle Status Penjual', 'Mengubah status ID Penjual ' . $id . ' menjadi ' . $new);
         $feedback = ['type' => 'success', 'msg' => 'Status penjual diperbarui.'];
     }
 }
@@ -98,6 +101,7 @@ if ($action === 'penjual_hapus') {
         }
         mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_penjual=$id");
         mysqli_query($conn, "DELETE FROM penjual WHERE id_penjual=$id");
+        catatLog($conn, 'Hapus Penjual', 'Menghapus data penjual dengan ID: ' . $id);
         $feedback = ['type' => 'success', 'msg' => 'Penjual berhasil dihapus.'];
         $selectedPenjual = 0;
     }
@@ -120,6 +124,7 @@ if ($action === 'kantin_assign_penjual') {
         } else {
             $s = $shift ? "'$shift'" : "NULL";
             mysqli_query($conn, "INSERT INTO toko_penjual (id_toko, id_penjual, shift) VALUES ($id_toko, $id_penjual, $s)");
+            catatLog($conn, 'Assign Penjual', 'Mengassign penjual dengan ID: ' . $id_penjual . ' ke kantin dengan ID: ' . $id_toko);
             $_SESSION['feedback'] = ['type' => 'success', 'msg' => 'Penjual berhasil di-assign.'];
         }
         $selectedPenjual = $id_penjual;
@@ -131,6 +136,7 @@ if ($action === 'kantin_lepas_penjual') {
     $id_tp = (int) ($_POST['id_tp'] ?? 0);
     if ($id_tp) {
         mysqli_query($conn, "UPDATE toko_penjual SET status='nonaktif' WHERE id=$id_tp");
+        catatLog($conn, 'Lepas Penjual', 'Melepas penjual dengan ID toko_penjual: ' . $id_tp);
         $feedback = ['type' => 'success', 'msg' => 'Penjual berhasil dilepas dari kantin.'];
     }
 }

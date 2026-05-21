@@ -27,6 +27,8 @@ if ($action === 'kantin_tambah') {
         $d = mysqli_real_escape_string($conn, $desk);
         $f = $foto ? "'$foto'" : "NULL";
         mysqli_query($conn, "INSERT INTO toko (nama_toko, deskripsi, foto_toko) VALUES ('$n','$d',$f)");
+        
+        catatLog($conn, 'Tambah Kantin', 'Menambahkan data kantin baru bernama: ' . $nama);
         $feedback = ['type' => 'success', 'msg' => "Kantin <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan."];
     }
 }
@@ -76,6 +78,7 @@ if ($action === 'kantin_edit') {
         } else {
             mysqli_query($conn, "UPDATE toko SET nama_toko='$n', deskripsi='$d' WHERE id_toko=$id");
         }
+        catatLog($conn, 'Edit Kantin', 'Memperbarui data kantin dengan ID: ' . $id);
         $feedback = ['type' => 'success', 'msg' => 'Kantin berhasil diperbarui.'];
         $selectedToko = $id;
     }
@@ -107,6 +110,7 @@ if ($action === 'kantin_hapus') {
         // baru hapus toko
         mysqli_query($conn, "DELETE FROM toko WHERE id_toko=$id");
 
+        catatLog($conn, 'Hapus Kantin', 'Menghapus data kantin dengan ID: ' . $id);
         $feedback = ['type' => 'success', 'msg' => 'Kantin berhasil dihapus.'];
         $selectedToko = 0;
     }
@@ -120,6 +124,7 @@ if ($action === 'kantin_assign_penjual') {
     if ($id_toko && $id_penjual) {
         $s = $shift ? "'$shift'" : "NULL";
         mysqli_query($conn, "INSERT INTO toko_penjual (id_toko, id_penjual, shift) VALUES ($id_toko, $id_penjual, $s)");
+        catatLog($conn, 'Assign Penjual', 'Mengassign penjual dengan ID: ' . $id_penjual . ' ke kantin dengan ID: ' . $id_toko);
         $feedback = ['type' => 'success', 'msg' => 'Penjual berhasil di-assign.'];
         $selectedToko = $id_toko;
     }
@@ -130,6 +135,7 @@ if ($action === 'kantin_lepas_penjual') {
     $id_tp = (int) ($_POST['id_tp'] ?? 0);
     if ($id_tp) {
         mysqli_query($conn, "UPDATE toko_penjual SET status='nonaktif' WHERE id=$id_tp");
+        catatLog($conn, 'Lepas Penjual', 'Melepaskan penjual dengan ID: ' . $id_tp . ' dari kantin dengan ID: ' . $id_toko);
         $feedback = ['type' => 'success', 'msg' => 'Penjual berhasil dilepas.'];
     }
 }
@@ -159,6 +165,7 @@ if ($action === 'menu_tambah') {
         $d = mysqli_real_escape_string($conn, $desk);
         $f = $foto ? "'$foto'" : "NULL";
         mysqli_query($conn, "INSERT INTO menu (id_toko, nama_menu, deskripsi, harga, stok, foto_menu) VALUES ($id_toko,'$n','$d',$harga,$stok,$f)");
+        catatLog($conn, 'Tambah Menu', 'Menambahkan data menu baru bernama: ' . $nama_menu);
         $feedback = ['type' => 'success', 'msg' => "Menu <strong>" . htmlspecialchars($nama_menu) . "</strong> berhasil ditambahkan."];
         $selectedToko = $id_toko;
     }
@@ -174,6 +181,7 @@ if ($action === 'menu_hapus') {
         }
         $selectedToko = $fotoLama['id_toko'] ?? 0;
         mysqli_query($conn, "DELETE FROM menu WHERE id_menu=$id_menu");
+        catatLog($conn, 'Hapus Menu', 'Menghapus menu dengan ID: ' . $id_menu);
         $feedback = ['type' => 'success', 'msg' => 'Menu berhasil dihapus.'];
     }
 }

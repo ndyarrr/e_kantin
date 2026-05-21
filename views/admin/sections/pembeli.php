@@ -29,25 +29,24 @@
             placeholder="Cari nama atau NISN/NUPTK..."
             style="width:100%;padding:10px 12px 10px 36px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--card-bg);color:var(--text);outline:none;box-sizing:border-box">
     </div>
-    <select name="filter_kategori" class="form-select"
+    <select name="filter_kategori" class="form-select" onchange="this.form.submit()"
         style="min-width:130px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--card-bg);color:var(--text)">
         <option value="" <?= $filterKategori === '' ? 'selected' : '' ?>>Semua</option>
         <option value="murid" <?= $filterKategori === 'murid' ? 'selected' : '' ?>>Murid</option>
         <option value="guru" <?= $filterKategori === 'guru' ? 'selected' : '' ?>>Guru</option>
     </select>
-    <!-- Tambah setelah select filter_kategori -->
-    <select name="filter_kelas" id="filterKelas"
+
+    <select name="filter_kelas" id="filterKelas" onchange="this.form.submit()"
         style="min-width:110px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--card-bg);color:var(--text)">
         <option value="">Semua Kelas</option>
         <?php foreach ($semuaKelas as $k): ?>
             <option value="<?= $k['id_kelas'] ?>" <?= ($_GET['filter_kelas'] ?? '') == $k['id_kelas'] ? 'selected' : '' ?>>
-                Kelas
-                <?= htmlspecialchars($k['nama_kelas']) ?>
+                Kelas <?= htmlspecialchars($k['nama_kelas']) ?>
             </option>
         <?php endforeach; ?>
     </select>
 
-    <select name="filter_jurusan" id="filterJurusan"
+    <select name="filter_jurusan" id="filterJurusan" onchange="this.form.submit()"
         style="min-width:130px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--card-bg);color:var(--text)">
         <option value="">Semua Jurusan</option>
         <?php foreach ($semuaJurusan as $j): ?>
@@ -374,21 +373,24 @@
             const nama = row.cells[0]?.textContent.toLowerCase() ?? '';
             const nisn = row.cells[1]?.textContent.toLowerCase() ?? '';
             const katCell = row.cells[2]?.textContent.trim().toLowerCase() ?? '';
-            const info = row.cells[3]?.textContent ?? ''; // kolom Kelas / Jurusan
 
             const matchQ = nama.includes(q) || nisn.includes(q);
             const matchKat = kat === '' || katCell.includes(kat.toLowerCase());
 
-            // Filter kelas & jurusan hanya berlaku untuk murid
+            // Default filter kelas dan jurusan untuk murid
             let matchKelas = true;
             let matchJurusan = true;
 
-            if (kelasId && katCell.includes('murid')) {
-                // data-kelas disimpan di row attribute
-                matchKelas = row.dataset.kelas === kelasId;
-            }
-            if (jurusanId && katCell.includes('murid')) {
-                matchJurusan = row.dataset.jurusan === jurusanId;
+            if (katCell.includes('murid')) {
+                if (kelasId) matchKelas = row.dataset.kelas === kelasId;
+                if (jurusanId) matchJurusan = row.dataset.jurusan === jurusanId;
+            } else if (katCell.includes('guru')) {
+                // JIKA baris data adalah Guru, dan ada filter kelas atau jurusan yang dipilih,
+                // maka Guru harus disembunyikan (match harus bernilai false)
+                if (kelasId !== '' || jurusanId !== '') {
+                    matchKelas = false;
+                    matchJurusan = false;
+                }
             }
 
             row.style.display = matchQ && matchKat && matchKelas && matchJurusan ? '' : 'none';
@@ -400,8 +402,8 @@
     if (filterKelasEl) filterKelasEl.addEventListener('change', filterPembeli);
     if (filterJurusanEl) filterJurusanEl.addEventListener('change', filterPembeli);
 
-    // init
+    // Jalankan pengecekan komponen saat pertama kali halaman di-load
     toggleFilterKelasJurusan();
-
+    filterPembeli(); // <-- Tambahkan baris ini juga di akhir script
 
 </script>

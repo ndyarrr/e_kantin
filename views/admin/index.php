@@ -15,7 +15,41 @@ require_once __DIR__ . '/../../config/database.php';
 $adminNama = $_SESSION['user_nama'] ?? 'Super Admin';
 $adminId = (int) ($_SESSION['user_id'] ?? 0);
 $profilAdmin = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM admin WHERE id_admin=$adminId"));
+
+// KUNCI UTAMA: Mengambil data laporan kendala sistem/web yang berstatus menunggu atau proses
+$filterKendala = $_GET['filter_kendala'] ?? 'aktif';
+
+$whereKendala = match ($filterKendala) {
+    'menunggu' => "WHERE status = 'menunggu'",
+    'proses' => "WHERE status = 'proses'",
+    'selesai' => "WHERE status = 'selesai'",
+    default => "WHERE status IN ('menunggu', 'proses')", // aktif
+};
+
+$kendala = mysqli_fetch_all(mysqli_query(
+    $conn,
+    "SELECT * FROM laporan_kendala $whereKendala ORDER BY dibuat_pada DESC LIMIT 10"
+), MYSQLI_ASSOC);
+
+// Untuk notif dropdown — selalu ambil yang aktif (menunggu + proses)
+$kendalaNotif = mysqli_fetch_all(mysqli_query(
+    $conn,
+    "SELECT * FROM laporan_kendala WHERE status IN ('menunggu','proses') ORDER BY dibuat_pada DESC LIMIT 10"
+), MYSQLI_ASSOC);
+
 /* ── helpers ── */
+
+function catatLog($conn, $aksi, $keterangan = '')
+{
+    $role = mysqli_real_escape_string($conn, $_SESSION['user_role'] ?? '');
+    $uid = mysqli_real_escape_string($conn, $_SESSION['user_id'] ?? '');
+    $nama = mysqli_real_escape_string($conn, $_SESSION['user_nama'] ?? '');
+    $aksi = mysqli_real_escape_string($conn, $aksi);
+    $ket = mysqli_real_escape_string($conn, $keterangan);
+    $ip = mysqli_real_escape_string($conn, $_SERVER['REMOTE_ADDR'] ?? '');
+    mysqli_query($conn, "INSERT INTO log_sistem (user_role, user_id, user_nama, aksi, keterangan, ip_address)
+                         VALUES ('$role','$uid','$nama','$aksi','$ket','$ip')");
+}
 function generateKodeAktivasi(): string
 {
     $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -45,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nama_baru = trim($_POST['nama_baru'] ?? '');
         $foto_baru = null;
 
+        catatLog($conn, 'Update Profil', 'Admin mengubah nama profil menjadi: ' . $nama_baru);
         // hapus foto
         if (isset($_POST['hapus_foto']) && $_POST['hapus_foto'] === '1') {
             $fotoLama = $profilAdmin['foto_profil'] ?? '';
@@ -88,6 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $_SESSION['user_nama'] = $nama_baru;
             $adminNama = $nama_baru;
+            catatLog($conn, 'Update Profil', 'Mengubah nama profil / foto admin');
             // refresh profilAdmin biar foto baru ke-load
             $profilAdmin = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM admin WHERE id_admin=$adminId"));
             $feedback = ['type' => 'success', 'msg' => 'Profil berhasil diperbarui.'];
@@ -110,6 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $hash_baru = md5($pw_baru);
                 mysqli_query($conn, "UPDATE admin SET password='$hash_baru' WHERE id_admin=$adminId");
+                catatLog($conn, 'Update Password', 'Admin mengubah password');
                 $feedback = ['type' => 'success', 'msg' => 'Password berhasil diubah.'];
             }
         }
@@ -129,6 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $h = md5($pass);
             $k = mysqli_real_escape_string($conn, $kode);
             if (mysqli_query($conn, "INSERT INTO admin (nama,password,kode_aktivasi) VALUES ('$n','$h','$k')")) {
+                catatLog($conn, 'Tambah Admin', 'Menambahkan admin baru bernama: ' . $nama);
                 $feedback = ['type' => 'success', 'msg' => "Admin <strong>" . htmlspecialchars($nama) . "</strong> ditambahkan.", "extra" => "Kode Aktivasi: <code>$kode</code>"];
             } else {
                 $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan admin.'];
@@ -143,6 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($id && in_array($status, ['aktif', 'tidak_digunakan'])) {
             $new = $status === 'aktif' ? 'tidak_digunakan' : 'aktif';
             mysqli_query($conn, "UPDATE admin SET status='$new' WHERE id_admin=$id");
+            catatLog($conn, 'Toggle Status Admin', 'Mengubah status ID Admin ' . $id . ' menjadi ' . $new);
         }
         header("Location: ?section=admin");
         exit;
@@ -156,6 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hash = md5($pw_reset);
             $nama_admin = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM admin WHERE id_admin=$id"))['nama'] ?? '';
             mysqli_query($conn, "UPDATE admin SET password='$hash' WHERE id_admin=$id");
+            catatLog($conn, 'Reset Password Admin', 'Mereset paksa password untuk admin: ' . $nama_admin);
             $feedback = ['type' => 'success', 'msg' => "Password <strong>" . htmlspecialchars($nama_admin) . "</strong> berhasil direset."];
         } elseif ($id && $pw_reset === '') {
             $feedback = ['type' => 'error', 'msg' => 'Password baru wajib diisi.'];
@@ -195,6 +235,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // ── ACTION TOOLS ──
+    if (str_starts_with($action, 'tools_')) {
+        require __DIR__ . '/actions/tools.php';
+        if ($feedback)
+            $_SESSION['feedback'] = $feedback;
+        header("Location: ?section=tools");
+        exit;
+    }
+
+    if (str_starts_with($action, 'kendala_')) {
+        $id = (int) ($_POST['id_laporan'] ?? 0);
+        if ($id) {
+            if ($action === 'kendala_proses') {
+                mysqli_query($conn, "UPDATE laporan_kendala SET status='proses' WHERE id_laporan=$id");
+                catatLog($conn, 'Update Laporan Kendala', 'Laporan ID ' . $id . ' ditandai sedang diproses');
+                $feedback = ['type' => 'success', 'msg' => 'Laporan ditandai sedang diproses.'];
+            }
+            if ($action === 'kendala_selesai') {
+                mysqli_query($conn, "UPDATE laporan_kendala SET status='selesai' WHERE id_laporan=$id");
+                catatLog($conn, 'Update Laporan Kendala', 'Laporan ID ' . $id . ' ditandai selesai');
+                $feedback = ['type' => 'success', 'msg' => 'Laporan ditandai selesai.'];
+            }
+            if ($action === 'kendala_hapus') {
+                mysqli_query($conn, "DELETE FROM laporan_kendala WHERE id_laporan=$id");
+                catatLog($conn, 'Delete Laporan Kendala', 'Laporan ID ' . $id . ' dihapus');
+                $feedback = ['type' => 'success', 'msg' => 'Laporan berhasil dihapus.'];
+            }
+        }
+        if ($feedback)
+            $_SESSION['feedback'] = $feedback;
+
+        // Bawa filter_kendala dari POST biar tidak reset
+        $filterKembali = $_POST['filter_kendala'] ?? 'aktif';
+        header("Location: ?section=dashboard&filter_kendala=$filterKembali");
+        exit;
+    }
 }
 
 
@@ -217,12 +293,13 @@ $proporsiRaw = mysqli_fetch_all(mysqli_query($conn, "SELECT t.nama_toko, COUNT(p
 $proporsiTotal = array_sum(array_column($proporsiRaw, 'total'));
 $proporsiLabels = array_column($proporsiRaw, 'nama_toko');
 $proporsiValues = $proporsiTotal > 0 ? array_map('intval', array_column($proporsiRaw, 'total')) : array_fill(0, count($proporsiRaw), 1);
-$kendala = mysqli_fetch_all(mysqli_query($conn, "SELECT p.id_pesanan,p.waktu_pesan,p.status,COALESCE(m.nama,g.nama,'Unknown') AS pelapor FROM pesanan p LEFT JOIN murid m ON m.nisn=p.nisn_pembeli LEFT JOIN guru g ON g.nuptk=p.nuptk_pembeli WHERE p.status IN ('dibatalkan','menunggu') ORDER BY p.waktu_pesan DESC LIMIT 10"), MYSQLI_ASSOC);
 
 // Admin
 $admins = mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM admin ORDER BY id_admin ASC"), MYSQLI_ASSOC);
 $totalAdmin = count($admins);
 $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
+// Tools
+require __DIR__ . '/sections/tools_data.php';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -235,6 +312,38 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="../../assets/css/admin.css">
     <link rel="stylesheet" href="../../assets/css/admin_kantin.css">
+
+    <style>
+        /* CSS Tambahan untuk Animasi & Desain Dropdown Notifikasi Kendala */
+        @keyframes fadeInNotif {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .notif-item:hover {
+            background-color: rgba(121, 183, 117, 0.06) !important;
+        }
+
+        .notif-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .notif-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .notif-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
 </head>
 
 
@@ -254,6 +363,7 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
             </div>
             <button class="btn-close-sidebar" onclick="closeSidebar()"><i class="fa-solid fa-xmark"></i></button>
         </div>
+
         <nav class="sidebar-nav">
             <button class="nav-link active" data-section="dashboard" onclick="switchSection('dashboard')"><i
                     class="fa-solid fa-border-all"></i> Dashboard</button>
@@ -267,7 +377,9 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
                     class="fa-solid fa-users"></i> Pembeli</button>
         </nav>
         <div class="sidebar-bottom">
-            <button class="nav-link"><i class="fa-solid fa-circle-info"></i> Help Centre</button>
+            <button class="nav-link" data-section="tools" onclick="switchSection('tools')">
+                <i class="fa-solid fa-wrench"></i> Tools & Log
+            </button>
             <a href="../../auth/logout.php" class="nav-link logout"><i class="fa-solid fa-arrow-right-from-bracket"></i>
                 Log out</a>
         </div>
@@ -285,7 +397,78 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
                     </div>
                 </div>
                 <div class="topbar-right">
-                    <button class="btn-notif"><i class="fa-solid fa-bell"></i><span class="notif-dot"></span></button>
+                    <div class="notif-wrapper" style="position: relative; display: inline-block;">
+                        <button type="button" class="btn-notif" onclick="toggleNotifDropdown(event)"
+                            style="position: relative;">
+                            <i class="fa-solid fa-bell"></i>
+                            <?php if (!empty($kendalaNotif)): ?>
+                                <span class="notif-dot" id="notifDot"></span>
+                            <?php endif; ?>
+                        </button>
+
+                        <div class="notif-dropdown" id="notifDropdown"
+                            style="display: none; position: absolute; right: 0; top: 45px; width: 340px; background: var(--card-bg, #fff); border: 1px solid var(--border, #e5e7eb); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; overflow: hidden;">
+                            <div
+                                style="padding: 12px 16px; border-bottom: 1px solid var(--border, #e5e7eb); display: flex; justify-content: space-between; align-items: center;">
+                                <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: var(--text);">Laporan
+                                    Kendala Web</h3>
+                                <span
+                                    style="font-size: 11px; background: #fee2e2; color: #ef4444; padding: 2px 8px; border-radius: 10px; font-weight: 600;">
+                                    <?= count($kendalaNotif) ?> Laporan
+                                </span>
+                            </div>
+
+                            <div class="notif-list" style="max-height: 320px; overflow-y: auto;">
+                                <?php if (empty($kendala)): ?>
+                                    <div
+                                        style="padding: 24px; text-align: center; color: var(--text-muted, #9ca3af); font-size: 12px;">
+                                        <i class="fa-solid fa-circle-check"
+                                            style="font-size: 22px; display: block; margin-bottom: 8px; color: #79b775;"></i>
+                                        Sistem aman! Belum ada laporan kendala masuk.
+                                    </div>
+                                <?php else: ?>
+                                    <?php foreach ($kendalaNotif as $knd):
+                                        $role = strtolower($knd['user_role'] ?? '');
+                                        $badgeBg = ($role === 'penjual') ? '#e0f2fe' : (($role === 'guru') ? '#e8f0fe' : '#e2f5e1');
+                                        $badgeColor = ($role === 'penjual') ? '#0369a1' : (($role === 'guru') ? '#1a56db' : '#2d7a2d');
+                                        ?>
+                                        <div class="notif-item"
+                                            style="padding: 14px 16px; border-bottom: 1px solid var(--border, #e5e7eb); display: flex; gap: 12px; cursor: pointer; transition: background 0.2s;"
+                                            onclick="switchSection('dashboard')">
+                                            <div style="width: 8px; height: 8px; background: <?= ($knd['status'] ?? '') === 'menunggu' ? '#ef4444' : '#f59e0b' ?>; border-radius: 50%; margin-top: 5px; flex-shrink: 0;"
+                                                title="Status: <?= $knd['status'] ?>"></div>
+
+                                            <div style="flex: 1;">
+                                                <div
+                                                    style="font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.4; margin-bottom: 4px;">
+                                                    <?= htmlspecialchars($knd['judul_kendala'] ?? '') ?>
+                                                </div>
+                                                <div
+                                                    style="font-size: 11px; color: var(--text-muted, #6b7280); display: flex; align-items: center; gap: 6px;">
+                                                    <span><?= htmlspecialchars($knd['user_nama'] ?? '') ?></span>
+                                                    <span
+                                                        style="background: <?= $badgeBg ?>; color: <?= $badgeColor ?>; font-size: 9px; padding: 1px 6px; border-radius: 10px; font-weight: 600; text-transform: uppercase;">
+                                                        <?= $role ?>
+                                                    </span>
+                                                </div>
+                                                <div style="font-size: 10px; color: #9ca3af; margin-top: 6px;">
+                                                    <i class="fa-regular fa-clock"></i>
+                                                    <?= date('d M, H:i', strtotime($knd['dibuat_pada'] ?? 'now')) ?> WIB
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+
+                            <a href="#"
+                                onclick="switchSection('dashboard'); document.getElementById('notifDropdown').style.display='none'; return false;"
+                                style="display: block; text-align: center; padding: 11px; font-size: 12px; color: #79b775; font-weight: 600; text-decoration: none; border-top: 1px solid var(--border, #e5e7eb); background: #f9fafb;">
+                                Lihat Semua Laporan di Tools & Log
+                            </a>
+                        </div>
+                    </div>
+
                     <div class="topbar-user" onclick="bukaProfil()" style="cursor:pointer">
                         <div class="avatar">
                             <?php if (!empty($profilAdmin['foto_profil'])): ?>
@@ -318,17 +501,14 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
 
             <?php require __DIR__ . '/sections/profile.php'; ?>
 
-            <!-- ══════════════ DASHBOARD ══════════════ -->
             <div class="section active" id="section-dashboard">
                 <?php require __DIR__ . '/sections/dashboard.php'; ?>
             </div>
 
-            <!-- ══════════════ ADMIN ══════════════ -->
             <div class="section" id="section-admin">
                 <?php require __DIR__ . '/sections/admin.php'; ?>
             </div>
 
-            <!-- ══════════════ KANTIN ══════════════ -->
             <div class="section" id="section-kantin">
 
                 <?php
@@ -337,7 +517,6 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
                 ?>
             </div>
 
-            <!-- ══════════════ PENJUAL ══════════════ -->
             <div class="section" id="section-penjual">
                 <?php
                 require __DIR__ . '/sections/penjual_data.php';
@@ -345,16 +524,19 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
                 ?>
             </div>
 
-            <!-- ══════════════ PEMBELI ══════════════ -->
             <div class="section" id="section-pembeli">
                 <?php
                 require __DIR__ . '/sections/pembeli_data.php'; // ← harus ada ini dulu
                 require __DIR__ . '/sections/pembeli.php';
                 ?>
-                </div>
             </div>
 
+            <div class="section" id="section-tools">
+                <?php require __DIR__ . '/sections/tools.php'; ?>
+            </div>
         </div>
+
+    </div>
     </div>
 
     <script>
@@ -381,6 +563,8 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
             kantin: { title: 'Kelola Kantin', sub: 'Manajemen toko dan menu kantin' },
             penjual: { title: 'Kelola Penjual', sub: 'Manajemen akun penjual' },
             pembeli: { title: 'Kelola Pembeli', sub: 'Data murid dan guru terdaftar' },
+            tools: { title: 'Tools & Log', sub: 'Import data dan log aktivitas sistem' },
+
         };
 
         function switchSection(name) {
@@ -511,9 +695,6 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
             ico.className = inp.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
         }
 
-        // HAPUS fungsi selectToko dan tutupDetailToko yang lama (yang pertama)
-        // Pakai ini saja:
-
 
         function bukaFotoAdmin(src) {
             document.getElementById('modalFotoAdminImg').src = src;
@@ -523,13 +704,28 @@ $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
             document.getElementById('modalFotoAdmin').classList.remove('show');
         }
 
-        // console.log('lineChart el:', document.getElementById('lineChart'));
-        // console.log('donutChart el:', document.getElementById('donutChart'));
-        // console.log('Chart.js loaded:', typeof Chart);
-        // console.log('grafikLabels:', grafikLabels);
-        // console.log('grafikValues:', grafikValues);
-        // console.log('proporsiLabels:', proporsiLabels);
-        // console.log('proporsiValues:', proporsiValues);
+        /* ── JavaScript Operasional Dropdown Notifikasi Kendala ── */
+        const notifDropdown = document.getElementById('notifDropdown');
+        const notifDot = document.getElementById('notifDot');
+
+        function toggleNotifDropdown(event) {
+            event.stopPropagation();
+            if (!notifDropdown) return;
+
+            if (notifDropdown.style.display === 'none' || notifDropdown.style.display === '') {
+                notifDropdown.style.display = 'block';
+                notifDropdown.style.animation = 'fadeInNotif 0.2s ease-out';
+            } else {
+                notifDropdown.style.display = 'none';
+            }
+        }
+
+        // Tutup dropdown otomatis jika admin melakukan klik di luar area komponen notifikasi
+        document.addEventListener('click', function (event) {
+            if (notifDropdown && !event.target.closest('.notif-wrapper')) {
+                notifDropdown.style.display = 'none';
+            }
+        });
     </script>
 </body>
 
