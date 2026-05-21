@@ -1,1 +1,1 @@
-<?php echo password_hash('aril11', PASSWORD_BCRYPT); ?>
+<?php echo md5('aril1234'); ?>

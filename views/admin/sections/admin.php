@@ -47,8 +47,9 @@
                                 <div class="kode-wrap">
                                     <span id="kode-<?= $a['id_admin'] ?>" data-plain="<?= $kode ?>"
                                         data-hidden="1"><?= $kodeSensor ?></span>
-                                    <button class="btn-reveal" onclick="revealKode(<?= $a['id_admin'] ?>)"><i
-                                            class="fa-solid fa-eye" id="eye-<?= $a['id_admin'] ?>"></i></button>
+                                    <button class="btn-reveal" onclick="revealKode(<?= $a['id_admin'] ?>)">
+                                        <i class="fa-solid fa-eye" id="eye-<?= $a['id_admin'] ?>"></i>
+                                    </button>
                                 </div>
                             </td>
                             <td>
@@ -58,15 +59,11 @@
                                 </span>
                             </td>
                             <td class="center" style="white-space:nowrap">
-                                <form method="POST" style="display:inline"
-                                    onsubmit="return confirm('Reset password <?= htmlspecialchars($a['nama']) ?>?')">
-                                    <input type="hidden" name="action" value="admin_reset">
-                                    <input type="hidden" name="id" value="<?= $a['id_admin'] ?>">
-                                    <input type="hidden" name="_section" value="admin">
-                                    <button type="submit" class="btn-aksi reset" title="Reset Password"><i
-                                            class="fa-solid fa-key"></i></button>
-                                </form>
                                 <?php if (!$isMe): ?>
+                                    <button type="button" class="btn-aksi reset" title="Reset Password"
+                                        onclick="bukaResetPassword(<?= $a['id_admin'] ?>, '<?= htmlspecialchars($a['nama']) ?>')">
+                                        <i class="fa-solid fa-key"></i>
+                                    </button>
                                     <form method="POST" style="display:inline"
                                         onsubmit="return confirm('<?= $aktif ? 'Nonaktifkan' : 'Aktifkan' ?> admin ini?')">
                                         <input type="hidden" name="action" value="admin_toggle">
@@ -79,9 +76,9 @@
                                         </button>
                                     </form>
                                 <?php else: ?>
-                                    <button class="btn-aksi toggle-off" disabled
-                                        title="Tidak bisa menonaktifkan akun sendiri"><i
-                                            class="fa-solid fa-user-slash"></i></button>
+                                    <button class="btn-aksi toggle-off" disabled title="Tidak bisa menonaktifkan akun sendiri">
+                                        <i class="fa-solid fa-user-slash"></i>
+                                    </button>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -128,3 +125,51 @@
         </form>
     </div>
 </div>
+
+<div id="modalResetPw"
+    style="display:none;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center">
+    <div onclick="tutupResetPw()"
+        style="position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(2px)"></div>
+    <div
+        style="position:relative;background:#fff;border-radius:16px;padding:28px;width:90%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.15)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <h2 style="font-size:16px;font-weight:700">Reset Password</h2>
+            <button onclick="tutupResetPw()"
+                style="background:none;border:none;font-size:18px;cursor:pointer;color:#6b7280"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p style="font-size:13px;color:#6b7280;margin-bottom:16px">Reset password untuk: <strong
+                id="namaResetTarget"></strong></p>
+        <form method="POST" id="formResetPw"
+            onsubmit="return confirm('Yakin reset password ' + document.getElementById('namaResetTarget').textContent + '?')">
+            <input type="hidden" name="action" value="admin_reset">
+            <input type="hidden" name="id" id="idResetTarget">
+            <input type="hidden" name="_section" value="admin">
+            <div class="form-group">
+                <label>Password Baru</label>
+                <div class="password-wrap">
+                    <input type="password" name="pw_reset" id="inputPwReset" placeholder="Masukkan password baru"
+                        required>
+                    <button type="button" class="btn-eye" onclick="togglePw('inputPwReset','eyePwReset')">
+                        <i class="fa-solid fa-eye" id="eyePwReset"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-key" style="margin-right:6px"></i>Reset Password
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function bukaResetPassword(id, nama) {
+        document.getElementById('idResetTarget').value = id;
+        document.getElementById('namaResetTarget').textContent = nama;
+        document.getElementById('inputPwReset').value = '';
+        document.getElementById('modalResetPw').style.display = 'flex';
+    }
+    function tutupResetPw() {
+        document.getElementById('modalResetPw').style.display = 'none';
+    }
+</script>

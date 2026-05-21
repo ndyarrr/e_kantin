@@ -1,4 +1,6 @@
-<?php require_once 'config/database.php'; ?>
+<?php require_once 'config/database.php';
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -20,7 +22,10 @@
                 <button onclick="window.location.href='./auth/login.php'" class="btn-login">Login</button>
             </div>
         </div>
-        <div class="collage-wrapper" draggable="false">
+        <div class="collage-wrapper">
+            <!-- Foto makanan mengambang -->
+            <img class="col-food col-food-left" src="./assets/img/ayam.png" alt="" />
+            <img class="col-food col-food-right" src="./assets/img/soto.png" alt="" />
             <div class="collage-grid">
                 <img class="col-img col-1" src="./assets/img/gb1.jpeg" alt="" />
                 <img class="col-img col-2" src="./assets/img/gb2.jpeg" alt="" />
@@ -76,6 +81,15 @@
                 if (pill.dataset.target === current) pill.classList.add('active');
             });
         }
+
+        document.querySelector('.hero-search input').addEventListener('input', function () {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll('.kantin-card').forEach(card => {
+                const nama = card.querySelector('.kantin-card-badge').textContent.toLowerCase();
+                const desc = card.querySelector('.kantin-card-desc').textContent.toLowerCase();
+                card.style.display = (nama.includes(q) || desc.includes(q)) ? '' : 'none';
+            });
+        });
 
         window.addEventListener('scroll', updateActive);
         updateActive();

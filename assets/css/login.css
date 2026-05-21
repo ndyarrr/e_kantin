@@ -1,0 +1,485 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --green: #79b775;
+  --green-dark: #5a9657;
+  --green-light: #e8f5e9;
+  --white: #fff;
+  --radius: 20px;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  min-height: 100dvh;
+  background: linear-gradient(160deg, #79b775 0%, #b8ddb6 50%, #e8f5e9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* ── Dekorasi background ── */
+.bg-deco {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bg-deco span {
+  position: absolute;
+  font-size: 80px;
+  opacity: 0.08;
+  filter: grayscale(1);
+  user-select: none;
+}
+
+.bg-deco span:nth-child(1) {
+  top: 5%;
+  left: 3%;
+  transform: rotate(-20deg);
+  font-size: 90px;
+}
+
+.bg-deco span:nth-child(2) {
+  top: 15%;
+  right: 5%;
+  transform: rotate(15deg);
+  font-size: 70px;
+}
+
+.bg-deco span:nth-child(3) {
+  top: 40%;
+  left: 1%;
+  transform: rotate(-10deg);
+  font-size: 60px;
+}
+
+.bg-deco span:nth-child(4) {
+  top: 60%;
+  right: 2%;
+  transform: rotate(25deg);
+  font-size: 85px;
+}
+
+.bg-deco span:nth-child(5) {
+  bottom: 20%;
+  left: 5%;
+  transform: rotate(-5deg);
+  font-size: 75px;
+}
+
+.bg-deco span:nth-child(6) {
+  bottom: 5%;
+  right: 8%;
+  transform: rotate(10deg);
+  font-size: 65px;
+}
+
+.bg-deco span:nth-child(7) {
+  bottom: 10%;
+  left: 30%;
+  transform: rotate(-15deg);
+  font-size: 55px;
+}
+
+.bg-deco span:nth-child(8) {
+  bottom: 8%;
+  right: 30%;
+  transform: rotate(20deg);
+  font-size: 60px;
+}
+
+.bg-deco span:nth-child(9) {
+  top: 30%;
+  left: 20%;
+  transform: rotate(8deg);
+  font-size: 50px;
+}
+
+.bg-deco span:nth-child(10) {
+  top: 70%;
+  right: 20%;
+  transform: rotate(-12deg);
+  font-size: 55px;
+}
+
+/* ── Wrapper utama ── */
+.login-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 860px;
+  padding: 24px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ── Logo & brand ── */
+.login-brand {
+  text-align: center;
+}
+
+.login-brand img {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+/* ── Card ── */
+.login-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: 820px;
+  display: flex;
+  overflow: hidden;
+  /* Fixed min-height agar card tidak berubah ukuran saat ganti role */
+  min-height: 420px;
+}
+
+/* ══════════════════════════════════════════
+   ROLE PANEL — panel kiri
+   Layout: arrow ▲ → gambar → label → arrow ▼
+   Semua di flex column, tengah, TIDAK ada absolute
+   ══════════════════════════════════════════ */
+.role-panel {
+  width: 220px;
+  flex-shrink: 0;
+  background: #f5f5f5;
+  border-radius: var(--radius) 0 0 var(--radius);
+
+  /* Flex column, center semua */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 16px;
+
+  /* TIDAK ada position: relative — arrow ikut flow */
+}
+
+/* Gambar role — FIXED size, tidak berubah apapun */
+.role-img-wrap {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  /* tidak mengecil */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.role-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Label role — fixed height agar tidak geser layout */
+.role-label {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--green-dark);
+  letter-spacing: -0.5px;
+  height: 28px;
+  /* fixed height */
+  line-height: 28px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Arrow button — sekarang ikut flow normal */
+.arrow-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--green);
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  padding: 0;
+}
+
+.arrow-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--green-dark);
+  transition: stroke 0.2s ease;
+  flex-shrink: 0;
+}
+
+.arrow-btn:hover {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.arrow-btn:hover svg {
+  stroke: #fff;
+}
+
+/* Sembunyikan class lama .role-arrows jika masih ada di HTML lama */
+.role-arrows {
+  display: none !important;
+}
+
+/* ══════════════════════════════════════════
+   FORM PANEL — panel kanan
+   ══════════════════════════════════════════ */
+.form-panel {
+  flex: 1;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+.form-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+}
+
+.form-title span {
+  color: var(--green-dark);
+}
+
+.alert-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.form-group input {
+  padding: 12px 16px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+  color: #111;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: #fafafa;
+  width: 100%;
+}
+
+.form-group input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(121, 183, 117, 0.2);
+  background: #fff;
+}
+
+/* ── Password wrapper ── */
+.input-password {
+  position: relative;
+}
+
+.input-password input {
+  padding-right: 44px;
+}
+
+/* Toggle mata */
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* SVG eye icon */
+.eye-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  stroke: #bbb;
+  fill: none;
+  transition: stroke 0.2s ease;
+  pointer-events: none;
+}
+
+.toggle-password:hover .eye-icon {
+  stroke: var(--green-dark);
+}
+
+/* ── Tombol submit ── */
+.btn-login {
+  padding: 13px;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  letter-spacing: 0.02em;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.btn-login:hover {
+  background: var(--green-dark);
+}
+
+.btn-login:active {
+  transform: scale(0.98);
+}
+
+/* ── Footer ── */
+.login-footer {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+
+}
+
+.input-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+  color: #333;
+  background: #fff;
+  outline: none;
+  transition: border .2s;
+}
+
+.input-select:focus {
+  border-color: #79b775;
+}
+
+/* ── Toggle Siswa / Guru ── */
+.toggle-wrap {
+  display: flex;
+  background: #f0f0f0;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.toggle-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.02em;
+}
+
+.toggle-tab.active {
+  background: #fff;
+  color: var(--green-dark);
+  border: 2px solid var(--green);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+}
+
+.toggle-tab:not(.active):hover {
+  color: var(--green-dark);
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE — max-width 600px
+   ══════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .login-card {
+    flex-direction: column;
+    max-width: 360px;
+    min-height: unset;
+  }
+
+  .role-panel {
+    width: 100%;
+    border-radius: var(--radius) var(--radius) 0 0;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+
+  .role-img-wrap {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+  }
+
+  .role-label {
+    font-size: 15px;
+    min-width: 64px;
+    height: 24px;
+    line-height: 24px;
+  }
+
+  .form-title {
+    text-align: center;
+  }
+
+  /* Pakai class khusus, bukan :first-child/:last-child */
+  .arrow-up svg {
+    transform: rotate(-90deg);
+  }
+
+  .arrow-down svg {
+    transform: rotate(-90deg);
+  }
+
+  .form-panel {
+    padding: 24px 20px;
+  }
+}

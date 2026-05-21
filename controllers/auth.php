@@ -5,120 +5,127 @@ function login()
 {
     global $conn;
 
-    $username = trim($_POST['username'] ?? '');
     $pass = $_POST['password'] ?? '';
-    $role = $_POST['role'] ?? 'siswa';
+    $role = $_POST['role'] ?? '';
 
-    if (empty($username) || empty($pass)) {
-        return "Username dan password wajib diisi.";
+    if (empty($pass) || empty($role)) {
+        return "Password dan role wajib diisi.";
     }
 
     switch ($role) {
 
         // ----------------------------------------
-        // SISWA — nama + nisn + password (MD5)
+        // PEMBELI — siswa (NISN 10 digit) atau guru (NUPTK 16 digit)
         // ----------------------------------------
-        case 'siswa':
-            $nisn = trim($_POST['nisn'] ?? '');
-            if (empty($nisn))
-                return "NISN wajib diisi.";
+        case 'pembeli':
+            $identifier = trim($_POST['identifier'] ?? '');
+            if (empty($identifier))
+                return "NISN atau NUPTK wajib diisi.";
+            if (!ctype_digit($identifier))
+                return "NISN/NUPTK hanya boleh angka.";
 
-            $u = mysqli_real_escape_string($conn, $username);
-            $n = mysqli_real_escape_string($conn, $nisn);
+            $len = strlen($identifier);
+            $id = mysqli_real_escape_string($conn, $identifier);
 
-            $res = mysqli_query($conn, "SELECT * FROM murid WHERE nama = '$u' AND nisn = '$n' LIMIT 1");
+            if ($len === 10) {
+                $res = mysqli_query($conn, "SELECT * FROM murid WHERE nisn = '$id' LIMIT 1");
+                $user = mysqli_fetch_assoc($res);
+
+                if (!$user)
+                    return "NISN tidak ditemukan.";
+                if ($user['password'] !== md5($pass))
+                    return "Password salah.";
+
+                mysqli_query($conn, "UPDATE murid SET terakhir_login = NOW() WHERE nisn = '$id'");
+
+                $_SESSION['user_id'] = $user['nisn'];
+                $_SESSION['user_nama'] = $user['nama'];
+                $_SESSION['user_role'] = 'siswa';
+                $_SESSION['user_foto'] = $user['foto_profil'];
+
+                header('Location: ../views/siswa/dashboard.php');
+                exit;
+
+            } elseif ($len === 16) {
+                $res = mysqli_query($conn, "SELECT * FROM guru WHERE nuptk = '$id' LIMIT 1");
+                $user = mysqli_fetch_assoc($res);
+
+                if (!$user)
+                    return "NUPTK tidak ditemukan.";
+                if ($user['password'] !== md5($pass))
+                    return "Password salah.";
+
+                mysqli_query($conn, "UPDATE guru SET terakhir_login = NOW() WHERE nuptk = '$id'");
+
+                $_SESSION['user_id'] = $user['nuptk'];
+                $_SESSION['user_nama'] = $user['nama'];
+                $_SESSION['user_role'] = 'guru';
+                $_SESSION['user_foto'] = $user['foto_profil'];
+
+                header('Location: ../views/guru/dashboard.php');
+                exit;
+
+            } else {
+                return "NISN harus 10 digit, NUPTK harus 16 digit.";
+            }
+
+        // ----------------------------------------
+        // PENJUAL — username + id_toko + password (MD5)
+        // ----------------------------------------
+        case 'penjual':
+            $nama = trim($_POST['username'] ?? '');
+            $id_toko = (int) ($_POST['id_toko'] ?? 0);
+
+            if (empty($nama))
+                return "Nama wajib diisi.";
+            if (!$id_toko)
+                return "Pilih kantin terlebih dahulu.";
+
+            $n = mysqli_real_escape_string($conn, $nama);
+            $res = mysqli_query($conn, "SELECT * FROM penjual WHERE nama = '$n' AND status = 'aktif' LIMIT 1");
             $user = mysqli_fetch_assoc($res);
 
             if (!$user)
-                return "Username atau NISN tidak sesuai.";
+                return "Nama tidak ditemukan.";
             if ($user['password'] !== md5($pass))
                 return "Password salah.";
 
-            $_SESSION['user_id'] = $user['nisn'];
+            $pid = (int) $user['id_penjual'];
+            $cek = mysqli_fetch_assoc(mysqli_query(
+                $conn,
+                "SELECT id FROM toko_penjual WHERE id_penjual=$pid AND id_toko=$id_toko AND status='aktif' LIMIT 1"
+            ));
+            if (!$cek)
+                return "Kamu tidak terdaftar di kantin tersebut.";
+
+            mysqli_query($conn, "UPDATE penjual SET terakhir_login = NOW() WHERE id_penjual = $pid");
+
+            $_SESSION['user_id'] = $user['id_penjual'];
             $_SESSION['user_nama'] = $user['nama'];
-            $_SESSION['user_role'] = 'siswa';
+            $_SESSION['user_role'] = 'penjual';
+            $_SESSION['user_foto'] = $user['foto_profil'];
+            $_SESSION['id_toko'] = $id_toko;
 
-            header('Location: ../views/siswa/dashboard.php');
-            exit;
-
-        // ----------------------------------------
-        // GURU — nama + nuptk + password (MD5)
-        // ----------------------------------------
-        case 'guru':
-            $nuptk = trim($_POST['nuptk'] ?? '');
-            if (empty($nuptk))
-                return "NUPTK wajib diisi.";
-
-            $u = mysqli_real_escape_string($conn, $username);
-            $n = mysqli_real_escape_string($conn, $nuptk);
-
-            $res = mysqli_query($conn, "SELECT * FROM guru WHERE nama = '$u' AND nuptk = '$n' LIMIT 1");
-            $user = mysqli_fetch_assoc($res);
-
-            if (!$user)
-                return "Username atau NUPTK tidak sesuai.";
-            if ($user['password'] !== md5($pass))
-                return "Password salah.";
-
-            $_SESSION['user_id'] = $user['nuptk'];
-            $_SESSION['user_nama'] = $user['nama'];
-            $_SESSION['user_role'] = 'guru';
-
-            header('Location: ../views/guru/dashboard.php');
-            exit;
-
-        // ----------------------------------------
-        // KANTIN — nama penjual + id_toko + password (MD5)
-        // Catatan: tabel penjual belum punya kolom password,
-        // sementara pakai password = md5(id_penjual) sebagai default
-        // ----------------------------------------
-        case 'kantin':
-            $nomor_lapak = trim($_POST['nomor_lapak'] ?? '');
-            if (empty($nomor_lapak))
-                return "Nomor lapak wajib diisi.";
-
-            $u = mysqli_real_escape_string($conn, $username);
-            $l = (int) $nomor_lapak;
-
-            // Cari penjual berdasarkan nama + verifikasi toko miliknya
-            $res = mysqli_query($conn, "
-                SELECT p.*, t.id_toko FROM penjual p
-                JOIN toko t ON t.id_penjual = p.id_penjual
-                WHERE p.nama = '$u' AND t.id_toko = $l
-                LIMIT 1
-            ");
-            $penjual = mysqli_fetch_assoc($res);
-
-            if (!$penjual)
-                return "Nama atau nomor lapak tidak sesuai.";
-
-            // Sementara password default = md5(id_penjual) karena kolom password belum ada
-            $defaultPass = md5($penjual['id_penjual']);
-            if (md5($pass) !== $defaultPass)
-                return "Password salah.";
-
-            $_SESSION['user_id'] = $penjual['id_penjual'];
-            $_SESSION['user_nama'] = $penjual['nama'];
-            $_SESSION['user_role'] = 'kantin';
-            $_SESSION['id_toko'] = $penjual['id_toko'];
-
-            header('Location: ../views/kantin/dashboard.php');
+            header('Location: ../views/penjual/index.php');
             exit;
 
         // ----------------------------------------
         // ADMIN — nama + kode_aktivasi + password (MD5)
         // ----------------------------------------
         case 'admin':
+            $username = trim($_POST['username'] ?? '');
             $kode = trim($_POST['kode_aktivasi'] ?? '');
+
+            if (empty($username))
+                return "Username wajib diisi.";
             if (empty($kode))
                 return "Kode aktivasi wajib diisi.";
 
             $u = mysqli_real_escape_string($conn, $username);
             $k = mysqli_real_escape_string($conn, $kode);
-
             $res = mysqli_query($conn, "
-                SELECT * FROM admin 
-                WHERE nama = '$u' AND kode_aktivasi = '$k' AND status = 'aktif' 
+                SELECT * FROM admin
+                WHERE nama = '$u' AND kode_aktivasi = '$k' AND status = 'aktif'
                 LIMIT 1
             ");
             $user = mysqli_fetch_assoc($res);
@@ -128,13 +135,13 @@ function login()
             if ($user['password'] !== md5($pass))
                 return "Password salah.";
 
-            // Update waktu login terakhir
             $id = (int) $user['id_admin'];
             mysqli_query($conn, "UPDATE admin SET terakhir_login = NOW() WHERE id_admin = $id");
 
             $_SESSION['user_id'] = $user['id_admin'];
             $_SESSION['user_nama'] = $user['nama'];
             $_SESSION['user_role'] = 'admin';
+            $_SESSION['user_foto'] = $user['foto_profil'];
 
             header('Location: ../views/admin/?section=dashboard');
             exit;
@@ -147,6 +154,6 @@ function login()
 function logout()
 {
     session_destroy();
-    header('Location: ../auth/login.php');
+    header('Location: ../views/login/index.php');
     exit;
 }

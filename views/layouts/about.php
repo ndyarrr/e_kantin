@@ -263,5 +263,5 @@ $statMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c F
 <hr class="ab-divider" />
 <div class="ab-footer-row">
     <span>©2026 ERROR 404 Team</span>
-    <span>SMKN 1 Boyolanggu</span>
+    <span>SMKN 1 Boyolangu</span>
 </div>
