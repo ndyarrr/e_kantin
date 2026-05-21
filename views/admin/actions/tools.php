@@ -96,10 +96,21 @@ if ($action === 'tools_import_murid') {
                 $feedback = ['type' => 'error', 'msg' => 'Kolom NISN atau Nama tidak ditemukan. Pastikan header CSV mengandung kolom "nisn" dan "nama".'];
             } else {
                 // Cache mapping kelas & jurusan nama → id
+                // Ganti cache mapping kelas
                 $mapKelas = [];
-                $res = mysqli_query($conn, "SELECT id_kelas, kelas FROM kelas");
-                while ($r = mysqli_fetch_assoc($res))
-                    $mapKelas[strtolower(trim($r['kelas']))] = $r['id_kelas'];
+                $res = mysqli_query($conn, "
+                    SELECT k.id_kelas, 
+                        CONCAT(k.kelas, ' ', j.nama_jurusan, ' ', k.rombel) as nama_lengkap,
+                        k.kelas, k.rombel, j.nama_jurusan
+                    FROM kelas k 
+                    JOIN jurusan j ON j.id_jurusan = k.id_jurusan
+                ");
+                while ($r = mysqli_fetch_assoc($res)) {
+                    // Support berbagai format: "10 RPL 1", "10rpl1", "10", dll
+                    $mapKelas[strtolower($r['nama_lengkap'])] = $r['id_kelas'];
+                    $mapKelas[strtolower($r['kelas'] . $r['nama_jurusan'] . $r['rombel'])] = $r['id_kelas'];
+                    $mapKelas[strtolower($r['kelas'])] = $r['id_kelas']; // fallback
+                }
 
                 $mapJurusan = [];
                 $res = mysqli_query($conn, "SELECT id_jurusan, nama_jurusan FROM jurusan");
