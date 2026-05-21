@@ -66,13 +66,11 @@
                                 <td class="center"><?= $t['total_penjual'] ?></td>
                                 <td>
                                     <span class="badge <?= $t['status'] === 'buka' ? 'badge-aktif' : 'badge-nonaktif' ?>">
-                                        <i
-                                            class="fa-solid <?= $t['status'] === 'buka' ? 'fa-circle-check' : 'fa-circle-xmark' ?>"></i>
+                                        <i class="fa-solid <?= $t['status'] === 'buka' ? 'fa-circle-check' : 'fa-circle-xmark' ?>"></i>
                                         <?= ucfirst($t['status']) ?>
                                     </span>
                                 </td>
                                 <td class="center" style="white-space:nowrap">
-
                                     <form method="POST" action="?section=kantin" style="display:inline"
                                         id="form-hapus-<?= $t['id_toko'] ?>">
                                         <input type="hidden" name="action" value="kantin_hapus">
@@ -149,8 +147,7 @@
                     <input type="hidden" name="_selected_toko" value="<?= $detailToko['id_toko'] ?>">
                     <div class="form-group">
                         <label>Nama Kantin</label>
-                        <input type="text" name="nama_toko" value="<?= htmlspecialchars($detailToko['nama_toko']) ?>"
-                            required>
+                        <input type="text" name="nama_toko" value="<?= htmlspecialchars($detailToko['nama_toko']) ?>" required>
                     </div>
                     <div class="form-group">
                         <label>Deskripsi</label>
@@ -186,8 +183,7 @@
                         <div class="penjual-item">
                             <div>
                                 <div class="penjual-nama"><?= htmlspecialchars($p['nama']) ?></div>
-                                <div class="penjual-shift"><?= $p['shift'] ? ucfirst($p['shift']) : 'Shift tidak ditentukan' ?>
-                                </div>
+                                <div class="penjual-shift"><?= $p['shift'] ? ucfirst($p['shift']) : 'Shift tidak ditentukan' ?></div>
                             </div>
                             <form method="POST" style="display:inline" onsubmit="return confirm('Lepas penjual ini?')">
                                 <input type="hidden" name="action" value="kantin_lepas_penjual">
@@ -242,46 +238,6 @@
                 </button>
             </div>
 
-            <!-- Form tambah menu — tersembunyi by default -->
-            <div id="formTambahMenu" class="form-tambah-menu" style="display:none">
-                <form method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="action" value="menu_tambah">
-                    <input type="hidden" name="id_toko" value="<?= $detailToko['id_toko'] ?>">
-                    <input type="hidden" name="_section" value="kantin">
-                    <input type="hidden" name="_selected_toko" value="<?= $detailToko['id_toko'] ?>">
-                    <input type="hidden" name="_menu_edit_mode" value="1">
-                    <div class="form-tambah-menu-grid">
-                        <div class="form-group">
-                            <label>Nama Menu</label>
-                            <input type="text" name="nama_menu" placeholder="cth. Nasi Ayam" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Harga (Rp)</label>
-                            <input type="number" name="harga" placeholder="cth. 12000" required min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Stok</label>
-                            <input type="number" name="stok" placeholder="cth. 30" required min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Foto Menu</label>
-                            <input type="file" name="foto_menu" accept="image/*">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Deskripsi</label>
-                        <input type="text" name="deskripsi" placeholder="Opsional">
-                    </div>
-                    <div class="form-tambah-menu-actions">
-                        <button type="submit" class="btn-submit" style="width:auto;padding:10px 20px">
-                            <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Simpan
-                        </button>
-                        <button type="button" onclick="document.getElementById('formTambahMenu').style.display='none'"
-                            class="btn-batal">Batal</button>
-                    </div>
-                </form>
-            </div>
-
             <div class="table-scroll">
                 <table>
                     <thead>
@@ -297,7 +253,7 @@
                     <tbody>
                         <?php if (empty($menuToko)): ?>
                             <tr class="empty-row">
-                                <td colspan="5" id="emptyMenuColspan">Belum ada menu</td>
+                                <td colspan="5">Belum ada menu</td>
                             </tr>
                         <?php else:
                             foreach ($menuToko as $m): ?>
@@ -323,14 +279,12 @@
                                             <?= $m['tersedia'] ? 'Ya' : 'Tidak' ?>
                                         </span>
                                     </td>
-                                    <!-- Kolom aksi hapus, tersembunyi by default -->
                                     <td class="center col-aksi-menu" style="display:none">
                                         <form method="POST" style="display:inline" onsubmit="return confirm('Hapus menu ini?')">
                                             <input type="hidden" name="action" value="menu_hapus">
                                             <input type="hidden" name="id_menu" value="<?= $m['id_menu'] ?>">
                                             <input type="hidden" name="_section" value="kantin">
                                             <input type="hidden" name="_selected_toko" value="<?= $detailToko['id_toko'] ?>">
-                                            <input type="hidden" name="_menu_edit_mode" value="1">
                                             <button type="submit" class="btn-aksi danger" title="Hapus menu">
                                                 <i class="fa-solid fa-trash"></i>
                                             </button>
@@ -344,53 +298,31 @@
         </div>
 
     </div>
-
 <?php endif; ?>
+
 <!-- Modal foto kantin -->
 <div id="modalFotoKantin" onclick="tutupFotoKantin()"
     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out">
     <img id="modalFotoImg" src="" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain">
 </div>
+
 <script>
     let menuEditMode = false;
 
     function toggleModeEditMenu() {
         menuEditMode = !menuEditMode;
 
-        const btn = document.getElementById('btnModeEditMenu');
-        const ikon = document.getElementById('ikonModeEdit');
-        const header = document.getElementById('menuCardHeader');
+        const btn     = document.getElementById('btnModeEditMenu');
         const colAksi = document.querySelectorAll('.col-aksi-menu');
-        const formTambah = document.getElementById('formTambahMenu');
-        const btnTambahId = 'btnTambahMenuEdit';
 
         if (menuEditMode) {
-            // Aktifkan mode edit
             btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Mode Edit: ON';
             btn.style.cssText = 'background:var(--red,#e74c3c);color:#fff;border-color:var(--red,#e74c3c)';
             colAksi.forEach(el => el.style.display = '');
-
-            // Sisipkan tombol "Tambah Menu" sebelum tombol Mode Edit
-            if (!document.getElementById(btnTambahId)) {
-                const btnTambah = document.createElement('button');
-                btnTambah.id = btnTambahId;
-                btnTambah.className = 'btn-tambah-menu';
-                btnTambah.innerHTML = '<i class="fa-solid fa-plus"></i> Tambah Menu';
-                btnTambah.onclick = () => {
-                    formTambah.style.display = formTambah.style.display === 'none' ? 'block' : 'none';
-                };
-                header.insertBefore(btnTambah, btn);
-            }
         } else {
-            // Nonaktifkan mode edit
             btn.innerHTML = '<i class="fa-solid fa-lock"></i> Mode Edit';
             btn.style.cssText = '';
             colAksi.forEach(el => el.style.display = 'none');
-            formTambah.style.display = 'none';
-
-            // Hapus tombol tambah menu
-            const btnTambah = document.getElementById(btnTambahId);
-            if (btnTambah) btnTambah.remove();
         }
     }
 
@@ -404,12 +336,10 @@
         document.getElementById('modalFotoKantin').style.display = 'none';
     }
 
-    // Tutup dengan ESC
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') tutupFotoKantin();
     });
 
-    // HAPUS semua ini
     function selectToko(id) {
         sessionStorage.setItem('adminScrollPos', window.scrollY);
         window.location.href = '?section=kantin&toko=' + id;
@@ -418,6 +348,4 @@
     function tutupDetailToko() {
         window.location.href = '?section=kantin';
     }
-
-
 </script>
