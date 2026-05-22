@@ -2,14 +2,14 @@
 
 <div class="stats-grid col2">
     <div class="stat-card">
-        <div class="stat-label">Total Penjual</div>
+        <div class="stat-label">Total Owner Kantin</div>
         <div class="stat-row">
             <div class="stat-value"><?= $totalPenjual ?></div>
             <i class="fa-solid fa-user-tie stat-icon"></i>
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-label">Penjual Aktif</div>
+        <div class="stat-label">Owner Aktif</div>
         <div class="stat-row">
             <div class="stat-value"><?= $penjualAktif ?><span class="sub"> / <?= $totalPenjual ?></span></div>
             <i class="fa-solid fa-circle-check stat-icon"></i>
@@ -18,18 +18,18 @@
 </div>
 
 <div class="page-grid">
-    <!-- Tabel Daftar Penjual -->
+    <!-- Tabel Daftar Owner -->
     <div class="table-card">
         <div class="table-card-header">
-            <h2>Daftar Penjual</h2>
+            <h2>Daftar Owner Kantin</h2>
         </div>
         <div class="table-scroll">
             <table>
                 <thead>
                     <tr>
-                        <th>Nama Penjual</th>
+                        <th>Nama Owner</th>
                         <th class="col-hide">Username</th>
-                        <th class="col-hide">Kantin</th>
+                        <th class="col-hide">Kantin Dikelola</th>
                         <th>Status</th>
                         <th class="center">Aksi</th>
                     </tr>
@@ -40,7 +40,7 @@
                             <td colspan="5">
                                 <i class="fa-solid fa-user-tie"
                                     style="color:var(--green-muted);font-size:22px;display:block;margin-bottom:8px"></i>
-                                Belum ada penjual
+                                Belum ada owner kantin
                             </td>
                         </tr>
                     <?php else:
@@ -54,7 +54,7 @@
                                                 class="toko-thumb" style="border-radius:50%">
                                         <?php else: ?>
                                             <div class="toko-thumb-placeholder" style="border-radius:50%">
-                                                <i class="fa-solid fa-user"></i>
+                                                <i class="fa-solid fa-user-tie"></i>
                                             </div>
                                         <?php endif; ?>
                                         <span><?= htmlspecialchars($p['nama']) ?></span>
@@ -99,7 +99,7 @@
                                         <input type="hidden" name="id_penjual" value="<?= $p['id_penjual'] ?>">
                                         <input type="hidden" name="_section" value="penjual">
                                         <button type="button" class="btn-aksi danger" title="Hapus"
-                                            onclick="event.stopPropagation();if(confirm('Hapus penjual <?= htmlspecialchars($p['nama']) ?>?'))this.closest('form').submit()">
+                                            onclick="event.stopPropagation();if(confirm('Hapus owner <?= htmlspecialchars($p['nama']) ?>?'))this.closest('form').submit()">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </form>
@@ -111,14 +111,14 @@
         </div>
     </div>
 
-    <!-- Form Tambah Penjual -->
+    <!-- Form Tambah Owner -->
     <div class="form-card">
-        <h2><i class="fa-solid fa-user-plus" style="color:var(--green);margin-right:8px"></i>Tambah Penjual Baru</h2>
+        <h2><i class="fa-solid fa-user-plus" style="color:var(--green);margin-right:8px"></i>Tambah Owner Baru</h2>
         <form method="POST" action="?section=penjual">
             <input type="hidden" name="action" value="penjual_tambah">
             <input type="hidden" name="_section" value="penjual">
             <div class="form-group">
-                <label>Nama Penjual</label>
+                <label>Nama Owner</label>
                 <input type="text" name="nama" placeholder="cth. Bu Sari" required autocomplete="off">
             </div>
             <div class="form-group">
@@ -145,13 +145,13 @@
                 </select>
             </div>
             <button type="submit" class="btn-submit">
-                <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Simpan Penjual
+                <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Simpan Akun Owner
             </button>
         </form>
     </div>
 </div>
 
-<!-- Detail Penjual -->
+<!-- Detail Owner -->
 <?php if ($selectedPenjual && $detailPenjual): ?>
     <div class="detail-toko-section" id="detailPenjualSection" style="margin-top:20px">
 
@@ -162,12 +162,13 @@
                         <img src="../../assets/img/penjual/<?= htmlspecialchars($detailPenjual['foto_profil']) ?>?v=<?= time() ?>"
                             style="border-radius:50%;width:100%;height:100%;object-fit:cover">
                     <?php else: ?>
-                        <i class="fa-solid fa-user"></i>
+                        <i class="fa-solid fa-user-tie"></i>
                     <?php endif; ?>
                 </div>
                 <div>
                     <div class="detail-toko-nama"><?= htmlspecialchars($detailPenjual['nama']) ?></div>
-                    <div class="detail-toko-desk">@<?= htmlspecialchars($detailPenjual['username'] ?: '-') ?></div>
+                    <div class="detail-toko-desk">@<?= htmlspecialchars($detailPenjual['username'] ?: '-') ?> &bull; Owner
+                        Kantin</div>
                 </div>
             </div>
             <button onclick="tutupDetailPenjual()" class="btn-aksi toggle-off" title="Tutup">
@@ -177,9 +178,9 @@
 
         <div class="detail-toko-grid">
 
-            <!-- Form Edit Penjual -->
+            <!-- Form Edit Owner -->
             <div class="form-card">
-                <h2><i class="fa-solid fa-pen" style="color:var(--green);margin-right:8px"></i>Edit Penjual</h2>
+                <h2><i class="fa-solid fa-pen" style="color:var(--green);margin-right:8px"></i>Edit Data Owner</h2>
                 <form method="POST" action="?section=penjual&penjual=<?= $detailPenjual['id_penjual'] ?>"
                     enctype="multipart/form-data">
                     <input type="hidden" name="action" value="penjual_edit">
@@ -187,7 +188,7 @@
                     <input type="hidden" name="_section" value="penjual">
                     <input type="hidden" name="_selected_penjual" value="<?= $detailPenjual['id_penjual'] ?>">
                     <div class="form-group">
-                        <label>Nama Penjual</label>
+                        <label>Nama Owner</label>
                         <input type="text" name="nama" value="<?= htmlspecialchars($detailPenjual['nama']) ?>" required>
                     </div>
                     <div class="form-group">
@@ -224,13 +225,46 @@
             </div>
 
             <!-- Kantin yang dikelola -->
+            <!-- Kantin yang dikelola (1 Owner = Maksimal 1 Kantin) -->
             <div class="form-card">
                 <h2><i class="fa-solid fa-store" style="color:var(--green);margin-right:8px"></i>Kantin Dikelola</h2>
 
                 <?php if (empty($kantinPenjual)): ?>
-                    <div class="empty-penjual">Penjual ini belum assigned ke kantin manapun</div>
-                <?php else:
-                    foreach ($kantinPenjual as $k): ?>
+                    <!-- TAMPILAN JIKA BELUM PUNYA KANTIN -->
+                    <div class="empty-penjual" style="margin-bottom:15px">Owner ini belum assigned ke kantin manapun</div>
+
+                    <div class="assign-penjual-wrap">
+                        <div class="form-group-label">Assign ke Kantin</div>
+                        <form method="POST" action="?section=penjual&penjual=<?= $detailPenjual['id_penjual'] ?>">
+                            <input type="hidden" name="action" value="kantin_assign_penjual">
+                            <input type="hidden" name="id_penjual" value="<?= $detailPenjual['id_penjual'] ?>">
+                            <input type="hidden" name="_section" value="penjual">
+                            <input type="hidden" name="_selected_penjual" value="<?= $detailPenjual['id_penjual'] ?>">
+                            <div class="form-group">
+                                <select name="id_toko" class="form-select" required>
+                                    <option value="">Pilih kantin...</option>
+                                    <?php foreach ($semuaToko as $t): ?>
+                                        <option value="<?= $t['id_toko'] ?>"><?= htmlspecialchars($t['nama_toko']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select name="shift" class="form-select">
+                                    <option value="">Shift (opsional)</option>
+                                    <option value="pagi">Pagi (07.00–09.30)</option>
+                                    <option value="istirahat">Istirahat (09.30–12.00)</option>
+                                    <option value="siang">Siang (12.00–15.00)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-submit">
+                                <i class="fa-solid fa-store" style="margin-right:6px"></i>Assign ke Kantin
+                            </button>
+                        </form>
+                    </div>
+
+                <?php else: ?>
+                    <!-- TAMPILAN JIKA SUDAH PUNYA KANTIN (FORM ASSIGN DISEMBUNYIKAN) -->
+                    <?php foreach ($kantinPenjual as $k): ?>
                         <div class="penjual-item">
                             <div>
                                 <div class="penjual-nama"><?= htmlspecialchars($k['nama_toko']) ?></div>
@@ -239,49 +273,54 @@
                                 </div>
                             </div>
                             <form method="POST" action="?section=penjual&penjual=<?= $detailPenjual['id_penjual'] ?>"
-                                style="display:inline" onsubmit="return confirm('Lepas dari kantin ini?')">
+                                style="display:inline" onsubmit="return confirm('Lepas owner dari kantin ini?')">
                                 <input type="hidden" name="action" value="kantin_lepas_penjual">
                                 <input type="hidden" name="id_tp" value="<?= $k['id'] ?>">
                                 <input type="hidden" name="_section" value="penjual">
                                 <input type="hidden" name="_selected_penjual" value="<?= $detailPenjual['id_penjual'] ?>">
                                 <button type="submit" class="btn-aksi danger" title="Lepas dari kantin">
-                                    <i class="fa-solid fa-store-slash"></i>
+                                    <i class="fa-solid fa-store-slash"></i> Lepas
                                 </button>
                             </form>
                         </div>
-                    <?php endforeach; endif; ?>
+                    <?php endforeach; ?>
 
-                <div class="assign-penjual-wrap">
-                    <div class="form-group-label">Assign ke Kantin</div>
-                    <form method="POST" action="?section=penjual&penjual=<?= $detailPenjual['id_penjual'] ?>">
-                        <input type="hidden" name="action" value="kantin_assign_penjual">
-                        <input type="hidden" name="id_penjual" value="<?= $detailPenjual['id_penjual'] ?>">
-                        <input type="hidden" name="_section" value="penjual">
-                        <input type="hidden" name="_selected_penjual" value="<?= $detailPenjual['id_penjual'] ?>">
-                        <div class="form-group">
-                            <select name="id_toko" class="form-select">
-                                <option value="">Pilih kantin...</option>
-                                <?php foreach ($semuaToko as $t): ?>
-                                    <option value="<?= $t['id_toko'] ?>"><?= htmlspecialchars($t['nama_toko']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <select name="shift" class="form-select">
-                                <option value="">Shift (opsional)</option>
-                                <option value="pagi">Pagi (07.00–09.30)</option>
-                                <option value="istirahat">Istirahat (09.30–12.00)</option>
-                                <option value="siang">Siang (12.00–15.00)</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn-submit">
-                            <i class="fa-solid fa-store" style="margin-right:6px"></i>Assign ke Kantin
-                        </button>
-                    </form>
-                </div>
+                    <div style="font-size:11px; color:var(--text-light); text-align:center; margin-top:15px; font-style:italic">
+                        * Owner sudah mengelola 1 kantin. Lepas terlebih dahulu jika ingin menukar kantin.
+                    </div>
+                <?php endif; ?>
             </div>
-
         </div>
+    </div>
+    <!-- DAFTAR STAF KASIR (INFO READ-ONLY UNTUK ADMIN) -->
+    <div class="form-card" style="margin-top:20px">
+        <h2><i class="fa-solid fa-users-gear" style="color:var(--green);margin-right:8px"></i>Daftar Staf Kasir Stand</h2>
+
+        <?php if (empty($stafOwner)): ?>
+            <div class="empty-penjual" style="padding:15px 0; text-align:center; color:var(--text-light)">
+                Belum ada staf kasir yang dipekerjakan oleh owner ini.
+            </div>
+        <?php else:
+            foreach ($stafOwner as $s): ?>
+                <div class="penjual-item"
+                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                    <div>
+                        <div class="penjual-nama" style="font-weight:600; font-size:14px;">
+                            <?= htmlspecialchars($s['nama']) ?>
+                            <span
+                                style="font-size:11px; font-weight:normal; color:var(--text-light)">(@<?= htmlspecialchars($s['username']) ?>)</span>
+                        </div>
+                        <div class="penjual-shift" style="font-size:11px; color:var(--text-light); margin-top:2px;">
+                            Stand: <?= htmlspecialchars($s['nama_toko']) ?>
+                            &bull; <?= $s['shift'] ? 'Shift: ' . ucfirst($s['shift']) : 'Shift Bebas' ?>
+                        </div>
+                    </div>
+                    <span class="badge <?= $s['status'] === 'aktif' ? 'badge-aktif' : 'badge-nonaktif' ?>"
+                        style="font-size:11px; padding:2px 6px;">
+                        <?= ucfirst($s['status']) ?>
+                    </span>
+                </div>
+            <?php endforeach; endif; ?>
     </div>
 <?php endif; ?>
 

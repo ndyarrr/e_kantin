@@ -1,57 +1,51 @@
 <?php
 // sections/kantin_data.php
 
-// selected toko dari URL/POST
 $selectedToko = (int) ($_POST['_selected_toko'] ?? $_GET['toko'] ?? 0);
 
-// daftar semua toko
 $tokos = mysqli_fetch_all(mysqli_query(
     $conn,
     "SELECT t.*,
-            COUNT(DISTINCT m.id_menu) as total_menu,
-            COUNT(DISTINCT tp.id) as total_penjual
+     (SELECT COUNT(id_menu) FROM menu WHERE id_toko = t.id_toko) as total_menu,
+     (SELECT COUNT(tp1.id) FROM toko_penjual tp1 
+      JOIN penjual p1 ON p1.id_penjual = tp1.id_penjual 
+      WHERE tp1.id_toko = t.id_toko AND tp1.status = 'aktif' AND p1.role = 'staf') as total_penjual,
+     (SELECT p2.nama FROM penjual p2 
+      JOIN toko_penjual tp2 ON tp2.id_penjual = p2.id_penjual 
+      WHERE tp2.id_toko = t.id_toko AND p2.role = 'owner' AND tp2.status = 'aktif' LIMIT 1) as nama_owner
      FROM toko t
-     LEFT JOIN menu m ON m.id_toko = t.id_toko
-     LEFT JOIN toko_penjual tp ON tp.id_toko = t.id_toko AND tp.status = 'aktif'
-     GROUP BY t.id_toko
-     ORDER BY t.dibuat_pada DESC"
+     ORDER BY t.nama_toko ASC"
 ), MYSQLI_ASSOC);
 
-
-
-// detail toko yang dipilih
 $detailToko = null;
 $menuToko = [];
 $penjualToko = [];
-$semuaPenjual = [];
 
 if ($selectedToko) {
     $detailToko = mysqli_fetch_assoc(mysqli_query(
         $conn,
-        "SELECT * FROM toko WHERE id_toko=$selectedToko"
+        "SELECT t.*,
+         (SELECT p2.nama FROM penjual p2 
+          JOIN toko_penjual tp2 ON tp2.id_penjual = p2.id_penjual 
+          WHERE tp2.id_toko = t.id_toko AND p2.role = 'owner' AND tp2.status = 'aktif' LIMIT 1) as nama_owner
+         FROM toko t
+         WHERE t.id_toko = $selectedToko"
     ));
 
-    $menuToko = mysqli_fetch_all(mysqli_query(
-        $conn,
-        "SELECT * FROM menu WHERE id_toko=$selectedToko ORDER BY nama_menu ASC"
-    ), MYSQLI_ASSOC);
-
+    // ✅ Hanya ambil staf (role='staf'), bukan owner
     $penjualToko = mysqli_fetch_all(mysqli_query(
         $conn,
-        "SELECT tp.id as id_tp, p.nama, tp.shift
+        "SELECT tp.id as id_tp, tp.shift, p.nama, p.foto_profil
          FROM toko_penjual tp
          JOIN penjual p ON p.id_penjual = tp.id_penjual
-         WHERE tp.id_toko=$selectedToko AND tp.status='aktif'
+         WHERE tp.id_toko = $selectedToko 
+           AND tp.status = 'aktif' 
+           AND p.role = 'staf'
          ORDER BY p.nama ASC"
     ), MYSQLI_ASSOC);
 
-    $semuaPenjual = mysqli_fetch_all(mysqli_query(
+    $menuToko = mysqli_fetch_all(mysqli_query(
         $conn,
-        "SELECT * FROM penjual 
-WHERE status='aktif' 
-AND id_penjual NOT IN (
-    SELECT id_penjual FROM toko_penjual WHERE status='aktif'
-)
-ORDER BY nama ASC"
+        "SELECT * FROM menu WHERE id_toko = $selectedToko ORDER BY nama_menu ASC"
     ), MYSQLI_ASSOC);
 }

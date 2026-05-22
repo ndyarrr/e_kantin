@@ -4,11 +4,13 @@
 
 $selectedPenjual = (int) ($_POST['_selected_penjual'] ?? 0);
 $sel = $selectedPenjual ?: (int) ($_POST['_selected_penjual'] ?? 0);
+
 /* Tambah penjual */
 if ($action === 'penjual_tambah') {
     $nama = trim($_POST['nama'] ?? '');
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
+    $role = in_array(trim($_POST['role'] ?? ''), ['staf', 'owner']) ? trim($_POST['role']) : 'staf'; // TANGKAP ROLE BARU
     $id_toko = (int) ($_POST['id_toko'] ?? 0);
 
     if ($nama === '' || $username === '' || $password === '') {
@@ -21,7 +23,9 @@ if ($action === 'penjual_tambah') {
             $n = mysqli_real_escape_string($conn, $nama);
             $u = mysqli_real_escape_string($conn, $username);
             $h = md5($password);
-            mysqli_query($conn, "INSERT INTO penjual (nama, username, password) VALUES ('$n','$u','$h')");
+
+            // MASUKKAN KOLOM ROLE KE QUERY
+            mysqli_query($conn, "INSERT INTO penjual (nama, username, password, role) VALUES ('$n','$u','$h','$role')");
             $id_baru = mysqli_insert_id($conn);
 
             if ($id_toko && $id_baru) {
@@ -29,17 +33,21 @@ if ($action === 'penjual_tambah') {
                 mysqli_query($conn, "INSERT INTO toko_penjual (id_toko, id_penjual) VALUES ($id_toko, $id_baru)");
             }
 
-            catatLog($conn, 'Tambah Penjual', 'Menambahkan data penjual baru bernama: ' . $nama_penjual);
+            // Memperbaiki bug variable $nama_penjual -> $nama
+            catatLog($conn, 'Tambah Penjual', "Menambahkan data pengelola ($role) baru bernama: " . $nama);
 
-            $feedback = ['type' => 'success', 'msg' => "Penjual <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan."];
+            $labelRole = $role === 'owner' ? 'Owner Kantin' : 'Penjual';
+            $feedback = ['type' => 'success', 'msg' => "$labelRole <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan."];
         }
     }
 }
+
 /* Edit penjual */
 if ($action === 'penjual_edit') {
     $id = (int) ($_POST['id_penjual'] ?? 0);
     $nama = trim($_POST['nama'] ?? '');
     $username = trim($_POST['username'] ?? '');
+    $role = in_array(trim($_POST['role'] ?? ''), ['staf', 'owner']) ? trim($_POST['role']) : 'staf'; // TANGKAP ROLE BARU
 
     if ($id && $nama !== '') {
         $n = mysqli_real_escape_string($conn, $nama);
@@ -67,12 +75,15 @@ if ($action === 'penjual_edit') {
         $pw_baru = trim($_POST['password_baru'] ?? '');
         if ($pw_baru !== '') {
             $h = md5($pw_baru);
-            mysqli_query($conn, "UPDATE penjual SET nama='$n', username='$u', password='$h' WHERE id_penjual=$id");
+            // UPDATE DENGAN MEMASUKKAN ROLE BARU
+            mysqli_query($conn, "UPDATE penjual SET nama='$n', username='$u', password='$h', role='$role' WHERE id_penjual=$id");
         } else {
-            mysqli_query($conn, "UPDATE penjual SET nama='$n', username='$u' WHERE id_penjual=$id");
+            // UPDATE DENGAN MEMASUKKAN ROLE BARU
+            mysqli_query($conn, "UPDATE penjual SET nama='$n', username='$u', role='$role' WHERE id_penjual=$id");
         }
-        catatLog($conn, 'Update Penjual', 'Memperbarui data penjual dengan ID: ' . $id);
-        $feedback = ['type' => 'success', 'msg' => 'Data penjual berhasil diperbarui.'];
+
+        catatLog($conn, 'Update Penjual', "Memperbarui data pengelola kantin dengan ID: $id (Role: $role)");
+        $feedback = ['type' => 'success', 'msg' => 'Data pengelola berhasil diperbarui.'];
         $selectedPenjual = $id;
     }
 }
@@ -85,7 +96,7 @@ if ($action === 'penjual_toggle') {
         $new = $status === 'aktif' ? 'nonaktif' : 'aktif';
         mysqli_query($conn, "UPDATE penjual SET status='$new' WHERE id_penjual=$id");
         catatLog($conn, 'Toggle Status Penjual', 'Mengubah status ID Penjual ' . $id . ' menjadi ' . $new);
-        $feedback = ['type' => 'success', 'msg' => 'Status penjual diperbarui.'];
+        $feedback = ['type' => 'success', 'msg' => 'Status pengelola diperbarui.'];
     }
 }
 
@@ -102,7 +113,7 @@ if ($action === 'penjual_hapus') {
         mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_penjual=$id");
         mysqli_query($conn, "DELETE FROM penjual WHERE id_penjual=$id");
         catatLog($conn, 'Hapus Penjual', 'Menghapus data penjual dengan ID: ' . $id);
-        $feedback = ['type' => 'success', 'msg' => 'Penjual berhasil dihapus.'];
+        $feedback = ['type' => 'success', 'msg' => 'Data pengelola berhasil dihapus.'];
         $selectedPenjual = 0;
     }
 }
@@ -120,12 +131,12 @@ if ($action === 'kantin_assign_penjual') {
         ));
 
         if ($cek) {
-            $_SESSION['feedback'] = ['type' => 'error', 'msg' => 'Penjual sudah assigned ke kantin lain. Lepas dulu sebelum assign ke kantin baru.'];
+            $_SESSION['feedback'] = ['type' => 'error', 'msg' => 'Pengelola sudah assigned ke kantin lain. Lepas dulu sebelum assign ke kantin baru.'];
         } else {
             $s = $shift ? "'$shift'" : "NULL";
             mysqli_query($conn, "INSERT INTO toko_penjual (id_toko, id_penjual, shift) VALUES ($id_toko, $id_penjual, $s)");
-            catatLog($conn, 'Assign Penjual', 'Mengassign penjual dengan ID: ' . $id_penjual . ' ke kantin dengan ID: ' . $id_toko);
-            $_SESSION['feedback'] = ['type' => 'success', 'msg' => 'Penjual berhasil di-assign.'];
+            catatLog($conn, 'Assign Penjual', 'Mengassign pengelola dengan ID: ' . $id_penjual . ' ke kantin dengan ID: ' . $id_toko);
+            $_SESSION['feedback'] = ['type' => 'success', 'msg' => 'Pengelola berhasil di-assign.'];
         }
         $selectedPenjual = $id_penjual;
     }
@@ -137,10 +148,9 @@ if ($action === 'kantin_lepas_penjual') {
     if ($id_tp) {
         mysqli_query($conn, "UPDATE toko_penjual SET status='nonaktif' WHERE id=$id_tp");
         catatLog($conn, 'Lepas Penjual', 'Melepas penjual dengan ID toko_penjual: ' . $id_tp);
-        $feedback = ['type' => 'success', 'msg' => 'Penjual berhasil dilepas dari kantin.'];
+        $feedback = ['type' => 'success', 'msg' => 'Pengelola berhasil dilepas dari kantin.'];
     }
 }
-
 
 /* Redirect bersih setelah action */
 if (

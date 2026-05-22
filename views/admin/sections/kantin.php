@@ -26,10 +26,10 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Nama Toko</th>
+                        <th>Nama Toko / Stand</th>
                         <th class="col-hide">Deskripsi</th>
+                        <th class="center">Penjual</th>  <!-- ← TAMBAH INI -->
                         <th class="center">Menu</th>
-                        <th class="center">Penjual</th>
                         <th>Status</th>
                         <th class="center">Aksi</th>
                     </tr>
@@ -37,14 +37,17 @@
                 <tbody>
                     <?php if (empty($tokos)): ?>
                         <tr class="empty-row">
-                            <td colspan="6">
+                            <td colspan="5">
                                 <i class="fa-solid fa-store"
                                     style="color:var(--green-muted);font-size:22px;display:block;margin-bottom:8px"></i>
                                 Belum ada kantin
                             </td>
                         </tr>
                     <?php else:
-                        foreach ($tokos as $t): ?>
+                        foreach ($tokos as $t):
+                            // Mengambil nama owner dari query custom
+                            $ownerNama = $t['nama_owner'] ?? 'Belum ada owner';
+                            ?>
                             <tr class="toko-row <?= $selectedToko == $t['id_toko'] ? 'toko-row-active' : '' ?>"
                                 onclick="selectToko(<?= $t['id_toko'] ?>)">
                                 <td>
@@ -58,15 +61,25 @@
                                                 <i class="fa-solid fa-store"></i>
                                             </div>
                                         <?php endif; ?>
-                                        <span><?= htmlspecialchars($t['nama_toko']) ?></span>
+                                        <div>
+                                            <span
+                                                style="font-weight:600; display:block;"><?= htmlspecialchars($t['nama_toko']) ?></span>
+                                            <!-- SUB-TEKS NAMA OWNER -->
+                                            <span style="font-size:11px; color:var(--text-light); font-style:italic;">
+                                                <i class="fa-solid fa-user-tie"
+                                                    style="font-size:9px; margin-right:3px;"></i>Owner:
+                                                <?= htmlspecialchars($ownerNama) ?>
+                                            </span>
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="col-hide toko-desc"><?= htmlspecialchars($t['deskripsi'] ?? '-') ?></td>
-                                <td class="center"><?= $t['total_menu'] ?></td>
-                                <td class="center"><?= $t['total_penjual'] ?></td>
+                                <td class="center" style="font-weight:600"><?= $t['total_penjual'] ?></td>
+                                <td class="center" style="font-weight:600"><?= $t['total_menu'] ?></td>
                                 <td>
                                     <span class="badge <?= $t['status'] === 'buka' ? 'badge-aktif' : 'badge-nonaktif' ?>">
-                                        <i class="fa-solid <?= $t['status'] === 'buka' ? 'fa-circle-check' : 'fa-circle-xmark' ?>"></i>
+                                        <i
+                                            class="fa-solid <?= $t['status'] === 'buka' ? 'fa-circle-check' : 'fa-circle-xmark' ?>"></i>
                                         <?= ucfirst($t['status']) ?>
                                     </span>
                                 </td>
@@ -89,13 +102,14 @@
         </div>
     </div>
 
+    <!-- Admin tetap bisa mendaftarkan stand kantin baru ke dalam mal sekolah -->
     <div class="form-card">
-        <h2><i class="fa-solid fa-store" style="color:var(--green);margin-right:8px"></i>Tambah Kantin Baru</h2>
+        <h2><i class="fa-solid fa-store" style="color:var(--green);margin-right:8px"></i>Tambah Stand Baru</h2>
         <form method="POST" enctype="multipart/form-data">
             <input type="hidden" name="action" value="kantin_tambah">
             <input type="hidden" name="_section" value="kantin">
             <div class="form-group">
-                <label>Nama Kantin</label>
+                <label>Nama Kantin / Stand</label>
                 <input type="text" name="nama_toko" placeholder="cth. Warung Bu Sari" required autocomplete="off">
             </div>
             <div class="form-group">
@@ -108,14 +122,14 @@
                 <div class="form-note">Opsional.</div>
             </div>
             <button type="submit" class="btn-submit">
-                <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Simpan Kantin
+                <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Daftarkan Stand
             </button>
         </form>
     </div>
 </div>
 
 <?php if ($selectedToko && $detailToko): ?>
-    <div class="detail-toko-section" id="detailTokoSection">
+    <div class="detail-toko-section" id="detailTokoSection" style="margin-top: 25px;">
 
         <div class="detail-toko-header">
             <div class="detail-toko-header-info">
@@ -128,7 +142,8 @@
                 </div>
                 <div>
                     <div class="detail-toko-nama"><?= htmlspecialchars($detailToko['nama_toko']) ?></div>
-                    <div class="detail-toko-desk"><?= htmlspecialchars($detailToko['deskripsi'] ?? '-') ?></div>
+                    <div class="detail-toko-desk">Status: <strong
+                            style="color:var(--green)"><?= ucfirst($detailToko['status']) ?></strong></div>
                 </div>
             </div>
             <button onclick="tutupDetailToko()" class="btn-aksi toggle-off" title="Tutup">
@@ -138,104 +153,87 @@
 
         <div class="detail-toko-grid">
 
+            <!-- DETAIL KANTIN CARD (INFO READ-ONLY BAGI ADMIN) -->
             <div class="form-card">
-                <h2><i class="fa-solid fa-pen" style="color:var(--green);margin-right:8px"></i>Edit Kantin</h2>
-                <form method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="action" value="kantin_edit">
-                    <input type="hidden" name="id_toko" value="<?= $detailToko['id_toko'] ?>">
-                    <input type="hidden" name="_section" value="kantin">
-                    <input type="hidden" name="_selected_toko" value="<?= $detailToko['id_toko'] ?>">
-                    <div class="form-group">
-                        <label>Nama Kantin</label>
-                        <input type="text" name="nama_toko" value="<?= htmlspecialchars($detailToko['nama_toko']) ?>" required>
+                <h2><i class="fa-solid fa-circle-info" style="color:var(--green);margin-right:8px"></i>Profil Stand Kantin
+                </h2>
+                <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+                    <div>
+                        <span style="font-size:11px; color:var(--text-light); display:block;">NAMA STAND</span>
+                        <strong style="font-size:16px;"><?= htmlspecialchars($detailToko['nama_toko']) ?></strong>
                     </div>
-                    <div class="form-group">
-                        <label>Deskripsi</label>
-                        <input type="text" name="deskripsi" value="<?= htmlspecialchars($detailToko['deskripsi'] ?? '') ?>">
+                    <div>
+                        <span style="font-size:11px; color:var(--text-light); display:block;">DESKRIPSI STAND</span>
+                        <span style="font-size:14px;"><?= htmlspecialchars($detailToko['deskripsi'] ?: '-') ?></span>
                     </div>
-                    <div class="form-group">
-                        <label>Foto Kantin</label>
-                        <?php if (!empty($detailToko['foto_toko'])): ?>
-                            <div class="foto-preview-wrap">
-                                <img src="../../assets/img/kantin/<?= htmlspecialchars($detailToko['foto_toko']) ?>?v=<?= time() ?>"
-                                    class="foto-preview-thumb" onclick="bukaFotoKantin(this.src)">
-                                <label class="hapus-foto-label">
-                                    <input type="checkbox" name="hapus_foto" value="1" style="accent-color:var(--red)">
-                                    Hapus foto
-                                </label>
-                            </div>
-                        <?php endif; ?>
-                        <input type="file" name="foto_toko" accept="image/*">
+                    <div>
+                        <span style="font-size:11px; color:var(--text-light); display:block;">TANGGAL BERDIRI</span>
+                        <span style="font-size:14px;"><?= date('d F Y', strtotime($detailToko['dibuat_pada'])) ?></span>
                     </div>
-                    <button type="submit" class="btn-submit">
-                        <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Simpan Perubahan
-                    </button>
-                </form>
+
+                    <div
+                        style="background:#fff8e1; border-left:4px solid #ffb300; padding:10px; border-radius:4px; margin-top:10px;">
+                        <span style="font-size:11px; font-weight:600; color:#b78103; display:block;">
+                            <i class="fa-solid fa-circle-exclamation"></i> CATATAN OTORITAS
+                        </span>
+                        <span style="font-size:11px; color:#5d4037; line-height:1.4; display:block; margin-top:3px;">
+                            Perubahan profil stand, unggahan foto toko, saldo penjualan, dan operasional buka/tutup hanya
+                            dapat dikelola secara mandiri oleh **Owner Kantin**.
+                        </span>
+                    </div>
+                </div>
             </div>
 
+            <!-- DETAIL PENGELOLA (INFO READ-ONLY BAGI ADMIN) -->
             <div class="form-card">
-                <h2><i class="fa-solid fa-user-tag" style="color:var(--green);margin-right:8px"></i>Penjual Assigned</h2>
+                <h2><i class="fa-solid fa-user-tie" style="color:var(--green);margin-right:8px"></i>Pengelola Assigned</h2>
 
-                <?php if (empty($penjualToko)): ?>
-                    <div class="empty-penjual">Belum ada penjual di kantin ini</div>
-                <?php else:
-                    foreach ($penjualToko as $p): ?>
-                        <div class="penjual-item">
-                            <div>
-                                <div class="penjual-nama"><?= htmlspecialchars($p['nama']) ?></div>
-                                <div class="penjual-shift"><?= $p['shift'] ? ucfirst($p['shift']) : 'Shift tidak ditentukan' ?></div>
-                            </div>
-                            <form method="POST" style="display:inline" onsubmit="return confirm('Lepas penjual ini?')">
-                                <input type="hidden" name="action" value="kantin_lepas_penjual">
-                                <input type="hidden" name="id_tp" value="<?= $p['id_tp'] ?>">
-                                <input type="hidden" name="_section" value="kantin">
-                                <input type="hidden" name="_selected_toko" value="<?= $detailToko['id_toko'] ?>">
-                                <button type="submit" class="btn-aksi danger" title="Lepas penjual">
-                                    <i class="fa-solid fa-user-minus"></i>
-                                </button>
-                            </form>
+                <div style="display:flex; flex-direction:column; gap:15px; margin-top:10px;">
+                    <!-- Owner Utama -->
+                    <div style="padding:12px; border:1px solid #eee; border-radius:6px; background:#fafafa;">
+                        <span
+                            style="font-size:10px; font-weight:600; color:var(--text-light); display:block; margin-bottom:5px;">OWNER
+                            (PEMILIK KANTIN)</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-user-shield" style="font-size:16px; color:#ff9800;"></i>
+                            <strong
+                                style="font-size:14px;"><?= htmlspecialchars($detailToko['nama_owner'] ?? 'Belum ada Owner assigned') ?></strong>
                         </div>
-                    <?php endforeach; endif; ?>
+                    </div>
 
-                <div class="assign-penjual-wrap">
-                    <div class="form-group-label">Assign Penjual Baru</div>
-                    <form method="POST">
-                        <input type="hidden" name="action" value="kantin_assign_penjual">
-                        <input type="hidden" name="id_toko" value="<?= $detailToko['id_toko'] ?>">
-                        <input type="hidden" name="_section" value="kantin">
-                        <input type="hidden" name="_selected_toko" value="<?= $detailToko['id_toko'] ?>">
-                        <div class="form-group">
-                            <select name="id_penjual" class="form-select">
-                                <option value="">Pilih penjual...</option>
-                                <?php foreach ($semuaPenjual as $pj): ?>
-                                    <option value="<?= $pj['id_penjual'] ?>"><?= htmlspecialchars($pj['nama']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <select name="shift" class="form-select">
-                                <option value="">Shift (opsional)</option>
-                                <option value="pagi">Pagi (07.00–09.30)</option>
-                                <option value="istirahat">Istirahat (09.30–12.00)</option>
-                                <option value="siang">Siang (12.00–15.00)</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn-submit">
-                            <i class="fa-solid fa-user-plus" style="margin-right:6px"></i>Assign Penjual
-                        </button>
-                    </form>
+                    <!-- Karyawan / Staf -->
+                    <div>
+                        <span
+                            style="font-size:10px; font-weight:600; color:var(--text-light); display:block; margin-bottom:8px;">STAF
+                            PENJUAL / KASIR</span>
+                        <?php if (empty($penjualToko)): ?>
+                            <div style="font-size:12px; color:var(--text-light); font-style:italic;">Belum ada staf terdaftar di
+                                stand ini.</div>
+                        <?php else:
+                            foreach ($penjualToko as $p): ?>
+                                <div class="penjual-item"
+                                    style="padding:8px 10px; margin-bottom:8px; border:1px solid #f1f1f1; border-radius:4px;">
+                                    <div>
+                                        <div class="penjual-nama" style="font-weight:600; font-size:13px;">
+                                            <?= htmlspecialchars($p['nama']) ?></div>
+                                        <div class="penjual-shift" style="font-size:11px; color:var(--text-light);">
+                                            <?= $p['shift'] ? 'Shift: ' . ucfirst($p['shift']) : 'Shift Bebas' ?></div>
+                                    </div>
+                                    <span class="badge badge-aktif" style="font-size:10px; padding:2px 6px;">Aktif</span>
+                                </div>
+                            <?php endforeach;
+                        endif; ?>
+                    </div>
                 </div>
             </div>
 
         </div>
 
-        <!-- ══ Tabel Menu + Toggle Edit Mode ══ -->
+        <!-- ══ Tabel Menu (Info Menu Tetap Read-Only) ══ -->
         <div class="table-card" style="margin-top:16px">
             <div class="table-card-header" id="menuCardHeader">
-                <h2>Menu Kantin</h2>
-                <button id="btnModeEditMenu" onclick="toggleModeEditMenu()" class="btn-tambah-menu">
-                    <i class="fa-solid fa-lock" id="ikonModeEdit"></i> Mode Edit
-                </button>
+                <h2>Menu Stand Kantin</h2>
+                <span style="font-size:11px; color:var(--text-light);">* Pengelolaan menu dikontrol oleh Owner Kantin</span>
             </div>
 
             <div class="table-scroll">
@@ -247,13 +245,12 @@
                             <th>Harga</th>
                             <th class="center">Stok</th>
                             <th class="center">Tersedia</th>
-                            <th class="center col-aksi-menu" style="display:none">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($menuToko)): ?>
                             <tr class="empty-row">
-                                <td colspan="5">Belum ada menu</td>
+                                <td colspan="5">Belum ada menu di stand ini</td>
                             </tr>
                         <?php else:
                             foreach ($menuToko as $m): ?>
@@ -272,23 +269,12 @@
                                         </div>
                                     </td>
                                     <td class="col-hide toko-desc"><?= htmlspecialchars($m['deskripsi'] ?? '-') ?></td>
-                                    <td>Rp <?= number_format($m['harga'], 0, ',', '.') ?></td>
+                                    <td style="font-weight:600;">Rp <?= number_format($m['harga'], 0, ',', '.') ?></td>
                                     <td class="center"><?= $m['stok'] ?></td>
                                     <td class="center">
                                         <span class="badge <?= $m['tersedia'] ? 'badge-aktif' : 'badge-nonaktif' ?>">
                                             <?= $m['tersedia'] ? 'Ya' : 'Tidak' ?>
                                         </span>
-                                    </td>
-                                    <td class="center col-aksi-menu" style="display:none">
-                                        <form method="POST" style="display:inline" onsubmit="return confirm('Hapus menu ini?')">
-                                            <input type="hidden" name="action" value="menu_hapus">
-                                            <input type="hidden" name="id_menu" value="<?= $m['id_menu'] ?>">
-                                            <input type="hidden" name="_section" value="kantin">
-                                            <input type="hidden" name="_selected_toko" value="<?= $detailToko['id_toko'] ?>">
-                                            <button type="submit" class="btn-aksi danger" title="Hapus menu">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; endif; ?>
@@ -307,25 +293,6 @@
 </div>
 
 <script>
-    let menuEditMode = false;
-
-    function toggleModeEditMenu() {
-        menuEditMode = !menuEditMode;
-
-        const btn     = document.getElementById('btnModeEditMenu');
-        const colAksi = document.querySelectorAll('.col-aksi-menu');
-
-        if (menuEditMode) {
-            btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Mode Edit: ON';
-            btn.style.cssText = 'background:var(--red,#e74c3c);color:#fff;border-color:var(--red,#e74c3c)';
-            colAksi.forEach(el => el.style.display = '');
-        } else {
-            btn.innerHTML = '<i class="fa-solid fa-lock"></i> Mode Edit';
-            btn.style.cssText = '';
-            colAksi.forEach(el => el.style.display = 'none');
-        }
-    }
-
     function bukaFotoKantin(src) {
         const modal = document.getElementById('modalFotoKantin');
         document.getElementById('modalFotoImg').src = src;
