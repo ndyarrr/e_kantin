@@ -28,7 +28,7 @@
                     <tr>
                         <th>Nama Kantin / Stand</th>
                         <th class="col-hide">Deskripsi</th>
-                        <th class="center">Penjual</th>  <!-- ← TAMBAH INI -->
+                        <th class="center">Penjual</th>
                         <th class="center">Menu</th>
                         <th>Status</th>
                         <th class="center">Aksi</th>
@@ -45,7 +45,6 @@
                         </tr>
                     <?php else:
                         foreach ($tokos as $t):
-                            // Mengambil nama owner dari query custom
                             $ownerNama = $t['nama_owner'] ?? 'Belum ada owner';
                             ?>
                             <tr class="toko-row <?= $selectedToko == $t['id_toko'] ? 'toko-row-active' : '' ?>"
@@ -64,7 +63,6 @@
                                         <div>
                                             <span
                                                 style="font-weight:600; display:block;"><?= htmlspecialchars($t['nama_toko']) ?></span>
-                                            <!-- SUB-TEKS NAMA OWNER -->
                                             <span style="font-size:11px; color:var(--text-light); font-style:italic;">
                                                 <i class="fa-solid fa-user-tie"
                                                     style="font-size:9px; margin-right:3px;"></i>Owner:
@@ -102,7 +100,6 @@
         </div>
     </div>
 
-    <!-- Admin tetap bisa mendaftarkan stand kantin baru ke dalam mal sekolah -->
     <div class="form-card">
         <h2><i class="fa-solid fa-store" style="color:var(--green);margin-right:8px"></i>Tambah Stand Baru</h2>
         <form method="POST" enctype="multipart/form-data">
@@ -153,7 +150,6 @@
 
         <div class="detail-toko-grid">
 
-            <!-- DETAIL KANTIN CARD (INFO READ-ONLY BAGI ADMIN) -->
             <div class="form-card">
                 <h2><i class="fa-solid fa-circle-info" style="color:var(--green);margin-right:8px"></i>Profil Kantin
                 </h2>
@@ -183,12 +179,10 @@
                 </div>
             </div>
 
-            <!-- DETAIL PENGELOLA (INFO READ-ONLY BAGI ADMIN) -->
             <div class="form-card">
                 <h2><i class="fa-solid fa-user-tie" style="color:var(--green);margin-right:8px"></i>Pengelola Assigned</h2>
 
                 <div style="display:flex; flex-direction:column; gap:15px; margin-top:10px;">
-                    <!-- Owner Utama -->
                     <div style="padding:12px; border:1px solid #eee; border-radius:6px; background:#fafafa;">
                         <span
                             style="font-size:10px; font-weight:600; color:var(--text-light); display:block; margin-bottom:5px;">OWNER
@@ -200,7 +194,6 @@
                         </div>
                     </div>
 
-                    <!-- Karyawan / Staf -->
                     <div>
                         <span
                             style="font-size:10px; font-weight:600; color:var(--text-light); display:block; margin-bottom:8px;">STAF
@@ -214,9 +207,11 @@
                                     style="padding:8px 10px; margin-bottom:8px; border:1px solid #f1f1f1; border-radius:4px;">
                                     <div>
                                         <div class="penjual-nama" style="font-weight:600; font-size:13px;">
-                                            <?= htmlspecialchars($p['nama']) ?></div>
+                                            <?= htmlspecialchars($p['nama']) ?>
+                                        </div>
                                         <div class="penjual-shift" style="font-size:11px; color:var(--text-light);">
-                                            <?= $p['shift'] ? 'Shift: ' . ucfirst($p['shift']) : 'Shift Bebas' ?></div>
+                                            <?= $p['shift'] ? 'Shift: ' . ucfirst($p['shift']) : 'Shift Bebas' ?>
+                                        </div>
                                     </div>
                                     <span class="badge badge-aktif" style="font-size:10px; padding:2px 6px;">Aktif</span>
                                 </div>
@@ -228,7 +223,6 @@
 
         </div>
 
-        <!-- ══ Tabel Menu (Info Menu Tetap Read-Only) ══ -->
         <div class="table-card" style="margin-top:16px">
             <div class="table-card-header" id="menuCardHeader">
                 <h2>Menu Stand Kantin</h2>
@@ -240,6 +234,7 @@
                     <thead>
                         <tr>
                             <th>Nama Menu</th>
+                            <th>Kategori</th>
                             <th class="col-hide">Deskripsi</th>
                             <th>Harga</th>
                             <th class="center">Stok</th>
@@ -249,10 +244,18 @@
                     <tbody>
                         <?php if (empty($menuToko)): ?>
                             <tr class="empty-row">
-                                <td colspan="5">Belum ada menu di stand ini</td>
+                                <td colspan="6">Belum ada menu di stand ini</td>
                             </tr>
                         <?php else:
-                            foreach ($menuToko as $m): ?>
+                            foreach ($menuToko as $m):
+                                // Deteksi icon berdasarkan kategori data murni DB
+                                $kat = $m['kategori'] ?? 'makanan';
+                                $iconKat = match ($kat) {
+                                    'minuman' => 'fa-glass-water',
+                                    'snack' => 'fa-cookie',
+                                    default => 'fa-utensils'
+                                };
+                                ?>
                                 <tr>
                                     <td>
                                         <div class="menu-name-cell">
@@ -266,6 +269,13 @@
                                             <?php endif; ?>
                                             <?= htmlspecialchars($m['nama_menu']) ?>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge"
+                                            style="background-color: #f3f4f6; color: #374151; font-size: 11px; padding: 4px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 5px;">
+                                            <i class="fa-solid <?= $iconKat ?>" style="color: var(--green); font-size: 10px;"></i>
+                                            <?= ucfirst($kat) ?>
+                                        </span>
                                     </td>
                                     <td class="col-hide toko-desc"><?= htmlspecialchars($m['deskripsi'] ?? '-') ?></td>
                                     <td style="font-weight:600;">Rp <?= number_format($m['harga'], 0, ',', '.') ?></td>
@@ -285,7 +295,6 @@
     </div>
 <?php endif; ?>
 
-<!-- Modal foto kantin -->
 <div id="modalFotoKantin" onclick="tutupFotoKantin()"
     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out">
     <img id="modalFotoImg" src="" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain">
