@@ -1,4 +1,6 @@
 <?php
+// controllers/auth.php
+
 require_once __DIR__ . '/../config/database.php';
 
 function login()
@@ -19,15 +21,22 @@ function login()
         // ----------------------------------------
         case 'pembeli':
             $identifier = trim($_POST['identifier'] ?? '');
-            if (empty($identifier))
-                return "NISN atau NUPTK wajib diisi.";
-            if (!ctype_digit($identifier))
-                return "NISN/NUPTK hanya boleh angka.";
+            $tipe_pembeli = $_POST['tipe_pembeli'] ?? 'siswa';
 
-            $len = strlen($identifier);
+            $_SESSION['last_tipe_pembeli'] = $tipe_pembeli;
+
+            if (empty($identifier)) {
+                return $tipe_pembeli === 'siswa' ? "NISN wajib diisi." : "NUPTK atau Nama Guru wajib diisi.";
+            }
+
             $id = mysqli_real_escape_string($conn, $identifier);
 
-            if ($len === 10) {
+            // ════ ALUR LOGIN SISWA ════
+            if ($tipe_pembeli === 'siswa') {
+                if (!ctype_digit($identifier) || strlen($identifier) !== 10) {
+                    return "NISN siswa harus berupa 10 digit angka.";
+                }
+
                 $res = mysqli_query($conn, "SELECT * FROM murid WHERE nisn = '$id' LIMIT 1");
                 $user = mysqli_fetch_assoc($res);
 
@@ -43,54 +52,77 @@ function login()
                 $_SESSION['user_role'] = 'siswa';
                 $_SESSION['user_foto'] = $user['foto_profil'];
 
-                header('Location: ../views/siswa/dashboard.php');
+                // Redirect ke dashboard siswa
+                header('Location: ../views/pembeli/dashboard.php');
                 exit;
 
-            } elseif ($len === 16) {
-                $res = mysqli_query($conn, "SELECT * FROM guru WHERE nuptk = '$id' LIMIT 1");
+            // ════ ALUR LOGIN GURU ════
+            } else {
+                if (ctype_digit($identifier)) {
+                    if (strlen($identifier) !== 16) {
+                        return "NUPTK guru harus tepat 16 digit angka.";
+                    }
+                    $query = "SELECT * FROM guru WHERE nuptk = '$id' LIMIT 1";
+                } else {
+                    $query = "SELECT * FROM guru WHERE nama = '$id' LIMIT 1";
+                }
+
+                $res = mysqli_query($conn, $query);
                 $user = mysqli_fetch_assoc($res);
 
-                if (!$user)
-                    return "NUPTK tidak ditemukan.";
+                if (!$user) {
+                    return ctype_digit($identifier) ? "NUPTK tidak ditemukan." : "Nama Guru tidak ditemukan.";
+                }
                 if ($user['password'] !== md5($pass))
                     return "Password salah.";
 
-                mysqli_query($conn, "UPDATE guru SET terakhir_login = NOW() WHERE nuptk = '$id'");
+                $nuptk_guru = $user['nuptk'];
+                mysqli_query($conn, "UPDATE guru SET terakhir_login = NOW() WHERE nuptk = '$nuptk_guru'");
 
                 $_SESSION['user_id'] = $user['nuptk'];
                 $_SESSION['user_nama'] = $user['nama'];
-                $_SESSION['user_role'] = 'guru';
+                $_SESSION['user_role'] = 'guru'; 
                 $_SESSION['user_foto'] = $user['foto_profil'];
 
-                header('Location: ../views/guru/dashboard.php');
+                // REDIRECT DISAMAKAN: Ikut masuk ke folder siswa
+                header('Location: ../views/pembeli/dashboard.php');
                 exit;
-
-            } else {
-                return "NISN harus 10 digit, NUPTK harus 16 digit.";
             }
+            break;
 
         // ----------------------------------------
-        // PENJUAL — username + id_toko + password (MD5)
+        // PENJUAL — username + id_toko + password (MD5) + sub-role (Owner/Staf)
         // ----------------------------------------
         case 'penjual':
-            $nama = trim($_POST['username'] ?? '');
+            $username = trim($_POST['username'] ?? '');
             $id_toko = (int) ($_POST['id_toko'] ?? 0);
+            $tipe_penjual = trim($_POST['tipe_penjual'] ?? 'staf'); // 'owner' atau 'staf'
 
-            if (empty($nama))
-                return "Nama wajib diisi.";
+            if (empty($username))
+                return "Username wajib diisi.";
             if (!$id_toko)
                 return "Pilih kantin terlebih dahulu.";
 
-            $n = mysqli_real_escape_string($conn, $nama);
-            $res = mysqli_query($conn, "SELECT * FROM penjual WHERE nama = '$n' AND status = 'aktif' LIMIT 1");
+            $u = mysqli_real_escape_string($conn, $username);
+            
+            // 1. CARI USER BERDASARKAN USERNAME, STATUS AKTIF, DAN ROLE (OWNER/STAF)
+            $res = mysqli_query($conn, "
+                SELECT * FROM penjual 
+                WHERE username = '$u' 
+                  AND status = 'aktif' 
+                  AND role = '$tipe_penjual' 
+                LIMIT 1
+            ");
             $user = mysqli_fetch_assoc($res);
 
             if (!$user)
-                return "Nama tidak ditemukan.";
+                return "Username atau sub-role tidak cocok.";
             if ($user['password'] !== md5($pass))
                 return "Password salah.";
 
             $pid = (int) $user['id_penjual'];
+            
+            // 2. CEK APAKAH USER TERDAFTAR DI KANTIN TERSEBUT
             $cek = mysqli_fetch_assoc(mysqli_query(
                 $conn,
                 "SELECT id FROM toko_penjual WHERE id_penjual=$pid AND id_toko=$id_toko AND status='aktif' LIMIT 1"
@@ -100,13 +132,20 @@ function login()
 
             mysqli_query($conn, "UPDATE penjual SET terakhir_login = NOW() WHERE id_penjual = $pid");
 
+            // 3. SET DATA KE SESSION
             $_SESSION['user_id'] = $user['id_penjual'];
             $_SESSION['user_nama'] = $user['nama'];
             $_SESSION['user_role'] = 'penjual';
+            $_SESSION['user_sub_role'] = $user['role']; // Simpan 'owner' atau 'staf'
             $_SESSION['user_foto'] = $user['foto_profil'];
             $_SESSION['id_toko'] = $id_toko;
 
-            header('Location: ../views/penjual/index.php');
+            // 4. REDIRECT BERDASARKAN SUB-ROLE
+            if ($user['role'] === 'owner') {
+                header('Location: ../views/owner/index.php'); // Arahkan ke folder owner lo
+            } else {
+                header('Location: ../views/penjual/index.php'); // Arahkan ke folder penjual/staf lo
+            }
             exit;
 
         // ----------------------------------------

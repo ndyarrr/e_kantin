@@ -5,6 +5,9 @@ if (session_status() === PHP_SESSION_NONE) {
 $error = $_SESSION['login_error'] ?? '';
 unset($_SESSION['login_error']);
 
+$lastTipePembeli = $_SESSION['last_tipe_pembeli'] ?? 'siswa';
+unset($_SESSION['last_tipe_pembeli']); 
+
 require_once __DIR__ . '/../../config/database.php';
 $daftarToko = mysqli_fetch_all(mysqli_query(
     $conn,
@@ -23,6 +26,7 @@ $roles = [
         'has_activation' => false,
         'has_toko' => false,
         'has_toggle' => true,
+        'has_toko_toggle' => false, // Tambahan
     ],
     [
         'key' => 'penjual',
@@ -35,6 +39,7 @@ $roles = [
         'has_activation' => false,
         'has_toko' => true,
         'has_toggle' => false,
+        'has_toko_toggle' => true, // AKTIFKAN TOGEL DI SINI
     ],
     [
         'key' => 'admin',
@@ -47,6 +52,7 @@ $roles = [
         'has_activation' => true,
         'has_toko' => false,
         'has_toggle' => false,
+        'has_toko_toggle' => false, // Tambahan
     ],
 ];
 ?>
@@ -111,6 +117,8 @@ $roles = [
                 <form action="../../auth/login.php" method="POST" id="loginForm">
                     <input type="hidden" name="role" id="roleInput" value="pembeli">
                     <input type="hidden" name="tipe_pembeli" id="tipePembeli" value="siswa">
+                    <!-- HIDDEN INPUT UNTUK SUB-ROLE PENJUAL -->
+                    <input type="hidden" name="tipe_penjual" id="tipePenjual" value="staf">
 
                     <!-- Toggle siswa/guru — hanya untuk role pembeli -->
                     <div id="pembeliToggle" style="display:none; margin-bottom:10px;">
@@ -119,6 +127,16 @@ $roles = [
                                 onclick="setPembeli('siswa')">Siswa</button>
                             <button type="button" class="toggle-tab" id="tabGuru"
                                 onclick="setPembeli('guru')">Guru</button>
+                        </div>
+                    </div>
+
+                    <!-- Toggle owner/staf — hanya untuk role penjual -->
+                    <div id="penjualToggle" style="display:none; margin-bottom:10px;">
+                        <div class="toggle-wrap">
+                            <button type="button" class="toggle-tab active" id="tabStaf"
+                                onclick="setPenjual('staf')">Staf Penjual</button>
+                            <button type="button" class="toggle-tab" id="tabOwner"
+                                onclick="setPenjual('owner')">Owner Kantin</button>
                         </div>
                     </div>
 
@@ -210,10 +228,18 @@ $roles = [
         const activationCode = document.getElementById('activationCode');
         const tokoGroup = document.getElementById('tokoGroup');
         const tokoSelect = document.getElementById('tokoSelect');
+        
+        // Elemen baru untuk Siswa/Guru
         const pembeliToggle = document.getElementById('pembeliToggle');
         const tipePembeli = document.getElementById('tipePembeli');
         const tabSiswa = document.getElementById('tabSiswa');
         const tabGuru = document.getElementById('tabGuru');
+
+        // Elemen baru untuk Staf/Owner
+        const penjualToggle = document.getElementById('penjualToggle');
+        const tipePenjual = document.getElementById('tipePenjual');
+        const tabStaf = document.getElementById('tabStaf');
+        const tabOwner = document.getElementById('tabOwner');
 
         function setPembeli(tipe) {
             tipePembeli.value = tipe;
@@ -229,6 +255,17 @@ $roles = [
                 fieldInput.placeholder = 'Masukkan NUPTK (16 digit) atau nama';
             }
             fieldInput.value = '';
+        }
+
+        function setPenjual(tipe) {
+            tipePenjual.value = tipe;
+            if (tipe === 'staf') {
+                tabStaf.classList.add('active');
+                tabOwner.classList.remove('active');
+            } else {
+                tabOwner.classList.add('active');
+                tabStaf.classList.remove('active');
+            }
         }
 
         function updateRole() {
@@ -247,24 +284,34 @@ $roles = [
             fieldInput.name = r.field_name;
             roleInput.value = r.key;
 
-            // Aktivasi
+            // Aktivasi Admin
             const isAdmin = r.has_activation;
             activationGroup.style.display = isAdmin ? 'block' : 'none';
             activationCode.required = isAdmin;
             if (!isAdmin) activationCode.value = '';
 
-            // Toko
+            // Dropdown Toko
             tokoGroup.style.display = r.has_toko ? 'block' : 'none';
             tokoSelect.required = r.has_toko ?? false;
 
-            // Toggle siswa/guru
+            // Toggle pembeli (siswa/guru)
             if (r.has_toggle) {
                 pembeliToggle.style.display = 'block';
-                setPembeli('siswa'); // reset ke siswa tiap ganti role
+                const tipeTerakhir = '<?= $lastTipePembeli ?>'; 
+                setPembeli(tipeTerakhir);
             } else {
                 pembeliToggle.style.display = 'none';
                 fieldLabel.textContent = r.field_label;
                 fieldInput.placeholder = r.placeholder;
+            }
+
+            // Toggle penjual (staf/owner)
+            if (r.has_toko_toggle) {
+                penjualToggle.style.display = 'block';
+                setPenjual('staf'); // Default awal ke staf penjual
+            } else {
+                penjualToggle.style.display = 'none';
+                tipePenjual.value = 'staf';
             }
         }
 
