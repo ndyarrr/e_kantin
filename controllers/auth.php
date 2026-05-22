@@ -142,9 +142,11 @@ function login()
 
             // 4. REDIRECT BERDASARKAN SUB-ROLE
             if ($user['role'] === 'owner') {
-                header('Location: ../views/owner/index.php'); // Arahkan ke folder owner lo
+                // Diarahkan masuk ke views/penjual/owner/index.php
+                header('Location: ../views/penjual/owner/index.php');
             } else {
-                header('Location: ../views/penjual/index.php'); // Arahkan ke folder penjual/staf lo
+                // Diarahkan masuk ke views/penjual/staf/index.php
+                header('Location: ../views/penjual/staf/index.php');
             }
             exit;
 

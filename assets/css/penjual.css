@@ -1292,3 +1292,278 @@ tbody tr:hover {
         font-size: 14px;
     }
 }
+
+/* ================= PAGE MENU ================= */
+.menu-action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.search-filter-group {
+    display: flex;
+    gap: 15px;
+    flex: 1;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    flex: 1;
+    max-width: 350px;
+}
+
+.search-box i { color: #9ca3af; margin-right: 10px; }
+.search-box input { border: none; outline: none; width: 100%; font-size: 14px; }
+
+.filter-select {
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    outline: none;
+    color: #4b5563;
+}
+
+.btn-primary {
+    background: #5aab55;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+.btn-primary:hover { background: #4a9146; }
+
+/* TABS */
+.menu-tabs {
+    display: flex;
+    gap: 20px;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 25px;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 5px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    position: relative;
+}
+
+.tab-btn.active { color: #5aab55; }
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #5aab55;
+    border-radius: 3px 3px 0 0;
+}
+
+/* GRID & CARDS */
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.menu-card {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    border: 1px solid #f3f4f6;
+    transition: 0.3s;
+}
+.menu-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.05); }
+
+.menu-img-wrap {
+    position: relative;
+    height: 140px;
+    width: 100%;
+}
+.menu-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+
+.badge-status {
+    position: absolute;
+    top: 10px; right: 10px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+}
+.bg-green { background: #5aab55; }
+.bg-red { background: #ef4444; }
+
+.menu-info { padding: 15px; }
+.menu-kategori { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+.menu-title { font-size: 16px; color: #1f2937; margin: 5px 0 8px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-price { font-size: 15px; color: #5aab55; font-weight: 700; margin-bottom: 12px; }
+.menu-stock { font-size: 13px; color: #4b5563; }
+
+.menu-actions {
+    display: flex;
+    border-top: 1px solid #f3f4f6;
+}
+.btn-outline-edit, .btn-outline-delete {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+}
+.btn-outline-edit { color: #3b82f6; border-right: 1px solid #f3f4f6; }
+.btn-outline-edit:hover { background: #eff6ff; }
+.btn-outline-delete { color: #ef4444; }
+.btn-outline-delete:hover { background: #fef2f2; }
+
+/* Styling Kartu Jika Stok Habis */
+.card-habis img { filter: grayscale(100%); opacity: 0.7; }
+.card-habis .menu-title, .card-habis .menu-price { opacity: 0.6; }
+.card-habis .menu-stock { color: #ef4444; }
+
+/* ================= FORM TAMBAH MENU DI BAWAH ================= */
+.form-tambah-container {
+    background: #ffffff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 24px;
+    margin-top: 40px; /* Jarak renggang dari grid menu atas */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+}
+
+.form-tambah-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+
+.form-tambah-header h3 {
+    font-size: 16px;
+    color: #1f2937;
+    font-weight: bold;
+}
+
+/* Mengatur inputan berjejer menyamping agar hemat tempat */
+.form-grid-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.static-form .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.static-form label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+.static-form input[type="text"],
+.static-form input[type="number"],
+.static-form input[type="file"] {
+    padding: 10px 14px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+    background: #ffffff;
+    transition: 0.2s;
+}
+
+.static-form input[type="file"] {
+    padding: 7px 10px;
+    font-size: 12px;
+}
+
+.static-form input:focus {
+    border-color: #5aab55;
+    box-shadow: 0 0 0 3px rgba(90, 171, 85, 0.1);
+}
+
+.form-tambah-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 25px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 16px;
+}
+
+.btn-reset {
+    background: #f3f4f6;
+    color: #4b5563;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-reset:hover { background: #e5e7eb; }
+
+.btn-save {
+    background: #5aab55;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+.btn-save:hover { background: #4a9146; }
+
+/* ================= FORM TAMBAH MENU TOGGLE SYSTEM ================= */
+.form-tambah-container.toggle-form {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    border-color: transparent;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Saat class .show aktif dipicu JavaScript */
+.form-tambah-container.toggle-form.show {
+    max-height: 500px; /* Batas tinggi form saat terbuka */
+    opacity: 1;
+    padding: 24px;
+    margin-top: 40px;
+    background: #ffffff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
