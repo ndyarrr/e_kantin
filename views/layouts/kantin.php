@@ -24,8 +24,7 @@ $kantins = mysqli_fetch_all(mysqli_query(
             <div class="kantin-card-body">
                 <span class="kantin-card-badge"><?= htmlspecialchars($kantin['nama_toko']) ?></span>
                 <p class="kantin-card-desc"><?= htmlspecialchars($kantin['deskripsi'] ?? '-') ?></p>
-                <button class="btn-selengkap"
-                    onclick="window.location.href='./kantin/detail.php?id=<?= $kantin['id_toko'] ?>'">
+                <button class="btn-selengkap" onclick="bukaModal('<?= $kantin['id_toko'] ?>')">
                     Selengkapnya
                 </button>
             </div>

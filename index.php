@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="./assets/css/styles.css?v=2">
     <title>E-Kantin</title>
     <!-- <?php //include 'views/layouts/header.php'; ?> -->
 </head>
@@ -94,6 +94,80 @@
         window.addEventListener('scroll', updateActive);
         updateActive();
     </script>
-</body>
+    <div id="modalKantin" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <button class="modal-close" onclick="tutupModal()">×</button>
+        
+        <h2 id="modalNama" class="modal-title">Nama Kantin</h2>
+        <p id="modalDesc" class="modal-desc">Deskripsi kantin</p>
+        
+        <div class="info-tunai" style="margin-bottom: 16px; font-size: 12px; background: #fff3cd; color: #856404; padding: 8px 12px; border-radius: 6px; border: 1px solid #ffeeba;">
+            ⚠️ <b>Perhatian:</b> Saat ini pembayaran hanya dapat dilakukan secara tunai di kasir.
+        </div>
 
+        <h3 style="font-size: 15px; margin-bottom: 10px; font-family: 'Poppins', sans-serif;">Daftar Menu</h3>
+        <div id="modalIsiMenu" class="modal-menu-list">
+            </div>
+    </div>
+</div>
+<script>
+    // Fungsi untuk memanggil data dan membuka Pop-up
+async function bukaModal(id_toko) {
+    const modal = document.getElementById('modalKantin');
+    const containerMenu = document.getElementById('modalIsiMenu');
+    
+    // Tampilkan modal dengan status loading
+    modal.style.display = 'flex';
+    document.getElementById('modalNama').textContent = "Memuat data...";
+    document.getElementById('modalDesc').textContent = "Tunggu sebentar...";
+    containerMenu.innerHTML = '<p style="text-align:center; color:#888;">Sedang mengambil menu...</p>';
+
+    try {
+        // Minta data ke PHP
+        const merespon = await fetch(`get_detail.php?id=${id_toko}`);
+        const data = await merespon.json();
+
+        // Ganti teks judul dan deskripsi
+        document.getElementById('modalNama').textContent = data.toko.nama_toko;
+        document.getElementById('modalDesc').textContent = data.toko.deskripsi || '-';
+
+        // Susun HTML untuk menu
+        let htmlMenu = '';
+        if (data.menus && data.menus.length > 0) {
+            data.menus.forEach(m => {
+                htmlMenu += `
+                <div class="menu-item-modal">
+                    <div>
+                        <div class="menu-item-nama">${m.nama_menu}</div>
+                    </div>
+                    <div class="menu-item-harga">Rp ${parseInt(m.harga).toLocaleString('id-ID')}</div>
+                </div>`;
+            });
+        } else {
+            htmlMenu = '<p style="font-size:13px; color:#888;">Belum ada menu di kantin ini.</p>';
+        }
+        
+        // Tampilkan menunya
+        containerMenu.innerHTML = htmlMenu;
+
+    } catch (error) {
+        console.error(error);
+        containerMenu.innerHTML = '<p style="color:red; font-size:13px;">Gagal memuat data menu.</p>';
+    }
+}
+
+// Fungsi menutup pop-up
+function tutupModal() {
+    document.getElementById('modalKantin').style.display = 'none';
+}
+
+// Menutup pop-up kalau user ngeklik area luar kotak putih
+window.onclick = function(event) {
+    const modal = document.getElementById('modalKantin');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+</script>
+</body>
 </html>

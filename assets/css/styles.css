@@ -761,3 +761,45 @@ body {
 .about-links a:hover {
     color: #84c180;
 }
+/* BACKGROUND GELAP POP-UP */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99999;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+/* KOTAK PUTIHNYA */
+.modal-content {
+    background: #fff; width: 90%; max-width: 500px;
+    border-radius: 16px; padding: 24px; position: relative;
+    max-height: 80vh; overflow-y: auto;
+    font-family: 'Poppins', sans-serif;
+    animation: muncul 0.3s ease-out;
+}
+
+@keyframes muncul {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-close {
+    position: absolute; top: 16px; right: 16px;
+    background: #eee; border: none; font-size: 20px;
+    width: 32px; height: 32px; border-radius: 50%;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: #ff4d4d; color: #fff; }
+
+.modal-title { font-size: 20px; margin-bottom: 4px; color: #111; }
+.modal-desc { font-size: 13px; color: #666; margin-bottom: 16px; }
+
+/* TAMPILAN MENU DI DALAM POP-UP */
+.modal-menu-list { display: flex; flex-direction: column; gap: 10px; }
+.menu-item-modal {
+    border: 1px solid #eee; padding: 12px; border-radius: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.menu-item-nama { font-weight: 600; font-size: 14px; color: #111;}
+.menu-item-harga { font-weight: 700; color: #71B668; font-size: 14px;}
