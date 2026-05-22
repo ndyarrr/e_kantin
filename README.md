@@ -111,29 +111,50 @@ git push -u origin master
 ## 📁 Struktur Folder
 
 ```
-tree
+$ tree
 .
 ├── assets
 │   ├── css
 │   │   ├── admin.css
 │   │   ├── admin_kantin.css
 │   │   ├── auth.css
+│   │   ├── login.css
+│   │   ├── pembeli.css
+│   │   ├── penjual.css
 │   │   └── styles.css
 │   └── img
 │       ├── admin
-│       │   └── admin_2.jpg
+│       │   ├── admin_2.jpg
+│       │   └── admin_4.jpg
+│       ├── ayam.png
 │       ├── colase.png
 │       ├── gb1.jpeg
 │       ├── gb2.jpeg
 │       ├── gb3.jpeg
+│       ├── gb4.png
 │       ├── kantin
-│       │   ├── toko_3.jpeg
-│       │   └── toko_4.jpeg
-│       ├── kls.png
-│       ├── kolase.png
+│       │   └── toko_2.png
+│       ├── kantin_bu_dian.jpeg
+│       ├── kantin_bu_kom.jpeg
+│       ├── kantin_bu_tika.jpeg
+│       ├── kantin_pak_agus.jpeg
+│       ├── kantin_pak_angga.jpeg
+│       ├── kantin_pak_basuni.jpeg
+│       ├── kantin_pak_fajar.jpeg
+│       ├── kantin_pak_mardika.jpeg
+│       ├── kantin_pak_sahudi.jpeg
+│       ├── kantin_pak_sukamto.jpeg
 │       ├── logo-esemkita.png
 │       ├── menu
-│       └── pak-fajar.png
+│       │   ├── menu_1779421792.jpg
+│       │   ├── menu_1779422399.jpg
+│       │   ├── menu_1779433975.png
+│       │   └── menu_1779435511.jpg
+│       ├── penjual
+│       ├── role_admin.jpg
+│       ├── role_pembeli.jpg
+│       ├── role_penjual.jpg
+│       └── soto.png
 ├── auth
 │   ├── login.php
 │   └── logout.php
@@ -143,20 +164,30 @@ tree
 │   └── database.php
 ├── controllers
 │   └── auth.php
+├── get_detail.php
 ├── hash.php
 ├── index.php
 ├── README.md
 └── views
     ├── admin
     │   ├── actions
-    │   │   └── kantin.php
+    │   │   ├── kantin.php
+    │   │   ├── pembeli.php
+    │   │   ├── penjual.php
+    │   │   └── tools.php
     │   ├── index.php
     │   └── sections
     │       ├── admin.php
     │       ├── dashboard.php
     │       ├── kantin_data.php
     │       ├── kantin.php
-    │       └── profile.php
+    │       ├── pembeli_data.php
+    │       ├── pembeli.php
+    │       ├── penjual_data.php
+    │       ├── penjual.php
+    │       ├── profile.php
+    │       ├── tools_data.php
+    │       └── tools.php
     ├── layouts
     │   ├── about.php
     │   ├── footer.php
@@ -164,10 +195,27 @@ tree
     │   ├── kantin.php
     │   ├── leaderboard.php
     │   └── navbar.php
-    └── siswa
-        └── dashboard.php
+    ├── login
+    │   └── index.php
+    ├── pembeli
+    │   └── index.php
+    └── penjual
+        ├── owner
+        │   ├── index.php
+        │   └── sections
+        │       ├── dashboard_data.php
+        │       ├── dashboard.php
+        │       ├── menu_data.php
+        │       └── menu.php
+        └── staf
+            ├── index.php
+            └── sections
+                ├── dashboard_data.php
+                ├── dashboard.php
+                ├── menu_data.php
+                └── menu.php
 
-17 directories, 37 files
+24 directories, 78 files
 ```
 
 ---
