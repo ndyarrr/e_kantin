@@ -1,1 +1,1 @@
-<?php echo md5('0011000001'); ?>
+<?php echo md5('admin123'); ?>

@@ -26,7 +26,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Nama Toko / Stand</th>
+                        <th>Nama Kantin / Stand</th>
                         <th class="col-hide">Deskripsi</th>
                         <th class="center">Penjual</th>  <!-- ← TAMBAH INI -->
                         <th class="center">Menu</th>
@@ -155,7 +155,7 @@
 
             <!-- DETAIL KANTIN CARD (INFO READ-ONLY BAGI ADMIN) -->
             <div class="form-card">
-                <h2><i class="fa-solid fa-circle-info" style="color:var(--green);margin-right:8px"></i>Profil Stand Kantin
+                <h2><i class="fa-solid fa-circle-info" style="color:var(--green);margin-right:8px"></i>Profil Kantin
                 </h2>
                 <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
                     <div>
@@ -177,8 +177,7 @@
                             <i class="fa-solid fa-circle-exclamation"></i> CATATAN OTORITAS
                         </span>
                         <span style="font-size:11px; color:#5d4037; line-height:1.4; display:block; margin-top:3px;">
-                            Perubahan profil stand, unggahan foto toko, saldo penjualan, dan operasional buka/tutup hanya
-                            dapat dikelola secara mandiri oleh **Owner Kantin**.
+                            Perubahan bisa di lakukan oleh owner kantin
                         </span>
                     </div>
                 </div>

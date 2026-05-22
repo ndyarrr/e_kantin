@@ -30,8 +30,8 @@
                 <img class="col-img col-1" src="./assets/img/gb1.jpeg" alt="" />
                 <img class="col-img col-2" src="./assets/img/gb2.jpeg" alt="" />
                 <img class="col-img col-3" src="./assets/img/gb3.jpeg" alt="" />
-                <img class="col-img col-4" src="./assets/img/gb4.jpeg" alt="" />
-                <img class="col-img col-5" src="./assets/img/gb5.jpeg" alt="" />
+                <img class="col-img col-4" src="./assets/img/gb4.png" alt="" />
+                <img class="col-img col-5" src="./assets/img/gb5.png" alt="" />
             </div>
         </div>
 

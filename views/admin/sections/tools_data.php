@@ -28,7 +28,7 @@ unset($_SESSION['import_result']);
 /* ══ LOG SISTEM ══ */
 $logRole = $_GET['log_role'] ?? '';
 $logPage = max(1, (int) ($_GET['log_page'] ?? 1));
-$logPerPage = 20;
+$logPerPage = 10;
 $logOffset = ($logPage - 1) * $logPerPage;
 
 $whereLog = $logRole ? "WHERE user_role = '" . mysqli_real_escape_string($conn, $logRole) . "'" : '';
@@ -37,3 +37,20 @@ $logSistem = mysqli_fetch_all(mysqli_query(
     $conn,
     "SELECT * FROM log_sistem $whereLog ORDER BY dibuat_pada DESC LIMIT $logPerPage OFFSET $logOffset"
 ), MYSQLI_ASSOC);
+
+/* ══ DATA TERHAPUS ══ */
+$deletedMurid = mysqli_fetch_all(mysqli_query($conn, "SELECT nisn, nama, deleted_at FROM murid WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"), MYSQLI_ASSOC);
+$deletedGuru = mysqli_fetch_all(mysqli_query($conn, "SELECT nuptk, nama, deleted_at FROM guru WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"), MYSQLI_ASSOC);
+$deletedPenjual = mysqli_fetch_all(mysqli_query($conn, "SELECT id_penjual, nama, deleted_at FROM penjual WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"), MYSQLI_ASSOC);
+$deletedToko = mysqli_fetch_all(mysqli_query($conn, "SELECT id_toko, nama_toko as nama, deleted_at FROM toko WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"), MYSQLI_ASSOC);
+$deletedMenu = mysqli_fetch_all(mysqli_query($conn, "SELECT id_menu, nama_menu as nama, deleted_at FROM menu WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"), MYSQLI_ASSOC);
+$deletedAdmin = mysqli_fetch_all(mysqli_query($conn, "SELECT id_admin, nama, deleted_at FROM admin WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"), MYSQLI_ASSOC);
+
+$allDeleted = [
+    'Murid' => ['data' => $deletedMurid, 'tabel' => 'murid', 'id_col' => 'nisn'],
+    'Guru' => ['data' => $deletedGuru, 'tabel' => 'guru', 'id_col' => 'nuptk'],
+    'Penjual' => ['data' => $deletedPenjual, 'tabel' => 'penjual', 'id_col' => 'id_penjual'],
+    'Kantin' => ['data' => $deletedToko, 'tabel' => 'toko', 'id_col' => 'id_toko'],
+    'Menu' => ['data' => $deletedMenu, 'tabel' => 'menu', 'id_col' => 'id_menu'],
+    'Admin' => ['data' => $deletedAdmin, 'tabel' => 'admin', 'id_col' => 'id_admin'],
+];

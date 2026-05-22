@@ -16,6 +16,9 @@ $adminNama = $_SESSION['user_nama'] ?? 'Super Admin';
 $adminId = (int) ($_SESSION['user_id'] ?? 0);
 $profilAdmin = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM admin WHERE id_admin=$adminId"));
 
+// Ambil status tingkatan level admin dari session (1 = Super Admin, 2 = Admin Biasa)
+$isAdminSuper = (isset($_SESSION['role_level']) && (int) $_SESSION['role_level'] === 1);
+
 // KUNCI UTAMA: Mengambil data laporan kendala sistem/web yang berstatus menunggu atau proses
 $filterKendala = $_GET['filter_kendala'] ?? 'aktif';
 
@@ -154,8 +157,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $activeSection = $_POST['_section'] ?? 'dashboard';
     }
 
-    /* Tambah admin */
+    /* Tambah admin - PROTEKSI SUPER ADMIN ONLY */
     if ($action === 'admin_tambah') {
+        if (!$isAdminSuper) {
+            die("Akses Ilegal: Hanya Super Admin yang berhak menambahkan Admin baru!");
+        }
+
         $nama = trim($_POST['nama'] ?? '');
         $pass = trim($_POST['password'] ?? '');
         $kode = generateKodeAktivasi();
@@ -165,7 +172,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $n = mysqli_real_escape_string($conn, $nama);
             $h = md5($pass);
             $k = mysqli_real_escape_string($conn, $kode);
-            if (mysqli_query($conn, "INSERT INTO admin (nama,password,kode_aktivasi) VALUES ('$n','$h','$k')")) {
+
+            // Kolom role_level dipaksa bernilai 2 (Admin Biasa)
+            if (mysqli_query($conn, "INSERT INTO admin (nama, password, role_level, kode_aktivasi) VALUES ('$n', '$h', 2, '$k')")) {
                 catatLog($conn, 'Tambah Admin', 'Menambahkan admin baru bernama: ' . $nama);
                 $feedback = ['type' => 'success', 'msg' => "Admin <strong>" . htmlspecialchars($nama) . "</strong> ditambahkan.", "extra" => "Kode Aktivasi: <code>$kode</code>"];
             } else {
@@ -174,9 +183,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    /* Toggle status admin */
+    /* Toggle status admin - PROTEKSI SUPER ADMIN ONLY & ANTI SENGGOL SUPER ADMIN */
     if ($action === 'admin_toggle') {
+        if (!$isAdminSuper) {
+            die("Akses Ilegal: Hanya Super Admin yang bisa mengaktifkan/menonaktifkan Admin!");
+        }
+
         $id = (int) ($_POST['id'] ?? 0);
+
+        // 🔥 PAGAR UTAMA: Cek level target di database sebelum eksekusi
+        $target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT role_level FROM admin WHERE id_admin=$id"));
+        if ((int) ($target['role_level'] ?? 2) === 1) {
+            die("Akses Ditolak: Akun sesama Super Admin tidak boleh dinonaktifkan!");
+        }
+
         $status = $_POST['status'] ?? '';
         if ($id && in_array($status, ['aktif', 'tidak_digunakan'])) {
             $new = $status === 'aktif' ? 'tidak_digunakan' : 'aktif';
@@ -187,9 +207,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    /* Reset password admin */
+    /* Reset password admin - PROTEKSI ANTI SENGGOL SUPER ADMIN */
     if ($action === 'admin_reset') {
+        if (!$isAdminSuper) {
+            die("Akses Ilegal: Hanya Super Admin yang diizinkan mereset password Admin!");
+        }
+
         $id = (int) ($_POST['id'] ?? 0);
+
+        // 🔥 PAGAR UTAMA: Cek level target sebelum reset
+        $target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT role_level FROM admin WHERE id_admin=$id"));
+        if ((int) ($target['role_level'] ?? 2) === 1) {
+            die("Akses Ditolak: Anda tidak berhak mereset password sesama Super Admin!");
+        }
+
         $pw_reset = trim($_POST['pw_reset'] ?? '');
         if ($id && $pw_reset !== '') {
             $hash = md5($pw_reset);
@@ -200,6 +231,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($id && $pw_reset === '') {
             $feedback = ['type' => 'error', 'msg' => 'Password baru wajib diisi.'];
         }
+    }
+
+    /* Soft Delete Admin - PROTEKSI SUPER ADMIN ONLY */
+    /* Soft Delete Admin - PROTEKSI ANTI SENGGOL SUPER ADMIN */
+    if ($action === 'admin_soft_delete') {
+        if (!$isAdminSuper) {
+            die("Akses Ilegal: Hanya Super Admin yang berhak menambahkan/menghapus data Admin!");
+        }
+
+        $id = (int) ($_POST['id'] ?? 0);
+
+        // 🔥 PAGAR UTAMA: Cek level target sebelum delete
+        $target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT role_level FROM admin WHERE id_admin=$id"));
+        if ((int) ($target['role_level'] ?? 2) === 1) {
+            die("Akses Ditolak: Struktur sistem melarang penghapusan sesama Super Admin!");
+        }
+
+        if ($id) {
+            $nama_admin = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM admin WHERE id_admin=$id"))['nama'] ?? '';
+            mysqli_query($conn, "UPDATE admin SET deleted_at = NOW() WHERE id_admin=$id");
+            catatLog($conn, 'Soft Delete Admin', 'Menghapus sementara akun admin: ' . $nama_admin);
+            $feedback = ['type' => 'success', 'msg' => "Admin <strong>" . htmlspecialchars($nama_admin) . "</strong> berhasil dipindahkan ke arsip sampah."];
+        }
+        header("Location: ?section=admin");
+        exit;
     }
 
     if (
@@ -235,8 +291,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // ── ACTION TOOLS ──
+    // ── ACTION TOOLS (Soft/Hard Delete, Restore) - PROTEKSI BACKEND ──
     if (str_starts_with($action, 'tools_')) {
+        // Blokir Admin Biasa jika mencoba melakukan Soft/Hard Delete atau Restore di file tools.php
+        if (!$isAdminSuper) {
+            die("Akses Ditolak: Anda tidak memiliki wewenang Super Admin untuk melakukan operasi data ini.");
+        }
         require __DIR__ . '/actions/tools.php';
         if ($feedback)
             $_SESSION['feedback'] = $feedback;
@@ -273,14 +333,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-
 /* ══ DATA ══ */
 // Dashboard
 $totalTransaksi = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM pesanan WHERE DATE(waktu_pesan)=CURDATE()"))['c'];
-$totalPembeli = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT (SELECT COUNT(*) FROM murid)+(SELECT COUNT(*) FROM guru) as c"))['c'];
-$tokoAktif = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE status='buka'"))['c'];
-$totalToko = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko"))['c'];
-$totalMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM menu WHERE tersedia=1"))['c'];
+$totalPembeli = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT (SELECT COUNT(*) FROM murid WHERE deleted_at IS NULL)+(SELECT COUNT(*) FROM guru WHERE deleted_at IS NULL) as c"))['c'];
+$tokoAktif = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE status='buka' AND deleted_at IS NULL"))['c'];
+$totalToko = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE deleted_at IS NULL"))['c'];
+$totalMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM menu WHERE tersedia=1 AND deleted_at IS NULL"))['c'];
 
 $grafikLabels = [];
 $grafikValues = [];
@@ -289,13 +348,21 @@ for ($i = 6; $i >= 0; $i--) {
     $grafikLabels[] = date('d/m', strtotime("-{$i} days"));
     $grafikValues[] = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM pesanan WHERE DATE(waktu_pesan)='$date'"))['c'];
 }
-$proporsiRaw = mysqli_fetch_all(mysqli_query($conn, "SELECT t.nama_toko, COUNT(p.id_pesanan) as total FROM toko t LEFT JOIN pesanan p ON p.id_toko=t.id_toko GROUP BY t.id_toko,t.nama_toko ORDER BY total DESC LIMIT 5"), MYSQLI_ASSOC);
+$proporsiRaw = mysqli_fetch_all(mysqli_query(
+    $conn,
+    "SELECT t.nama_toko, COUNT(p.id_pesanan) as total 
+     FROM toko t 
+     LEFT JOIN pesanan p ON p.id_toko=t.id_toko 
+     WHERE t.deleted_at IS NULL
+     GROUP BY t.id_toko, t.nama_toko 
+     ORDER BY total DESC LIMIT 5"
+), MYSQLI_ASSOC);
 $proporsiTotal = array_sum(array_column($proporsiRaw, 'total'));
 $proporsiLabels = array_column($proporsiRaw, 'nama_toko');
 $proporsiValues = $proporsiTotal > 0 ? array_map('intval', array_column($proporsiRaw, 'total')) : array_fill(0, count($proporsiRaw), 1);
 
 // Admin
-$admins = mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM admin ORDER BY id_admin ASC"), MYSQLI_ASSOC);
+$admins = mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM admin WHERE deleted_at IS NULL ORDER BY id_admin ASC"), MYSQLI_ASSOC);
 $totalAdmin = count($admins);
 $aktifCount = count(array_filter($admins, fn($a) => $a['status'] === 'aktif'));
 // Tools
@@ -464,7 +531,7 @@ require __DIR__ . '/sections/tools_data.php';
                             <a href="#"
                                 onclick="switchSection('dashboard'); document.getElementById('notifDropdown').style.display='none'; return false;"
                                 style="display: block; text-align: center; padding: 11px; font-size: 12px; color: #79b775; font-weight: 600; text-decoration: none; border-top: 1px solid var(--border, #e5e7eb); background: #f9fafb;">
-                                Lihat Semua Laporan di Tools & Log
+                                Lihat Laporan
                             </a>
                         </div>
                     </div>
@@ -480,7 +547,7 @@ require __DIR__ . '/sections/tools_data.php';
                         </div>
                         <div>
                             <div class="user-name"><?= htmlspecialchars($adminNama) ?></div>
-                            <div class="user-role">Administrator</div>
+                            <div class="user-role"><?= $isAdminSuper ? 'Super Admin' : 'Admin' ?></div>
                         </div>
                     </div>
                 </div>
@@ -512,7 +579,7 @@ require __DIR__ . '/sections/tools_data.php';
             <div class="section" id="section-kantin">
 
                 <?php
-                require __DIR__ . '/sections/kantin_data.php'; // ← TAMBAH INI
+                require __DIR__ . '/sections/kantin_data.php';
                 require __DIR__ . '/sections/kantin.php';
                 ?>
             </div>
@@ -526,7 +593,7 @@ require __DIR__ . '/sections/tools_data.php';
 
             <div class="section" id="section-pembeli">
                 <?php
-                require __DIR__ . '/sections/pembeli_data.php'; // ← harus ada ini dulu
+                require __DIR__ . '/sections/pembeli_data.php';
                 require __DIR__ . '/sections/pembeli.php';
                 ?>
             </div>
@@ -545,15 +612,21 @@ require __DIR__ . '/sections/tools_data.php';
         const overlay = document.getElementById('overlay');
         function toggleSidebar() {
             if (window.innerWidth <= 768) {
-                sidebar.classList.toggle('open');
-                overlay.classList.toggle('show');
+                if (sidebar) sidebar.classList.toggle('open');
+                if (overlay) overlay.classList.toggle('show');
             } else {
-                const hidden = sidebar.style.marginLeft === '-256px';
-                sidebar.style.marginLeft = hidden ? '0' : '-256px';
-                document.getElementById('main').style.width = hidden ? '' : '100%';
+                if (sidebar) {
+                    const hidden = sidebar.style.marginLeft === '-256px';
+                    sidebar.style.marginLeft = hidden ? '0' : '-256px';
+                    const mainEl = document.getElementById('main');
+                    if (mainEl) mainEl.style.width = hidden ? '' : '100%';
+                }
             }
         }
-        function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('show'); }
+        function closeSidebar() {
+            if (sidebar) sidebar.classList.remove('open');
+            if (overlay) overlay.classList.remove('show');
+        }
         window.addEventListener('resize', () => { if (window.innerWidth > 768) closeSidebar(); });
 
         /* ── section switcher ── */
@@ -564,20 +637,27 @@ require __DIR__ . '/sections/tools_data.php';
             penjual: { title: 'Kelola Penjual', sub: 'Manajemen akun penjual' },
             pembeli: { title: 'Kelola Pembeli', sub: 'Data murid dan guru terdaftar' },
             tools: { title: 'Tools & Log', sub: 'Import data dan log aktivitas sistem' },
-
         };
 
         function switchSection(name) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-link[data-section]').forEach(l => l.classList.remove('active'));
-            document.getElementById('section-' + name).classList.add('active');
-            document.querySelector('.nav-link[data-section="' + name + '"]').classList.add('active');
+
+            const targetSec = document.getElementById('section-' + name);
+            if (targetSec) targetSec.classList.add('active');
+
+            const targetLink = document.querySelector('.nav-link[data-section="' + name + '"]');
+            if (targetLink) targetLink.classList.add('active');
+
             const meta = pageMeta[name] || {};
-            document.getElementById('pageTitle').textContent = meta.title || '';
-            document.getElementById('pageSubtitle').textContent = meta.sub || '';
+            const titleEl = document.getElementById('pageTitle');
+            const subEl = document.getElementById('pageSubtitle');
+            if (titleEl) titleEl.textContent = meta.title || '';
+            if (subEl) subEl.textContent = meta.sub || '';
+
             if (window.innerWidth <= 768) closeSidebar();
             history.replaceState(null, '', '?section=' + name);
-            if (name === 'admin') regenKode();
+            if (name === 'admin' && typeof regenKode === 'function') regenKode();
         }
 
         if (window.location.search.includes('toko=')) {
@@ -585,35 +665,43 @@ require __DIR__ . '/sections/tools_data.php';
         }
 
         /* aktifkan section dari URL / POST */
-        const initSection = '<?= htmlspecialchars($activeSection) ?>';
-        if (initSection !== 'dashboard') switchSection(initSection);
+        const initSection = '<?= htmlspecialchars($activeSection ?? "dashboard") ?>';
+        if (initSection !== 'dashboard' && document.getElementById('section-' + initSection)) {
+            switchSection(initSection);
+        }
 
         /* ── charts ── */
-        const grafikLabels = <?= json_encode($grafikLabels) ?>;
-        const grafikValues = <?= json_encode($grafikValues) ?>;
-        const proporsiLabels = <?= json_encode($proporsiLabels) ?>;
-        const proporsiValues = <?= json_encode($proporsiValues) ?>;
+        const grafikLabels = <?= json_encode($grafikLabels ?? []) ?>;
+        const grafikValues = <?= json_encode($grafikValues ?? []) ?>;
+        const proporsiLabels = <?= json_encode($proporsiLabels ?? []) ?>;
+        const proporsiValues = <?= json_encode($proporsiValues ?? []) ?>;
         const greens = ['#79b775', '#8cd48a', '#b5d7b4', '#4a9e4a', '#2d7a2d'];
 
-        const ctxL = document.getElementById('lineChart').getContext('2d');
-        const grad = ctxL.createLinearGradient(0, 0, 0, 180);
-        grad.addColorStop(0, 'rgba(121,183,117,.35)');
-        grad.addColorStop(1, 'rgba(121,183,117,0)');
-        new Chart(ctxL, { type: 'line', data: { labels: grafikLabels, datasets: [{ data: grafikValues, borderColor: '#79b775', borderWidth: 2.5, backgroundColor: grad, fill: true, tension: 0.4, pointBackgroundColor: '#79b775', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { grid: { color: '#e5e7eb' }, ticks: { display: false }, beginAtZero: true, border: { display: false } } } } });
+        const lineChartEl = document.getElementById('lineChart');
+        if (lineChartEl) {
+            const ctxL = lineChartEl.getContext('2d');
+            const grad = ctxL.createLinearGradient(0, 0, 0, 180);
+            grad.addColorStop(0, 'rgba(121,183,117,.35)');
+            grad.addColorStop(1, 'rgba(121,183,117,0)');
+            new Chart(ctxL, { type: 'line', data: { labels: grafikLabels, datasets: [{ data: grafikValues, borderColor: '#79b775', borderWidth: 2.5, backgroundColor: grad, fill: true, tension: 0.4, pointBackgroundColor: '#79b775', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { grid: { color: '#e5e7eb' }, ticks: { display: false }, beginAtZero: true, border: { display: false } } } } });
+        }
 
         const ctxD = document.getElementById('donutChart');
         if (ctxD) {
-            const greens = ['#79b775', '#8cd48a', '#b5d7b4', '#4a9e4a', '#2d7a2d'];
             new Chart(ctxD, {
                 type: 'doughnut',
                 data: { labels: proporsiLabels, datasets: [{ data: proporsiValues, backgroundColor: greens.slice(0, proporsiLabels.length), borderWidth: 3, borderColor: '#f8f9fa' }] },
                 options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { display: false } } }
             });
             const legend = document.getElementById('legend');
-            proporsiLabels.forEach((label, i) => {
-                legend.innerHTML += `<div class="legend-item"><span class="legend-dot" style="background:${greens[i]}"></span>${label}</div>`;
-            });
+            if (legend) {
+                legend.innerHTML = ''; // reset container
+                proporsiLabels.forEach((label, i) => {
+                    legend.innerHTML += `<div class="legend-item"><span class="legend-dot" style="background:${greens[i]}"></span>${label}</div>`;
+                });
+            }
         }
+
         /* ── kode aktivasi ── */
         function randomKode() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -623,28 +711,33 @@ require __DIR__ . '/sections/tools_data.php';
         }
         function regenKode() {
             const k = randomKode();
-            document.getElementById('kodePreview').textContent = k;
-            document.getElementById('kodeHidden').value = k;
+            const preview = document.getElementById('kodePreview');
+            const hidden = document.getElementById('kodeHidden');
+            if (preview) preview.textContent = k;
+            if (hidden) hidden.value = k;
         }
 
-        /* ── toggle password ── */
+        /* ── toggle password (sidebar/tabel bawaan) ── */
         function togglePass() {
             const inp = document.getElementById('inputPass');
             const ico = document.getElementById('eyeIcon');
-            inp.type = inp.type === 'password' ? 'text' : 'password';
-            ico.className = inp.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+            if (inp && ico) {
+                inp.type = inp.type === 'password' ? 'text' : 'password';
+                ico.className = inp.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+            }
         }
 
         /* ── reveal kode di tabel ── */
         function revealKode(id) {
             const el = document.getElementById('kode-' + id);
             const eye = document.getElementById('eye-' + id);
+            if (!el || !eye) return;
             if (el.dataset.hidden === '1') {
                 el.textContent = el.dataset.plain;
                 el.dataset.hidden = '0';
                 eye.className = 'fa-solid fa-eye-slash';
             } else {
-                const p = el.dataset.plain;
+                const p = el.dataset.plain || '';
                 el.textContent = p.substring(0, 2) + '•'.repeat(Math.max(0, p.length - 2));
                 el.dataset.hidden = '1';
                 eye.className = 'fa-solid fa-eye';
@@ -654,22 +747,31 @@ require __DIR__ . '/sections/tools_data.php';
         /* ── modal profil ── */
         function bukaProfil() {
             const modal = document.getElementById('modalProfil');
-            modal.style.display = 'flex';
-            document.getElementById('profilSection').value =
-                document.querySelector('.nav-link.active[data-section]')?.dataset.section || 'dashboard';
+            if (modal) modal.style.display = 'flex';
+
+            const activeLink = document.querySelector('.nav-link.active[data-section]');
+            const inputSection = document.getElementById('profilSection');
+            if (inputSection) {
+                inputSection.value = activeLink?.dataset?.section || 'dashboard';
+            }
         }
         function tutupProfil() {
-            document.getElementById('modalProfil').style.display = 'none';
+            const modal = document.getElementById('modalProfil');
+            if (modal) modal.style.display = 'none';
         }
         function revealModalKode() {
             const el = document.getElementById('modalKode');
-            const eye = document.getElementById('modalKodeEye').querySelector('i');
+            const eyeBtn = document.getElementById('modalKodeEye');
+            if (!el || !eyeBtn) return;
+            const eye = eyeBtn.querySelector('i');
+            if (!eye) return;
+
             if (el.dataset.hidden === '1') {
                 el.textContent = el.dataset.plain;
                 el.dataset.hidden = '0';
                 eye.className = 'fa-solid fa-eye-slash';
             } else {
-                const p = el.dataset.plain;
+                const p = el.dataset.plain || '';
                 el.textContent = p.substring(0, 2) + '•'.repeat(Math.max(0, p.length - 2));
                 el.dataset.hidden = '1';
                 eye.className = 'fa-solid fa-eye';
@@ -683,25 +785,29 @@ require __DIR__ . '/sections/tools_data.php';
             setTimeout(() => {
                 feedbackEl.style.transition = 'opacity .5s';
                 feedbackEl.style.opacity = '0';
-                setTimeout(() => feedbackEl.remove(), 500);
-            }, 4000); // hilang setelah 4 detik
+                setTimeout(() => { if (feedbackEl.parentNode) feedbackEl.remove(); }, 500);
+            }, 4000);
         }
 
+        /* ── toggle password input dinamis ── */
         function togglePw(inputId, iconId) {
             const inp = document.getElementById(inputId);
             const ico = document.getElementById(iconId);
-            if (!inp) return;
+            if (!inp || !ico) return;
             inp.type = inp.type === 'password' ? 'text' : 'password';
             ico.className = inp.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
         }
 
-
+        /* ── modal foto profil admin ── */
         function bukaFotoAdmin(src) {
-            document.getElementById('modalFotoAdminImg').src = src;
-            document.getElementById('modalFotoAdmin').classList.add('show');
+            const img = document.getElementById('modalFotoAdminImg');
+            const modal = document.getElementById('modalFotoAdmin');
+            if (img) img.src = src;
+            if (modal) modal.classList.add('show');
         }
         function tutupFotoAdmin() {
-            document.getElementById('modalFotoAdmin').classList.remove('show');
+            const modal = document.getElementById('modalFotoAdmin');
+            if (modal) modal.classList.remove('show');
         }
 
         /* ── JavaScript Operasional Dropdown Notifikasi Kendala ── */
@@ -709,7 +815,7 @@ require __DIR__ . '/sections/tools_data.php';
         const notifDot = document.getElementById('notifDot');
 
         function toggleNotifDropdown(event) {
-            event.stopPropagation();
+            if (event) event.stopPropagation();
             if (!notifDropdown) return;
 
             if (notifDropdown.style.display === 'none' || notifDropdown.style.display === '') {
@@ -720,7 +826,7 @@ require __DIR__ . '/sections/tools_data.php';
             }
         }
 
-        // Tutup dropdown otomatis jika admin melakukan klik di luar area komponen notifikasi
+        // Tutup dropdown otomatis jika klik di luar area komponen notifikasi
         document.addEventListener('click', function (event) {
             if (notifDropdown && !event.target.closest('.notif-wrapper')) {
                 notifDropdown.style.display = 'none';

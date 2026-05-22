@@ -37,7 +37,7 @@ function login()
                     return "NISN siswa harus berupa 10 digit angka.";
                 }
 
-                $res = mysqli_query($conn, "SELECT * FROM murid WHERE nisn = '$id' LIMIT 1");
+                $res = mysqli_query($conn, "SELECT * FROM murid WHERE nisn = '$id' AND deleted_at IS NULL LIMIT 1");
                 $user = mysqli_fetch_assoc($res);
 
                 if (!$user)
@@ -56,15 +56,15 @@ function login()
                 header('Location: ../views/pembeli/dashboard.php');
                 exit;
 
-            // ════ ALUR LOGIN GURU ════
+                // ════ ALUR LOGIN GURU ════
             } else {
                 if (ctype_digit($identifier)) {
                     if (strlen($identifier) !== 16) {
                         return "NUPTK guru harus tepat 16 digit angka.";
                     }
-                    $query = "SELECT * FROM guru WHERE nuptk = '$id' LIMIT 1";
+                    $query = "SELECT * FROM guru WHERE nuptk = '$id' AND deleted_at IS NULL LIMIT 1";
                 } else {
-                    $query = "SELECT * FROM guru WHERE nama = '$id' LIMIT 1";
+                    $query = "SELECT * FROM guru WHERE nama = '$id' AND deleted_at IS NULL LIMIT 1";
                 }
 
                 $res = mysqli_query($conn, $query);
@@ -81,7 +81,7 @@ function login()
 
                 $_SESSION['user_id'] = $user['nuptk'];
                 $_SESSION['user_nama'] = $user['nama'];
-                $_SESSION['user_role'] = 'guru'; 
+                $_SESSION['user_role'] = 'guru';
                 $_SESSION['user_foto'] = $user['foto_profil'];
 
                 // REDIRECT DISAMAKAN: Ikut masuk ke folder siswa
@@ -104,7 +104,7 @@ function login()
                 return "Pilih kantin terlebih dahulu.";
 
             $u = mysqli_real_escape_string($conn, $username);
-            
+
             // 1. CARI USER BERDASARKAN USERNAME, STATUS AKTIF, DAN ROLE (OWNER/STAF)
             $res = mysqli_query($conn, "
                 SELECT * FROM penjual 
@@ -121,7 +121,7 @@ function login()
                 return "Password salah.";
 
             $pid = (int) $user['id_penjual'];
-            
+
             // 2. CEK APAKAH USER TERDAFTAR DI KANTIN TERSEBUT
             $cek = mysqli_fetch_assoc(mysqli_query(
                 $conn,
@@ -181,6 +181,9 @@ function login()
             $_SESSION['user_nama'] = $user['nama'];
             $_SESSION['user_role'] = 'admin';
             $_SESSION['user_foto'] = $user['foto_profil'];
+
+            // 🔥 FIX UTAMA: Daftarkan role_level murni database ke dalam Session browser!
+            $_SESSION['role_level'] = (int) ($user['role_level'] ?? 1);
 
             header('Location: ../views/admin/?section=dashboard');
             exit;

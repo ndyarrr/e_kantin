@@ -117,6 +117,7 @@
         <form method="POST" action="?section=penjual">
             <input type="hidden" name="action" value="penjual_tambah">
             <input type="hidden" name="_section" value="penjual">
+            <input type="hidden" name="role" value="owner">
             <div class="form-group">
                 <label>Nama Owner</label>
                 <input type="text" name="nama" placeholder="cth. Bu Sari" required autocomplete="off">
@@ -184,6 +185,7 @@
                 <form method="POST" action="?section=penjual&penjual=<?= $detailPenjual['id_penjual'] ?>"
                     enctype="multipart/form-data">
                     <input type="hidden" name="action" value="penjual_edit">
+                    <input type="hidden" name="role" value="owner">
                     <input type="hidden" name="id_penjual" value="<?= $detailPenjual['id_penjual'] ?>">
                     <input type="hidden" name="_section" value="penjual">
                     <input type="hidden" name="_selected_penjual" value="<?= $detailPenjual['id_penjual'] ?>">

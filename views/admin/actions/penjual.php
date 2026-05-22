@@ -104,16 +104,10 @@ if ($action === 'penjual_toggle') {
 if ($action === 'penjual_hapus') {
     $id = (int) ($_POST['id_penjual'] ?? 0);
     if ($id) {
-        // Hapus foto
-        foreach (['jpg', 'jpeg', 'png', 'webp'] as $e) {
-            $f = __DIR__ . '/../../../assets/img/penjual/penjual_' . $id . '.' . $e;
-            if (file_exists($f))
-                unlink($f);
-        }
-        mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_penjual=$id");
-        mysqli_query($conn, "DELETE FROM penjual WHERE id_penjual=$id");
-        catatLog($conn, 'Hapus Penjual', 'Menghapus data penjual dengan ID: ' . $id);
-        $feedback = ['type' => 'success', 'msg' => 'Data pengelola berhasil dihapus.'];
+        $nama_target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM penjual WHERE id_penjual=$id"))['nama'] ?? '';
+        mysqli_query($conn, "UPDATE penjual SET deleted_at = NOW() WHERE id_penjual=$id");
+        catatLog($conn, 'Hapus Penjual', 'Menghapus penjual ID: ' . $id . ' (' . $nama_target . ')');
+        $feedback = ['type' => 'success', 'msg' => "Penjual <strong>" . htmlspecialchars($nama_target) . "</strong> berhasil dihapus."];
         $selectedPenjual = 0;
     }
 }

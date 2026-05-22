@@ -2,6 +2,8 @@
 
 $action = $_POST['action'] ?? '';
 
+// Kita hapus proteksi global di sini agar Admin Biasa bisa lolos ke proses bawah!
+
 /* ══ helper: catat log ══ */
 
 
@@ -64,7 +66,7 @@ function parseCSV(string $content, string $delimiter): array
     return $rows;
 }
 
-/* ══ IMPORT MURID ══ */
+/* ══ IMPORT MURID (Bisa diakses Semua Admin) ══ */
 if ($action === 'tools_import_murid') {
     $skipDuplikat = isset($_POST['skip_duplikat']);
     $berhasil = $dilewati = $gagal = 0;
@@ -96,7 +98,6 @@ if ($action === 'tools_import_murid') {
                 $feedback = ['type' => 'error', 'msg' => 'Kolom NISN atau Nama tidak ditemukan. Pastikan header CSV mengandung kolom "nisn" dan "nama".'];
             } else {
                 // Cache mapping kelas & jurusan nama → id
-                // Ganti cache mapping kelas
                 $mapKelas = [];
                 $res = mysqli_query($conn, "
                     SELECT k.id_kelas, 
@@ -106,7 +107,6 @@ if ($action === 'tools_import_murid') {
                     JOIN jurusan j ON j.id_jurusan = k.id_jurusan
                 ");
                 while ($r = mysqli_fetch_assoc($res)) {
-                    // Support berbagai format: "10 RPL 1", "10rpl1", "10", dll
                     $mapKelas[strtolower($r['nama_lengkap'])] = $r['id_kelas'];
                     $mapKelas[strtolower($r['kelas'] . $r['nama_jurusan'] . $r['rombel'])] = $r['id_kelas'];
                     $mapKelas[strtolower($r['kelas'])] = $r['id_kelas']; // fallback
@@ -119,7 +119,7 @@ if ($action === 'tools_import_murid') {
 
                 // Proses baris data (skip header di index 0)
                 foreach (array_slice($rows, 1) as $rowNum => $data) {
-                    $row = $rowNum + 2; // nomor baris asli (1=header, 2=data pertama)
+                    $row = $rowNum + 2;
                     if (count($data) < 2)
                         continue;
 
@@ -127,7 +127,6 @@ if ($action === 'tools_import_murid') {
                     $nama = trim($data[$colNama] ?? '');
                     $password = $colPassword !== -1 ? trim($data[$colPassword] ?? '') : '';
 
-                    // Fix leading zero NISN — Excel sering hapus 0 di depan
                     if (ctype_digit($nisn) && strlen($nisn) < 10 && strlen($nisn) >= 8) {
                         $nisn = str_pad($nisn, 10, '0', STR_PAD_LEFT);
                     }
@@ -203,7 +202,7 @@ if ($action === 'tools_import_murid') {
     }
 }
 
-/* ══ IMPORT GURU ══ */
+/* ══ IMPORT GURU (Bisa diakses Semua Admin) ══ */
 if ($action === 'tools_import_guru') {
     $skipDuplikat = isset($_POST['skip_duplikat']);
     $berhasil = $dilewati = $gagal = 0;
@@ -240,7 +239,6 @@ if ($action === 'tools_import_guru') {
                     $nama = trim($data[$colNama] ?? '');
                     $password = $colPassword !== -1 ? trim($data[$colPassword] ?? '') : '';
 
-                    // Fix leading zero NUPTK
                     if (ctype_digit($nuptk) && strlen($nuptk) < 16 && strlen($nuptk) >= 14) {
                         $nuptk = str_pad($nuptk, 16, '0', STR_PAD_LEFT);
                     }
@@ -291,8 +289,128 @@ if ($action === 'tools_import_guru') {
     }
 }
 
-/* ══ HAPUS LOG ══ */
+/* ══ RESTORE DATA (Hanya Super Admin) ══ */
+/* ══ RESTORE DATA (Hanya Super Admin & Sinkronisasi Kantin) ══ */
+if ($action === 'tools_restore') {
+    // KUNCI UTAMA: Gunakan variabel $isAdminSuper dari file utama agar lebih aman & akurat dibanding session mentah
+    if (!$isAdminSuper) {
+        die("Akses Ilegal: Aksi restore data hanya diperbolehkan untuk Super Admin!");
+    }
+
+    $tabel = $_POST['tabel'] ?? '';
+    $id_col = $_POST['id_col'] ?? '';
+    $id_val = $_POST['id_val'] ?? '';
+
+    $allowedTabel = ['murid', 'guru', 'penjual', 'toko', 'menu', 'admin'];
+    $allowedCol = ['nisn', 'nuptk', 'id_penjual', 'id_toko', 'id_menu', 'id_admin'];
+
+    if (in_array($tabel, $allowedTabel) && in_array($id_col, $allowedCol) && $id_val !== '') {
+        $id = mysqli_real_escape_string($conn, $id_val);
+
+        // 1. Eksekusi Restore Utama (misal: menghidupkan toko)
+        mysqli_query($conn, "UPDATE `$tabel` SET deleted_at = NULL WHERE `$id_col` = '$id'");
+
+        // 🔥 2. SINKRONISASI KANTIN: Jika yang di-restore adalah toko/kantin, otomatis hidupkan menunya sekalian!
+        if ($tabel === 'toko') {
+            mysqli_query($conn, "UPDATE menu SET deleted_at = NULL WHERE id_toko = '$id'");
+            catatLog($conn, 'Restore Kantin Bertingkat', "Memulihkan toko ID $id beserta seluruh menu di dalamnya");
+        } else {
+            catatLog($conn, 'Restore Data', "Restore $tabel dengan $id_col: $id");
+        }
+
+        $feedback = ['type' => 'success', 'msg' => "Data berhasil dipulihkan ke sistem."];
+    } else {
+        $feedback = ['type' => 'error', 'msg' => 'Request tidak valid.'];
+    }
+}
+
+/* ══ PERMANENT DELETE (Hanya Super Admin) ══ */
+if ($action === 'tools_permanent_delete') {
+    if (!$isAdminSuper) {
+        die("Akses Ilegal: Aksi hapus permanen hanya diperbolehkan untuk Super Admin!");
+    }
+
+    $tabel = $_POST['tabel'] ?? '';
+    $id_col = $_POST['id_col'] ?? '';
+    $id_val = $_POST['id_val'] ?? '';
+
+    $allowedTabel = ['murid', 'guru', 'penjual', 'toko', 'menu', 'admin'];
+    $allowedCol = ['nisn', 'nuptk', 'id_penjual', 'id_toko', 'id_menu', 'id_admin'];
+
+    if (in_array($tabel, $allowedTabel) && in_array($id_col, $allowedCol) && $id_val !== '') {
+        $id = mysqli_real_escape_string($conn, $id_val);
+
+        if ($tabel === 'toko') {
+            mysqli_query($conn, "DELETE dp FROM detail_pesanan dp JOIN pesanan p ON p.id_pesanan = dp.id_pesanan WHERE p.id_toko = '$id'");
+            mysqli_query($conn, "DELETE FROM pesanan WHERE id_toko = '$id'");
+            mysqli_query($conn, "DELETE FROM menu WHERE id_toko = '$id'");
+            mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_toko = '$id'");
+        }
+        if ($tabel === 'penjual') {
+            mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_penjual = '$id'");
+        }
+
+        mysqli_query($conn, "DELETE FROM `$tabel` WHERE `$id_col` = '$id'");
+        catatLog($conn, 'Permanent Delete', "Hapus permanen $tabel dengan $id_col: $id");
+        $feedback = ['type' => 'success', 'msg' => "Data berhasil dihapus permanen dari database."];
+    } else {
+        $feedback = ['type' => 'error', 'msg' => 'Request tidak valid.'];
+    }
+}
+
+/* ══ HAPUS LOG (Hanya Super Admin) ══ */
 if ($action === 'tools_hapus_log') {
+    if (!$isAdminSuper) {
+        die("Akses Ilegal: Aksi pengosongan log hanya diperbolehkan untuk Super Admin!");
+    }
+
+    mysqli_query($conn, "DELETE FROM log_sistem");
+    catatLog($conn, 'Hapus Log', 'Semua log sistem dihapus');
+    $feedback = ['type' => 'success', 'msg' => 'Semua log sistem berhasil dikosongkan.'];
+}
+
+/* ══ PERMANENT DELETE (Hanya Super Admin) ══ */
+if ($action === 'tools_permanent_delete') {
+    // FIX VALIDASI: Hapus spasi casting dan gunakan perbandingan longgar !=
+    if (!isset($_SESSION['role_level']) || (int) $_SESSION['role_level'] != 1) {
+        die("Akses Ilegal: Aksi hapus permanen hanya diperbolehkan untuk Super Admin!");
+    }
+
+    $tabel = $_POST['tabel'] ?? '';
+    $id_col = $_POST['id_col'] ?? '';
+    $id_val = $_POST['id_val'] ?? '';
+
+    $allowedTabel = ['murid', 'guru', 'penjual', 'toko', 'menu', 'admin'];
+    $allowedCol = ['nisn', 'nuptk', 'id_penjual', 'id_toko', 'id_menu', 'id_admin'];
+
+    if (in_array($tabel, $allowedTabel) && in_array($id_col, $allowedCol) && $id_val !== '') {
+        $id = mysqli_real_escape_string($conn, $id_val);
+
+        if ($tabel === 'toko') {
+            mysqli_query($conn, "DELETE dp FROM detail_pesanan dp JOIN pesanan p ON p.id_pesanan = dp.id_pesanan WHERE p.id_toko = '$id'");
+            mysqli_query($conn, "DELETE FROM pesanan WHERE id_toko = '$id'");
+            mysqli_query($conn, "DELETE FROM menu WHERE id_toko = '$id'");
+            mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_toko = '$id'");
+        }
+        if ($tabel === 'penjual') {
+            mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_penjual = '$id'");
+        }
+
+        mysqli_query($conn, "DELETE FROM `$tabel` WHERE `$id_col` = '$id'");
+        catatLog($conn, 'Permanent Delete', "Hapus permanen $tabel dengan $id_col: $id");
+        $feedback = ['type' => 'success', 'msg' => "Data berhasil dihapus permanen."];
+    } else {
+        $feedback = ['type' => 'error', 'msg' => 'Request tidak valid.'];
+    }
+}
+
+/* ══ HAPUS LOG (Hanya Super Admin) ══ */
+if ($action === 'tools_hapus_log') {
+    // FIX VALIDASI: Hapus spasi casting dan gunakan perbandingan longgar !=
+    if (!isset($_SESSION['role_level']) || (int) $_SESSION['role_level'] != 1) {
+        die("Akses Ilegal: Aksi pengosongan log hanya diperbolehkan untuk Super Admin!");
+    }
+
     mysqli_query($conn, "DELETE FROM log_sistem");
     catatLog($conn, 'Hapus Log', 'Semua log sistem dihapus');
     $feedback = ['type' => 'success', 'msg' => 'Semua log berhasil dihapus.'];
