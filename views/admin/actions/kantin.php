@@ -27,7 +27,7 @@ if ($action === 'kantin_tambah') {
         $d = mysqli_real_escape_string($conn, $desk);
         $f = $foto ? "'$foto'" : "NULL";
         mysqli_query($conn, "INSERT INTO toko (nama_toko, deskripsi, foto_toko) VALUES ('$n','$d',$f)");
-        
+
         catatLog($conn, 'Tambah Kantin', 'Menambahkan data kantin baru bernama: ' . $nama);
         $feedback = ['type' => 'success', 'msg' => "Kantin <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan."];
     }
@@ -87,31 +87,12 @@ if ($action === 'kantin_edit') {
 if ($action === 'kantin_hapus') {
     $id = (int) ($_POST['id_toko'] ?? 0);
     if ($id) {
-        // hapus foto dulu
-        $fotoLama = mysqli_fetch_assoc(mysqli_query($conn, "SELECT foto_toko FROM toko WHERE id_toko=$id"))['foto_toko'] ?? '';
-        if ($fotoLama && file_exists(__DIR__ . '/../../../assets/img/kantin/' . $fotoLama)) {
-            unlink(__DIR__ . '/../../../assets/img/kantin/' . $fotoLama);
-        }
-
-        // hapus detail_pesanan dulu (anak dari pesanan)
-        mysqli_query($conn, "DELETE dp FROM detail_pesanan dp 
-            JOIN pesanan p ON p.id_pesanan = dp.id_pesanan 
-            WHERE p.id_toko = $id");
-
-        // hapus pesanan
-        mysqli_query($conn, "DELETE FROM pesanan WHERE id_toko=$id");
-
-        // hapus menu
-        mysqli_query($conn, "DELETE FROM menu WHERE id_toko=$id");
-
-        // hapus toko_penjual
-        mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_toko=$id");
-
-        // baru hapus toko
-        mysqli_query($conn, "DELETE FROM toko WHERE id_toko=$id");
-
-        catatLog($conn, 'Hapus Kantin', 'Menghapus data kantin dengan ID: ' . $id);
-        $feedback = ['type' => 'success', 'msg' => 'Kantin berhasil dihapus.'];
+        $nama_target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama_toko FROM toko WHERE id_toko=$id"))['nama_toko'] ?? '';
+        mysqli_query($conn, "UPDATE toko SET deleted_at = NOW() WHERE id_toko=$id");
+        // Menghapus menu sekalian
+        mysqli_query($conn, "UPDATE menu SET deleted_at = NOW() WHERE id_toko=$id");
+        catatLog($conn, 'Hapus Kantin', 'Menghapus kantin ID: ' . $id . ' (' . $nama_target . ')');
+        $feedback = ['type' => 'success', 'msg' => "Kantin <strong>" . htmlspecialchars($nama_target) . "</strong> berhasil dihapus."];
         $selectedToko = 0;
     }
 }
@@ -140,48 +121,3 @@ if ($action === 'kantin_lepas_penjual') {
     }
 }
 
-/* Tambah menu */
-if ($action === 'menu_tambah') {
-    $id_toko = (int) ($_POST['id_toko'] ?? 0);
-    $nama_menu = trim($_POST['nama_menu'] ?? '');
-    $harga = (float) ($_POST['harga'] ?? 0);
-    $stok = (int) ($_POST['stok'] ?? 0);
-    $desk = trim($_POST['deskripsi'] ?? '');
-    $foto = null;
-
-    if ($id_toko && $nama_menu !== '') {
-        if (!empty($_FILES['foto_menu']['name'])) {
-            $ext = pathinfo($_FILES['foto_menu']['name'], PATHINFO_EXTENSION);
-            $allowed = ['jpg', 'jpeg', 'png', 'webp'];
-            if (in_array(strtolower($ext), $allowed)) {
-                $namaFile = 'menu_' . time() . '.' . strtolower($ext);
-                $tujuan = __DIR__ . '/../../assets/img/menu/' . $namaFile;
-                if (move_uploaded_file($_FILES['foto_menu']['tmp_name'], $tujuan)) {
-                    $foto = $namaFile;
-                }
-            }
-        }
-        $n = mysqli_real_escape_string($conn, $nama_menu);
-        $d = mysqli_real_escape_string($conn, $desk);
-        $f = $foto ? "'$foto'" : "NULL";
-        mysqli_query($conn, "INSERT INTO menu (id_toko, nama_menu, deskripsi, harga, stok, foto_menu) VALUES ($id_toko,'$n','$d',$harga,$stok,$f)");
-        catatLog($conn, 'Tambah Menu', 'Menambahkan data menu baru bernama: ' . $nama_menu);
-        $feedback = ['type' => 'success', 'msg' => "Menu <strong>" . htmlspecialchars($nama_menu) . "</strong> berhasil ditambahkan."];
-        $selectedToko = $id_toko;
-    }
-}
-
-/* Hapus menu */
-if ($action === 'menu_hapus') {
-    $id_menu = (int) ($_POST['id_menu'] ?? 0);
-    if ($id_menu) {
-        $fotoLama = mysqli_fetch_assoc(mysqli_query($conn, "SELECT foto_menu, id_toko FROM menu WHERE id_menu=$id_menu"));
-        if ($fotoLama['foto_menu'] && file_exists(__DIR__ . '/../../assets/img/menu/' . $fotoLama['foto_menu'])) {
-            unlink(__DIR__ . '/../../assets/img/menu/' . $fotoLama['foto_menu']);
-        }
-        $selectedToko = $fotoLama['id_toko'] ?? 0;
-        mysqli_query($conn, "DELETE FROM menu WHERE id_menu=$id_menu");
-        catatLog($conn, 'Hapus Menu', 'Menghapus menu dengan ID: ' . $id_menu);
-        $feedback = ['type' => 'success', 'msg' => 'Menu berhasil dihapus.'];
-    }
-}

@@ -142,8 +142,8 @@ if ($action === 'pembeli_hapus_murid') {
     $nisn = mysqli_real_escape_string($conn, trim($_POST['nisn'] ?? ''));
     if ($nisn) {
         $nama_target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM murid WHERE nisn='$nisn'"))['nama'] ?? '';
-        mysqli_query($conn, "DELETE FROM murid WHERE nisn='$nisn'");
-        catatLog($conn, 'Hapus Murid', 'Menghapus data murid dengan NISN: ' . $nisn);
+        mysqli_query($conn, "UPDATE murid SET deleted_at = NOW() WHERE nisn='$nisn'");
+        catatLog($conn, 'Hapus Murid', 'Menghapus murid NISN: ' . $nisn . ' (' . $nama_target . ')');
         $feedback = ['type' => 'success', 'msg' => "Murid <strong>" . htmlspecialchars($nama_target) . "</strong> berhasil dihapus."];
     }
     if ($feedback)
@@ -157,8 +157,8 @@ if ($action === 'pembeli_hapus_guru') {
     $nuptk = mysqli_real_escape_string($conn, trim($_POST['nuptk'] ?? ''));
     if ($nuptk) {
         $nama_target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM guru WHERE nuptk='$nuptk'"))['nama'] ?? '';
-        catatLog($conn, 'Hapus Guru', 'Menghapus data guru dengan NUPTK: ' . $nuptk);
-        mysqli_query($conn, "DELETE FROM guru WHERE nuptk='$nuptk'");
+        mysqli_query($conn, "UPDATE guru SET deleted_at = NOW() WHERE nuptk='$nuptk'");
+        catatLog($conn, 'Hapus Guru', 'Menghapus guru NUPTK: ' . $nuptk . ' (' . $nama_target . ')');
         $feedback = ['type' => 'success', 'msg' => "Guru <strong>" . htmlspecialchars($nama_target) . "</strong> berhasil dihapus."];
     }
     if ($feedback)
