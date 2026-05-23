@@ -1,7 +1,15 @@
 <?php // sections/dashboard.php ?>
 
+<style>
+    .stats-grid.col3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 kolom sama lebar, memenuhi 100% space */
+    gap: 20px;
+}
+</style>
+
 <!-- STATS -->
-<div class="stats-grid col4">
+<div class="stats-grid col3">
     <div class="stat-card">
         <div class="stat-label">Ringkasan Pendapatan Hari ini</div>
         <div class="stat-row">
@@ -15,7 +23,6 @@
             <?= ($trendPendapatan >= 0 ? '+' : '') . $trendPendapatan ?>% dari kemarin
         </div>
     </div>
-
     <div class="stat-card">
         <div class="stat-label">Pesanan Selesai Hari ini</div>
         <div class="stat-row">
@@ -27,7 +34,6 @@
             <?= ($trendPesanan >= 0 ? '+' : '') . $trendPesanan ?>% dari kemarin
         </div>
     </div>
-
     <div class="stat-card">
         <div class="stat-label">Item Terlaris Harian</div>
         <div class="stat-row">
@@ -46,18 +52,7 @@
             <i class="fa-solid fa-star stat-icon"></i>
         </div>
     </div>
-
-    <div class="stat-card">
-        <div class="stat-label">Saldo Buku Kas (Dompet)</div>
-        <div class="stat-row">
-            <div class="stat-value" style="font-size:18px">
-                Rp <?= number_format($saldoKas, 0, ',', '.') ?>
-            </div>
-            <i class="fa-solid fa-wallet stat-icon"></i>
-        </div>
-    </div>
 </div>
-
 <!-- CHARTS -->
 <div class="chart-grid">
     <div class="chart-card">
@@ -74,7 +69,6 @@
         <div class="legend" id="legendPenjual"></div>
     </div>
 </div>
-
 <!-- TABEL PESANAN TERBARU -->
 <div class="table-card">
     <div class="table-card-header">
@@ -147,13 +141,11 @@
         </table>
     </div>
 </div>
-
 <script>
 (function() {
     const labels    = <?= json_encode($grafikLabels) ?>;
     const values    = <?= json_encode($grafikValues) ?>;
     const distribusi = <?= json_encode($distribusi) ?>;
-
     /* Line chart */
     const ctxL = document.getElementById('lineChartPenjual').getContext('2d');
     const grad = ctxL.createLinearGradient(0, 0, 0, 180);
@@ -193,13 +185,11 @@
             }
         }
     });
-
     /* Donut chart */
     const colors = ['#3b82f6','#06b6d4','#f97316','#5aab55','#a78bfa'];
     const noData = distribusi.length === 0;
     const distLabels = noData ? ['Belum ada data'] : distribusi.map(d => d.kategori);
     const distValues = noData ? [1] : distribusi.map(d => parseInt(d.total));
-
     new Chart(document.getElementById('donutChartPenjual'), {
         type: 'doughnut',
         data: {
@@ -217,7 +207,6 @@
             plugins: { legend: { display: false }, tooltip: { enabled: !noData } }
         }
     });
-
     if (!noData) {
         const legend = document.getElementById('legendPenjual');
         distLabels.forEach((label, i) => {
