@@ -1,9 +1,8 @@
-<?php // sections/menu_data.php
-
+<?php
 /** @var mysqli $conn */
 /** @var int $idToko */
 
-$search = $_GET['search'] ?? '';
+$search         = $_GET['search'] ?? '';
 $filterKategori = $_GET['kategori'] ?? 'semua';
 
 $querySql = "SELECT * FROM menu WHERE id_toko = $idToko";
@@ -13,13 +12,12 @@ if (!empty($search)) {
     $querySql .= " AND nama_menu LIKE '%$searchEscaped%'";
 }
 
-if ($filterKategori === 'makanan') {
-    $querySql .= " AND LOWER(nama_menu) NOT LIKE '%teh%' AND LOWER(nama_menu) NOT LIKE '%es%' AND LOWER(nama_menu) NOT LIKE '%minum%' AND LOWER(nama_menu) NOT LIKE '%jus%'";
-} elseif ($filterKategori === 'minuman') {
-    $querySql .= " AND (LOWER(nama_menu) LIKE '%teh%' OR LOWER(nama_menu) LIKE '%es%' OR LOWER(nama_menu) LIKE '%minum%' OR LOWER(nama_menu) LIKE '%jus%')";
+// Filter pakai kolom kategori, bukan tebak-tebak dari nama menu
+if (in_array($filterKategori, ['Makanan', 'Minuman', 'Snack'])) {
+    $querySql .= " AND kategori = '$filterKategori'";
 }
 
-$querySql .= " ORDER BY id_menu DESC";
+$querySql .= " ORDER BY kategori ASC, nama_menu ASC";
 
-// PASTIKAN NAMA VARIABEL DI BAWAH INI ADALAH $daftarMenu
 $daftarMenu = mysqli_fetch_all(mysqli_query($conn, $querySql), MYSQLI_ASSOC);
+?>

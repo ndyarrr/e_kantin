@@ -173,7 +173,7 @@ require __DIR__ . '/sections/menu_data.php';
     <title>E-Kantin — Owner</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="../../../assets/css/penjual.css">
+    <link rel="stylesheet" href="../../../assets/css/penjual.css?v=<?= time() ?>">
 </head>
 <body>
 

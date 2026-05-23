@@ -210,17 +210,19 @@ button {
 
 /* ── Topbar ── */
 .topbar {
-    height: var(--topbar-h);
-    background: var(--card-bg);
-    border-bottom: 1.5px solid var(--border);
+    background: var(--green);
+    padding: 16px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
     gap: 12px;
+    border-radius: var(--radius);
+    margin: 20px 24px 0;
+    box-shadow: var(--shadow);
+    border: none;
+    height: auto;
+    position: relative;
+    z-index: 100;
 }
 
 .topbar-left {
@@ -232,9 +234,10 @@ button {
 }
 
 .topbar-title h1 {
-    font-size: 18px;
-    font-weight: 700;
-    line-height: 1.2;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -242,7 +245,8 @@ button {
 
 .topbar-title p {
     font-size: 12px;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, .75);
+    margin-top: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -256,71 +260,90 @@ button {
 }
 
 .btn-hamburger {
-    background: none;
+    background: rgba(255, 255, 255, .2);
     border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: var(--text-muted);
-    padding: 6px;
+    color: #fff;
+    width: 38px;
+    height: 38px;
     border-radius: 8px;
-    display: none;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s;
+    flex-shrink: 0;
+}
+
+.btn-hamburger:hover {
+    background: rgba(255, 255, 255, .35);
 }
 
 .btn-notif {
     position: relative;
-    background: var(--green-light);
+    background: rgba(255, 255, 255, .2);
     border: none;
-    border-radius: 10px;
-    width: 40px;
-    height: 40px;
+    color: #fff;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
-    color: var(--green);
-    cursor: pointer;
+    transition: background .15s;
+}
+
+.btn-notif:hover {
+    background: rgba(255, 255, 255, .35);
 }
 
 .notif-dot {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 7px;
+    right: 7px;
     width: 8px;
     height: 8px;
     background: var(--red);
     border-radius: 50%;
-    border: 2px solid #fff;
+    border: 2px solid var(--green);
 }
 
 .topbar-user {
     display: flex;
     align-items: center;
     gap: 10px;
+    border-left: 1px solid rgba(255, 255, 255, .3);
+    padding-left: 14px;
 }
 
 .avatar {
     width: 38px;
     height: 38px;
     border-radius: 10px;
-    background: var(--green);
+    background: var(--green-dark);
     color: #fff;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, .3);
 }
 
 .user-name {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
 }
 
 .user-role {
     font-size: 11px;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, .7);
 }
 
 /* ── Section ── */
@@ -786,7 +809,9 @@ tbody tr:hover {
     }
 
     .topbar {
-        padding: 0 14px;
+        margin: 12px 14px 0;
+        padding: 12px 16px;
+        height: auto;
     }
 
     .topbar-title p {
@@ -1162,7 +1187,9 @@ tbody tr:hover {
     }
 
     .topbar {
-        padding: 0 14px;
+        margin: 12px 14px 0;
+        padding: 12px 16px;
+        height: auto;
     }
 
     .topbar-title p {
@@ -1566,4 +1593,610 @@ tbody tr:hover {
     border: 1.5px solid #e5e7eb;
     border-radius: 14px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+/* ═══════════════════════════════════════
+   INBOX — Tambahkan di bagian paling bawah penjual.css
+   ═══════════════════════════════════════ */
+
+/* ── Tab bar ── */
+.inbox-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 8px;
+    box-shadow: var(--shadow);
+}
+
+.inbox-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+}
+
+.inbox-tab:hover {
+    background: var(--green-light);
+    color: var(--green-dark);
+}
+
+.inbox-tab.active {
+    background: var(--green);
+    color: #fff;
+}
+
+.inbox-tab.active .tab-count {
+    background: rgba(255,255,255,.3);
+    color: #fff;
+}
+
+.tab-count {
+    background: var(--green-muted);
+    color: var(--green-dark);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 20px;
+    min-width: 20px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* ── Empty state ── */
+.inbox-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 10px;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+}
+
+.inbox-empty-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--green-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: var(--green);
+    margin-bottom: 6px;
+}
+
+.inbox-empty-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.inbox-empty-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* ── Pesanan card ── */
+.inbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pcard {
+    background: var(--card-bg);
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border-left-width: 4px;
+    transition: box-shadow .15s, transform .15s;
+}
+
+.pcard:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+/* Left accent bar warna per status */
+.bar-menunggu  { border-left-color: #f59e0b; }
+.bar-proses    { border-left-color: #3b82f6; }
+.bar-siap      { border-left-color: #8b5cf6; }
+.bar-selesai   { border-left-color: #10b981; }
+.bar-batal     { border-left-color: #ef4444; }
+
+.pcard-inner {
+    padding: 16px 18px;
+}
+
+/* Header */
+.pcard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.pcard-buyer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pcard-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--green-muted);
+    color: var(--green-dark);
+    font-size: 15px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pcard-nama {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.pcard-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.pcard-dot { opacity: .5; }
+
+/* Badge status */
+.pcard-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.status-menunggu  { background: #fef3c7; color: #92400e; }
+.status-proses    { background: #dbeafe; color: #1e40af; }
+.status-siap      { background: #ede9fe; color: #5b21b6; }
+.status-selesai   { background: #d1fae5; color: #065f46; }
+.status-batal     { background: #fee2e2; color: #991b1b; }
+
+/* Divider */
+.pcard-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0 0 12px;
+}
+
+/* Item rows */
+.pcard-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.pcard-item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.pcard-qty {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--green-dark);
+    background: var(--green-light);
+    padding: 2px 7px;
+    border-radius: 6px;
+    min-width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.pcard-item-name {
+    flex: 1;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.pcard-item-price {
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.pcard-catatan {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: #f9fafb;
+    border-left: 2px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 0 6px 6px 0;
+    margin-left: 36px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Footer */
+.pcard-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.pcard-total {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.pcard-total-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--text-muted);
+}
+
+.pcard-total-value {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--green-dark);
+}
+
+.pcard-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Action buttons */
+.pcard-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 9px;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+}
+
+.pcard-btn:active { transform: scale(.97); }
+
+.pcard-btn-proses {
+    background: var(--green);
+    color: #fff;
+}
+.pcard-btn-proses:hover { background: var(--green-dark); }
+
+.pcard-btn-siap {
+    background: #8b5cf6;
+    color: #fff;
+}
+.pcard-btn-siap:hover { background: #7c3aed; }
+
+.pcard-btn-selesai {
+    background: #10b981;
+    color: #fff;
+}
+.pcard-btn-selesai:hover { background: #059669; }
+
+.pcard-btn-batal {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #fca5a5;
+}
+.pcard-btn-batal:hover { background: #fecaca; }
+
+/* ── Responsive inbox ── */
+@media (max-width: 768px) {
+    .inbox-tabs {
+        gap: 4px;
+        padding: 6px;
+    }
+
+    .inbox-tab {
+        padding: 7px 10px;
+        font-size: 12px;
+        gap: 5px;
+    }
+
+    .tab-label { display: none; }
+
+    .pcard-inner { padding: 14px; }
+
+    .pcard-header { flex-wrap: wrap; }
+
+    .pcard-total-value { font-size: 15px; }
+}
+
+@media (max-width: 480px) {
+    .pcard-btn {
+        padding: 7px 12px;
+        font-size: 12px;
+    }
+
+    .pcard-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
+}
+
+/* ═══════════════════════════════════════
+   NOTA MODAL — Tambahkan di paling bawah penjual.css
+   ═══════════════════════════════════════ */
+
+/* Tombol nota */
+.pcard-btn-nota {
+    background: #f59e0b;
+    color: #fff;
+}
+.pcard-btn-nota:hover { background: #d97706; }
+
+/* Tombol selesai terkunci */
+.pcard-btn-selesai-locked {
+    opacity: .4;
+    cursor: not-allowed !important;
+}
+.pcard-btn-selesai-locked:hover { background: #10b981; }
+
+/* Overlay modal */
+.nota-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.nota-overlay.show { display: flex; }
+
+/* Nota box */
+.nota-box {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 340px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+}
+
+#notaKonten {
+    padding: 36px 22px 24px;
+}
+
+.nota-header {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.nota-logo {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.nota-toko-nama {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: .3px;
+}
+
+.nota-sub {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.nota-garis {
+    border-top: 1px dashed #d1d5db;
+    margin: 10px 0;
+}
+
+.nota-info { margin-bottom: 4px; }
+
+.nota-info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 2px 0;
+    color: #374151;
+}
+
+.nota-info-row span:first-child { color: #6b7280; }
+.nota-info-row span:last-child  { font-weight: 600; text-align: right; max-width: 55%; }
+
+/* Tabel item */
+.nota-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    color: #374151;
+}
+
+.nota-table th {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #9ca3af;
+    padding: 4px 0;
+    letter-spacing: .4px;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.nota-table td {
+    padding: 5px 0;
+    vertical-align: top;
+}
+
+.nota-table .center { text-align: center; }
+.nota-table .right  { text-align: right; white-space: nowrap; }
+
+/* Total */
+.nota-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    font-weight: 800;
+    color: #1a1a1a;
+    padding: 4px 0;
+}
+
+/* Footer nota */
+.nota-footer {
+    text-align: center;
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+    padding-bottom: 4px;
+}
+
+/* Tombol aksi modal */
+.nota-actions {
+    display: flex;
+    gap: 10px;
+    padding: 14px 22px;
+    border-top: 1px solid #f3f4f6;
+    background: #f9fafb;
+}
+
+.nota-actions .pcard-btn { flex: 1; justify-content: center; }
+
+.pcard-btn-print {
+    background: #10b981;
+    color: #fff;
+}
+.pcard-btn-print:hover { background: #10b981; }
+
+/* ── Print styles ── */
+@media print {
+    /* Sembunyikan semua kecuali konten nota */
+    body > * { display: none !important; }
+
+    .nota-overlay {
+        display: block !important;
+        position: static !important;
+        background: none !important;
+        padding: 0 !important;
+    }
+
+    .nota-box {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .no-print { display: none !important; }
+
+    #notaKonten { padding: 0 !important; }
+}
+
+@media (max-width: 400px) {
+    .nota-box { max-width: 100%; border-radius: 12px; }
+}
+
+/* ═══════════════════════════════════════
+   PROFIL — Tambahkan di paling bawah penjual.css
+   ═══════════════════════════════════════ */
+
+.profil-btn-foto {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    background: var(--green-light);
+    color: var(--green-dark);
+    border: 1.5px solid var(--green-muted);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+}
+.profil-btn-foto:hover { background: var(--green-muted); }
+
+.profil-info-kecil {
+    text-align: left;
+    border-top: 1.5px solid var(--border);
+    padding-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.profil-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    gap: 8px;
+}
+
+.profil-info-row span:first-child {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profil-info-row span:last-child {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.profil-role-badge {
+    background: var(--green-muted);
+    color: var(--green-dark);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
 }
