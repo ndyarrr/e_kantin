@@ -283,11 +283,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // ── ACTION PEMBELI ──
+    // ── ACTION PEMBELI ──
     if (str_starts_with($action, 'pembeli_')) {
         require __DIR__ . '/actions/pembeli.php';
         if ($feedback)
             $_SESSION['feedback'] = $feedback;
-        header("Location: ?section=pembeli");
+        $backSection = $_POST['_section'] ?? 'pembeli';
+        // pastikan hanya section yang valid
+        $allowedSections = ['pembeli', 'tambah_akun'];
+        if (!in_array($backSection, $allowedSections))
+            $backSection = 'pembeli';
+        header("Location: ?section=$backSection");
         exit;
     }
 
@@ -380,6 +386,49 @@ require __DIR__ . '/sections/tools_data.php';
     <link rel="stylesheet" href="../../assets/css/admin.css">
     <link rel="stylesheet" href="../../assets/css/admin_kantin.css">
 
+    <script>
+        const pageMeta = {
+            dashboard: { title: 'Dashboard', sub: 'Monitor semua transaksi dan keuangan E-Kantin' },
+            admin: { title: 'Admin Management', sub: 'Kelola akun administrator E-Kantin' },
+            kantin: { title: 'Kelola Kantin', sub: 'Manajemen toko dan menu kantin' },
+            penjual: { title: 'Kelola Penjual', sub: 'Manajemen akun penjual' },
+            pembeli: { title: 'Kelola Pembeli', sub: 'Data murid dan guru terdaftar' },
+            tambah_akun: { title: 'Tambah Akun Pembeli', sub: 'Tambah akun murid atau guru baru' },
+            tools: { title: 'Tools & Log', sub: 'Import data dan log aktivitas sistem' },
+            chat: { title: 'Chat', sub: 'Hubungi dan balas pesan dari murid atau toko kantin' },
+        };
+
+        function switchSection(name) {
+            if (!name) name = 'dashboard';
+
+            // Ambil element secara dinamis, jika belum ke-render di HTML kita skip dulu sementara
+            const targetSec = document.getElementById('section-' + name);
+            if (!targetSec) return;
+
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-link[data-section]').forEach(l => l.classList.remove('active'));
+
+            targetSec.classList.add('active');
+
+            const targetLink = document.querySelector('.nav-link[data-section="' + name + '"]');
+            if (targetLink) targetLink.classList.add('active');
+
+            const meta = pageMeta[name] || pageMeta['dashboard'];
+            const titleEl = document.getElementById('pageTitle');
+            const subEl = document.getElementById('pageSubtitle');
+            if (titleEl) titleEl.textContent = meta.title;
+            if (subEl) subEl.textContent = meta.sub;
+
+            // Update URL browser
+            try {
+                const currentParams = new URLSearchParams(window.location.search);
+                currentParams.set('section', name);
+                if (name !== 'chat') currentParams.delete('lawan');
+                history.replaceState(null, '', '?' + currentParams.toString());
+            } catch (e) { }
+        }
+    </script>
+
     <style>
         /* CSS Tambahan untuk Animasi & Desain Dropdown Notifikasi Kendala */
         @keyframes fadeInNotif {
@@ -442,6 +491,12 @@ require __DIR__ . '/sections/tools_data.php';
                     class="fa-solid fa-user-tag"></i> Penjual</button>
             <button class="nav-link" data-section="pembeli" onclick="switchSection('pembeli')"><i
                     class="fa-solid fa-users"></i> Pembeli</button>
+            <button class="nav-link" data-section="tambah_akun" onclick="switchSection('tambah_akun')">
+                <i class="fa-solid fa-user-plus"></i> Tambah Akun
+            </button>
+            <button class="nav-link" data-section="chat" onclick="switchSection('chat')"><i
+                    class="fa-solid fa-comments"></i> Chat 
+            </button>
         </nav>
         <div class="sidebar-bottom">
             <button class="nav-link" data-section="tools" onclick="switchSection('tools')">
@@ -598,6 +653,18 @@ require __DIR__ . '/sections/tools_data.php';
                 ?>
             </div>
 
+            <div class="section" id="section-tambah_akun">
+                <?php
+                require __DIR__ . '/sections/pembeli_data.php'; // butuh $semuaKelas
+                require __DIR__ . '/sections/penjual_data.php'; // butuh $semuaKelas
+                require __DIR__ . '/sections/tambah_akun.php';
+                ?>
+            </div>
+
+            <div class="section" id="section-chat">
+                <?php require __DIR__ . '/sections/chat.php'; ?>
+            </div>
+
             <div class="section" id="section-tools">
                 <?php require __DIR__ . '/sections/tools.php'; ?>
             </div>
@@ -630,37 +697,22 @@ require __DIR__ . '/sections/tools_data.php';
         window.addEventListener('resize', () => { if (window.innerWidth > 768) closeSidebar(); });
 
         /* ── section switcher ── */
-        const pageMeta = {
-            dashboard: { title: 'Dashboard', sub: 'Monitor semua transaksi dan keuangan E-Kantin' },
-            admin: { title: 'Admin Management', sub: 'Kelola akun administrator E-Kantin' },
-            kantin: { title: 'Kelola Kantin', sub: 'Manajemen toko dan menu kantin' },
-            penjual: { title: 'Kelola Penjual', sub: 'Manajemen akun penjual' },
-            pembeli: { title: 'Kelola Pembeli', sub: 'Data murid dan guru terdaftar' },
-            tools: { title: 'Tools & Log', sub: 'Import data dan log aktivitas sistem' },
-        };
 
-        function switchSection(name) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-link[data-section]').forEach(l => l.classList.remove('active'));
 
-            const targetSec = document.getElementById('section-' + name);
-            if (targetSec) targetSec.classList.add('active');
+        /* Inisialisasi awal saat halaman pertama kali di-load */
+        document.addEventListener("DOMContentLoaded", function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            let initSection = urlParams.get('section') || '<?= htmlspecialchars($activeSection ?? "dashboard") ?>';
 
-            const targetLink = document.querySelector('.nav-link[data-section="' + name + '"]');
-            if (targetLink) targetLink.classList.add('active');
+            // Bersihkan string jikalau ada sisa parameter nempel
+            initSection = initSection.split('&')[0];
 
-            const meta = pageMeta[name] || {};
-            const titleEl = document.getElementById('pageTitle');
-            const subEl = document.getElementById('pageSubtitle');
-            if (titleEl) titleEl.textContent = meta.title || '';
-            if (subEl) subEl.textContent = meta.sub || '';
+            // Jalankan switch otomatis ke halaman terakhir yang dibuka
+            switchSection(initSection);
+        });
 
-            if (window.innerWidth <= 768) closeSidebar();
-            history.replaceState(null, '', '?section=' + name);
-            if (name === 'admin' && typeof regenKode === 'function') regenKode();
-        }
-
-        if (window.location.search.includes('toko=')) {
+        // MODIFIKASI: Filter redirect toko agar tidak mengganggu section chat
+        if (window.location.search.includes('toko=') && !window.location.search.includes('section=')) {
             history.replaceState(null, '', '?section=kantin');
         }
 

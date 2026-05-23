@@ -262,7 +262,7 @@ $statMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c F
     </a>
     
     <a class="ab-team-card" href="https://www.instagram.com/ndydod?igsh=eDF6Y281OTBqbzR2" target="_blank">
-        <img class="ab-avatar" src="./assets/img/PPFandy.jpeg" alt="Backend Dev">
+        <img class="ab-avatar" src="./assets/img/PPFandy.png" alt="Backend Dev">
         <div class="ab-name">Fandy Ahmad R.</div>
         <div class="ab-role">Backend Dev</div>
     </a>

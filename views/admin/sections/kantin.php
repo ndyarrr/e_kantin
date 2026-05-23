@@ -4,21 +4,27 @@
     <div class="stat-card">
         <div class="stat-label">Total Kantin</div>
         <div class="stat-row">
-            <div class="stat-value"><?= $totalToko ?></div>
+            <div class="stat-value">
+                <?= $totalToko ?>
+            </div>
             <i class="fa-solid fa-store stat-icon"></i>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-label">Kantin Buka Hari Ini</div>
         <div class="stat-row">
-            <div class="stat-value"><?= $tokoAktif ?><span class="sub"> / <?= $totalToko ?></span></div>
+            <div class="stat-value">
+                <?= $tokoAktif ?><span class="sub"> /
+                    <?= $totalToko ?>
+                </span>
+            </div>
             <i class="fa-solid fa-circle-check stat-icon"></i>
         </div>
     </div>
 </div>
 
-<div class="page-grid">
-    <div class="table-card">
+<div id="panelDaftarKantin" style="width: 100%;">
+    <div class="table-card" style="width: 100%;">
         <div class="table-card-header">
             <h2>Daftar Kantin</h2>
         </div>
@@ -37,7 +43,7 @@
                 <tbody>
                     <?php if (empty($tokos)): ?>
                         <tr class="empty-row">
-                            <td colspan="5">
+                            <td colspan="6">
                                 <i class="fa-solid fa-store"
                                     style="color:var(--green-muted);font-size:22px;display:block;margin-bottom:8px"></i>
                                 Belum ada kantin
@@ -61,8 +67,9 @@
                                             </div>
                                         <?php endif; ?>
                                         <div>
-                                            <span
-                                                style="font-weight:600; display:block;"><?= htmlspecialchars($t['nama_toko']) ?></span>
+                                            <span style="font-weight:600; display:block;">
+                                                <?= htmlspecialchars($t['nama_toko']) ?>
+                                            </span>
                                             <span style="font-size:11px; color:var(--text-light); font-style:italic;">
                                                 <i class="fa-solid fa-user-tie"
                                                     style="font-size:9px; margin-right:3px;"></i>Owner:
@@ -71,9 +78,15 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="col-hide toko-desc"><?= htmlspecialchars($t['deskripsi'] ?? '-') ?></td>
-                                <td class="center" style="font-weight:600"><?= $t['total_penjual'] ?></td>
-                                <td class="center" style="font-weight:600"><?= $t['total_menu'] ?></td>
+                                <td class="col-hide toko-desc">
+                                    <?= htmlspecialchars($t['deskripsi'] ?? '-') ?>
+                                </td>
+                                <td class="center" style="font-weight:600">
+                                    <?= $t['total_penjual'] ?>
+                                </td>
+                                <td class="center" style="font-weight:600">
+                                    <?= $t['total_menu'] ?>
+                                </td>
                                 <td>
                                     <span class="badge <?= $t['status'] === 'buka' ? 'badge-aktif' : 'badge-nonaktif' ?>">
                                         <i
@@ -99,30 +112,6 @@
             </table>
         </div>
     </div>
-
-    <div class="form-card">
-        <h2><i class="fa-solid fa-store" style="color:var(--green);margin-right:8px"></i>Tambah Stand Baru</h2>
-        <form method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="action" value="kantin_tambah">
-            <input type="hidden" name="_section" value="kantin">
-            <div class="form-group">
-                <label>Nama Kantin / Stand</label>
-                <input type="text" name="nama_toko" placeholder="cth. Warung Bu Sari" required autocomplete="off">
-            </div>
-            <div class="form-group">
-                <label>Deskripsi</label>
-                <input type="text" name="deskripsi" placeholder="cth. Nasi, lauk, dan minuman">
-            </div>
-            <div class="form-group">
-                <label>Foto Kantin</label>
-                <input type="file" name="foto_toko" accept="image/*">
-                <div class="form-note">Opsional.</div>
-            </div>
-            <button type="submit" class="btn-submit">
-                <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Daftarkan Stand
-            </button>
-        </form>
-    </div>
 </div>
 
 <?php if ($selectedToko && $detailToko): ?>
@@ -138,9 +127,12 @@
                     <?php endif; ?>
                 </div>
                 <div>
-                    <div class="detail-toko-nama"><?= htmlspecialchars($detailToko['nama_toko']) ?></div>
-                    <div class="detail-toko-desk">Status: <strong
-                            style="color:var(--green)"><?= ucfirst($detailToko['status']) ?></strong></div>
+                    <div class="detail-toko-nama">
+                        <?= htmlspecialchars($detailToko['nama_toko']) ?>
+                    </div>
+                    <div class="detail-toko-desk">Status: <strong style="color:var(--green)">
+                            <?= ucfirst($detailToko['status']) ?>
+                        </strong></div>
                 </div>
             </div>
             <button onclick="tutupDetailToko()" class="btn-aksi toggle-off" title="Tutup">
@@ -156,15 +148,21 @@
                 <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
                     <div>
                         <span style="font-size:11px; color:var(--text-light); display:block;">NAMA STAND</span>
-                        <strong style="font-size:16px;"><?= htmlspecialchars($detailToko['nama_toko']) ?></strong>
+                        <strong style="font-size:16px;">
+                            <?= htmlspecialchars($detailToko['nama_toko']) ?>
+                        </strong>
                     </div>
                     <div>
                         <span style="font-size:11px; color:var(--text-light); display:block;">DESKRIPSI STAND</span>
-                        <span style="font-size:14px;"><?= htmlspecialchars($detailToko['deskripsi'] ?: '-') ?></span>
+                        <span style="font-size:14px;">
+                            <?= htmlspecialchars($detailToko['deskripsi'] ?: '-') ?>
+                        </span>
                     </div>
                     <div>
                         <span style="font-size:11px; color:var(--text-light); display:block;">TANGGAL BERDIRI</span>
-                        <span style="font-size:14px;"><?= date('d F Y', strtotime($detailToko['dibuat_pada'])) ?></span>
+                        <span style="font-size:14px;">
+                            <?= date('d F Y', strtotime($detailToko['dibuat_pada'])) ?>
+                        </span>
                     </div>
 
                     <div
@@ -189,8 +187,9 @@
                             (PEMILIK KANTIN)</span>
                         <div style="display:flex; align-items:center; gap:8px;">
                             <i class="fa-solid fa-user-shield" style="font-size:16px; color:#ff9800;"></i>
-                            <strong
-                                style="font-size:14px;"><?= htmlspecialchars($detailToko['nama_owner'] ?? 'Belum ada Owner assigned') ?></strong>
+                            <strong style="font-size:14px;">
+                                <?= htmlspecialchars($detailToko['nama_owner'] ?? 'Belum ada Owner assigned') ?>
+                            </strong>
                         </div>
                     </div>
 
@@ -248,7 +247,6 @@
                             </tr>
                         <?php else:
                             foreach ($menuToko as $m):
-                                // Deteksi icon berdasarkan kategori data murni DB
                                 $kat = $m['kategori'] ?? 'makanan';
                                 $iconKat = match ($kat) {
                                     'minuman' => 'fa-glass-water',
@@ -277,9 +275,15 @@
                                             <?= ucfirst($kat) ?>
                                         </span>
                                     </td>
-                                    <td class="col-hide toko-desc"><?= htmlspecialchars($m['deskripsi'] ?? '-') ?></td>
-                                    <td style="font-weight:600;">Rp <?= number_format($m['harga'], 0, ',', '.') ?></td>
-                                    <td class="center"><?= $m['stok'] ?></td>
+                                    <td class="col-hide toko-desc">
+                                        <?= htmlspecialchars($m['deskripsi'] ?? '-') ?>
+                                    </td>
+                                    <td style="font-weight:600;">Rp
+                                        <?= number_format($m['harga'], 0, ',', '.') ?>
+                                    </td>
+                                    <td class="center">
+                                        <?= $m['stok'] ?>
+                                    </td>
                                     <td class="center">
                                         <span class="badge <?= $m['tersedia'] ? 'badge-aktif' : 'badge-nonaktif' ?>">
                                             <?= $m['tersedia'] ? 'Ya' : 'Tidak' ?>

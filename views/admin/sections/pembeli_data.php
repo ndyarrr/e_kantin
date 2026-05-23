@@ -34,10 +34,10 @@ $sqlMurid = "
         m.status,
         m.terakhir_login,
         m.id_kelas,
-        m.id_jurusan,
+        k.id_jurusan, -- 🔥 FIX MUTLAK: id_jurusan diambil dari tabel kelas (k), BUKAN m.id_jurusan!
         k.kelas     AS tingkat,
-        CONCAT(k.kelas, ' ', j.nama_jurusan, ' ', k.rombel) AS info_tambahan,
-        NULL        AS info2
+        k.rombel,     -- 🔥 Ambil rombel asli dari tabel kelas
+        CONCAT(k.kelas, ' ', j.nama_jurusan, ' ', k.rombel) AS info_tambahan
     FROM murid m
     LEFT JOIN kelas k ON k.id_kelas = m.id_kelas
     LEFT JOIN jurusan j ON j.id_jurusan = k.id_jurusan
@@ -56,8 +56,8 @@ $sqlGuru = "
         NULL        AS id_kelas,
         NULL        AS id_jurusan,
         NULL        AS tingkat,
-        NULL        AS info_tambahan,
-        NULL        AS info2
+        ''          AS rombel, 
+        NULL        AS info_tambahan
     FROM guru g
     WHERE " . implode(' AND ', $whereGuru);
 
@@ -65,13 +65,19 @@ $sqlGuru = "
 $daftarPembeli = [];
 if ($filterKategori !== 'guru') {
     $resMurid = mysqli_query($conn, $sqlMurid);
-    while ($row = mysqli_fetch_assoc($resMurid))
-        $daftarPembeli[] = $row;
+    if ($resMurid) {
+        while ($row = mysqli_fetch_assoc($resMurid)) {
+            $daftarPembeli[] = $row;
+        }
+    }
 }
 if ($filterKategori !== 'murid') {
     $resGuru = mysqli_query($conn, $sqlGuru);
-    while ($row = mysqli_fetch_assoc($resGuru))
-        $daftarPembeli[] = $row;
+    if ($resGuru) {
+        while ($row = mysqli_fetch_assoc($resGuru)) {
+            $daftarPembeli[] = $row;
+        }
+    }
 }
 
 /* ══ DROPDOWN DATA ══ */
@@ -83,7 +89,9 @@ $semuaJurusan = mysqli_fetch_all(mysqli_query(
 $semuaKelas = mysqli_fetch_all(mysqli_query(
     $conn,
     "SELECT k.id_kelas,
+            k.id_jurusan, -- 🔥 BARU: Tarik id_jurusan di sini biar loop dropdown rombel dapet data aslinya
             k.kelas AS tingkat,
+            k.rombel, 
             CONCAT(k.kelas, ' ', j.nama_jurusan, ' ', k.rombel) AS nama_kelas
      FROM kelas k
      JOIN jurusan j ON j.id_jurusan = k.id_jurusan
