@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $harga     = (int)($_POST['harga'] ?? 0);
         $stok      = (int)($_POST['stok'] ?? 0);
         $tersedia  = $stok > 0 ? 1 : 0;
-        $kategori  = mysqli_real_escape_string($conn, $_POST['kategori'] ?? 'Makanan');
+        $kategori  = mysqli_real_escape_string($conn, strtolower($_POST['kategori'] ?? 'makanan'));
         $nama_foto = null;
 
         if ($harga > 99999) {
@@ -64,13 +64,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fileName      = $_FILES['foto']['name'];
             $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
             $newFileName   = 'menu_' . time() . '.' . $fileExtension;
-            $uploadFileDir = __DIR__ . '/../../assets/img/menu/';
+            $uploadFileDir = '/opt/lampp/htdocs/e_kantin/assets/img/menu/';
 
             if (!is_dir($uploadFileDir)) {
                 mkdir($uploadFileDir, 0777, true);
             }
             if (move_uploaded_file($fileTmpPath, $uploadFileDir . $newFileName)) {
                 $nama_foto = $newFileName;
+            } else {
+                $feedback = ['type' => 'danger', 'msg' => 'Gagal mengunggah gambar. Periksa permission folder assets/img/menu/!'];
+                $_SESSION['feedback'] = $feedback;
+                header('Location: ?section=' . $activeSection);
+                exit;
             }
         }
 
@@ -93,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ));
         if ($cek) {
             if (!empty($cek['foto_menu'])) {
-                $path = __DIR__ . '/../../assets/img/menu/' . $cek['foto_menu'];
+                $path = __DIR__ . '/../../../assets/img/menu/' . $cek['foto_menu'];
                 if (file_exists($path)) unlink($path);
             }
             mysqli_query($conn, "DELETE FROM menu WHERE id_menu=$id_menu");
@@ -110,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $harga     = (int)($_POST['harga'] ?? 0);
         $stok      = (int)($_POST['stok'] ?? 0);
         $tersedia  = $stok > 0 ? 1 : 0;
-        $kategori  = mysqli_real_escape_string($conn, $_POST['kategori'] ?? 'Makanan');
+        $kategori  = mysqli_real_escape_string($conn, strtolower($_POST['kategori'] ?? 'makanan'));
 
         if ($harga > 99999) {
             $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal: Harga tidak boleh melebihi Rp 99.999!'];
@@ -126,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $feedback = ['type' => 'danger', 'msg' => 'Menu tidak ditemukan atau bukan milik toko ini.'];
         } else {
             $nama_foto     = $menuLama['foto_menu'] ?? null;
-            $uploadFileDir = __DIR__ . '/../../assets/img/menu/';
+            $uploadFileDir = '/opt/lampp/htdocs/e_kantin/assets/img/menu/';
 
             if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
                 $fileTmpPath   = $_FILES['foto']['tmp_name'];
@@ -138,6 +143,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         unlink($uploadFileDir . $menuLama['foto_menu']);
                     }
                     $nama_foto = $newFileName;
+                } else {
+                    $feedback = ['type' => 'danger', 'msg' => 'Gagal mengunggah gambar menu. Periksa permission folder assets/img/menu/!'];
+                    $_SESSION['feedback'] = $feedback;
+                    header('Location: ?section=' . $activeSection);
+                    exit;
                 }
             }
 
@@ -217,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!in_array($ext, $allowed)) {
                         $feedback = ['type' => 'danger', 'msg' => 'Format foto tidak didukung.'];
                     } else {
-                        $uploadDir = __DIR__ . '/../../../assets/img/penjual/';
+                        $uploadDir = '/opt/lampp/htdocs/e_kantin/assets/img/penjual/';
                         if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
                         $newFile = 'penjual_' . $penjualId . '_' . time() . '.' . $ext;
                         if (move_uploaded_file($_FILES['foto_profil']['tmp_name'], $uploadDir . $newFile)) {
@@ -226,6 +236,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if ($fotoLama && file_exists($uploadDir . $fotoLama)) unlink($uploadDir . $fotoLama);
                             $fotoField = ", foto_profil = '$newFile'";
                             $_SESSION['user_foto'] = $newFile;
+                        } else {
+                            $feedback = ['type' => 'danger', 'msg' => 'Gagal mengunggah foto profil. Periksa permission folder assets/img/penjual/!'];
                         }
                     }
                 }

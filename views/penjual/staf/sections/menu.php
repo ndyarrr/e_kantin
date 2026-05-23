@@ -52,10 +52,10 @@
     <div class="menu-card">
         <div class="menu-img-wrap">
             <?php if (!empty($m['foto_menu'])): ?>
-                <img src="../../assets/img/menu/<?= htmlspecialchars($m['foto_menu']) ?>" 
-                     alt="Foto Menu" onerror="this.src='../../assets/img/ayam.png'">
+                <img src="../../../assets/img/menu/<?= htmlspecialchars($m['foto_menu']) ?>" 
+                     alt="Foto Menu" onerror="this.src='../../../assets/img/ayam.png'">
             <?php else: ?>
-                <img src="../../assets/img/ayam.png" alt="Foto Default">
+                <img src="../../../assets/img/ayam.png" alt="Foto Default">
             <?php endif; ?>
         </div>
         
