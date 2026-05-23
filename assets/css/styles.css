@@ -803,3 +803,29 @@ body {
 }
 .menu-item-nama { font-weight: 600; font-size: 14px; color: #111;}
 .menu-item-harga { font-weight: 700; color: #71B668; font-size: 14px;}
+/* =========================================
+   ANIMASI MAKANAN MELAYANG (FLOATING)
+   ========================================= */
+
+/* Membuat kunci pergerakan (naik 15px lalu turun lagi) */
+@keyframes floating {
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-15px); /* Bergerak ke atas 15 pixel */
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* Menerapkan animasi ke gambar makanan */
+.col-food {
+    animation: floating 2s ease-in-out infinite;
+}
+
+/* Memberikan jeda pada piring soto (kanan) agar bergeraknya bergantian dengan ayam geprek (kiri) */
+.col-food-right {
+    animation-delay: 1s;
+}

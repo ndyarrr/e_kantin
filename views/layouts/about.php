@@ -1,4 +1,6 @@
 <?php // about.php ?>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+
 <style>
     #about {
         padding: 48px 32px;
@@ -63,96 +65,115 @@
         font-family: 'Poppins', sans-serif;
     }
 
+    /* Grid Layout Tim Pengembang (Responsif) */
     .ab-team-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
         margin-bottom: 2rem;
     }
 
+    /* Desain Kartu Tim (Menggunakan tag <a>) */
     .ab-team-card {
         background: #fff;
-        border: 1px solid #eee;
-        border-radius: 12px;
-        padding: 1rem;
+        border: 1.5px solid #eee;
+        border-radius: 16px;
+        padding: 20px 12px;
         text-align: center;
-        transition: box-shadow 0.2s ease, transform 0.2s ease;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none; /* Menghilangkan garis bawah link default */
+        color: inherit; /* Menjaga warna teks agar tidak berubah biru */
     }
 
+    /* Efek Hover Kartu Terangkat */
     .ab-team-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(121, 183, 117, 0.12);
+        transform: translateY(-6px);
+        box-shadow: 0 10px 20px rgba(121, 183, 117, 0.15);
         border-color: #79b775;
     }
 
+    /* Desain Foto Profil */
     .ab-avatar {
-        width: 48px;
-        height: 48px;
+        width: 64px;
+        height: 64px;
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 16px;
-        margin: 0 auto 8px;
-        font-family: 'Poppins', sans-serif;
+        object-fit: cover;
+        margin: 0 auto 12px;
+        border: 3px solid transparent;
+        background: #f4f9f3;
+        transition: all 0.3s ease;
     }
 
-    .av-d {
-        background: #E3E8FF;
-        color: #79b775;
-    }
-
-    .av-p {
-        background: #E8F5E9;
-        color: #79b775;
+    /* Efek Ring Hijau pada Foto saat Kartu di-hover */
+    .ab-team-card:hover .ab-avatar {
+        border-color: #79b775;
+        padding: 2px;
     }
 
     .ab-name {
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 600;
         color: #111;
         font-family: 'Poppins', sans-serif;
+        margin-bottom: 4px;
     }
 
     .ab-role {
         font-size: 11px;
         color: #777;
-        margin-top: 4px;
-        background: #f0f0f0;
+        background: #f5f5f5;
         border-radius: 20px;
-        padding: 2px 10px;
+        padding: 4px 12px;
         display: inline-block;
         font-family: 'Poppins', sans-serif;
+        font-weight: 500;
     }
 
+    /* Area Tombol Kontak */
     .ab-contact {
         display: flex;
-        gap: 10px;
+        gap: 12px;
         flex-wrap: wrap;
         margin-bottom: 2rem;
     }
 
+    /* Tombol Kontak Utama */
     .ab-contact-btn {
         display: flex;
         align-items: center;
-        gap: 6px;
-        background: #f5f5f5;
-        border: 1px solid #eee;
-        border-radius: 8px;
-        padding: 8px 16px;
+        gap: 8px;
+        background: #fff;
+        border: 1.5px solid #eee;
+        border-radius: 12px;
+        padding: 10px 20px;
         font-size: 13px;
-        color: #444;
+        font-weight: 600;
+        color: #555;
         cursor: pointer;
         text-decoration: none;
         font-family: 'Poppins', sans-serif;
         transition: all 0.2s ease;
     }
 
+    .ab-contact-btn iconify-icon {
+        font-size: 20px;
+        color: #888;
+        transition: all 0.2s ease;
+    }
+
+    /* Efek Hover Tombol Kontak */
     .ab-contact-btn:hover {
         background: #79b775;
         color: #fff;
         border-color: #79b775;
+        transform: translateY(-2px);
+    }
+
+    .ab-contact-btn:hover iconify-icon {
+        color: #fff;
     }
 
     .ab-divider {
@@ -172,6 +193,7 @@
         font-family: 'Poppins', sans-serif;
     }
 
+    /* Responsivitas Layar HP */
     @media (max-width: 768px) {
         #about {
             padding: 32px 16px;
@@ -188,26 +210,21 @@
 </style>
 
 <?php
-// Ambil stats dari DB
+// Ambil data statistik dinamis dari Database
 $statKantin = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko"))['c'];
 $statMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM menu WHERE tersedia=1"))['c'];
 ?>
 
 <div class="ab-hero">
     <h2>E-Kantin Esemkita</h2>
-    <p>Platform digital pemesanan kantin sekolah yang memudahkan siswa memesan makanan tanpa antri panjang. Dibuat oleh
-        tim ERROR 404.</p>
+    <p>Platform digital pemesanan kantin sekolah yang memudahkan siswa memesan makanan tanpa antri panjang. Dibuat oleh tim ERROR 404.</p>
     <div class="ab-stats">
         <div class="ab-stat">
-            <div class="ab-stat-num">
-                <?= $statKantin ?>+
-            </div>
+            <div class="ab-stat-num"><?= $statKantin ?>+</div>
             <div class="ab-stat-label">Kantin</div>
         </div>
         <div class="ab-stat">
-            <div class="ab-stat-num">
-                <?= $statMenu ?>+
-            </div>
+            <div class="ab-stat-num"><?= $statMenu ?>+</div>
             <div class="ab-stat-label">Menu</div>
         </div>
         <div class="ab-stat">
@@ -219,45 +236,58 @@ $statMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c F
 
 <div class="ab-section-title">Tim Pengembang</div>
 <div class="ab-team-grid">
-    <!-- TODO: ganti nama & inisial sesuai tim lo -->
-    <div class="ab-team-card">
-        <div class="ab-avatar av-d">D1</div>
-        <div class="ab-name">Designer 1</div>
+    
+    <a class="ab-team-card" href="https://www.instagram.com/dns.tm_?igsh=MTBoMTd2M2RyOXYyMA==" target="_blank">
+        <img class="ab-avatar" src="./assets/img/PPDanes.jpeg" alt="Project Manager">
+        <div class="ab-name">Daneswara P.H.G</div>
+        <div class="ab-role">Project Manager</div>
+    </a>
+    
+    <a class="ab-team-card" href="https://www.instagram.com/_ayzzrril?igsh=M3pwYjd1ZHkyY253" target="_blank">
+        <img class="ab-avatar" src="./assets/img/PPAcin.jpeg" alt="UI/UX Designer">
+        <div class="ab-name">Ahmad Yazril R.F</div>
         <div class="ab-role">UI/UX Designer</div>
-    </div>
-    <div class="ab-team-card">
-        <div class="ab-avatar av-d">D2</div>
-        <div class="ab-name">Designer 2</div>
-        <div class="ab-role">UI/UX Designer</div>
-    </div>
-    <div class="ab-team-card">
-        <div class="ab-avatar av-d">D3</div>
-        <div class="ab-name">Flowcharter</div>
+    </a>
+    
+    <a class="ab-team-card" href="https://www.instagram.com/dedineckhurt?igsh=MWtpanQ5cGRyYjdhMg==" target="_blank">
+        <img class="ab-avatar" src="./assets/img/PPDedi.jpeg" alt="Flowcharter">
+        <div class="ab-name">Dedi Permana</div>
         <div class="ab-role">Flowcharter</div>
-    </div>
-    <div class="ab-team-card">
-        <div class="ab-avatar av-p">P1</div>
-        <div class="ab-name">Programmer 1</div>
+    </a>
+    
+    <a class="ab-team-card" href="https://www.instagram.com/alvafloww?igsh=MThtb2pmeHBrZHUxNg==" target="_blank">
+        <img class="ab-avatar" src="./assets/img/PPVaro.jpeg" alt="Tester">
+        <div class="ab-name">Alvaro Algozhali</div>
+        <div class="ab-role">Tester</div>
+    </a>
+    
+    <a class="ab-team-card" href="https://www.instagram.com/ndydod?igsh=eDF6Y281OTBqbzR2" target="_blank">
+        <img class="ab-avatar" src="./assets/img/PPFandy.jpeg" alt="Backend Dev">
+        <div class="ab-name">Fandy Ahmad R.</div>
+        <div class="ab-role">Backend Dev</div>
+    </a>
+    
+    <a class="ab-team-card" href="https://www.instagram.com/ariel_wijaya88?igsh=eHY4Nmpyd2MyaDM1" target="_blank">
+        <img class="ab-avatar" src="./assets/img/PPAril.jpeg" alt="Frontend Dev">
+        <div class="ab-name">Aril Wijaya S.</div>
         <div class="ab-role">Frontend Dev</div>
-    </div>
-    <div class="ab-team-card">
-        <div class="ab-avatar av-p">P2</div>
-        <div class="ab-name">Programmer 2</div>
-        <div class="ab-role">Backend Dev</div>
-    </div>
-    <div class="ab-team-card">
-        <div class="ab-avatar av-p">P3</div>
-        <div class="ab-name">Programmer 3</div>
-        <div class="ab-role">Backend Dev</div>
-    </div>
+    </a>
 </div>
 
 <div class="ab-section-title">Kontak</div>
 <div class="ab-contact">
-    <!-- TODO: ganti href dengan link asli -->
-    <a class="ab-contact-btn" href="#">Instagram</a>
-    <a class="ab-contact-btn" href="#">Email</a>
-    <a class="ab-contact-btn" href="#">GitHub</a>
+    <a class="ab-contact-btn" href="https://www.instagram.com/erro.r404team?igsh=MTdjeThjYmJuNjV5NQ==" target="_blank">
+        <iconify-icon icon="fa6-brands:instagram"></iconify-icon> Instagram
+    </a>
+    <a class="ab-contact-btn" href="https://www.tiktok.com/@error404team6?is_from_webapp=1&sender_device=pc" target="_blank">
+        <iconify-icon icon="ri:tiktok-fill"></iconify-icon> TikTok
+    </a>
+    <a class="ab-contact-btn" href="mailto:ekantin404@gmail.com">
+        <iconify-icon icon="ri:mail-send-line"></iconify-icon> Email
+    </a>
+    <a class="ab-contact-btn" href="https://github.com/ndyarrr/e_kantin.git" target="_blank">
+        <iconify-icon icon="fa6-brands:github"></iconify-icon> GitHub
+    </a>
 </div>
 
 <hr class="ab-divider" />
