@@ -121,6 +121,30 @@ $tabs = [
                     'harga'  => $item['harga_satuan'] * $item['jumlah'],
                 ];
             }
+
+            // Dapatkan logo toko berdasarkan database atau slug nama toko
+            $fotoToko = $profilPenjual['foto_toko'] ?? null;
+            if (empty($fotoToko)) {
+                $slugToko = strtolower(trim($profilPenjual['nama_toko'] ?? ''));
+                $slugToko = str_replace(' ', '_', $slugToko);
+                if (!empty($slugToko)) {
+                    if (strpos($slugToko, 'kantin_') !== 0) {
+                        $slugToko = 'kantin_' . $slugToko;
+                    }
+                    $exts = ['jpeg', 'jpg', 'png'];
+                    foreach ($exts as $ext) {
+                        $filePath = __DIR__ . '/../../../../assets/img/' . $slugToko . '.' . $ext;
+                        if (file_exists($filePath)) {
+                            $fotoToko = $slugToko . '.' . $ext;
+                            break;
+                        }
+                    }
+                    if (empty($fotoToko)) {
+                        $fotoToko = $slugToko . '.jpeg';
+                    }
+                }
+            }
+
             $notaData = json_encode([
                 'id'      => $ps['id_pesanan'],
                 'pembeli' => $ps['nama_pembeli'],
@@ -129,7 +153,7 @@ $tabs = [
                 'total'   => $ps['total_harga'],
                 'items'   => $notaItems,
                 'toko'    => $profilPenjual['nama_toko'] ?? 'Kantin',
-                'foto'    => $profilPenjual['foto_toko'] ?? null,
+                'foto'    => $fotoToko,
             ]);
         ?>
         <div class="pcard <?= $st['bar'] ?>">
@@ -267,10 +291,10 @@ function bukaNotaModal(data, idPesanan) {
 
     document.getElementById('notaTokoNama').textContent = data.toko;
     const logoEl = document.getElementById('notaLogo');
-        if (data.foto) {
-        logoEl.innerHTML = `<img src="../../../assets/img/${data.foto}" style="width:90px;height:90px;object-fit:cover;border-radius:14px;">`;
-        } else {
-            logoEl.innerHTML = '🏪';
+    if (data.foto) {
+        logoEl.innerHTML = `<img src="../../../assets/img/${data.foto}" style="width:90px;height:90px;object-fit:cover;border-radius:14px;" onerror="this.onerror=null; this.outerHTML='🏪';">`;
+    } else {
+        logoEl.innerHTML = '🏪';
     }
     document.getElementById('notaId').textContent       = '#' + data.id;
     document.getElementById('notaPembeli').textContent  = data.pembeli;
