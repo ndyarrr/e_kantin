@@ -1,8 +1,12 @@
 <?php
-$koneksi = mysqli_connect("localhost", "root", "", "e_kantin"); // pastikan nama DB-nya 'e_kantin' sesuai file sql Anda
-if (!$koneksi) {
-    die("Koneksi gagal: " . mysqli_connect_error());
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
+
+require_once __DIR__ . '/../../config/database.php';
+
+// Jika user belum login, redirect ke login (opsional — aktifkan kalau pembeli perlu login)
+// if (empty($_SESSION['user_id'])) { header('Location: ../../auth/login.php'); exit; }
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -12,6 +16,93 @@ if (!$koneksi) {
     <title>E-Kantin - Beranda</title>
     <link rel="stylesheet" href="../../assets/css/pembeli.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ── Floating Chat Button ── */
+        .fab-chat {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
+            z-index: 999;
+            border: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .fab-chat:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 24px rgba(34, 197, 94, 0.5);
+        }
+        /* ── Modal Overlay Chat ── */
+        .chat-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-modal-overlay.active {
+            display: flex;
+        }
+        .chat-modal-box {
+            background: #fff;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 860px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            position: relative;
+        }
+        .chat-modal-topbar {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 15px;
+        }
+        .chat-modal-topbar button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-modal-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+        }
+        .chat-modal-content .chat-wrapper {
+            flex: 1;
+            border-radius: 0;
+            border: none;
+            margin-top: 0;
+            height: 100% !important;
+            min-height: unset !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -174,5 +265,45 @@ if (!$koneksi) {
         </div>
     </main>
 
+    <!-- ══════════════════════════════════
+         FLOATING CHAT BUTTON + MODAL
+    ══════════════════════════════════ -->
+    <button class="fab-chat" onclick="bukaModalChat()" title="Tanya Kantin">
+        <i class="fa-solid fa-comment-dots"></i>
+    </button>
+
+    <div class="chat-modal-overlay" id="overlayModalChat" onclick="tutupModalChatKontainer(event)">
+        <div class="chat-modal-box">
+            <div class="chat-modal-topbar">
+                <span>💬 Hubungi Kantin</span>
+                <button onclick="tutupModalChat()">&times;</button>
+            </div>
+            <div class="chat-modal-content">
+                <?php require __DIR__ . '/../chat.php'; ?>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function bukaModalChat() {
+        document.getElementById('overlayModalChat').classList.add('active');
+        if (typeof muatDaftarKontak === 'function') {
+            muatDaftarKontak('');
+        }
+    }
+    function tutupModalChat() {
+        document.getElementById('overlayModalChat').classList.remove('active');
+        if (typeof intervalPollingChat !== 'undefined' && intervalPollingChat) {
+            clearInterval(intervalPollingChat);
+            intervalPollingChat = null;
+        }
+        ID_LAWAN_AKTIF = '';
+    }
+    function tutupModalChatKontainer(e) {
+        if (e.target.id === 'overlayModalChat') {
+            tutupModalChat();
+        }
+    }
+    </script>
 </body>
 </html>

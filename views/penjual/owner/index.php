@@ -37,6 +37,8 @@ if (!empty($profilPenjual)) {
     ));
     $idToko = (int)($rToko['id_toko'] ?? 0);
 }
+// Simpan id_toko ke session supaya backend chat bisa pakai
+$_SESSION['id_toko'] = $idToko;
 
 $activeSection = $_POST['_section'] ?? $_GET['section'] ?? 'dashboard';
 
@@ -205,6 +207,9 @@ require __DIR__ . '/sections/menu_data.php';
         <button class="nav-link" data-section="profil" onclick="switchSection('profil')">
             <i class="fa-solid fa-user"></i> Profil
         </button>
+        <button class="nav-link" data-section="chat" onclick="switchSection('chat')">
+            <i class="fa-solid fa-comments"></i> Chat
+        </button>
         <button class="nav-link" data-section="kas" onclick="switchSection('kas')">
             <i class="fa-solid fa-book"></i> Buku Kas
         </button>
@@ -281,6 +286,9 @@ require __DIR__ . '/sections/menu_data.php';
                 <p>Halaman Profil — segera diisi</p>
             </div>
         </div>
+        <div class="section" id="section-chat">
+            <?php require __DIR__ . '/../../../views/chat.php'; ?>
+        </div>
         <div class="section" id="section-grid-buku-kas">
             <div class="placeholder-box">
                 <i class="fa-solid fa-book"></i>
@@ -316,6 +324,7 @@ const pageMeta = {
     menu      : { title: 'Menu',       sub: 'Kelola menu dan stok kantin' },
     inbox     : { title: 'Inbox',      sub: 'Pesanan masuk dan riwayat transaksi' },
     profil    : { title: 'Profil',     sub: 'Kelola data akun penjual' },
+    chat      : { title: 'Chat',       sub: 'Balas pesan pembeli atas nama kantin kamu' },
     kas       : { title: 'Buku Kas',   sub: 'Catatan pemasukan dan keuangan toko' },
 };
 

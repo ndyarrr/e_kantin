@@ -36,6 +36,8 @@ if (!empty($profilPenjual)) {
     ));
     $idToko = (int)($rToko['id_toko'] ?? 0);
 }
+// Simpan id_toko ke session agar backend chat bisa pakai
+$_SESSION['id_toko'] = $idToko;
 
 $activeSection = $_POST['_section'] ?? $_GET['section'] ?? 'dashboard';
 
@@ -405,10 +407,7 @@ require __DIR__ . '/sections/inbox_data.php';
         </div>
 
         <div class="section" id="section-chat">
-            <div class="placeholder-box">
-            <i class="fa-solid fa-comments"></i>
-            <p>Fitur Chat — segera hadir</p>
-            </div>
+            <?php require __DIR__ . '/../../../views/chat.php'; ?>
         </div>
 
         <div class="section" id="section-profil">

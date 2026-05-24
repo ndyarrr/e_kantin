@@ -53,7 +53,7 @@ function login()
                 $_SESSION['user_foto'] = $user['foto_profil'];
 
                 // Redirect ke dashboard siswa
-                header('Location: ../views/pembeli/dashboard.php');
+                header('Location: ../views/pembeli/index.php');
                 exit;
 
                 // ════ ALUR LOGIN GURU ════
@@ -85,7 +85,7 @@ function login()
                 $_SESSION['user_foto'] = $user['foto_profil'];
 
                 // REDIRECT DISAMAKAN: Ikut masuk ke folder siswa
-                header('Location: ../views/pembeli/dashboard.php');
+                header('Location: ../views/pembeli/index.php');
                 exit;
             }
             break;
