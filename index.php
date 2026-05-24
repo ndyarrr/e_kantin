@@ -9,7 +9,108 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./assets/css/styles.css?v=4">
     <title>E-Kantin</title>
-    <!-- <?php //include 'views/layouts/header.php'; ?> -->
+    
+    <style>
+        /* 1. Kunci body agar tidak bisa di-scroll ke samping (kanan/kiri) */
+        html, body {
+            overflow-x: hidden !important;
+            width: 100% !important;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 2. Pastikan semua elemen menghitung padding sebagai bagian dari lebar utama */
+        * {
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 768px) {
+            /* ... (kode lain seperti .btn-ps dan .collage-grid biarkan saja) ... */
+
+            /* 1. Beri ruang atas dan bawah pada bungkus galeri agar gambar melayang tidak kepotong */
+            .collage-wrapper {
+                height: auto !important;
+                min-height: auto !important;
+                padding: 40px 15px 40px 15px !important; /* Ruang atas bawah diperbesar */
+                position: relative !important;
+                overflow: visible !important; /* PENTING: Ubah jadi visible agar bayangan tidak terpotong kotak */
+            }
+
+            /* 2. Gambar Ayam Geprek (Kiri Atas) */
+            .col-food-left {
+                display: block !important;
+                width: 140px !important; /* Ukuran pas */
+                left: 5px !important; /* Masukkan ke dalam layar, jangan minus */
+                top: -15px !important; /* Numpang estetik di atas pojok kiri galeri */
+                z-index: 20 !important;
+                filter: drop-shadow(8px 15px 15px rgba(0,0,0,0.4)) !important; /* Bayangan lebih nyata dan tebal */
+            }
+
+            /* 3. Gambar Soto (Kanan Bawah) */
+            .col-food-right {
+                display: block !important;
+                width: 130px !important;
+                right: 5px !important; /* Masukkan ke dalam layar */
+                bottom: 25px !important; /* Numpang estetik di atas pojok kanan galeri */
+                z-index: 20 !important;
+                filter: drop-shadow(-8px 15px 15px rgba(0,0,0,0.4)) !important;
+            }
+        }
+        /* =========================================
+   UI/UX ENHANCEMENTS: FOTO MAKANAN MENGAMBANG
+   ========================================= */
+
+/* 1. Animasi Mengambang (Floating Effect) */
+@keyframes floatFood {
+    0% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-12px) rotate(3deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+}
+
+/* 2. Styling Dasar & Efek 3D */
+.col-food {
+    position: absolute !important;
+    z-index: 10 !important;
+    /* Drop shadow lembut untuk kedalaman visual */
+    filter: drop-shadow(0px 15px 25px rgba(0, 0, 0, 0.35)) !important; 
+    animation: floatFood 4s ease-in-out infinite !important;
+    pointer-events: none !important; /* Agar gambar tidak menghalangi klik pada tombol/layout di bawahnya */
+}
+
+/* 3. Posisi Estetik di Desktop */
+.col-food-left {
+    width: 250px !important;
+    left: -40px !important;
+    top: 5% !important;
+}
+
+.col-food-right {
+    width: 220px !important;
+    right: -30px !important;
+    bottom: 5% !important;
+    animation-delay: 1.5s !important; /* Animasi dibuat tidak sinkron agar lebih natural */
+}
+
+/* 4. Posisi Estetik di HP (Mobile Responsive) */
+@media (max-width: 768px) {
+    /* Pastikan .col-food di-set ke block, jika sebelumnya kamu pakai display: none */
+    .col-food {
+        display: block !important;
+    }
+    
+    .col-food-left {
+        width: 120px !important;
+        left: -20px !important;
+        top: -40px !important; /* Digeser ke pojok kiri atas ruang kosong */
+    }
+    
+    .col-food-right {
+        width: 110px !important;
+        right: -15px !important;
+        bottom: -20px !important; /* Digeser ke pojok kanan bawah */
+    }
+}
+    </style>
 </head>
 
 <body>
