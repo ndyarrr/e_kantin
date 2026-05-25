@@ -86,6 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         . ($nama_foto ? "'$nama_foto'" : "NULL") . ", $stok, $tersedia, '$kategori')";
 
         if (mysqli_query($conn, $queryInsert)) {
+            catatLog($conn, 'Tambah Menu', "Staf menambahkan menu baru: $nama_menu (Kategori: $kategori, Harga: Rp $harga)");
             $feedback = ['type' => 'success', 'msg' => 'Menu baru berhasil ditambahkan!'];
         } else {
             $feedback = ['type' => 'danger', 'msg' => 'Gagal menambah menu: ' . mysqli_error($conn)];
@@ -94,16 +95,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ════ HAPUS MENU ════  ← FIX: sudah di luar blok tambah_menu
     if ($action === 'hapus_menu') {
-        $id_menu = (int)($_POST['id_menu'] ?? 0);
         $cek = mysqli_fetch_assoc(mysqli_query($conn,
-            "SELECT foto_menu FROM menu WHERE id_menu=$id_menu AND id_toko=$idToko LIMIT 1"
+            "SELECT foto_menu, nama_menu FROM menu WHERE id_menu=$id_menu AND id_toko=$idToko LIMIT 1"
         ));
         if ($cek) {
+            $nama_menu_del = $cek['nama_menu'];
             if (!empty($cek['foto_menu'])) {
                 $path = __DIR__ . '/../../../assets/img/menu/' . $cek['foto_menu'];
                 if (file_exists($path)) unlink($path);
             }
             mysqli_query($conn, "DELETE FROM menu WHERE id_menu=$id_menu");
+            catatLog($conn, 'Hapus Menu', "Staf menghapus menu: $nama_menu_del (ID: $id_menu)");
             $feedback = ['type' => 'success', 'msg' => 'Menu berhasil dihapus.'];
         } else {
             $feedback = ['type' => 'danger', 'msg' => 'Menu tidak ditemukan atau bukan milik toko ini.'];

@@ -1396,8 +1396,17 @@ tbody tr:hover {
     max-width: 350px;
 }
 
-.search-box i { color: #9ca3af; margin-right: 10px; }
-.search-box input { border: none; outline: none; width: 100%; font-size: 14px; }
+.search-box i {
+    color: #9ca3af;
+    margin-right: 10px;
+}
+
+.search-box input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+}
 
 .filter-select {
     padding: 10px 15px;
@@ -1420,7 +1429,10 @@ tbody tr:hover {
     gap: 8px;
     transition: 0.2s;
 }
-.btn-primary:hover { background: #4a9146; }
+
+.btn-primary:hover {
+    background: #4a9146;
+}
 
 /* TABS */
 .menu-tabs {
@@ -1441,7 +1453,10 @@ tbody tr:hover {
     position: relative;
 }
 
-.tab-btn.active { color: #5aab55; }
+.tab-btn.active {
+    color: #5aab55;
+}
+
 .tab-btn.active::after {
     content: '';
     position: absolute;
@@ -1464,42 +1479,171 @@ tbody tr:hover {
     background: #fff;
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
     border: 1px solid #f3f4f6;
     transition: 0.3s;
 }
-.menu-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.05); }
+
+.menu-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+}
 
 .menu-img-wrap {
     position: relative;
     height: 140px;
     width: 100%;
 }
-.menu-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+
+.menu-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Beautiful & Elegant Placeholder Menu Cards */
+.menu-img-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    gap: 8px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #f8fafc;
+}
+
+/* Food Category Placeholder styling */
+.menu-img-placeholder.makanan {
+    background: linear-gradient(135deg, #fffcf9 0%, #ffe8d6 100%);
+    border-bottom: 2.5px solid #ff7a45;
+}
+.menu-img-placeholder.makanan svg {
+    fill: #ff7a45;
+    filter: drop-shadow(0 4px 8px rgba(255, 122, 69, 0.2));
+}
+.menu-img-placeholder.makanan::after {
+    content: 'Delicious Food';
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #ff7a45;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+/* Drink Category Placeholder styling */
+.menu-img-placeholder.minuman {
+    background: linear-gradient(135deg, #f4faff 0%, #d2ebff 100%);
+    border-bottom: 2.5px solid #1890ff;
+}
+.menu-img-placeholder.minuman svg {
+    fill: #1890ff;
+    filter: drop-shadow(0 4px 8px rgba(24, 144, 255, 0.2));
+}
+.menu-img-placeholder.minuman::after {
+    content: 'Fresh Drink';
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #1890ff;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+/* Snack Category Placeholder styling */
+.menu-img-placeholder.snack {
+    background: linear-gradient(135deg, #faf5ff 0%, #ebd3ff 100%);
+    border-bottom: 2.5px solid #9254de;
+}
+.menu-img-placeholder.snack svg {
+    fill: #9254de;
+    filter: drop-shadow(0 4px 8px rgba(146, 84, 222, 0.2));
+}
+.menu-img-placeholder.snack::after {
+    content: 'Tasty Snack';
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #9254de;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.menu-img-placeholder svg {
+    width: 44px;
+    height: 44px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.menu-card:hover .menu-img-placeholder svg {
+    transform: scale(1.15) translateY(-3px);
+}
+
 
 .badge-status {
     position: absolute;
-    top: 10px; right: 10px;
+    top: 10px;
+    right: 10px;
     padding: 5px 12px;
     border-radius: 20px;
     font-size: 11px;
     font-weight: bold;
     color: white;
 }
-.bg-green { background: #5aab55; }
-.bg-red { background: #ef4444; }
 
-.menu-info { padding: 15px; }
-.menu-kategori { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
-.menu-title { font-size: 16px; color: #1f2937; margin: 5px 0 8px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.menu-price { font-size: 15px; color: #5aab55; font-weight: 700; margin-bottom: 12px; }
-.menu-stock { font-size: 13px; color: #4b5563; }
+.bg-green {
+    background: #5aab55;
+}
+
+.bg-red {
+    background: #ef4444;
+}
+
+.menu-info {
+    padding: 15px;
+}
+
+.menu-kategori {
+    font-size: 11px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.menu-title {
+    font-size: 16px;
+    color: #1f2937;
+    margin: 5px 0 8px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.menu-price {
+    font-size: 15px;
+    color: #5aab55;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.menu-stock {
+    font-size: 13px;
+    color: #4b5563;
+}
 
 .menu-actions {
     display: flex;
     border-top: 1px solid #f3f4f6;
 }
-.btn-outline-edit, .btn-outline-delete {
+
+.btn-outline-edit,
+.btn-outline-delete {
     flex: 1;
     background: transparent;
     border: none;
@@ -1508,15 +1652,38 @@ tbody tr:hover {
     font-weight: 600;
     transition: 0.2s;
 }
-.btn-outline-edit { color: #3b82f6; border-right: 1px solid #f3f4f6; }
-.btn-outline-edit:hover { background: #eff6ff; }
-.btn-outline-delete { color: #ef4444; }
-.btn-outline-delete:hover { background: #fef2f2; }
+
+.btn-outline-edit {
+    color: #3b82f6;
+    border-right: 1px solid #f3f4f6;
+}
+
+.btn-outline-edit:hover {
+    background: #eff6ff;
+}
+
+.btn-outline-delete {
+    color: #ef4444;
+}
+
+.btn-outline-delete:hover {
+    background: #fef2f2;
+}
 
 /* Styling Kartu Jika Stok Habis */
-.card-habis img { filter: grayscale(100%); opacity: 0.7; }
-.card-habis .menu-title, .card-habis .menu-price { opacity: 0.6; }
-.card-habis .menu-stock { color: #ef4444; }
+.card-habis img {
+    filter: grayscale(100%);
+    opacity: 0.7;
+}
+
+.card-habis .menu-title,
+.card-habis .menu-price {
+    opacity: 0.6;
+}
+
+.card-habis .menu-stock {
+    color: #ef4444;
+}
 
 /* ================= FORM TAMBAH MENU DI BAWAH ================= */
 .form-tambah-container {
@@ -1524,8 +1691,9 @@ tbody tr:hover {
     border: 1.5px solid #e5e7eb;
     border-radius: 14px;
     padding: 24px;
-    margin-top: 40px; /* Jarak renggang dari grid menu atas */
-    box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+    margin-top: 40px;
+    /* Jarak renggang dari grid menu atas */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.01);
 }
 
 .form-tambah-header {
@@ -1594,7 +1762,8 @@ tbody tr:hover {
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 16px;
-    padding-right: 35px; /* Beri ruang agar teks tidak menabrak ikon panah */
+    padding-right: 35px;
+    /* Beri ruang agar teks tidak menabrak ikon panah */
 }
 
 /* Memastikan tulisan pilihan di dalam dropdown berwarna gelap dan jelas terbaca */
@@ -1628,7 +1797,10 @@ tbody tr:hover {
     cursor: pointer;
     transition: 0.2s;
 }
-.btn-reset:hover { background: #e5e7eb; }
+
+.btn-reset:hover {
+    background: #e5e7eb;
+}
 
 .btn-save {
     background: #5aab55;
@@ -1643,12 +1815,16 @@ tbody tr:hover {
     gap: 8px;
     transition: 0.2s;
 }
-.btn-save:hover { background: #4a9146; }
+
+.btn-save:hover {
+    background: #4a9146;
+}
 
 /* ================= FORM TAMBAH MENU TOGGLE SYSTEM ================= */
 .form-tambah-container.toggle-form {
     max-height: 0;
-    overflow: hidden; /* Dikunci saat form tertutup */
+    overflow: hidden;
+    /* Dikunci saat form tertutup */
     opacity: 0;
     padding-top: 0;
     padding-bottom: 0;
@@ -1659,19 +1835,22 @@ tbody tr:hover {
 
 /* Saat class .show aktif dipicu JavaScript */
 .form-tambah-container.toggle-form.show {
-    max-height: 600px; /* Ditambah sedikit biar space kategori & snack muat longgar */
+    max-height: 600px;
+    /* Ditambah sedikit biar space kategori & snack muat longgar */
     opacity: 1;
     padding: 24px;
     margin-top: 40px;
     background: #ffffff;
     border: 1.5px solid #e5e7eb;
     border-radius: 14px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-    overflow: visible !important; /* 🌟 KUNCI UTAMA: Dibuka gemboknya agar list dropdown bisa menyembul keluar */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    overflow: visible !important;
+    /* 🌟 KUNCI UTAMA: Dibuka gemboknya agar list dropdown bisa menyembul keluar */
 }
 
 /* ================= CSS RESPONSIF FINAL PENYELAMAT MENU ================= */
 @media (max-width: 768px) {
+
     /* 1. Paksa layout menu jadi 2 kolom sejajar di layar HP */
     .menu-grid {
         grid-template-columns: repeat(2, 1fr) !important;
@@ -1691,24 +1870,32 @@ tbody tr:hover {
     .menu-card img,
     .menu-img-wrap img,
     img {
-        display: block !important;       /* Pastikan gambar tidak tersembunyi (none) */
-        visibility: visible !important;  /* Pastikan gambar terlihat */
-        width: 100% !important;          /* Lebar penuhi kotak kartu */
-        height: 120px !important;        /* Tingginya pas, tidak melar kebawah */
+        display: block !important;
+        /* Pastikan gambar tidak tersembunyi (none) */
+        visibility: visible !important;
+        /* Pastikan gambar terlihat */
+        width: 100% !important;
+        /* Lebar penuhi kotak kartu */
+        height: 120px !important;
+        /* Tingginya pas, tidak melar kebawah */
         max-height: 120px !important;
-        object-fit: cover !important;    /* Biar gambar estetik terpotong rapi */
+        object-fit: cover !important;
+        /* Biar gambar estetik terpotong rapi */
     }
 
     /* 4. Sesuaikan ukuran teks informasi menu di HP */
     .menu-info {
         padding: 10px !important;
     }
+
     .menu-title {
         font-size: 13px !important;
         white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis; /* Biar kalau judul kepanjangan diganti titik-titik (...) */
+        text-overflow: ellipsis;
+        /* Biar kalau judul kepanjangan diganti titik-titik (...) */
     }
+
     .menu-price {
         font-size: 12px !important;
     }
@@ -1722,7 +1909,7 @@ tbody tr:hover {
     /* 1. Paksa Kotak Cari di Paling Atas, Dropdown & Tombol di Bawahnya */
     .menu-action-bar {
         display: flex !important;
-        flex-direction: column !important; 
+        flex-direction: column !important;
         align-items: stretch !important;
         gap: 12px !important;
         width: 100% !important;
@@ -1741,7 +1928,7 @@ tbody tr:hover {
     }
 
     /* 2. Tombol Dropdown dan New Item Lebar Penuh */
-    .filter-select, 
+    .filter-select,
     .menu-action-bar .btn-primary {
         width: 100% !important;
         display: flex !important;
@@ -1752,31 +1939,31 @@ tbody tr:hover {
 }
 
 /* ================= FORCE LOGO SEKOLAH MENGECIL DI HP ================= */
-    
-    /* Tembak langsung kontainer logo di sidebar */
-    .sidebar-logo-inner {
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-        width: auto !important;
-    }
 
-    /* Paksa gambar logo badge mengecil (Maksimal 40px) */
-    .sidebar-logo-inner img,
-    .sidebar-logo-inner .logo-badge,
-    aside img {
-        width: 40px !important;
-        max-width: 40px !important;
-        height: 40px !important;
-        max-height: 40px !important;
-        object-fit: contain !important;
-    }
+/* Tembak langsung kontainer logo di sidebar */
+.sidebar-logo-inner {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: auto !important;
+}
 
-    /* Biar teks E-Kantin gak turun kebawah */
-    .sidebar-logo .logo-text {
-        font-size: 16px !important;
-        white-space: nowrap !important;
-    }
+/* Paksa gambar logo badge mengecil (Maksimal 40px) */
+.sidebar-logo-inner img,
+.sidebar-logo-inner .logo-badge,
+aside img {
+    width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    max-height: 40px !important;
+    object-fit: contain !important;
+}
+
+/* Biar teks E-Kantin gak turun kebawah */
+.sidebar-logo .logo-text {
+    font-size: 16px !important;
+    white-space: nowrap !important;
+}
 
 /* ==========================================
    CSS HALAMAN ANTREAN PESANAN (OWNER)
@@ -1804,7 +1991,7 @@ tbody tr:hover {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .pesanan-header {
@@ -1950,16 +2137,19 @@ tbody tr:hover {
 .inbox-item {
     display: flex;
     gap: 15px;
-    background: #e2e8f0; /* Warna abu figma */
+    background: #e2e8f0;
+    /* Warna abu figma */
     border: 2px solid transparent;
     border-radius: 16px;
     padding: 16px;
     cursor: pointer;
-    align-items: stretch; /* Memaksa kolom kiri & kanan memiliki tinggi yang sejajar */
+    align-items: stretch;
+    /* Memaksa kolom kiri & kanan memiliki tinggi yang sejajar */
     transition: all 0.2s ease;
 }
 
-.inbox-item:hover, .inbox-item.active {
+.inbox-item:hover,
+.inbox-item.active {
     border-color: #5aab55;
     background: #cbd5e1;
 }
@@ -1982,7 +2172,7 @@ tbody tr:hover {
     justify-content: center;
     font-size: 18px;
     color: #4b5563;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Dot Hijau Indikator Unread Sesuai Desain Figma */
@@ -1997,6 +2187,7 @@ tbody tr:hover {
     display: none;
     z-index: 2;
 }
+
 .inbox-item.is-unread .unread-dot {
     display: block;
 }
@@ -2008,7 +2199,8 @@ tbody tr:hover {
 /* 1. KOLOM KIRI: Data Informasi Teks */
 .inbox-item .msg-content-left {
     flex-grow: 1;
-    min-width: 0; /* Mengunci teks agar tidak mendesak kolom kanan */
+    min-width: 0;
+    /* Mengunci teks agar tidak mendesak kolom kanan */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -2044,18 +2236,23 @@ tbody tr:hover {
 .inbox-item .msg-meta-right {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;    /* Semua konten rata kanan */
-    justify-content: flex-start; /* Default numpuk dari atas ke bawah secara normal */
+    align-items: flex-end;
+    /* Semua konten rata kanan */
+    justify-content: flex-start;
+    /* Default numpuk dari atas ke bawah secara normal */
     position: relative;
-    min-width: 85px;          /* Jaga space area kanan biar gak kemakan teks kiri */
+    min-width: 85px;
+    /* Jaga space area kanan biar gak kemakan teks kiri */
     flex-shrink: 0;
 }
 
 .inbox-item .msg-time {
     font-size: 11px;
     color: #9ca3af;
-    white-space: nowrap;      /* Tanggal haram patah baris */
-    margin-bottom: auto;      /* Trik flexbox: Memaksa elemen di bawahnya (badge) terdorong otomatis ke paling bawah! */
+    white-space: nowrap;
+    /* Tanggal haram patah baris */
+    margin-bottom: auto;
+    /* Trik flexbox: Memaksa elemen di bawahnya (badge) terdorong otomatis ke paling bawah! */
     line-height: 1.2;
 }
 
@@ -2069,30 +2266,34 @@ tbody tr:hover {
     text-align: center;
     min-width: 65px;
     line-height: 1.2;
-    margin-top: 10px;         /* Kasih jarak aman minimal dari teks waktu di atasnya */
+    margin-top: 10px;
+    /* Kasih jarak aman minimal dari teks waktu di atasnya */
 }
 
-.badge-status.read { 
-    background: #5aab55; 
-    color: #fff; 
+.badge-status.read {
+    background: #5aab55;
+    color: #fff;
 }
-.badge-status.unread { 
-    background: #1f2937; 
-    color: #fff; 
+
+.badge-status.unread {
+    background: #1f2937;
+    color: #fff;
 }
+
 /* ==========================================
    PANEL DETAIL SLIDING OVERLAY (SISI KANAN)
    ========================================== */
 .inbox-detail-panel {
     position: absolute;
-    right: -55%; 
+    right: -55%;
     top: 0;
     width: 48%;
     height: 100%;
-    background: #e2e8f0; /* Dasar abu-abu figma */
+    background: #e2e8f0;
+    /* Dasar abu-abu figma */
     border: 1px solid #cbd5e1;
     border-radius: 16px;
-    box-shadow: -6px 0 15px rgba(0,0,0,0.05);
+    box-shadow: -6px 0 15px rgba(0, 0, 0, 0.05);
     opacity: 0;
     visibility: hidden;
     transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, visibility 0.4s;
@@ -2153,8 +2354,15 @@ tbody tr:hover {
     color: white;
 }
 
-.btn-inbox-action.delete { background: #f87171; color: #7f1d1d; }
-.btn-inbox-action.reply { background: #76c072; color: white; }
+.btn-inbox-action.delete {
+    background: #f87171;
+    color: #7f1d1d;
+}
+
+.btn-inbox-action.reply {
+    background: #76c072;
+    color: white;
+}
 
 .detail-header-info {
     border-bottom: 2px solid #cbd5e1;
@@ -2245,7 +2453,7 @@ tbody tr:hover {
 }
 
 .inbox-tab.active .tab-count {
-    background: rgba(255,255,255,.3);
+    background: rgba(255, 255, 255, .3);
     color: #fff;
 }
 
@@ -2321,13 +2529,29 @@ tbody tr:hover {
     transform: translateY(-1px);
 }
 
-.bar-menunggu  { border-left-color: #f59e0b; }
-.bar-proses    { border-left-color: #3b82f6; }
-.bar-siap      { border-left-color: #8b5cf6; }
-.bar-selesai   { border-left-color: #10b981; }
-.bar-batal     { border-left-color: #ef4444; }
+.bar-menunggu {
+    border-left-color: #f59e0b;
+}
 
-.pcard-inner { padding: 16px 18px; }
+.bar-proses {
+    border-left-color: #3b82f6;
+}
+
+.bar-siap {
+    border-left-color: #8b5cf6;
+}
+
+.bar-selesai {
+    border-left-color: #10b981;
+}
+
+.bar-batal {
+    border-left-color: #ef4444;
+}
+
+.pcard-inner {
+    padding: 16px 18px;
+}
 
 .pcard-header {
     display: flex;
@@ -2373,7 +2597,9 @@ tbody tr:hover {
     margin-top: 2px;
 }
 
-.pcard-dot { opacity: .5; }
+.pcard-dot {
+    opacity: .5;
+}
 
 .pcard-badge {
     display: inline-flex;
@@ -2387,11 +2613,30 @@ tbody tr:hover {
     flex-shrink: 0;
 }
 
-.status-menunggu  { background: #fef3c7; color: #92400e; }
-.status-proses    { background: #dbeafe; color: #1e40af; }
-.status-siap      { background: #ede9fe; color: #5b21b6; }
-.status-selesai   { background: #d1fae5; color: #065f46; }
-.status-batal     { background: #fee2e2; color: #991b1b; }
+.status-menunggu {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-proses {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-siap {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+.status-selesai {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-batal {
+    background: #fee2e2;
+    color: #991b1b;
+}
 
 .pcard-divider {
     height: 1px;
@@ -2501,25 +2746,64 @@ tbody tr:hover {
     transition: background .15s, transform .1s;
 }
 
-.pcard-btn:active { transform: scale(.97); }
+.pcard-btn:active {
+    transform: scale(.97);
+}
 
-.pcard-btn-proses  { background: var(--green); color: #fff; }
-.pcard-btn-proses:hover { background: var(--green-dark); }
+.pcard-btn-proses {
+    background: var(--green);
+    color: #fff;
+}
 
-.pcard-btn-siap    { background: #8b5cf6; color: #fff; }
-.pcard-btn-siap:hover { background: #7c3aed; }
+.pcard-btn-proses:hover {
+    background: var(--green-dark);
+}
 
-.pcard-btn-selesai { background: #10b981; color: #fff; }
-.pcard-btn-selesai:hover { background: #059669; }
+.pcard-btn-siap {
+    background: #8b5cf6;
+    color: #fff;
+}
 
-.pcard-btn-batal   { background: #fee2e2; color: #991b1b; border: 1.5px solid #fca5a5; }
-.pcard-btn-batal:hover { background: #fecaca; }
+.pcard-btn-siap:hover {
+    background: #7c3aed;
+}
 
-.pcard-btn-nota    { background: #f59e0b; color: #fff; }
-.pcard-btn-nota:hover { background: #d97706; }
+.pcard-btn-selesai {
+    background: #10b981;
+    color: #fff;
+}
 
-.pcard-btn-print   { background: #2563eb; color: #fff; }
-.pcard-btn-print:hover { background: #1d4ed8; }
+.pcard-btn-selesai:hover {
+    background: #059669;
+}
+
+.pcard-btn-batal {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #fca5a5;
+}
+
+.pcard-btn-batal:hover {
+    background: #fecaca;
+}
+
+.pcard-btn-nota {
+    background: #f59e0b;
+    color: #fff;
+}
+
+.pcard-btn-nota:hover {
+    background: #d97706;
+}
+
+.pcard-btn-print {
+    background: #2563eb;
+    color: #fff;
+}
+
+.pcard-btn-print:hover {
+    background: #1d4ed8;
+}
 
 .pcard-btn-selesai-locked {
     opacity: .4;
@@ -2528,17 +2812,45 @@ tbody tr:hover {
 
 /* ── Responsive inbox ── */
 @media (max-width: 768px) {
-    .inbox-tabs { gap: 4px; padding: 6px; }
-    .inbox-tab  { padding: 7px 10px; font-size: 12px; gap: 5px; }
-    .tab-label  { display: none; }
-    .pcard-inner { padding: 14px; }
-    .pcard-header { flex-wrap: wrap; }
-    .pcard-total-value { font-size: 15px; }
+    .inbox-tabs {
+        gap: 4px;
+        padding: 6px;
+    }
+
+    .inbox-tab {
+        padding: 7px 10px;
+        font-size: 12px;
+        gap: 5px;
+    }
+
+    .tab-label {
+        display: none;
+    }
+
+    .pcard-inner {
+        padding: 14px;
+    }
+
+    .pcard-header {
+        flex-wrap: wrap;
+    }
+
+    .pcard-total-value {
+        font-size: 15px;
+    }
 }
 
 @media (max-width: 480px) {
-    .pcard-btn { padding: 7px 12px; font-size: 12px; }
-    .pcard-avatar { width: 32px; height: 32px; font-size: 13px; }
+    .pcard-btn {
+        padding: 7px 12px;
+        font-size: 12px;
+    }
+
+    .pcard-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
 }
 
 /* ═══════════════════════════════════════
@@ -2549,29 +2861,40 @@ tbody tr:hover {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.55);
+    background: rgba(0, 0, 0, .55);
     z-index: 9999;
     align-items: center;
     justify-content: center;
     padding: 20px;
 }
-.nota-overlay.show { display: flex; }
+
+.nota-overlay.show {
+    display: flex;
+}
 
 .nota-box {
     background: #fff;
     border-radius: 16px;
     width: 100%;
     max-width: 340px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .25);
     overflow: hidden;
     font-family: 'Courier New', monospace;
 }
 
-#notaKonten { padding: 36px 22px 24px; }
+#notaKonten {
+    padding: 36px 22px 24px;
+}
 
-.nota-header { text-align: center; margin-bottom: 12px; }
+.nota-header {
+    text-align: center;
+    margin-bottom: 12px;
+}
 
-.nota-logo { font-size: 28px; margin-bottom: 10px; }
+.nota-logo {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
 
 .nota-toko-nama {
     font-size: 15px;
@@ -2580,11 +2903,20 @@ tbody tr:hover {
     letter-spacing: .3px;
 }
 
-.nota-sub { font-size: 11px; color: #6b7280; margin-top: 2px; }
+.nota-sub {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+}
 
-.nota-garis { border-top: 1px dashed #d1d5db; margin: 10px 0; }
+.nota-garis {
+    border-top: 1px dashed #d1d5db;
+    margin: 10px 0;
+}
 
-.nota-info { margin-bottom: 4px; }
+.nota-info {
+    margin-bottom: 4px;
+}
 
 .nota-info-row {
     display: flex;
@@ -2594,8 +2926,15 @@ tbody tr:hover {
     color: #374151;
 }
 
-.nota-info-row span:first-child { color: #6b7280; }
-.nota-info-row span:last-child  { font-weight: 600; text-align: right; max-width: 55%; }
+.nota-info-row span:first-child {
+    color: #6b7280;
+}
+
+.nota-info-row span:last-child {
+    font-weight: 600;
+    text-align: right;
+    max-width: 55%;
+}
 
 .nota-table {
     width: 100%;
@@ -2614,9 +2953,19 @@ tbody tr:hover {
     border-bottom: 1px dashed #e5e7eb;
 }
 
-.nota-table td { padding: 5px 0; vertical-align: top; }
-.nota-table .center { text-align: center; }
-.nota-table .right  { text-align: right; white-space: nowrap; }
+.nota-table td {
+    padding: 5px 0;
+    vertical-align: top;
+}
+
+.nota-table .center {
+    text-align: center;
+}
+
+.nota-table .right {
+    text-align: right;
+    white-space: nowrap;
+}
 
 .nota-total-row {
     display: flex;
@@ -2643,11 +2992,16 @@ tbody tr:hover {
     background: #f9fafb;
 }
 
-.nota-actions .pcard-btn { flex: 1; justify-content: center; }
+.nota-actions .pcard-btn {
+    flex: 1;
+    justify-content: center;
+}
 
 /* ── Print ── */
 @media print {
-    body > * { display: none !important; }
+    body>* {
+        display: none !important;
+    }
 
     .nota-overlay {
         display: block !important;
@@ -2662,10 +3016,18 @@ tbody tr:hover {
         max-width: 100% !important;
     }
 
-    .no-print { display: none !important; }
-    #notaKonten { padding: 0 !important; }
+    .no-print {
+        display: none !important;
+    }
+
+    #notaKonten {
+        padding: 0 !important;
+    }
 }
 
 @media (max-width: 400px) {
-    .nota-box { max-width: 100%; border-radius: 12px; }
+    .nota-box {
+        max-width: 100%;
+        border-radius: 12px;
+    }
 }

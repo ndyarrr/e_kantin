@@ -42,16 +42,18 @@ $kendalaNotif = mysqli_fetch_all(mysqli_query(
 
 /* ── helpers ── */
 
-function catatLog($conn, $aksi, $keterangan = '')
-{
-    $role = mysqli_real_escape_string($conn, $_SESSION['user_role'] ?? '');
-    $uid = mysqli_real_escape_string($conn, $_SESSION['user_id'] ?? '');
-    $nama = mysqli_real_escape_string($conn, $_SESSION['user_nama'] ?? '');
-    $aksi = mysqli_real_escape_string($conn, $aksi);
-    $ket = mysqli_real_escape_string($conn, $keterangan);
-    $ip = mysqli_real_escape_string($conn, $_SERVER['REMOTE_ADDR'] ?? '');
-    mysqli_query($conn, "INSERT INTO log_sistem (user_role, user_id, user_nama, aksi, keterangan, ip_address)
-                         VALUES ('$role','$uid','$nama','$aksi','$ket','$ip')");
+if (!function_exists('catatLog')) {
+    function catatLog($conn, $aksi, $keterangan = '')
+    {
+        $role = mysqli_real_escape_string($conn, $_SESSION['user_role'] ?? '');
+        $uid = mysqli_real_escape_string($conn, $_SESSION['user_id'] ?? '');
+        $nama = mysqli_real_escape_string($conn, $_SESSION['user_nama'] ?? '');
+        $aksi = mysqli_real_escape_string($conn, $aksi);
+        $ket = mysqli_real_escape_string($conn, $keterangan);
+        $ip = mysqli_real_escape_string($conn, $_SERVER['REMOTE_ADDR'] ?? '');
+        mysqli_query($conn, "INSERT INTO log_sistem (user_role, user_id, user_nama, aksi, keterangan, ip_address)
+                             VALUES ('$role','$uid','$nama','$aksi','$ket','$ip')");
+    }
 }
 function generateKodeAktivasi(): string
 {

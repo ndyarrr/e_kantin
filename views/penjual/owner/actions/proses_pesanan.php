@@ -52,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $queryUpdateStatus = "UPDATE pesanan SET status = 'selesai' WHERE id_pesanan = $id_pesanan";
                 
                 if (mysqli_query($conn, $queryUpdateStatus)) {
+                    catatLog($conn, 'Selesaikan Pesanan', "Owner menyelesaikan pesanan ID: $id_pesanan (Menu: $nama_menu, Jumlah: $jumlahBeli)");
                     $feedback = [
                         'type' => 'success', 
                         'msg' => 'Pesanan sukses diproses! Khodam Sugeng Rahayu meluncur ke Ngawi! 🚌💨'
@@ -66,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Jalur Bypass: Jika data id_menu dari form gagal dibaca, status tetap di-set selesai tanpa potong stok
             mysqli_query($conn, "UPDATE pesanan SET status = 'selesai' WHERE id_pesanan = $id_pesanan");
+            catatLog($conn, 'Selesaikan Pesanan', "Owner menyelesaikan pesanan ID: $id_pesanan (Bypass Stok)");
             $feedback = [
                 'type' => 'success', 
                 'msg' => 'Pesanan selesai! (Stok menu tetap karena ID Menu tidak terkirim dari form).'

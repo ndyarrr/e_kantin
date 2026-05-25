@@ -47,10 +47,12 @@ function login()
 
                 mysqli_query($conn, "UPDATE murid SET terakhir_login = NOW() WHERE nisn = '$id'");
 
-                $_SESSION['user_id'] = $user['nisn'];
+                                $_SESSION['user_id'] = $user['nisn'];
                 $_SESSION['user_nama'] = $user['nama'];
                 $_SESSION['user_role'] = 'siswa';
                 $_SESSION['user_foto'] = $user['foto_profil'];
+
+                catatLog($conn, 'Login', 'Siswa berhasil login');
 
                 // Redirect ke dashboard siswa
                 header('Location: ../views/pembeli/index.php');
@@ -79,10 +81,12 @@ function login()
                 $nuptk_guru = $user['nuptk'];
                 mysqli_query($conn, "UPDATE guru SET terakhir_login = NOW() WHERE nuptk = '$nuptk_guru'");
 
-                $_SESSION['user_id'] = $user['nuptk'];
+                                $_SESSION['user_id'] = $user['nuptk'];
                 $_SESSION['user_nama'] = $user['nama'];
                 $_SESSION['user_role'] = 'guru';
                 $_SESSION['user_foto'] = $user['foto_profil'];
+
+                catatLog($conn, 'Login', 'Guru berhasil login');
 
                 // REDIRECT DISAMAKAN: Ikut masuk ke folder siswa
                 header('Location: ../views/pembeli/index.php');
@@ -140,6 +144,8 @@ function login()
             $_SESSION['user_foto'] = $user['foto_profil'];
             $_SESSION['id_toko'] = $id_toko;
 
+            catatLog($conn, 'Login', "Penjual ({$user['role']}) berhasil login");
+
             // 4. REDIRECT BERDASARKAN SUB-ROLE
             if ($user['role'] === 'owner') {
                 // Diarahkan masuk ke views/penjual/owner/index.php
@@ -186,6 +192,8 @@ function login()
 
             // 🔥 FIX UTAMA: Daftarkan role_level murni database ke dalam Session browser!
             $_SESSION['role_level'] = (int) ($user['role_level'] ?? 1);
+
+            catatLog($conn, 'Login', 'Admin berhasil login');
 
             header('Location: ../views/admin/?section=dashboard');
             exit;

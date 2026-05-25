@@ -5,11 +5,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 🌟 DETEKSI OTOMATIS: Apakah pake php -S (:8000) atau XAMPP biasa
 $is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
 $base_url = $is_php_s ? '' : '/e_kantin';
 
-// 🌟 1. PERBAIKAN TENDANGAN LOGIN (Paling Atas)
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
     header('Location: ' . $base_url . '/auth/login.php');
     exit;
@@ -17,132 +15,188 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
 
 require_once __DIR__ . '/../../../../config/database.php';
 
-$penjualId = (int)($_SESSION['user_id'] ?? 0);
+$penjualId = (int) ($_SESSION['user_id'] ?? 0);
 
-// Cari id_toko
-$rToko = mysqli_fetch_assoc(mysqli_query($conn,
+$rToko = mysqli_fetch_assoc(mysqli_query(
+    $conn,
     "SELECT id_toko FROM toko_penjual WHERE id_penjual=$penjualId LIMIT 1"
 ));
-$idToko = (int)($rToko['id_toko'] ?? 0);
+$idToko = (int) ($rToko['id_toko'] ?? 0);
+
+// ✅ Path upload pakai __DIR__ — otomatis benar di Windows maupun Linux
+$uploadFileDir = realpath(__DIR__ . '/../../../../assets/img/menu') . DIRECTORY_SEPARATOR;
+// // DEBUG SEMENTARA — hapus setelah beres
+// die(json_encode([
+//     'uploadFileDir' => $uploadFileDir,
+//     'dir_exists' => is_dir($uploadFileDir),
+//     'writable' => is_writable($uploadFileDir),
+//     'files' => $_FILES,
+// ]));
+
+if (!is_dir($uploadFileDir)) {
+    mkdir($uploadFileDir, 0777, true);
+}
+
+$allowed_ext = ['jpg', 'jpeg', 'png', 'webp'];
+$allowed_mime = ['image/jpeg', 'image/png', 'image/webp'];
+
+/**
+ * Upload foto menu dengan nama: menu_{id_menu}_{id_toko}.{ext}
+ * Return nama file jika sukses, null jika gagal / tidak ada file.
+ */
+function uploadFotoMenu(array $file, int $id_menu, int $idToko, string $dir, array $allowed_ext, array $allowed_mime): ?string
+{
+    if ($file['error'] !== UPLOAD_ERR_OK)
+        return null;
+
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if (!in_array($ext, $allowed_ext))
+        return null;
+
+    // ✅ Pakai OOP style — tidak deprecated di PHP 8.5
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = $finfo->file($file['tmp_name']);
+    if (!in_array($mime, $allowed_mime))
+        return null;
+
+    $namaFile = "menu_{$id_menu}_{$idToko}.{$ext}";
+    if (move_uploaded_file($file['tmp_name'], $dir . $namaFile)) {
+        return $namaFile;
+    }
+    return null;
+}
+
+/**
+ * Hapus file foto lama jika ada dan berbeda dengan yang baru.
+ */
+function hapusFotoLama(?string $fotoLama, ?string $fotoBaru, string $dir): void
+{
+    if (!empty($fotoLama) && $fotoLama !== $fotoBaru) {
+        $path = $dir . $fotoLama;
+        if (file_exists($path))
+            unlink($path);
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    $activeSection = $_POST['_section'] ?? 'menu'; // Default balik ke menu biar aman
+    $activeSection = $_POST['_section'] ?? 'menu';
     $feedback = null;
-    
-    // 1. LOGIKA TAMBAH MENU
+
+    // ── 1. TAMBAH MENU ───────────────────────────────────────────────────────
     if ($action === 'tambah_menu') {
-        $nama_menu = mysqli_real_escape_string($conn, $_POST['nama_menu']);
-        $kategori  = mysqli_real_escape_string($conn, $_POST['kategori'] ?? 'makanan');
-        $harga     = (int)($_POST['harga'] ?? 0);
-        $stok      = (int)($_POST['stok'] ?? 0);
-        $tersedia  = $stok > 0 ? 1 : 0;
-        $nama_foto = null;
+        $nama_menu = mysqli_real_escape_string($conn, trim($_POST['nama_menu']));
+        $kategori = mysqli_real_escape_string($conn, $_POST['kategori'] ?? 'makanan');
+        $harga = (int) ($_POST['harga'] ?? 0);
+        $stok = (int) ($_POST['stok'] ?? 0);
+        $tersedia = $stok > 0 ? 1 : 0;
 
         if ($harga > 99999) {
             $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal: Harga tidak boleh melebihi Rp 99.999!'];
-            // 🌟 UBAH: Pakai $base_url biar ga nyasar di php -S
             header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=' . $activeSection);
             exit;
         }
 
-        if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-            $fileTmpPath   = $_FILES['foto']['tmp_name'];
-            $fileName      = $_FILES['foto']['name'];
-            $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-            $newFileName   = 'menu_' . time() . '.' . $fileExtension;
-            
-            // Catatan: folder /opt/lampp adalah path internal Linux. 
-            // Kalau kamu di windows/hosting, sesuaikan path folder upload ini ya!
-            $uploadFileDir = '/opt/lampp/htdocs/e_kantin/assets/img/menu/';
-            
-            if (!is_dir($uploadFileDir)) {
-                mkdir($uploadFileDir, 0777, true);
-            }
-            
-            if (move_uploaded_file($fileTmpPath, $uploadFileDir . $newFileName)) {
-                $nama_foto = $newFileName;
+        // Insert dulu tanpa foto untuk dapat id_menu
+        $ok = mysqli_query(
+            $conn,
+            "INSERT INTO menu (id_toko, nama_menu, kategori, deskripsi, harga, foto_menu, stok, tersedia)
+             VALUES ($idToko, '$nama_menu', '$kategori', NULL, $harga, NULL, $stok, $tersedia)"
+        );
+
+        if (!$ok) {
+            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal menambahkan menu: ' . mysqli_error($conn)];
+            header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=' . $activeSection);
+            exit;
+        }
+
+        $id_menu_baru = (int) mysqli_insert_id($conn);
+
+        // Upload foto setelah dapat id_menu
+        $nama_foto = null;
+        if (!empty($_FILES['foto']['name'])) {
+            $nama_foto = uploadFotoMenu($_FILES['foto'], $id_menu_baru, $idToko, $uploadFileDir, $allowed_ext, $allowed_mime);
+
+            if ($nama_foto) {
+                mysqli_query($conn, "UPDATE menu SET foto_menu = '$nama_foto' WHERE id_menu = $id_menu_baru");
             } else {
-                $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal mengunggah gambar!'];
-                // 🌟 UBAH: Pakai $base_url biar ga nyasar di php -S
+                // File ada tapi gagal upload
+                $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Menu tersimpan, tapi foto gagal diunggah. Cek format/ukuran file.'];
                 header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=' . $activeSection);
                 exit;
             }
         }
 
-        $queryInsert = "INSERT INTO menu (id_toko, nama_menu, kategori, deskripsi, harga, foto_menu, stok, tersedia) 
-                        VALUES ($idToko, '$nama_menu', '$kategori', NULL, $harga, " . ($nama_foto ? "'$nama_foto'" : "NULL") . ", $stok, $tersedia)";
-        
-        if (mysqli_query($conn, $queryInsert)) {
-            $feedback = ['type' => 'success', 'msg' => 'Menu baru berhasil ditambahkan!'];
-        } else {
-            $feedback = ['type' => 'danger', 'msg' => 'Gagal menambahkan menu: ' . mysqli_error($conn)];
-        }
+        catatLog($conn, 'Tambah Menu', "Owner menambahkan menu baru: $nama_menu (Kategori: $kategori, Harga: Rp $harga)");
+
+        $feedback = ['type' => 'success', 'msg' => 'Menu baru berhasil ditambahkan!'];
     }
 
-    // 2. LOGIKA EDIT MENU
+    // ── 2. EDIT MENU ─────────────────────────────────────────────────────────
     if ($action === 'edit_menu') {
-        $id_menu   = (int)($_POST['id_menu'] ?? 0);
-        $nama_menu = mysqli_real_escape_string($conn, $_POST['nama_menu']);
-        $kategori  = mysqli_real_escape_string($conn, $_POST['kategori'] ?? 'makanan');
-        $harga     = (int)($_POST['harga'] ?? 0);
-        $stok      = (int)($_POST['stok'] ?? 0);
-        $tersedia  = $stok > 0 ? 1 : 0;
+        $id_menu = (int) ($_POST['id_menu'] ?? 0);
+        $nama_menu = mysqli_real_escape_string($conn, trim($_POST['nama_menu']));
+        $kategori = mysqli_real_escape_string($conn, $_POST['kategori'] ?? 'makanan');
+        $harga = (int) ($_POST['harga'] ?? 0);
+        $stok = (int) ($_POST['stok'] ?? 0);
+        $tersedia = $stok > 0 ? 1 : 0;
 
         if ($harga > 99999) {
             $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal: Harga tidak boleh melebihi Rp 99.999!'];
-            // 🌟 UBAH: Pakai $base_url biar ga nyasar di php -S
             header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=' . $activeSection);
             exit;
         }
 
         $resLama = mysqli_query($conn, "SELECT foto_menu FROM menu WHERE id_menu = $id_menu LIMIT 1");
         $menuLama = mysqli_fetch_assoc($resLama);
-        $nama_foto = $menuLama['foto_menu'] ?? null;
+        $nama_foto = $menuLama['foto_menu'] ?? null; // default: tetap pakai foto lama
 
-        if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-            $fileTmpPath   = $_FILES['foto']['tmp_name'];
-            $fileName      = $_FILES['foto']['name'];
-            $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-            $newFileName   = 'menu_' . time() . '.' . $fileExtension;
-            $uploadFileDir = '/opt/lampp/htdocs/e_kantin/assets/img/menu/';
-            
-            if (move_uploaded_file($fileTmpPath, $uploadFileDir . $newFileName)) {
-                if (!empty($menuLama['foto_menu']) && file_exists($uploadFileDir . $menuLama['foto_menu'])) {
-                    unlink($uploadFileDir . $menuLama['foto_menu']);
-                }
-                $nama_foto = $newFileName;
+        if (!empty($_FILES['foto']['name'])) {
+            $fotoBaru = uploadFotoMenu($_FILES['foto'], $id_menu, $idToko, $uploadFileDir, $allowed_ext, $allowed_mime);
+            if ($fotoBaru) {
+                hapusFotoLama($nama_foto, $fotoBaru, $uploadFileDir); // hapus lama jika nama beda (ganti ekstensi)
+                $nama_foto = $fotoBaru;
             }
         }
 
-        $queryUpdate = "UPDATE menu SET 
-                        nama_menu = '$nama_menu', 
-                        kategori = '$kategori', 
-                        harga = $harga, 
-                        stok = $stok, 
-                        tersedia = $tersedia" . 
-                        ($nama_foto ? ", foto_menu = '$nama_foto'" : "") . " 
-                        WHERE id_menu = $id_menu";
-        
-        if (mysqli_query($conn, $queryUpdate)) {
-            $feedback = ['type' => 'success', 'msg' => 'Menu berhasil diperbarui!'];
-        } else {
-            $feedback = ['type' => 'danger', 'msg' => 'Gagal memperbarui menu: ' . mysqli_error($conn)];
+        $fotoSql = $nama_foto ? ", foto_menu = '$nama_foto'" : '';
+        $ok = mysqli_query(
+            $conn,
+            "UPDATE menu SET
+                nama_menu = '$nama_menu',
+                kategori  = '$kategori',
+                harga     = $harga,
+                stok      = $stok,
+                tersedia  = $tersedia
+                $fotoSql
+             WHERE id_menu = $id_menu AND id_toko = $idToko"
+        );
+
+        if ($ok) {
+            catatLog($conn, 'Edit Menu', "Owner mengubah menu ID $id_menu: $nama_menu (Kategori: $kategori, Harga: Rp $harga)");
         }
+
+        $feedback = $ok
+            ? ['type' => 'success', 'msg' => 'Menu berhasil diperbarui!']
+            : ['type' => 'danger', 'msg' => 'Gagal memperbarui menu: ' . mysqli_error($conn)];
     }
 
-    // 3. LOGIKA SOFT DELETE MENU
+    // ── 3. HAPUS MENU (soft delete) ──────────────────────────────────────────
     if ($action === 'hapus_menu') {
-        $id_menu = (int)($_POST['id_menu'] ?? 0);
+        $id_menu = (int) ($_POST['id_menu'] ?? 0);
 
         if ($id_menu > 0) {
-            $querySoftDelete = "UPDATE menu SET deleted_at = NOW() WHERE id_menu = $id_menu AND id_toko = $idToko";
-            
-            if (mysqli_query($conn, $querySoftDelete)) {
-                $feedback = ['type' => 'success', 'msg' => 'Menu berhasil dihapus!'];
-            } else {
-                $feedback = ['type' => 'danger', 'msg' => 'Gagal menghapus menu: ' . mysqli_error($conn)];
+            $ok = mysqli_query(
+                $conn,
+                "UPDATE menu SET deleted_at = NOW() WHERE id_menu = $id_menu AND id_toko = $idToko"
+            );
+            if ($ok) {
+                $nama_menu_del = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama_menu FROM menu WHERE id_menu=$id_menu"))['nama_menu'] ?? '';
+                catatLog($conn, 'Hapus Menu', "Owner menghapus menu: $nama_menu_del (ID: $id_menu)");
             }
+            $feedback = $ok
+                ? ['type' => 'success', 'msg' => 'Menu berhasil dihapus!']
+                : ['type' => 'danger', 'msg' => 'Gagal menghapus menu: ' . mysqli_error($conn)];
         }
     }
 
@@ -150,7 +204,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['feedback'] = $feedback;
     }
 
-    // Jalur balik dinamis: kalau XAMPP pake /e_kantin, kalau php -S langsung /views
     header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=' . $activeSection);
     exit;
 }
