@@ -833,3 +833,65 @@ body {
 .col-food-right {
     animation-delay: 1s;
 }
+/* =========================================
+   POSISI & ANIMASI PIRING MAKANAN
+   ========================================= */
+
+/* Pastikan pembungkusnya punya posisi relative agar piring tidak lari ke ujung layar */
+.collage-wrapper {
+    position: relative;
+    max-width: 900px;
+    margin: 40px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Gaya dasar untuk piring makanan */
+.col-food {
+    position: absolute;
+    width: 220px; /* Ukuran piring, sesuaikan jika kurang besar/kecil */
+    height: auto;
+    z-index: 5; /* Angka 5 agar posisinya pas (tidak menutupi teks penting) */
+    
+    /* Efek bayangan jatuh yang halus agar terlihat 3D dan melayang beneran */
+    filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.2)); 
+    
+    /* Panggil animasi gerak naik-turun */
+    animation: floating 2.5s ease-in-out infinite; 
+}
+
+/* Posisi piring Ayam Geprek (Kiri) */
+.col-food-left {
+    left: -80px; /* Geser ke kiri hingga agak keluar dari tengah */
+    top: 10%;    /* Posisi vertikal */
+}
+
+/* Posisi piring Soto (Kanan) */
+.col-food-right {
+    right: -80px; /* Geser ke kanan */
+    top: 25%;     /* Posisinya sengaja dibikin agak lebih bawah dari ayam geprek */
+    animation-delay: 1.2s; /* Jeda biar melayangnya bergantian (jungkat-jungkit) */
+}
+
+/* Kunci Animasi Melayang */
+@keyframes floating {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-20px); } /* Terangkat 20px */
+    100% { transform: translateY(0); }
+}
+
+/* Responsif untuk layar HP agar piring tidak terlalu memakan tempat */
+@media (max-width: 768px) {
+    .col-food {
+        width: 130px;
+    }
+    .col-food-left {
+        left: -10px;
+        top: 5%;
+    }
+    .col-food-right {
+        right: -10px;
+        top: 15%;
+    }
+}
