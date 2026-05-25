@@ -210,19 +210,17 @@ button {
 
 /* ── Topbar ── */
 .topbar {
-    background: var(--green);
-    padding: 16px 24px;
+    height: var(--topbar-h);
+    background: var(--card-bg);
+    border-bottom: 1.5px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    border-radius: var(--radius);
-    margin: 20px 24px 0;
-    box-shadow: var(--shadow);
-    border: none;
-    height: auto;
-    position: relative;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
     z-index: 100;
+    gap: 12px;
 }
 
 .topbar-left {
@@ -234,10 +232,9 @@ button {
 }
 
 .topbar-title h1 {
-    font-size: 22px;
-    font-weight: 800;
-    color: #fff;
-    line-height: 1.1;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -245,8 +242,7 @@ button {
 
 .topbar-title p {
     font-size: 12px;
-    color: rgba(255, 255, 255, .75);
-    margin-top: 2px;
+    color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -260,90 +256,71 @@ button {
 }
 
 .btn-hamburger {
-    background: rgba(255, 255, 255, .2);
+    background: none;
     border: none;
-    color: #fff;
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
-    font-size: 16px;
+    font-size: 20px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background .15s;
-    flex-shrink: 0;
-}
-
-.btn-hamburger:hover {
-    background: rgba(255, 255, 255, .35);
+    color: var(--text-muted);
+    padding: 6px;
+    border-radius: 8px;
+    display: none;
 }
 
 .btn-notif {
     position: relative;
-    background: rgba(255, 255, 255, .2);
+    background: var(--green-light);
     border: none;
-    color: #fff;
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background .15s;
-}
-
-.btn-notif:hover {
-    background: rgba(255, 255, 255, .35);
+    font-size: 16px;
+    color: var(--green);
+    cursor: pointer;
 }
 
 .notif-dot {
     position: absolute;
-    top: 7px;
-    right: 7px;
+    top: 8px;
+    right: 8px;
     width: 8px;
     height: 8px;
     background: var(--red);
     border-radius: 50%;
-    border: 2px solid var(--green);
+    border: 2px solid #fff;
 }
 
 .topbar-user {
     display: flex;
     align-items: center;
     gap: 10px;
-    border-left: 1px solid rgba(255, 255, 255, .3);
-    padding-left: 14px;
 }
 
 .avatar {
     width: 38px;
     height: 38px;
     border-radius: 10px;
-    background: var(--green-dark);
+    background: var(--green);
     color: #fff;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     flex-shrink: 0;
-    border: 2px solid rgba(255, 255, 255, .3);
 }
 
 .user-name {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    color: #fff;
-    line-height: 1.2;
 }
 
 .user-role {
     font-size: 11px;
-    color: rgba(255, 255, 255, .7);
+    color: var(--text-muted);
 }
 
 /* ── Section ── */
@@ -809,9 +786,7 @@ tbody tr:hover {
     }
 
     .topbar {
-        margin: 12px 14px 0;
-        padding: 12px 16px;
-        height: auto;
+        padding: 0 14px;
     }
 
     .topbar-title p {
@@ -1187,9 +1162,7 @@ tbody tr:hover {
     }
 
     .topbar {
-        margin: 12px 14px 0;
-        padding: 12px 16px;
-        height: auto;
+        padding: 0 14px;
     }
 
     .topbar-title p {
@@ -1513,16 +1486,21 @@ tbody tr:hover {
     margin-bottom: 8px;
 }
 
+/* PERBAIKAN: Memasukkan elemen select agar desainnya seragam dengan input box lainnya */
 .static-form input[type="text"],
 .static-form input[type="number"],
-.static-form input[type="file"] {
+.static-form input[type="file"],
+.static-form select {
     padding: 10px 14px;
     border: 1.5px solid #d1d5db;
     border-radius: 8px;
     outline: none;
     font-size: 14px;
     background: #ffffff;
+    color: #1f2937;
+    font-family: inherit;
     transition: 0.2s;
+    box-sizing: border-box;
 }
 
 .static-form input[type="file"] {
@@ -1530,7 +1508,27 @@ tbody tr:hover {
     font-size: 12px;
 }
 
-.static-form input:focus {
+/* Desain khusus tag select agar panah dropdown-nya rapi dan konsisten di semua OS */
+.static-form select {
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 35px; /* Beri ruang agar teks tidak menabrak ikon panah */
+}
+
+/* Memastikan tulisan pilihan di dalam dropdown berwarna gelap dan jelas terbaca */
+.static-form select option {
+    color: #1f2937;
+    background-color: #ffffff;
+}
+
+.static-form input:focus,
+.static-form select:focus {
     border-color: #5aab55;
     box-shadow: 0 0 0 3px rgba(90, 171, 85, 0.1);
 }
@@ -1574,7 +1572,7 @@ tbody tr:hover {
 /* ================= FORM TAMBAH MENU TOGGLE SYSTEM ================= */
 .form-tambah-container.toggle-form {
     max-height: 0;
-    overflow: hidden;
+    overflow: hidden; /* Dikunci saat form tertutup */
     opacity: 0;
     padding-top: 0;
     padding-bottom: 0;
@@ -1585,7 +1583,7 @@ tbody tr:hover {
 
 /* Saat class .show aktif dipicu JavaScript */
 .form-tambah-container.toggle-form.show {
-    max-height: 500px; /* Batas tinggi form saat terbuka */
+    max-height: 600px; /* Ditambah sedikit biar space kategori & snack muat longgar */
     opacity: 1;
     padding: 24px;
     margin-top: 40px;
@@ -1593,610 +1591,535 @@ tbody tr:hover {
     border: 1.5px solid #e5e7eb;
     border-radius: 14px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    overflow: visible !important; /* 🌟 KUNCI UTAMA: Dibuka gemboknya agar list dropdown bisa menyembul keluar */
 }
 
-/* ═══════════════════════════════════════
-   INBOX — Tambahkan di bagian paling bawah penjual.css
-   ═══════════════════════════════════════ */
-
-/* ── Tab bar ── */
-.inbox-tabs {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-    background: var(--card-bg);
-    border: 1.5px solid var(--border);
-    border-radius: 14px;
-    padding: 8px;
-    box-shadow: var(--shadow);
-}
-
-.inbox-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 13px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    transition: background .15s, color .15s;
-    white-space: nowrap;
-}
-
-.inbox-tab:hover {
-    background: var(--green-light);
-    color: var(--green-dark);
-}
-
-.inbox-tab.active {
-    background: var(--green);
-    color: #fff;
-}
-
-.inbox-tab.active .tab-count {
-    background: rgba(255,255,255,.3);
-    color: #fff;
-}
-
-.tab-count {
-    background: var(--green-muted);
-    color: var(--green-dark);
-    font-size: 10px;
-    font-weight: 800;
-    padding: 2px 7px;
-    border-radius: 20px;
-    min-width: 20px;
-    text-align: center;
-    line-height: 1.6;
-}
-
-/* ── Empty state ── */
-.inbox-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 20px;
-    gap: 10px;
-    background: var(--card-bg);
-    border: 1.5px solid var(--border);
-    border-radius: 14px;
-    box-shadow: var(--shadow);
-}
-
-.inbox-empty-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: var(--green-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 26px;
-    color: var(--green);
-    margin-bottom: 6px;
-}
-
-.inbox-empty-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-}
-
-.inbox-empty-sub {
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-/* ── Pesanan card ── */
-.inbox-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.pcard {
-    background: var(--card-bg);
-    border-radius: 14px;
-    border: 1.5px solid var(--border);
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    border-left-width: 4px;
-    transition: box-shadow .15s, transform .15s;
-}
-
-.pcard:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
-}
-
-/* Left accent bar warna per status */
-.bar-menunggu  { border-left-color: #f59e0b; }
-.bar-proses    { border-left-color: #3b82f6; }
-.bar-siap      { border-left-color: #8b5cf6; }
-.bar-selesai   { border-left-color: #10b981; }
-.bar-batal     { border-left-color: #ef4444; }
-
-.pcard-inner {
-    padding: 16px 18px;
-}
-
-/* Header */
-.pcard-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.pcard-buyer {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.pcard-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    background: var(--green-muted);
-    color: var(--green-dark);
-    font-size: 15px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.pcard-nama {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.2;
-}
-
-.pcard-meta {
-    font-size: 11px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 2px;
-}
-
-.pcard-dot { opacity: .5; }
-
-/* Badge status */
-.pcard-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.status-menunggu  { background: #fef3c7; color: #92400e; }
-.status-proses    { background: #dbeafe; color: #1e40af; }
-.status-siap      { background: #ede9fe; color: #5b21b6; }
-.status-selesai   { background: #d1fae5; color: #065f46; }
-.status-batal     { background: #fee2e2; color: #991b1b; }
-
-/* Divider */
-.pcard-divider {
-    height: 1px;
-    background: var(--border);
-    margin: 0 0 12px;
-}
-
-/* Item rows */
-.pcard-items {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 14px;
-}
-
-.pcard-item-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-}
-
-.pcard-qty {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--green-dark);
-    background: var(--green-light);
-    padding: 2px 7px;
-    border-radius: 6px;
-    min-width: 28px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-.pcard-item-name {
-    flex: 1;
-    color: var(--text);
-    font-weight: 500;
-}
-
-.pcard-item-price {
-    font-weight: 700;
-    color: var(--text-muted);
-    font-size: 12px;
-    white-space: nowrap;
-}
-
-.pcard-catatan {
-    font-size: 11px;
-    color: var(--text-muted);
-    background: #f9fafb;
-    border-left: 2px solid var(--border);
-    padding: 4px 10px;
-    border-radius: 0 6px 6px 0;
-    margin-left: 36px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-/* Footer */
-.pcard-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-}
-
-.pcard-total {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-}
-
-.pcard-total-label {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    color: var(--text-muted);
-}
-
-.pcard-total-value {
-    font-size: 17px;
-    font-weight: 800;
-    color: var(--green-dark);
-}
-
-.pcard-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-/* Action buttons */
-.pcard-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 9px;
-    border: none;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    transition: background .15s, transform .1s;
-}
-
-.pcard-btn:active { transform: scale(.97); }
-
-.pcard-btn-proses {
-    background: var(--green);
-    color: #fff;
-}
-.pcard-btn-proses:hover { background: var(--green-dark); }
-
-.pcard-btn-siap {
-    background: #8b5cf6;
-    color: #fff;
-}
-.pcard-btn-siap:hover { background: #7c3aed; }
-
-.pcard-btn-selesai {
-    background: #10b981;
-    color: #fff;
-}
-.pcard-btn-selesai:hover { background: #059669; }
-
-.pcard-btn-batal {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1.5px solid #fca5a5;
-}
-.pcard-btn-batal:hover { background: #fecaca; }
-
-/* ── Responsive inbox ── */
+/* ================= CSS RESPONSIF FINAL PENYELAMAT MENU ================= */
 @media (max-width: 768px) {
-    .inbox-tabs {
-        gap: 4px;
-        padding: 6px;
+    /* 1. Paksa layout menu jadi 2 kolom sejajar di layar HP */
+    .menu-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        display: grid !important;
     }
 
-    .inbox-tab {
-        padding: 7px 10px;
-        font-size: 12px;
-        gap: 5px;
+    /* 2. Jaga tinggi pembungkus kartu menu */
+    .menu-card {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        height: auto !important;
     }
 
-    .tab-label { display: none; }
-
-    .pcard-inner { padding: 14px; }
-
-    .pcard-header { flex-wrap: wrap; }
-
-    .pcard-total-value { font-size: 15px; }
-}
-
-@media (max-width: 480px) {
-    .pcard-btn {
-        padding: 7px 12px;
-        font-size: 12px;
+    /* 3. TAMPILKAN SEMUA GAMBAR: Mau ayam maupun BMW, kunci tinggi di 120px */
+    .menu-card img,
+    .menu-img-wrap img,
+    img {
+        display: block !important;       /* Pastikan gambar tidak tersembunyi (none) */
+        visibility: visible !important;  /* Pastikan gambar terlihat */
+        width: 100% !important;          /* Lebar penuhi kotak kartu */
+        height: 120px !important;        /* Tingginya pas, tidak melar kebawah */
+        max-height: 120px !important;
+        object-fit: cover !important;    /* Biar gambar estetik terpotong rapi */
     }
 
-    .pcard-avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 13px;
+    /* 4. Sesuaikan ukuran teks informasi menu di HP */
+    .menu-info {
+        padding: 10px !important;
+    }
+    .menu-title {
+        font-size: 13px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; /* Biar kalau judul kepanjangan diganti titik-titik (...) */
+    }
+    .menu-price {
+        font-size: 12px !important;
     }
 }
 
-/* ═══════════════════════════════════════
-   NOTA MODAL — Tambahkan di paling bawah penjual.css
-   ═══════════════════════════════════════ */
+/* ==========================================================================
+   BLOK KHUSUS HP (Desktop Gak Bakal Ikut Campur)
+   ========================================================================== */
+@media (max-width: 768px) {
 
-/* Tombol nota */
-.pcard-btn-nota {
-    background: #f59e0b;
-    color: #fff;
-}
-.pcard-btn-nota:hover { background: #d97706; }
-
-/* Tombol selesai terkunci */
-.pcard-btn-selesai-locked {
-    opacity: .4;
-    cursor: not-allowed !important;
-}
-.pcard-btn-selesai-locked:hover { background: #10b981; }
-
-/* Overlay modal */
-.nota-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.55);
-    z-index: 9999;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-.nota-overlay.show { display: flex; }
-
-/* Nota box */
-.nota-box {
-    background: #fff;
-    border-radius: 16px;
-    width: 100%;
-    max-width: 340px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.25);
-    overflow: hidden;
-    font-family: 'Courier New', monospace;
-}
-
-#notaKonten {
-    padding: 36px 22px 24px;
-}
-
-.nota-header {
-    text-align: center;
-    margin-bottom: 12px;
-}
-
-.nota-logo {
-    font-size: 28px;
-    margin-bottom: 10px;
-}
-
-.nota-toko-nama {
-    font-size: 15px;
-    font-weight: 700;
-    color: #1a1a1a;
-    letter-spacing: .3px;
-}
-
-.nota-sub {
-    font-size: 11px;
-    color: #6b7280;
-    margin-top: 2px;
-}
-
-.nota-garis {
-    border-top: 1px dashed #d1d5db;
-    margin: 10px 0;
-}
-
-.nota-info { margin-bottom: 4px; }
-
-.nota-info-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    padding: 2px 0;
-    color: #374151;
-}
-
-.nota-info-row span:first-child { color: #6b7280; }
-.nota-info-row span:last-child  { font-weight: 600; text-align: right; max-width: 55%; }
-
-/* Tabel item */
-.nota-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    color: #374151;
-}
-
-.nota-table th {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #9ca3af;
-    padding: 4px 0;
-    letter-spacing: .4px;
-    border-bottom: 1px dashed #e5e7eb;
-}
-
-.nota-table td {
-    padding: 5px 0;
-    vertical-align: top;
-}
-
-.nota-table .center { text-align: center; }
-.nota-table .right  { text-align: right; white-space: nowrap; }
-
-/* Total */
-.nota-total-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 15px;
-    font-weight: 800;
-    color: #1a1a1a;
-    padding: 4px 0;
-}
-
-/* Footer nota */
-.nota-footer {
-    text-align: center;
-    font-size: 12px;
-    color: #6b7280;
-    margin-top: 4px;
-    padding-bottom: 4px;
-}
-
-/* Tombol aksi modal */
-.nota-actions {
-    display: flex;
-    gap: 10px;
-    padding: 14px 22px;
-    border-top: 1px solid #f3f4f6;
-    background: #f9fafb;
-}
-
-.nota-actions .pcard-btn { flex: 1; justify-content: center; }
-
-.pcard-btn-print {
-    background: #10b981;
-    color: #fff;
-}
-.pcard-btn-print:hover { background: #10b981; }
-
-/* ── Print styles ── */
-@media print {
-    /* Sembunyikan semua kecuali konten nota */
-    body > * { display: none !important; }
-
-    .nota-overlay {
-        display: block !important;
-        position: static !important;
-        background: none !important;
-        padding: 0 !important;
+    /* 1. Paksa Kotak Cari di Paling Atas, Dropdown & Tombol di Bawahnya */
+    .menu-action-bar {
+        display: flex !important;
+        flex-direction: column !important; 
+        align-items: stretch !important;
+        gap: 12px !important;
+        width: 100% !important;
     }
 
-    .nota-box {
-        box-shadow: none !important;
-        border-radius: 0 !important;
+    .search-filter-group {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    .search-box {
+        width: 100% !important;
         max-width: 100% !important;
     }
 
-    .no-print { display: none !important; }
-
-    #notaKonten { padding: 0 !important; }
+    /* 2. Tombol Dropdown dan New Item Lebar Penuh */
+    .filter-select, 
+    .menu-action-bar .btn-primary {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 12px !important;
+    }
 }
 
-@media (max-width: 400px) {
-    .nota-box { max-width: 100%; border-radius: 12px; }
+/* ================= FORCE LOGO SEKOLAH MENGECIL DI HP ================= */
+    
+    /* Tembak langsung kontainer logo di sidebar */
+    .sidebar-logo-inner {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        width: auto !important;
+    }
+
+    /* Paksa gambar logo badge mengecil (Maksimal 40px) */
+    .sidebar-logo-inner img,
+    .sidebar-logo-inner .logo-badge,
+    aside img {
+        width: 40px !important;
+        max-width: 40px !important;
+        height: 40px !important;
+        max-height: 40px !important;
+        object-fit: contain !important;
+    }
+
+    /* Biar teks E-Kantin gak turun kebawah */
+    .sidebar-logo .logo-text {
+        font-size: 16px !important;
+        white-space: nowrap !important;
+    }
+
+/* ==========================================
+   CSS HALAMAN ANTREAN PESANAN (OWNER)
+   ========================================== */
+.inbox-container {
+    margin-bottom: 20px;
 }
 
-/* ═══════════════════════════════════════
-   PROFIL — Tambahkan di paling bawah penjual.css
-   ═══════════════════════════════════════ */
-
-.profil-btn-foto {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 9px 18px;
-    background: var(--green-light);
-    color: var(--green-dark);
-    border: 1.5px solid var(--green-muted);
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background .15s;
+.inbox-container h2 {
+    margin-bottom: 20px;
+    color: #1f2937;
 }
-.profil-btn-foto:hover { background: var(--green-muted); }
 
-.profil-info-kecil {
-    text-align: left;
-    border-top: 1.5px solid var(--border);
-    padding-top: 14px;
+.pesanan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.pesanan-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    justify-content: space-between;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.profil-info-row {
+.pesanan-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
-    color: var(--text-muted);
-    gap: 8px;
+    border-bottom: 1px dashed #e5e7eb;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
 }
 
-.profil-info-row span:first-child {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+.pesanan-header .antrean-num {
+    font-weight: bold;
+    color: #5aab55;
+    font-size: 16px;
 }
 
-.profil-info-row span:last-child {
-    font-weight: 600;
-    color: var(--text);
+.pesanan-header h4 {
+    margin: 3px 0 0 0;
+    color: #374151;
 }
 
-.profil-role-badge {
-    background: var(--green-muted);
-    color: var(--green-dark);
-    padding: 2px 10px;
+.status-badge {
+    background: #fef3c7;
+    color: #d97706;
+    padding: 4px 10px;
     border-radius: 20px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.pesanan-body {
+    flex-grow: 1;
+    margin-bottom: 15px;
+}
+
+.pesanan-body .menu-item {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.pesanan-body .menu-qty {
+    color: #6b7280;
+}
+
+.pesanan-catatan {
+    margin: 5px 0 0 0;
+    font-size: 12px;
+    color: #dc2626;
+    background: #fef2f2;
+    padding: 6px;
+    border-radius: 6px;
+    font-style: italic;
+}
+
+.pesanan-footer-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.pesanan-footer-info .label {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.pesanan-footer-info .total {
+    font-weight: bold;
+    color: #1f2937;
+    font-size: 15px;
+}
+
+.btn-selesai-submit {
+    width: 100%;
+    background: #5aab55;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.btn-selesai-submit:hover {
+    background: #489344;
+}
+
+/* ==========================================
+   CSS INBOX MODERN - STRUKTUR 2 KOLOM FIGMA
+   ========================================== */
+.inbox-search-container {
+    margin-bottom: 15px;
+}
+
+.inbox-search-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.inbox-wrapper {
+    position: relative;
+    overflow: hidden;
+    height: calc(100vh - 180px);
+    display: flex;
+    gap: 0;
+}
+
+/* Penampung Daftar Pesan Kiri */
+.inbox-list-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 5px;
+    transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Saat detail aktif, area kiri menyusut mulus ke 50% */
+.inbox-wrapper.detail-open .inbox-list-wrapper {
+    width: 50%;
+}
+
+.inbox-grid-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Card Item Utama (Menggunakan warna dasar abu-abu soft figma) */
+.inbox-item {
+    display: flex;
+    gap: 15px;
+    background: #e2e8f0; /* Warna abu figma */
+    border: 2px solid transparent;
+    border-radius: 16px;
+    padding: 16px;
+    cursor: pointer;
+    align-items: stretch; /* Memaksa kolom kiri & kanan memiliki tinggi yang sejajar */
+    transition: all 0.2s ease;
+}
+
+.inbox-item:hover, .inbox-item.active {
+    border-color: #5aab55;
+    background: #cbd5e1;
+}
+
+/* Area Avatar & Dot Unread */
+.avatar-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.inbox-item .avatar-box {
+    width: 44px;
+    height: 44px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #4b5563;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Dot Hijau Indikator Unread Sesuai Desain Figma */
+.inbox-item .unread-dot {
+    position: absolute;
+    top: 2px;
+    left: -2px;
+    width: 10px;
+    height: 10px;
+    background: #5aab55;
+    border-radius: 50%;
+    display: none;
+    z-index: 2;
+}
+.inbox-item.is-unread .unread-dot {
+    display: block;
+}
+
+/* ==========================================
+   PEMBAGIAN KOLOM UTAMA (ANTI-TUMPANG TINDID)
+   ========================================== */
+
+/* 1. KOLOM KIRI: Data Informasi Teks */
+.inbox-item .msg-content-left {
+    flex-grow: 1;
+    min-width: 0; /* Mengunci teks agar tidak mendesak kolom kanan */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.inbox-item .sender-name {
+    font-weight: bold;
+    color: #000000;
+    margin: 0;
+    font-size: 15px;
+}
+
+.inbox-item .msg-subject {
+    font-weight: bold;
+    color: #000000;
+    margin: 2px 0;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.inbox-item .msg-snippet {
+    font-size: 12px;
+    color: #4b5563;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 2. KOLOM KANAN: Waktu (Atas) & Badge Kapsul (Bawah) */
+.inbox-item .msg-meta-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;    /* Semua konten rata kanan */
+    justify-content: flex-start; /* Default numpuk dari atas ke bawah secara normal */
+    position: relative;
+    min-width: 85px;          /* Jaga space area kanan biar gak kemakan teks kiri */
+    flex-shrink: 0;
+}
+
+.inbox-item .msg-time {
+    font-size: 11px;
+    color: #9ca3af;
+    white-space: nowrap;      /* Tanggal haram patah baris */
+    margin-bottom: auto;      /* Trik flexbox: Memaksa elemen di bawahnya (badge) terdorong otomatis ke paling bawah! */
+    line-height: 1.2;
+}
+
+/* Gaya Komponen Badge Kapsul Figma */
+.inbox-item .badge-status {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+    min-width: 65px;
+    line-height: 1.2;
+    margin-top: 10px;         /* Kasih jarak aman minimal dari teks waktu di atasnya */
+}
+
+.badge-status.read { 
+    background: #5aab55; 
+    color: #fff; 
+}
+.badge-status.unread { 
+    background: #1f2937; 
+    color: #fff; 
+}
+/* ==========================================
+   PANEL DETAIL SLIDING OVERLAY (SISI KANAN)
+   ========================================== */
+.inbox-detail-panel {
+    position: absolute;
+    right: -55%; 
+    top: 0;
+    width: 48%;
+    height: 100%;
+    background: #e2e8f0; /* Dasar abu-abu figma */
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    box-shadow: -6px 0 15px rgba(0,0,0,0.05);
+    opacity: 0;
+    visibility: hidden;
+    transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, visibility 0.4s;
+    overflow-y: auto;
+}
+
+.inbox-detail-panel.open {
+    position: relative;
+    right: 0;
+    opacity: 1;
+    visibility: visible;
+    width: 50%;
+    margin-left: 20px;
+}
+
+.detail-active-wrapper {
+    display: flex;
+    flex-direction: column;
+    padding: 25px;
+}
+
+.detail-actions-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.btn-close-panel {
+    background: #cbd5e1;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1f2937;
+    transition: background 0.2s;
+}
+
+.btn-close-panel:hover {
+    background: #94a3b8;
+    color: #ef4444;
+}
+
+.btn-inbox-action {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: white;
+}
+
+.btn-inbox-action.delete { background: #f87171; color: #7f1d1d; }
+.btn-inbox-action.reply { background: #76c072; color: white; }
+
+.detail-header-info {
+    border-bottom: 2px solid #cbd5e1;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.detail-subject-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #000;
+    line-height: 1.3;
+    margin-bottom: 15px;
+}
+
+.detail-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.detail-meta-text .from-name {
+    font-weight: bold;
+    color: #000;
+    font-size: 14px;
+}
+
+.detail-meta-text .from-email {
+    color: #4b5563;
+    font-size: 13px;
+}
+
+.detail-meta-text .full-time {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 3px;
+}
+
+.detail-body-text {
+    font-size: 14px;
+    color: #1f2937;
+    line-height: 1.6;
+    white-space: pre-line;
 }

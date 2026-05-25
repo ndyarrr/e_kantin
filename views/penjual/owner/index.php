@@ -1,20 +1,41 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-$feedback = null;
 
+$feedback = null;
 if (isset($_SESSION['feedback'])) {
     $feedback = $_SESSION['feedback'];
     unset($_SESSION['feedback']);
 }
 
+// Deteksi server dinamis
+$is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
+$base_path = $is_php_s ? '' : '/e_kantin';
+
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
-    header('Location: ../../auth/login.php');
+    header('Location: ' . $base_path . '/auth/login.php');
     exit;
 }
 
+// Penanganan request POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+    
+    if ($action === 'tambah_menu' || $action === 'edit_menu' || $action === 'hapus_menu') {
+        require_once __DIR__ . '/actions/proses_menu.php';
+        exit;
+    } elseif ($action === 'selesaikan_pesanan' || strpos($action, 'pesanan') !== false) {
+        require_once __DIR__ . '/actions/proses_pesanan.php'; 
+        exit;
+    }
+}
+
+// Lanjut ke query database...
 require_once __DIR__ . '/../../../config/database.php';
 
 $penjualNama = $_SESSION['user_nama'] ?? 'Penjual';
@@ -40,131 +61,15 @@ if (!empty($profilPenjual)) {
 // Simpan id_toko ke session supaya backend chat bisa pakai
 $_SESSION['id_toko'] = $idToko;
 
-$activeSection = $_POST['_section'] ?? $_GET['section'] ?? 'dashboard';
+$activeSection = $_GET['section'] ?? 'dashboard';
 
-/* ── ACTIONS ── */
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-    $activeSection = $_POST['_section'] ?? 'dashboard';
-    
-    // LOGIKA TAMBAH MENU
-    if ($action === 'tambah_menu') {
-        $nama_menu = mysqli_real_escape_string($conn, $_POST['nama_menu']);
-        $harga     = (int)($_POST['harga'] ?? 0);
-        $stok      = (int)($_POST['stok'] ?? 0);
-        $tersedia  = $stok > 0 ? 1 : 0;
-        $nama_foto = null;
-
-        // ── VALIDASI PHP: Benteng Pertahanan Terakhir ──
-        if ($harga > 99999) {
-            $feedback = [
-                'type' => 'danger', 
-                'msg' => 'Gagal: Harga tidak boleh melebihi Rp 99.999 demi keamanan database!'
-            ];
-            $_SESSION['feedback'] = $feedback;
-            header('Location: ?section=' . $activeSection);
-            exit;
-        }
-
-        // ── PERBAIKAN PROSES UPLOAD FOTO (GANTI BLOK BARIS 56-72) ──
-        if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-            $fileTmpPath   = $_FILES['foto']['tmp_name'];
-            $fileName      = $_FILES['foto']['name'];
-            $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-            $newFileName   = 'menu_' . time() . '.' . $fileExtension;
-            
-            // Menggunakan jalur absolut Linux XAMPP agar pasti ketemu foldernya
-            $uploadFileDir = '/opt/lampp/htdocs/e_kantin/assets/img/menu/';
-            
-            // Membuat folder otomatis jika belum ada di direktori assets
-            if (!is_dir($uploadFileDir)) {
-                mkdir($uploadFileDir, 0777, true);
-            }
-            
-            if (move_uploaded_file($fileTmpPath, $uploadFileDir . $newFileName)) {
-                $nama_foto = $newFileName;
-            } else {
-                $feedback = [
-                    'type' => 'danger', 
-                    'msg' => 'Gagal mengunggah gambar. Silakan cek permission folder assets kamu!'
-                ];
-                $_SESSION['feedback'] = $feedback;
-                header('Location: ?section=' . $activeSection);
-                exit;
-            }
-        }
-
-        $queryInsert = "INSERT INTO menu (id_toko, nama_menu, deskripsi, harga, foto_menu, stok, tersedia) 
-                VALUES ($idToko, '$nama_menu', NULL, $harga, " . ($nama_foto ? "'$nama_foto'" : "NULL") . ", $stok, $tersedia)";
-        
-        if (mysqli_query($conn, $queryInsert)) {
-            $feedback = ['type' => 'success', 'msg' => 'Menu baru berhasil ditambahkan!'];
-        } else {
-            // PERBAIKAN: Membersihkan potongan error teks nyasar yang bikin crash
-            $feedback = ['type' => 'danger', 'msg' => 'Gagal menambah menu: ' . mysqli_error($conn)];
-        }
-    }
-
-    // ════ BARU: LOGIKA EDIT MENU ════
-    if ($action === 'edit_menu') {
-        $id_menu   = (int)($_POST['id_menu'] ?? 0);
-        $nama_menu = mysqli_real_escape_string($conn, $_POST['nama_menu']);
-        $harga     = (int)($_POST['harga'] ?? 0);
-        $stok      = (int)($_POST['stok'] ?? 0);
-        $tersedia  = $stok > 0 ? 1 : 0;
-
-        // Validasi harga maksimal
-        if ($harga > 99999) {
-            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal: Harga tidak boleh melebihi Rp 99.999!'];
-            header('Location: ?section=' . $activeSection);
-            exit;
-        }
-
-        // Ambil nama foto lama terlebih dahulu dari database
-        $resLama = mysqli_query($conn, "SELECT foto_menu FROM menu WHERE id_menu = $id_menu LIMIT 1");
-        $menuLama = mysqli_fetch_assoc($resLama);
-        $nama_foto = $menuLama['foto_menu'] ?? null;
-
-        // Jika user mengunggah foto baru, proses file-nya
-        if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-            $fileTmpPath   = $_FILES['foto']['tmp_name'];
-            $fileName      = $_FILES['foto']['name'];
-            $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-            $newFileName   = 'menu_' . time() . '.' . $fileExtension;
-            $uploadFileDir = '/opt/lampp/htdocs/e_kantin/assets/img/menu/';
-            
-            if (move_uploaded_file($fileTmpPath, $uploadFileDir . $newFileName)) {
-                // Hapus foto lama di folder jika ada, biar tidak menimbun sampah gambar
-                if (!empty($menuLama['foto_menu']) && file_exists($uploadFileDir . $menuLama['foto_menu'])) {
-                    unlink($uploadFileDir . $menuLama['foto_menu']);
-                }
-                $nama_foto = $newFileName;
-            }
-        }
-
-        // Jalankan perintah UPDATE ke database
-        $queryUpdate = "UPDATE menu SET 
-                        nama_menu = '$nama_menu', 
-                        harga = $harga, 
-                        stok = $stok, 
-                        tersedia = $tersedia, 
-                        foto_menu = " . ($nama_foto ? "'$nama_foto'" : "NULL") . " 
-                        WHERE id_menu = $id_menu";
-        
-        if (mysqli_query($conn, $queryUpdate)) {
-            $feedback = ['type' => 'success', 'msg' => 'Menu berhasil diperbarui!'];
-        } else {
-            $feedback = ['type' => 'danger', 'msg' => 'Gagal memperbarui menu: ' . mysqli_error($conn)];
-        }
-    }
-
-    if ($feedback) $_SESSION['feedback'] = $feedback;
-    header('Location: ?section=' . $activeSection);
-    exit;
-}
-
-/* ── DATA ── */
+/* ── DATA READ (PROSES GET UNTUK VIEW TAMPILAN) ── */
 require __DIR__ . '/sections/dashboard_data.php';
+
+// Menangkap kiriman filter URL untuk digunakan di menu_data.php
+$search   = mysqli_real_escape_string($conn, $_GET['search'] ?? '');
+$kategori = mysqli_real_escape_string($conn, $_GET['kategori'] ?? 'semua');
+
 require __DIR__ . '/sections/menu_data.php';
 ?>
 <!DOCTYPE html>
@@ -175,7 +80,7 @@ require __DIR__ . '/sections/menu_data.php';
     <title>E-Kantin — Owner</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="../../../assets/css/penjual.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= $base_path ?>/assets/css/penjual.css?v=<?= time() ?>">
 </head>
 <body>
 
@@ -184,7 +89,7 @@ require __DIR__ . '/sections/menu_data.php';
 <aside id="sidebar">
     <div class="sidebar-logo">
         <div class="sidebar-logo-inner">
-            <img src="../../../assets/img/logo-esemkita.png" class="logo-badge" onerror="this.style.display='none'">
+            <img src="<?= $base_path ?>/assets/img/logo-esemkita.png" class="logo-badge" onerror="this.style.display='none'">
             <div class="logo-text">E-Kantin</div>
         </div>
         <button class="btn-close-sidebar" onclick="closeSidebar()">
@@ -198,11 +103,17 @@ require __DIR__ . '/sections/menu_data.php';
         <button class="nav-link" data-section="menu" onclick="switchSection('menu')">
             <i class="fa-solid fa-utensils"></i> Menu
         </button>
+        <button class="nav-link" data-section="staf" onclick="switchSection('staf')">
+            <i class="fa-solid fa-users"></i> Staf & Shift
+        </button>
         <button class="nav-link" data-section="inbox" onclick="switchSection('inbox')">
             <i class="fa-solid fa-inbox"></i> Inbox
             <?php if ($totalPesananBaru > 0): ?>
                 <span class="nav-badge"><?= $totalPesananBaru ?></span>
             <?php endif; ?>
+        </button>
+        <button class="nav-link" data-section="pesanan" onclick="switchSection('pesanan')">
+            <i class="fa-solid fa-receipt"></i> Antrean Pesanan
         </button>
         <button class="nav-link" data-section="profil" onclick="switchSection('profil')">
             <i class="fa-solid fa-user"></i> Profil
@@ -216,7 +127,7 @@ require __DIR__ . '/sections/menu_data.php';
     </nav>
     <div class="sidebar-bottom">
         <button class="nav-link"><i class="fa-solid fa-circle-info"></i> Help Centre</button>
-        <a href="../../../auth/logout.php" class="nav-link logout">
+        <a href="<?= $base_path ?>/auth/logout.php" class="nav-link logout">
             <i class="fa-solid fa-arrow-right-from-bracket"></i> Log out
         </a>
     </div>
@@ -245,7 +156,7 @@ require __DIR__ . '/sections/menu_data.php';
                 <div class="topbar-user" onclick="switchSection('profil')" style="cursor:pointer">
                     <div class="avatar">
                         <?php if (!empty($profilPenjual['foto_profil'])): ?>
-                            <img src="../../../assets/img/penjual/<?= htmlspecialchars($profilPenjual['foto_profil']) ?>?v=<?= time() ?>"
+                            <img src="<?= $base_path ?>/assets/img/penjual/<?= htmlspecialchars($profilPenjual['foto_profil']) ?>?v=<?= time() ?>"
                                 style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
                         <?php else: ?>
                             <?= strtoupper(substr($penjualNama, 0, 1)) ?>
@@ -274,12 +185,21 @@ require __DIR__ . '/sections/menu_data.php';
             <?php require __DIR__ . '/sections/menu.php'; ?>
         </div>
 
-        <div class="section" id="section-inbox">
+        <div class="section" id="section-staf">
             <div class="placeholder-box">
-                <i class="fa-solid fa-inbox"></i>
-                <p>Halaman Inbox — segera diisi</p>
+                <i class="fa-solid fa-users"></i>
+                <p>Halaman Staf & Shift — segera diisi</p>
             </div>
         </div>
+
+        <div class="section" id="section-inbox">
+            <?php require __DIR__ . '/sections/inbox.php'; ?>
+        </div>
+
+        <div class="section" id="section-pesanan">
+            <?php require __DIR__ . '/sections/pesanan.php'; ?>
+        </div>
+
         <div class="section" id="section-profil">
             <div class="placeholder-box">
                 <i class="fa-solid fa-user"></i>
@@ -295,7 +215,6 @@ require __DIR__ . '/sections/menu_data.php';
                 <p>Halaman Buku Kas — khusus owner</p>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -322,7 +241,9 @@ window.addEventListener('resize', () => { if (window.innerWidth > 768) closeSide
 const pageMeta = {
     dashboard : { title: 'Dashboard',  sub: 'Monitor semua penjualan dan keuangan E-Kantin' },
     menu      : { title: 'Menu',       sub: 'Kelola menu dan stok kantin' },
+    staf      : { title: 'Staf & Shift', sub: 'Kelola jadwal kerja dan petugas kasir' },
     inbox     : { title: 'Inbox',      sub: 'Pesanan masuk dan riwayat transaksi' },
+    pesanan   : { title: 'Antrean Pesanan', sub: 'Kelola pesanan pelanggan' },
     profil    : { title: 'Profil',     sub: 'Kelola data akun penjual' },
     chat      : { title: 'Chat',       sub: 'Balas pesan pembeli atas nama kantin kamu' },
     kas       : { title: 'Buku Kas',   sub: 'Catatan pemasukan dan keuangan toko' },
@@ -332,7 +253,6 @@ function switchSection(name) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-link[data-section]').forEach(l => l.classList.remove('active'));
     
-    // Perbaikan selektor penamaan section kas agar sinkron
     const targetSection = name === 'kas' ? 'section-grid-buku-kas' : 'section-' + name;
     const targetEl = document.getElementById(targetSection);
     if(targetEl) targetEl.classList.add('active');
@@ -346,8 +266,10 @@ function switchSection(name) {
     history.replaceState(null, '', '?section=' + name);
 }
 
-const initSection = '<?= htmlspecialchars($activeSection) ?>';
-if (initSection !== 'dashboard') switchSection(initSection);
+const initSection = <?= json_encode($activeSection ?? 'dashboard') ?>;
+if (initSection && initSection !== 'dashboard') {
+    switchSection(initSection);
+}
 
 const feedbackEl = document.getElementById('feedbackBanner');
 if (feedbackEl) {

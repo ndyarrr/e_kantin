@@ -13,131 +13,124 @@
                    onchange="document.getElementById('formFilterMenu').submit()">
         </div>
         
-        <!-- FIX 4: value konsisten kapital sesuai ENUM -->
         <select class="filter-select" name="kategori" onchange="document.getElementById('formFilterMenu').submit()">
-            <option value="semua"   <?= ($_GET['kategori'] ?? 'semua') === 'semua'   ? 'selected' : '' ?>>Semua Kategori</option>
-            <option value="Makanan" <?= ($_GET['kategori'] ?? '')       === 'Makanan' ? 'selected' : '' ?>>Makanan</option>
-            <option value="Minuman" <?= ($_GET['kategori'] ?? '')       === 'Minuman' ? 'selected' : '' ?>>Minuman</option>
-            <option value="Snack"   <?= ($_GET['kategori'] ?? '')       === 'Snack'   ? 'selected' : '' ?>>Snack</option>
+            <option value="semua" <?= ($_GET['kategori'] ?? '') === 'semua' ? 'selected' : '' ?>>Semua Kategori</option>
+            <option value="makanan" <?= ($_GET['kategori'] ?? '') === 'makanan' ? 'selected' : '' ?>>Makanan</option>
+            <option value="minuman" <?= ($_GET['kategori'] ?? '') === 'minuman' ? 'selected' : '' ?>>Minuman</option>
+            <option value="snack" <?= ($_GET['kategori'] ?? '') === 'snack' ? 'selected' : '' ?>>Snack</option>
         </select>
     </div>
     
-    <button type="button" class="btn-primary" 
-            style="background-color:#5aab55;color:white;border:none;padding:10px 20px;border-radius:10px;font-weight:bold;cursor:pointer;" 
-            onclick="toggleFormTambah()">
+    <button type="button" class="btn-primary" style="background-color: #5aab55; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer;" onclick="toggleFormTambah()">
         <i class="fa-solid fa-plus"></i> New Item
     </button>
 </form>
 
-<h2 style="margin:20px 0;font-size:22px;color:#1f2937;">Menu Listing</h2>
+<h2 style="margin: 20px 0; font-size: 22px; color: #1f2937;">Menu Listing</h2>
 
-<div class="menu-grid">
+<div class="menu-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;">
     <?php if (empty($daftarMenu)): ?>
-        <div style="grid-column:1/-1;text-align:center;color:#9ca3af;padding:40px 0;">
-            <i class="fa-solid fa-utensils" style="font-size:40px;margin-bottom:10px;display:block;"></i>
+        <div style="grid-column: 1/-1; text-align: center; color: #9ca3af; padding: 40px 0;">
+            <i class="fa-solid fa-utensils" style="font-size: 40px; margin-bottom: 10px; display: block;"></i>
             Belum ada produk di menu ini.
         </div>
-    <?php else: foreach ($daftarMenu as $m):
-        $stok      = $m['stok'] ?? 0;
+    <?php else: foreach ($daftarMenu as $m): 
+        $stok = $m['stok'] ?? 1; 
         $isTersedia = $stok > 0;
-
-        $badgeMap = [
-            'Makanan' => ['color' => '#dcfce7', 'text' => '#166534'],
-            'Minuman' => ['color' => '#dbeafe', 'text' => '#1e40af'],
-            'Snack'   => ['color' => '#fef9c3', 'text' => '#854d0e'],
-        ];
-        $kat = ucfirst($m['kategori'] ?? 'Makanan');
-        $b   = $badgeMap[$kat] ?? $badgeMap['Makanan'];
+        $kat = strtolower($m['kategori'] ?? 'makanan');
     ?>
-    <div class="menu-card">
-        <div class="menu-img-wrap">
+    <div class="menu-card" style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        
+        <div class="menu-img-wrap" style="width: 100%; height: 150px; background-color: #f3f4f6; display: flex; align-items: center; justify-content: center; overflow: hidden;">
             <?php if (!empty($m['foto_menu'])): ?>
-                <img src="../../../assets/img/menu/<?= htmlspecialchars($m['foto_menu']) ?>" 
-                     alt="Foto Menu" onerror="this.src='../../../assets/img/ayam.png'">
+                <img src="../../assets/img/menu/<?= htmlspecialchars($m['foto_menu']) ?>" 
+                     alt="Foto Menu" onerror="this.src='../../assets/img/ayam.png'">
             <?php else: ?>
-                <img src="../../../assets/img/ayam.png" alt="Foto Default">
+                <img src="../../assets/img/ayam.png" alt="Foto Default">
             <?php endif; ?>
         </div>
         
-        <!-- FIX 1: satu blok menu-info saja, sudah include badge kategori -->
-        <div class="menu-info">
-            <h3 class="menu-title" title="<?= htmlspecialchars($m['nama_menu']) ?>">
-                <?= htmlspecialchars($m['nama_menu']) ?>
-            </h3>
-            <div class="menu-row-flex">
-                <span class="menu-price">Rp <?= number_format($m['harga'], 0, ',', '.') ?></span>
-                <span class="badge-status-tersedia" style="<?= !$isTersedia ? 'background-color:#fde8e8;color:#9b1c1c;' : '' ?>">
+        <div class="menu-info" style="padding: 15px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <h3 class="menu-title" title="<?= htmlspecialchars($m['nama_menu']) ?>" style="margin: 0 0 10px 0; font-size: 16px; font-weight: bold; color: #1f2937;">
+                    <?= htmlspecialchars($m['nama_menu']) ?>
+                </h3>
+                
+                <span style="font-size: 12px; color: #6b7280; text-transform: capitalize; background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">
+                    <?php if ($kat === 'minuman'): ?>
+                        <i class="fa-solid fa-glass-water"></i>
+                    <?php elseif ($kat === 'snack'): ?>
+                        <i class="fa-solid fa-cookie-bite"></i>
+                    <?php else: ?>
+                        <i class="fa-solid fa-bowl-food"></i>
+                    <?php endif; ?>
+                    <?= htmlspecialchars($kat) ?>
+                </span>
+            </div>
+            
+            <div class="menu-row-flex" style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; margin-bottom: 15px;">
+                <span class="menu-price" style="font-weight: bold; color: #5aab55; font-size: 15px;">Rp <?= number_format($m['harga'], 0, ',', '.') ?></span>
+                
+                <span class="badge-status-tersedia" style="padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; <?= !$isTersedia ? 'background-color:#fde8e8; color:#9b1c1c;' : 'background-color:#e1f5fe; color:#0288d1;' ?>">
                     <?= $isTersedia ? 'Tersedia' : 'Habis' ?>
                 </span>
             </div>
-            <span style="display:inline-block;margin-top:4px;padding:2px 10px;border-radius:12px;font-size:11px;
-                         background:<?= $b['color'] ?>;color:<?= $b['text'] ?>;">
-                <?= $kat ?>
-            </span>
         </div>
-
-        <div class="menu-actions">
-            <!-- FIX 3: tambah parameter kategori + proteksi karakter khusus (petik) -->
-            <button type="button" class="btn-outline-edit" 
-                onclick="bukaFormEdit(
-                    <?= $m['id_menu'] ?>, 
-                    '<?= htmlspecialchars(addslashes($m['nama_menu']), ENT_QUOTES, 'UTF-8') ?>', 
-                    <?= $m['harga'] ?>, 
-                    <?= $m['stok'] ?>,
-                    '<?= htmlspecialchars(addslashes($kat), ENT_QUOTES, 'UTF-8') ?>'
-                )">
+        
+        <div class="menu-actions" style="display: flex; border-top: 1px solid #e5e7eb;">
+            <button type="button" class="btn-outline-edit" style="flex: 1; padding: 10px; background: none; border: none; border-right: 1px solid #e5e7eb; color: #2563eb; cursor: pointer; font-weight: 600;" 
+                    onclick="bukaFormEdit(<?= htmlspecialchars(json_encode($m)) ?>)">
                 <i class="fa-solid fa-pen"></i> Edit
             </button>
-            <form method="POST" style="display:inline" 
-                  onsubmit="return confirm('Hapus menu <?= htmlspecialchars(addslashes($m['nama_menu'])) ?>?')">
-                <input type="hidden" name="_section" value="menu">
-                <input type="hidden" name="action" value="hapus_menu">
-                <input type="hidden" name="id_menu" value="<?= $m['id_menu'] ?>">
-                <button type="submit" class="btn-outline-delete">
-                    <i class="fa-solid fa-trash"></i> Hapus
-                </button>
-            </form>
+            <button type="button" class="btn-outline-delete" style="flex: 1; padding: 10px; background: none; border: none; color: #dc2626; cursor: pointer; font-weight: 600;" onclick="confirm('Hapus menu ini?') ? alert('Proses Hapus ID: <?= $m['id_menu'] ?>') : ''">
+                <i class="fa-solid fa-trash"></i> Hapus
+            </button>
         </div>
     </div>
     <?php endforeach; endif; ?>
 </div>
 
-<!-- Form Tambah Menu -->
 <div id="containerTambahMenu" class="form-tambah-container toggle-form">
     <div class="form-tambah-header">
-        <i class="fa-solid fa-circle-plus" style="color:#5aab55;font-size:20px;"></i>
+        <i class="fa-solid fa-circle-plus" style="color: #5aab55; font-size: 20px;"></i>
         <h3>Form Tambah Menu Baru</h3>
     </div>
+    
     <form action="" method="POST" enctype="multipart/form-data" class="static-form">
         <input type="hidden" name="_section" value="menu">
         <input type="hidden" name="action" value="tambah_menu">
+        
         <div class="form-grid-layout">
             <div class="form-group">
                 <label for="nama_menu">Nama Menu</label>
                 <input type="text" id="nama_menu" name="nama_menu" placeholder="Contoh: Nasi Goreng Gila" required>
             </div>
+            
+            <div class="form-group">
+                <label for="kategori_menu">Kategori</label>
+                <select id="kategori_menu" name="kategori" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;" required>
+                    <option value="makanan">Makanan</option>
+                    <option value="minuman">Minuman</option>
+                    <option value="snack">Snack</option>
+                </select>
+            </div>
+            
             <div class="form-group">
                 <label for="harga_menu">Harga (Rp)</label>
                 <input type="number" id="harga_menu" name="harga" placeholder="Contoh: 12000" min="0" max="99999" required>
             </div>
+            
             <div class="form-group">
                 <label for="stok_menu">Stok Awal</label>
                 <input type="number" id="stok_menu" name="stok" placeholder="Contoh: 50" min="0" value="50" required>
             </div>
-            <!-- FIX 2: field kategori di form tambah -->
-            <div class="form-group">
-                <label for="kategori_tambah">Kategori</label>
-                <select id="kategori_tambah" name="kategori" class="filter-select" required>
-                    <option value="Makanan">Makanan</option>
-                    <option value="Minuman">Minuman</option>
-                    <option value="Snack">Snack</option>
-                </select>
-            </div>
+            
             <div class="form-group">
                 <label for="foto_menu">Foto Menu</label>
                 <input type="file" id="foto_menu" name="foto" accept="image/*">
             </div>
         </div>
+        
         <div class="form-tambah-footer">
             <button type="button" class="btn-reset" onclick="toggleFormTambah()">Batal</button>
             <button type="submit" class="btn-save"><i class="fa-solid fa-floppy-disk"></i> Simpan Menu</button>
@@ -145,55 +138,59 @@
     </form>
 </div>
 
-<!-- Form Edit Menu -->
-<div id="containerEditMenu" class="form-tambah-container toggle-form">
+<div id="containerEditMenu" class="form-tambah-container toggle-form" style="border-top: 4px solid #2563eb;">
     <div class="form-tambah-header">
-        <i class="fa-solid fa-pen" style="color:#5aab55;font-size:20px"></i>
-        <h3>Form Edit Menu</h3>
+        <i class="fa-solid fa-pen-to-square" style="color: #2563eb; font-size: 20px;"></i>
+        <h3>Form Edit Menu: <span id="judul_edit_menu" style="color:#1f2937;"></span></h3>
     </div>
+    
     <form action="" method="POST" enctype="multipart/form-data" class="static-form">
         <input type="hidden" name="_section" value="menu">
         <input type="hidden" name="action" value="edit_menu">
-        <input type="hidden" name="id_menu" id="editIdMenu">
+        <input type="hidden" id="edit_id_menu" name="id_menu">
+        
         <div class="form-grid-layout">
             <div class="form-group">
-                <label>Nama Menu</label>
-                <input type="text" name="nama_menu" id="editNamaMenu" required>
+                <label for="edit_nama_menu">Nama Menu</label>
+                <input type="text" id="edit_nama_menu" name="nama_menu" required>
             </div>
+            
             <div class="form-group">
-                <label>Harga (Rp)</label>
-                <input type="number" name="harga" id="editHarga" min="0" max="99999" required>
-            </div>
-            <div class="form-group">
-                <label>Stok</label>
-                <input type="number" name="stok" id="editStok" min="0" required>
-            </div>
-            <div class="form-group">
-                <label>Kategori</label>
-                <select name="kategori" id="editKategori" class="filter-select" required>
-                    <option value="Makanan">Makanan</option>
-                    <option value="Minuman">Minuman</option>
-                    <option value="Snack">Snack</option>
+                <label for="edit_kategori_menu">Kategori</label>
+                <select id="edit_kategori_menu" name="kategori" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;" required>
+                    <option value="makanan">Makanan</option>
+                    <option value="minuman">Minuman</option>
+                    <option value="snack">Snack</option>
                 </select>
             </div>
+            
             <div class="form-group">
-                <label>Foto Baru (opsional)</label>
-                <input type="file" name="foto" accept="image/*">
+                <label for="edit_harga_menu">Harga (Rp)</label>
+                <input type="number" id="edit_harga_menu" name="harga" min="0" max="99999" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit_stok_menu">Stok</label>
+                <input type="number" id="edit_stok_menu" name="stok" min="0" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit_foto_menu">Ganti Foto Menu <small style="color:gray;">(Kosongkan jika tidak diubah)</small></label>
+                <input type="file" id="edit_foto_menu" name="foto" accept="image/*">
             </div>
         </div>
+        
         <div class="form-tambah-footer">
             <button type="button" class="btn-reset" onclick="tutupFormEdit()">Batal</button>
-            <button type="submit" class="btn-save">
-                <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan
-            </button>
+            <button type="submit" class="btn-save" style="background-color: #2563eb;"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
         </div>
     </form>
 </div>
 
 <script>
 function toggleFormTambah() {
-    const formBox = document.getElementById('containerTambahMenu');
     tutupFormEdit();
+    const formBox = document.getElementById('containerTambahMenu');
     formBox.classList.toggle('show');
     if (formBox.classList.contains('show')) {
         formBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -203,22 +200,25 @@ function toggleFormTambah() {
     }
 }
 
-// FIX 3: terima parameter kategori, set ke select
-function bukaFormEdit(id, nama, harga, stok, kategori) {
-    const formBox = document.getElementById('containerEditMenu');
+function bukaFormEdit(menu) {
     document.getElementById('containerTambahMenu').classList.remove('show');
-    document.getElementById('editIdMenu').value    = id;
-    document.getElementById('editNamaMenu').value  = nama;
-    document.getElementById('editHarga').value     = harga;
-    document.getElementById('editStok').value      = stok;
-    document.getElementById('editKategori').value  = kategori;
-    formBox.classList.add('show');
-    formBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const formEdit = document.getElementById('containerEditMenu');
+    
+    document.getElementById('judul_edit_menu').textContent = menu.nama_menu;
+    document.getElementById('edit_id_menu').value = menu.id_menu;
+    document.getElementById('edit_nama_menu').value = menu.nama_menu;
+    document.getElementById('edit_kategori_menu').value = menu.kategori ? menu.kategori.toLowerCase() : 'makanan';
+    document.getElementById('edit_harga_menu').value = menu.harga;
+    document.getElementById('edit_stok_menu').value = menu.stok;
+    
+    formEdit.classList.add('show');
+    formEdit.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('edit_nama_menu').focus();
 }
 
 function tutupFormEdit() {
-    const formBox = document.getElementById('containerEditMenu');
-    formBox.classList.remove('show');
-    formBox.querySelector('form').reset();
+    const formEdit = document.getElementById('containerEditMenu');
+    formEdit.classList.remove('show');
+    formEdit.querySelector('form').reset();
 }
 </script>
