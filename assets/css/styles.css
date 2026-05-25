@@ -176,7 +176,7 @@ body {
     font-size: 24px;
     font-family: 'Poppins', sans-serif;
     margin-top: 5rem;
-    color: #000;
+    color: #0000007c;
 }
 
 .btn-wrapper {
@@ -537,10 +537,16 @@ body {
     height: 90px;
     font-size: 30px;
 }
-
 .lb-table-wrap {
     flex: 1;
     min-width: 0;
+    max-height: 295px; /* Membatasi tinggi tabel leaderboard agar muat sekitar 5 baris sekaligus */
+    overflow-y: auto; /* Aktifkan scroll vertikal */
+    overflow-x: auto; /* Aktifkan scroll horizontal di mobile */
+    border-radius: 10px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+    background: #fff;
+    border: 1.5px solid #eee;
 }
 
 .lb-table {
@@ -549,18 +555,19 @@ body {
     font-size: 14px;
     font-family: 'Poppins', sans-serif;
     background: #fff;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
 }
 
 .lb-table thead th {
+    position: sticky;
+    top: 0;
+    background: #fff; /* Agar tidak transparan saat baris di bawahnya bergeser */
+    z-index: 2;
     text-align: left;
     color: #888;
     font-size: 13px;
     font-weight: 500;
     padding: 12px 16px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 2px solid #eee; /* Pembatas header yang sticky */
 }
 
 .lb-table tbody tr {
@@ -601,9 +608,6 @@ body {
     display: none;
 }
 
-.lb-table-wrap {
-    flex: 1;
-}
 
 /* ===================== RESPONSIVE ===================== */
 @media (max-width: 768px) {

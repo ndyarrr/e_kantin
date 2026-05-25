@@ -274,12 +274,17 @@
 
         const opsiRombel = elRombel.querySelectorAll('option:not([value=""])');
         let rombelSesuaiMasihAda = false;
+        const rombelTampil = new Set();
 
         opsiRombel.forEach(opsi => {
             const idJurusanOpsi = opsi.dataset.idJurusanOpsi;
-            if (jurusanIdTerpilih === '' || idJurusanOpsi === jurusanIdTerpilih) {
+            const val = opsi.value;
+            const cocokJurusan = (jurusanIdTerpilih === '' || idJurusanOpsi === jurusanIdTerpilih);
+
+            if (cocokJurusan && !rombelTampil.has(val)) {
                 opsi.style.display = '';
-                if (elRombel.value === opsi.value) {
+                rombelTampil.add(val);
+                if (elRombel.value === val) {
                     rombelSesuaiMasihAda = true;
                 }
             } else {

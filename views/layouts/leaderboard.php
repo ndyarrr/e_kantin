@@ -6,9 +6,9 @@ $rowsKantin = mysqli_fetch_all(mysqli_query(
     COUNT(DISTINCT p.nisn_pembeli) + COUNT(DISTINCT p.nuptk_pembeli) as total_pembeli
     FROM toko t
     LEFT JOIN pesanan p ON p.id_toko = t.id_toko
+    WHERE t.deleted_at IS NULL
     GROUP BY t.id_toko
-    ORDER BY total_pembeli DESC
-    LIMIT 10"
+    ORDER BY total_pembeli DESC"
 ), MYSQLI_ASSOC);
 
 // Ambil data menu
@@ -18,9 +18,9 @@ $rowsMenu = mysqli_fetch_all(mysqli_query(
     COUNT(dp.id_detail_pesanan) as total_pembeli
     FROM menu m
     LEFT JOIN detail_pesanan dp ON dp.id_menu = m.id_menu
+    WHERE m.deleted_at IS NULL
     GROUP BY m.id_menu
-    ORDER BY total_pembeli DESC
-    LIMIT 10"
+    ORDER BY total_pembeli DESC"
 ), MYSQLI_ASSOC);
 
 function renderLb($rows, $type)
