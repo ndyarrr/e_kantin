@@ -1613,14 +1613,21 @@ tbody tr:hover {
 
     /* 3. TAMPILKAN SEMUA GAMBAR: Mau ayam maupun BMW, kunci tinggi di 120px */
     .menu-card img,
-    .menu-img-wrap img,
-    img {
+    .menu-img-wrap img {
         display: block !important;       /* Pastikan gambar tidak tersembunyi (none) */
         visibility: visible !important;  /* Pastikan gambar terlihat */
         width: 100% !important;          /* Lebar penuhi kotak kartu */
         height: 120px !important;        /* Tingginya pas, tidak melar kebawah */
         max-height: 120px !important;
         object-fit: cover !important;    /* Biar gambar estetik terpotong rapi */
+    }
+
+    /* Override: foto profil di chat jangan ikut aturan di atas */
+    .chat-avatar img {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: unset !important;
+        object-fit: cover !important;
     }
 
     /* 4. Sesuaikan ukuran teks informasi menu di HP */
