@@ -82,9 +82,14 @@
                     onclick="bukaFormEdit(<?= htmlspecialchars(json_encode($m)) ?>)">
                 <i class="fa-solid fa-pen"></i> Edit
             </button>
-            <button type="button" class="btn-outline-delete" style="flex: 1; padding: 10px; background: none; border: none; color: #dc2626; cursor: pointer; font-weight: 600;" onclick="confirm('Hapus menu ini?') ? alert('Proses Hapus ID: <?= $m['id_menu'] ?>') : ''">
-                <i class="fa-solid fa-trash"></i> Hapus
-            </button>
+            <form method="POST" style="display:inline; flex:1;" onsubmit="return confirm('Hapus menu <?= htmlspecialchars($m['nama_menu']) ?>?')">
+                <input type="hidden" name="_section" value="menu">
+                <input type="hidden" name="action" value="hapus_menu">
+                <input type="hidden" name="id_menu" value="<?= $m['id_menu'] ?>">
+                <button type="submit" class="btn-outline-delete" style="width: 100%; padding: 10px; background: none; border: none; color: #dc2626; cursor: pointer; font-weight: 600;">
+                    <i class="fa-solid fa-trash"></i> Hapus
+                </button>
+            </form>
         </div>
     </div>
     <?php endforeach; endif; ?>
