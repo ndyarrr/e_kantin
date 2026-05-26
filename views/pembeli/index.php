@@ -4,20 +4,29 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../config/database.php';
+// Mapping koneksi database agar tidak terjadi error akibat perbedaan nama variabel
+$koneksi = $conn;
 
-// Jika user belum login, redirect ke login (opsional — aktifkan kalau pembeli perlu login)
+// Jika user belum login, redirect ke login (opsional)
 // if (empty($_SESSION['user_id'])) { header('Location: ../../auth/login.php'); exit; }
+
+// Ambil foto profil pembeli dari session, jika tidak ada gunakan fallback default
+$avatar_file = $_SESSION['user_foto'] ?? '';
+$avatar_path = '../../assets/img/' . $avatar_file;
+if (empty($avatar_file) || !file_exists(__DIR__ . '/../../assets/img/' . $avatar_file)) {
+    $avatar_path = '../../assets/img/PPAril.jpeg'; // fallback avatar default
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Kantin - Beranda</title>
-    <link rel="stylesheet" href="../../assets/css/pembeli.css">
+    <title>E-Kantin - Beranda Pembeli</title>
+    <link rel="stylesheet" href="../../assets/css/pembeli.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ── Floating Chat Button ── */
+        /* ── Floating Chat Button & Modal Integration ── */
         .fab-chat {
             position: fixed;
             bottom: 28px;
@@ -41,7 +50,6 @@ require_once __DIR__ . '/../../config/database.php';
             transform: scale(1.1);
             box-shadow: 0 6px 24px rgba(34, 197, 94, 0.5);
         }
-        /* ── Modal Overlay Chat ── */
         .chat-modal-overlay {
             display: none;
             position: fixed;
@@ -106,11 +114,14 @@ require_once __DIR__ . '/../../config/database.php';
 </head>
 <body>
 
+    <!-- ── TOP HEADER (GLASSMORPHISM PRESET) ── -->
     <header class="main-header">
+        <div class="header-pattern-left"></div>
+        <div class="header-pattern-right"></div>
         <div class="header-inner">
             <div class="top-bar">
                 <div class="logo-area">
-                    <div class="blank-logo"></div>
+                    <img src="../../assets/img/logo-esemkita.png" class="school-logo" style="width: 38px; height: 38px; object-fit: contain; flex-shrink: 0; border-radius: 50%; background-color: #ffffff; padding: 2px;" alt="Logo Esemkita">
                     <span class="brand-name">E-Kantin</span>
                 </div>
                 <div class="search-container">
@@ -120,13 +131,13 @@ require_once __DIR__ . '/../../config/database.php';
                 <div class="header-icons">
                     <div class="icon-badge">
                         <i class="fa-regular fa-bell"></i>
-                        <span class="badge red">12</span>
+                        <span class="badge">12</span>
                     </div>
                     <div class="icon-badge">
                         <i class="fa-solid fa-cart-shopping"></i>
-                        <span class="badge red">5</span>
+                        <span class="badge">5</span>
                     </div>
-                    <div class="blank-avatar"></div>
+                    <img src="<?= $avatar_path; ?>" class="blank-avatar" alt="Profil Pembeli">
                 </div>
             </div>
             
@@ -139,109 +150,182 @@ require_once __DIR__ . '/../../config/database.php';
         </div>
     </header>
 
+    <!-- ── CONTENT UTAMA ── -->
     <main class="content-container">
         <div class="content-inner">
             
+            <!-- ── PROMO BANNER ── -->
             <section class="section-block">
                 <h2 class="section-title">Promo Hari ini</h2>
                 <div class="promo-banner-blank">
                     <div class="promo-text-placeholder">
                         <h3>DISKON 25%</h3>
-                        <p>KODE PROMO: <strong>KANTINJOSS25</strong></p>
+                        <p>UNTUK MENU SPESIAL HARI INI!</p>
                     </div>
-                    <button class="btn-promo-blank">Pesan Sekarang</button>
+                    <div class="promo-action-area">
+                        <span class="promo-code-right">KODE PROMO: <strong>KANTINJOSS25</strong></span>
+                        <button class="btn-promo-blank">Pesan Sekarang</button>
+                    </div>
                 </div>
             </section>
 
+            <!-- ── MENU TERLARIS ── -->
             <section class="section-block">
                 <h2 class="section-title">Menu Terlaris</h2>
                 <div class="horizontal-scroll">
-                        <?php
-                        $query_menu = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko FROM menu 
-                                                            JOIN toko ON menu.id_toko = toko.id_toko 
-                                                            WHERE menu.tersedia = 1 AND menu.stok > 0 
-                                                            LIMIT 5");
+                    <?php
+                    // Query data menu terlaris gabung dengan toko
+                    $query_menu = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko FROM menu 
+                                                         JOIN toko ON menu.id_toko = toko.id_toko 
+                                                         WHERE menu.tersedia = 1 AND menu.stok > 0 
+                                                         LIMIT 5");
 
-                        if ($query_menu && mysqli_num_rows($query_menu) > 0) {
-                            while ($menu = mysqli_fetch_assoc($query_menu)) {
-                                ?>
-                                <div class="menu-card">
-                                    
-                                    <?php if (!empty($menu['foto_menu'])): ?>
-                                        <img src="../../assets/img/<?= $menu['foto_menu']; ?>" class="menu-image-rect" alt="Foto Menu">
-                                    <?php else: ?>
-                                        <img src="../../assets/img/ayam.png" class="menu-image-rect" alt="Default Menu">
-                                    <?php endif; ?>
-                                    <div class="menu-info">
-                                        <h4><?= htmlspecialchars($menu['nama_menu']); ?></h4>
-                                        <p class="seller-name"><?= htmlspecialchars($menu['nama_toko']); ?></p> 
-                                        <span class="price-tag">Rp. <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
-                                    </div>
-                                </div>
-                                <?php
+                    if ($query_menu && mysqli_num_rows($query_menu) > 0) {
+                        while ($menu = mysqli_fetch_assoc($query_menu)) {
+                            // Menangani visualisasi gambar menu
+                            $foto_menu = $menu['foto_menu'];
+                            $menu_img_src = '../../assets/img/ayam.png'; // default fallback
+
+                            if (!empty($foto_menu)) {
+                                if (file_exists(__DIR__ . '/../../assets/img/menu/' . $foto_menu)) {
+                                    $menu_img_src = '../../assets/img/menu/' . $foto_menu;
+                                } elseif (file_exists(__DIR__ . '/../../assets/img/' . $foto_menu)) {
+                                    $menu_img_src = '../../assets/img/' . $foto_menu;
+                                }
                             }
-                        } else {
-                            echo "<p style='color:#888; font-size:13px; padding:10px 0;'>Belum ada menu tersedia saat ini.</p>";
+                            ?>
+                            <div class="menu-card">
+                                <img src="<?= $menu_img_src; ?>" class="menu-image-rect" alt="<?= htmlspecialchars($menu['nama_menu']); ?>">
+                                <div class="menu-info">
+                                    <h4><?= htmlspecialchars($menu['nama_menu']); ?></h4>
+                                    <p class="seller-name"><?= htmlspecialchars($menu['nama_toko']); ?></p> 
+                                    <span class="price-tag">Rp. <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
+                                </div>
+                            </div>
+                            <?php
                         }
-                        ?>
-                    </div>
+                    } else {
+                        // Dummy visual data jika database kosong agar tampilan mengikuti desain di atas
+                        $dummy_menus = [
+                            ['nama_menu' => 'Nasi Ayam Geprek', 'nama_toko' => 'MAR DIKA', 'harga' => 8000],
+                            ['nama_menu' => 'Nasi Ayam Geprek', 'nama_toko' => 'MAR DIKA', 'harga' => 8000],
+                            ['nama_menu' => 'Nasi Ayam Geprek', 'nama_toko' => 'MAR DIKA', 'harga' => 8000]
+                        ];
+                        foreach ($dummy_menus as $menu) {
+                            ?>
+                            <div class="menu-card">
+                                <img src="../../assets/img/ayam.png" class="menu-image-rect" alt="Nasi Ayam Geprek">
+                                <div class="menu-info">
+                                    <h4><?= htmlspecialchars($menu['nama_menu']); ?></h4>
+                                    <p class="seller-name"><?= htmlspecialchars($menu['nama_toko']); ?></p> 
+                                    <span class="price-tag">Rp. <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
+                                </div>
+                            </div>
+                            <?php
+                        }
+                    }
+                    ?>
+                </div>
+                
+                <!-- Titik slider dengan kapsul aktif memanjang -->
                 <div class="slider-dots">
                     <span class="dot active"></span>
                     <span class="dot"></span>
                     <span class="dot"></span>
+                    <span class="dot"></span>
                 </div>
             </section>
 
+            <!-- ── KATEGORI CIRCULAR ── -->
             <section class="section-block">
                 <h2 class="section-title">Kategori</h2>
                 <div class="category-list">
-                    <div class="category-item">
+                    <a href="#" class="category-item">
                         <div class="blank-circle icon-grid-center">
                             <i class="fa-solid fa-table-cells-large"></i>
                         </div>
                         <span>Semua</span>
-                    </div>
-                    <div class="category-item">
-                        <div class="blank-circle"></div>
+                    </a>
+                    <a href="#" class="category-item">
+                        <div class="blank-circle">
+                            <img src="../../assets/img/ayam.png" alt="Makanan">
+                        </div>
                         <span>Makanan</span>
-                    </div>
-                    <div class="category-item">
-                        <div class="blank-circle"></div>
+                    </a>
+                    <a href="#" class="category-item">
+                        <div class="blank-circle">
+                            <img src="../../assets/img/soto.png" alt="Snack">
+                        </div>
                         <span>Snack</span>
-                    </div>
-                    <div class="category-item">
-                        <div class="blank-circle"></div>
+                    </a>
+                    <a href="#" class="category-item">
+                        <div class="blank-circle">
+                            <!-- Minuman fallback estetik -->
+                            <img src="../../assets/img/ayam.png" style="filter: hue-rotate(130deg) saturate(1.5);" alt="Minuman">
+                        </div>
                         <span>Minuman</span>
-                    </div>
+                    </a>
                 </div>
             </section>
 
+            <!-- ── KANTIN GRID ── -->
             <section class="section-block">
                 <h2 class="section-title">Kantin</h2>
                 <div class="kantin-grid">
                     <?php
-                    // Ambil data toko asli dari tabel database e_kantin Anda
-                    $query_toko = mysqli_query($koneksi, "SELECT * FROM toko ORDER BY status ASC, nama_toko ASC");
+                    // Ambil data toko terdaftar dari database
+                    $query_toko = mysqli_query($koneksi, "SELECT * FROM toko ORDER BY FIELD(status, 'buka', 'tutup'), nama_toko ASC");
 
                     if ($query_toko && mysqli_num_rows($query_toko) > 0) {
                         while ($toko = mysqli_fetch_assoc($query_toko)) {
-                            // Cek status toko untuk kelas CSS
-                            $status_kelas = ($toko['status'] == 'buka') ? 'online' : 'offline';
-                            $status_teks  = ($toko['status'] == 'buka') ? 'Buka' : 'Tutup';
+                            // Cek status buka/tutup toko secara aman
+                            $is_buka = (strtolower($toko['status'] ?? '') === 'buka');
+                            $status_kelas = $is_buka ? 'online' : 'offline';
+                            $status_teks  = $is_buka ? 'Buka' : 'Tutup';
                             
-                            // Kunci tombol jika status toko tutup
-                            $btn_disabled = ($toko['status'] == 'tutup') ? 'style="background-color:#95a5a6; pointer-events:none;"' : '';
+                            // Nonaktifkan tombol jika tutup
+                            $btn_disabled = !$is_buka ? 'style="background-color:#94a3b8; pointer-events:none; box-shadow:none;"' : '';
+                            
+                            // Menangani visualisasi gambar toko
+                            $foto_toko = $toko['foto_toko'] ?? '';
+                            $toko_img_src = '';
+
+                            if (!empty($foto_toko)) {
+                                if (file_exists(__DIR__ . '/../../assets/img/kantin/' . $foto_toko)) {
+                                    $toko_img_src = '../../assets/img/kantin/' . $foto_toko;
+                                } elseif (file_exists(__DIR__ . '/../../assets/img/' . $foto_toko)) {
+                                    $toko_img_src = '../../assets/img/' . $foto_toko;
+                                }
+                            }
+                            
+                            // Jika path kosong atau gambar tidak ditemukan, cari fallback ilustrasi asli
+                            if (empty($toko_img_src)) {
+                                $nama_kecil = strtolower($toko['nama_toko']);
+                                if (str_contains($nama_kecil, 'tika')) {
+                                    $toko_img_src = '../../assets/img/kantin_bu_tika.jpeg';
+                                } elseif (str_contains($nama_kecil, 'fajar')) {
+                                    $toko_img_src = '../../assets/img/kantin_pak_fajar.jpeg';
+                                } elseif (str_contains($nama_kecil, 'agus')) {
+                                    $toko_img_src = '../../assets/img/kantin_pak_agus.jpeg';
+                                } elseif (str_contains($nama_kecil, 'mardika')) {
+                                    $toko_img_src = '../../assets/img/kantin_pak_mardika.jpeg';
+                                } elseif (str_contains($nama_kecil, 'basuni')) {
+                                    $toko_img_src = '../../assets/img/kantin_pak_basuni.jpeg';
+                                } else {
+                                    $toko_img_src = '../../assets/img/ayam.png'; // default fallback
+                                }
+                            }
                             ?>
                             
                             <div class="kantin-card">
-                                <div class="blank-image-square border-green"></div>
+                                <img src="<?= $toko_img_src; ?>" class="blank-image-square" alt="<?= htmlspecialchars($toko['nama_toko']); ?>">
                                 <div class="kantin-info">
                                     <h3><?= htmlspecialchars($toko['nama_toko']); ?></h3>
-                                    <p><?= htmlspecialchars($toko['deskripsi'] ?? 'Makanan & Minuman'); ?></p>
+                                    <p><?= htmlspecialchars($toko['deskripsi'] ?? 'Makanan, Snack, & Minuman'); ?></p>
                                     <span class="status-indicator <?= $status_kelas; ?>"><?= $status_teks; ?></span>
                                     
                                     <a href="toko.php?id=<?= $toko['id_toko']; ?>" class="btn-lihat-menu" <?= $btn_disabled; ?>>
-                                        <?= ($toko['status'] == 'buka') ? 'Lihat Menu' : 'Sedang Tutup'; ?>
+                                        <?= $is_buka ? 'Lihat Menu' : 'Sedang Tutup'; ?>
                                     </a>
                                 </div>
                             </div>
@@ -249,11 +333,39 @@ require_once __DIR__ . '/../../config/database.php';
                             <?php 
                         }
                     } else {
-                        echo "<p style='color:#888; font-size:13px; padding:10px 0;'>Belum ada data kantin yang terdaftar.</p>";
+                        // Dummy visual data kantin jika database kosong agar mengikuti mockup desain
+                        $dummy_tokos = [
+                            ['nama' => 'Kantin Bu Tika', 'deskripsi' => 'Makanan,Snack,& Minuman', 'status' => 'buka', 'img' => 'kantin_bu_tika.jpeg'],
+                            ['nama' => 'Kantin Pak Fajar', 'deskripsi' => 'Makanan,Snack,& Minuman', 'status' => 'buka', 'img' => 'kantin_pak_fajar.jpeg'],
+                            ['nama' => 'Kantin Pak Agus', 'deskripsi' => 'Makanan,Snack,& Minuman', 'status' => 'buka', 'img' => 'kantin_pak_agus.jpeg'],
+                            ['nama' => 'Kantin Pak Mardika', 'deskripsi' => 'Makanan,Snack,& Minuman', 'status' => 'buka', 'img' => 'kantin_pak_mardika.jpeg'],
+                            ['nama' => 'Kantin Pak Basuni', 'deskripsi' => 'Makanan,Snack,& Minuman', 'status' => 'tutup', 'img' => 'kantin_pak_basuni.jpeg']
+                        ];
+                        foreach ($dummy_tokos as $t) {
+                            $is_buka = ($t['status'] === 'buka');
+                            $status_kelas = $is_buka ? 'online' : 'offline';
+                            $status_teks  = $is_buka ? 'Buka' : 'Tutup';
+                            $btn_disabled = !$is_buka ? 'style="background-color:#94a3b8; pointer-events:none; box-shadow:none;"' : '';
+                            ?>
+                            <div class="kantin-card">
+                                <img src="../../assets/img/<?= $t['img']; ?>" class="blank-image-square" alt="<?= $t['nama']; ?>">
+                                <div class="kantin-info">
+                                    <h3><?= $t['nama']; ?></h3>
+                                    <p><?= $t['deskripsi']; ?></p>
+                                    <span class="status-indicator <?= $status_kelas; ?>"><?= $status_teks; ?></span>
+                                    
+                                    <a href="#" class="btn-lihat-menu" <?= $btn_disabled; ?>>
+                                        <?= $is_buka ? 'Lihat Menu' : 'Sedang Tutup'; ?>
+                                    </a>
+                                </div>
+                            </div>
+                            <?php
+                        }
                     }
                     ?>
 
-                    <div class="category-item-all-box">
+                    <!-- Kartu Khusus tombol 'SEMUA' di akhir baris grid kantin -->
+                    <div class="category-item-all-box" onclick="location.href='#';">
                         <div class="blank-square-icon">
                             <i class="fa-solid fa-table-cells-large"></i>
                         </div>
