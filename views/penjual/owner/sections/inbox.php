@@ -41,13 +41,13 @@ $dummyMails = [
 ];
 ?>
 
-<div class="inbox-search-container">
+<div class="inbox-search-container" id="inboxSearchContainer">
     <input type="text" class="inbox-search-input" placeholder="🔍 Cari pesan masuk...">
 </div>
 
 <div class="inbox-wrapper" id="inboxContainerWrapper">
     
-    <div class="inbox-list-wrapper">
+    <div class="inbox-list-wrapper" id="inboxListLeft">
         <div class="inbox-grid-items">
             <?php foreach ($dummyMails as $mail): ?>
             <div class="inbox-item <?= $mail['status'] === 'unread' ? 'is-unread' : '' ?>" id="mail-item-<?= $mail['id'] ?>" onclick="slideMailDetail(<?= htmlspecialchars(json_encode($mail)) ?>)">
@@ -83,6 +83,8 @@ $dummyMails = [
 function slideMailDetail(mail) {
     const wrapper = document.getElementById('inboxContainerWrapper');
     const detailPanel = document.getElementById('inboxDetailPanel');
+    const listLeft = document.getElementById('inboxListLeft');
+    const searchBox = document.getElementById('inboxSearchContainer');
 
     document.querySelectorAll('.inbox-item').forEach(item => item.classList.remove('active'));
     const currentItem = document.getElementById('mail-item-' + mail.id);
@@ -119,13 +121,32 @@ function slideMailDetail(mail) {
         </div>
     `;
 
+    // 🌟 LOGIK UTAMA: Sembunyikan list kiri & search box, lalu buat detail panel melebar 100%
+    listLeft.style.display = 'none';
+    searchBox.style.display = 'none';
+    
+    detailPanel.style.width = '100%';
+    detailPanel.style.right = '0';
+
     wrapper.classList.add('detail-open');
     detailPanel.classList.add('open');
 }
 
 function closeMailDetail() {
+    const detailPanel = document.getElementById('inboxDetailPanel');
+    const listLeft = document.getElementById('inboxListLeft');
+    const searchBox = document.getElementById('inboxSearchContainer');
+
+    // 🌟 KEMBALIKAN: Munculkan kembali list kiri dan box search ke bentuk semula
+    listLeft.style.display = 'flex';
+    searchBox.style.display = 'block';
+    
+    // Kembalikan ukuran panel detail ke default (biar kalau dibuka lagi nanti gak ngebug)
+    detailPanel.style.width = '';
+    detailPanel.style.right = '';
+
     document.getElementById('inboxContainerWrapper').classList.remove('detail-open');
-    document.getElementById('inboxDetailPanel').classList.remove('open');
+    detailPanel.classList.remove('open');
     document.querySelectorAll('.inbox-item').forEach(item => item.classList.remove('active'));
 }
 

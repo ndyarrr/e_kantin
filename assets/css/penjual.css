@@ -2416,3 +2416,118 @@ aside img {
     line-height: 1.6;
     white-space: pre-line;
 }
+
+/* ==========================================================================
+   STYLE HALAMAN PROFIL OWNER (E-KANTIN)
+   ========================================================================== */
+
+/* Banner Akses Ditolak */
+.akses-ditolak-banner {
+    padding: 20px; 
+    background: #fee2e2; 
+    color: #991b1b; 
+    border-radius: 8px; 
+    margin: 20px; 
+    font-weight: bold;
+}
+
+/* Avatar Border Green */
+.profil-avatar-big {
+    border: 3px solid var(--green);
+}
+
+/* Gambar Render di Dalam Lingkaran */
+.avatar-img-render {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Identitas Toko & Icons */
+.profil-toko {
+    font-weight: bold; 
+    color: var(--green);
+}
+.profil-toko i {
+    font-size: 12px;
+}
+.icon-header-section {
+    color: var(--green);
+    margin-right: 8px;
+}
+.icon-gold {
+    color: #eab308;
+}
+
+/* Layout Tombol Foto Profil */
+.profil-action-foto-group {
+    margin-top: 18px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; 
+    align-items: center; 
+    width: 100%;
+}
+
+.profil-btn-foto {
+    margin: 0; 
+    cursor: pointer; 
+    text-align: center; 
+    width: 80%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Jarak antara icon kamera dan teks */
+}
+
+.form-hapus-foto-wrap {
+    margin: 0; 
+    width: 80%;
+}
+
+/* Tombol Hapus Foto Profil (Merah) */
+.btn-hapus-foto {
+    width: 100%; 
+    padding: 8px 12px; 
+    background-color: #ef4444; 
+    color: white; 
+    border: none; 
+    border-radius: 6px; 
+    font-size: 13px; 
+    font-weight: 500; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 6px; 
+    transition: background 0.2s;
+}
+.btn-hapus-foto:hover {
+    background-color: #dc2626;
+}
+
+/* Badge Owner Utama (Emas) */
+.badge-gold {
+    background-color: #eab308; 
+    color: #fff; 
+    font-weight: bold;
+}
+
+/* Jarak Informasi Kecil & Kolom Form */
+.profil-info-kecil {
+    margin-top: 14px;
+}
+.profil-form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* Tombol Khusus Perbarui Password (Biru) */
+.btn-password-blue {
+    background-color: #3b82f6 !important;
+}
+.btn-password-blue:hover {
+    background-color: #2563eb !important;
+}

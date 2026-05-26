@@ -27,10 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     if ($action === 'tambah_menu' || $action === 'edit_menu' || $action === 'hapus_menu') {
-        require_once __DIR__ . '/actions/proses_menu.php';
+        require_once __DIR__ . '/../actions/proses_menu.php';
         exit;
     } elseif ($action === 'selesaikan_pesanan' || strpos($action, 'pesanan') !== false) {
-        require_once __DIR__ . '/actions/proses_pesanan.php'; 
+        require_once __DIR__ . '/../actions/proses_pesanan.php'; 
+        exit;
+    } elseif ($action === 'edit_profil' || $action === 'ganti_password' || $action === 'hapus_foto_profil') {
+        require_once __DIR__ . '/../actions/proses_profil.php';
         exit;
     }
 }
@@ -49,6 +52,17 @@ $profilPenjual = mysqli_fetch_assoc(mysqli_query($conn,
      WHERE p.id_penjual = $penjualId
      LIMIT 1"
 ));
+
+// 🌟 INTEGRASI PROTEKSI AKUN: Blokir jika user nekat mengakses paksa dashboard owner
+if (!$profilPenjual || strtolower($profilPenjual['role'] ?? '') !== 'owner') {
+    echo "<div style='padding: 30px; background: #fee2e2; color: #991b1b; text-align:center; font-family:sans-serif; margin: 50px auto; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);'>
+            <i class='fa-solid fa-triangle-exclamation' style='font-size: 40px; margin-bottom: 15px;'></i>
+            <h2>Akses Dashboard Ditolak!</h2>
+            <p>Akun Anda tidak memiliki hak akses sebagai Owner Utama.</p>
+            <a href='".$base_path."/auth/logout.php' style='display:inline-block; margin-top:15px; padding:10px 20px; background:#dc2626; color:#fff; text-decoration:none; border-radius:5px;'>Log Out</a>
+          </div>";
+    exit;
+}
 
 // Cari id_toko
 $idToko = 0;
@@ -108,7 +122,7 @@ require __DIR__ . '/sections/menu_data.php';
         </button>
         <button class="nav-link" data-section="inbox" onclick="switchSection('inbox')">
             <i class="fa-solid fa-inbox"></i> Inbox
-            <?php if ($totalPesananBaru > 0): ?>
+            <?php if (isset($totalPesananBaru) && $totalPesananBaru > 0): ?>
                 <span class="nav-badge"><?= $totalPesananBaru ?></span>
             <?php endif; ?>
         </button>
@@ -149,7 +163,7 @@ require __DIR__ . '/sections/menu_data.php';
             <div class="topbar-right">
                 <button class="btn-notif" onclick="switchSection('inbox')">
                     <i class="fa-solid fa-bell"></i>
-                    <?php if ($totalPesananBaru > 0): ?>
+                    <?php if (isset($totalPesananBaru) && $totalPesananBaru > 0): ?>
                         <span class="notif-dot"></span>
                     <?php endif; ?>
                 </button>
@@ -201,15 +215,13 @@ require __DIR__ . '/sections/menu_data.php';
         </div>
 
         <div class="section" id="section-profil">
-            <div class="placeholder-box">
-                <i class="fa-solid fa-user"></i>
-                <p>Halaman Profil — segera diisi</p>
-            </div>
+            <?php require __DIR__ . '/sections/profil.php'; ?>
         </div>
         <div class="section" id="section-chat">
             <?php require __DIR__ . '/../../../views/chat.php'; ?>
         </div>
-        <div class="section" id="section-grid-buku-kas">
+        
+        <div class="section" id="section-kas">
             <div class="placeholder-box">
                 <i class="fa-solid fa-book"></i>
                 <p>Halaman Buku Kas — khusus owner</p>
@@ -253,7 +265,8 @@ function switchSection(name) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-link[data-section]').forEach(l => l.classList.remove('active'));
     
-    const targetSection = name === 'kas' ? 'section-grid-buku-kas' : 'section-' + name;
+    // 🌟 PERBAIKAN UTAMA: Navigasi ID sekarang langsung seirama ke "section-kas"
+    const targetSection = 'section-' + name;
     const targetEl = document.getElementById(targetSection);
     if(targetEl) targetEl.classList.add('active');
     
@@ -263,7 +276,13 @@ function switchSection(name) {
     document.getElementById('pageTitle').textContent    = meta.title || '';
     document.getElementById('pageSubtitle').textContent = meta.sub   || '';
     if (window.innerWidth <= 768) closeSidebar();
-    history.replaceState(null, '', '?section=' + name);
+    
+    // Cegah URL menumpuk data filter pencarian menu saat berpindah ke section lain
+    if (name === 'menu') {
+        history.replaceState(null, '', '?section=' + name + '&search=<?=urlencode($_GET['search']??'')?>&kategori=<?=$_GET['kategori']??'semua'?>');
+    } else {
+        history.replaceState(null, '', '?section=' + name);
+    }
 }
 
 const initSection = <?= json_encode($activeSection ?? 'dashboard') ?>;
