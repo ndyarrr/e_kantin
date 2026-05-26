@@ -166,6 +166,11 @@
             </div>
 
             <div class="form-group">
+                <label for="deskripsi_menu">Deskripsi Menu</label>
+                <textarea id="deskripsi_menu" name="deskripsi" rows="2" placeholder="Masukkan deskripsi menu..." style="resize: none;"></textarea>
+            </div>
+
+            <div class="form-group">
                 <label for="foto_menu">Foto Menu</label>
                 <input type="file" id="foto_menu" name="foto" accept="image/*">
             </div>
@@ -211,6 +216,11 @@
             <div class="form-group">
                 <label for="edit_stok_menu">Stok</label>
                 <input type="number" id="edit_stok_menu" name="stok" min="0" required>
+            </div>
+
+            <div class="form-group">
+                <label for="edit_deskripsi_menu">Deskripsi Menu</label>
+                <textarea id="edit_deskripsi_menu" name="deskripsi" rows="2" placeholder="Masukkan deskripsi menu..." style="resize: none;"></textarea>
             </div>
 
             <div class="form-group">

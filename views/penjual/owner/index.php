@@ -123,6 +123,9 @@ require __DIR__ . '/sections/menu_data.php';
         <button class="nav-link" data-section="staf" onclick="switchSection('staf')">
             <i class="fa-solid fa-users"></i> Kelola Staf & Shift
         </button>
+        <button class="nav-link" data-section="inbox" onclick="switchSection('inbox')">
+            <i class="fa-solid fa-inbox"></i> Inbox
+        </button>
         <button class="nav-link" data-section="pesanan" onclick="switchSection('pesanan')">
             <i class="fa-solid fa-receipt"></i> Antrean Pesanan
         </button>
@@ -201,6 +204,10 @@ require __DIR__ . '/sections/menu_data.php';
         </div>
 
         <div class="section" id="section-inbox">
+            <?php require __DIR__ . '/sections/inbox.php'; ?>
+        </div>
+
+        <div class="section" id="inbox">
             <?php require __DIR__ . '/sections/inbox.php'; ?>
         </div>
 
