@@ -13,7 +13,7 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
     exit;
 }
 
-require_once __DIR__ . '/../../../../config/database.php';
+require_once __DIR__ . '/../../../config/database.php';
 
 $penjualId = (int) ($_SESSION['user_id'] ?? 0);
 
@@ -23,15 +23,9 @@ $rToko = mysqli_fetch_assoc(mysqli_query(
 ));
 $idToko = (int) ($rToko['id_toko'] ?? 0);
 
-// ✅ Path upload pakai __DIR__ — otomatis benar di Windows maupun Linux
-$uploadFileDir = realpath(__DIR__ . '/../../../../assets/img/menu') . DIRECTORY_SEPARATOR;
-// // DEBUG SEMENTARA — hapus setelah beres
-// die(json_encode([
-//     'uploadFileDir' => $uploadFileDir,
-//     'dir_exists' => is_dir($uploadFileDir),
-//     'writable' => is_writable($uploadFileDir),
-//     'files' => $_FILES,
-// ]));
+
+$uploadFileDir = realpath(__DIR__ . '/../../../assets/img/menu') . DIRECTORY_SEPARATOR;
+
 
 if (!is_dir($uploadFileDir)) {
     mkdir($uploadFileDir, 0777, true);
