@@ -13,6 +13,8 @@ if (!$db) {
     exit;
 }
 
+$db->query("SET sql_mode=''");
+
 $user_id_raw    = $_SESSION['user_id'] ?? '';
 $role_sekarang  = $_SESSION['user_role'] ?? $_SESSION['role'] ?? '';
 $sub_role       = $_SESSION['user_sub_role'] ?? ''; // 'owner' atau 'staf'
@@ -66,8 +68,12 @@ try {
 
         } elseif (in_array($role_sekarang, ['siswa', 'guru'])) {
             // Pembeli: cari kantin saja
-            $query = "SELECT CONCAT('toko_', id_toko) as id_user, nama_toko as nama, 'kantin' as role_user, foto_toko as foto_profil
-                      FROM toko WHERE deleted_at IS NULL AND nama_toko LIKE ? LIMIT 20";
+           // ══ MODE DEFAULT: Riwayat Chat ══
+        $query = "SELECT CASE WHEN id_pengirim = ? THEN id_penerima ELSE id_pengirim END as id_lawan
+                  FROM pesan_chat 
+                  WHERE id_pengirim = ? OR id_penerima = ? 
+                  GROUP BY id_lawan 
+                  ORDER BY MAX(id_pesan) DESC LIMIT 20";
 
         } else {
             echo json_encode([]);
