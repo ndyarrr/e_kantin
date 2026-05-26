@@ -6,9 +6,10 @@ if (isset($_GET['download'])) {
     if ($type === 'template_murid') {
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="template_murid.csv"');
-        echo "nisn,nama,password,id_kelas,id_jurusan\n";
-        echo "0123456789,Budi Santoso,,1,1\n";
-        echo "0987654321,Siti Rahayu,password123,2,2\n";
+        echo "nisn,nama,password,id_kelas\n";
+        echo "0123456789,Budi Santoso,,10 RPL 1\n";
+        echo "0987654321,Siti Rahayu,password123,11 TKJ 2\n";
+        echo "1122334455,Andi Kurniawan,,12 Akuntansi 1\n";
         exit;
     }
     if ($type === 'template_guru') {

@@ -2,21 +2,11 @@
 
 $action = $_POST['action'] ?? '';
 
-// Kita hapus proteksi global di sini agar Admin Biasa bisa lolos ke proses bawah!
-
-/* ══ helper: catat log ══ */
-
-
-/* ══ helper: auto-detect delimiter ══
-   Baca baris pertama, hitung jumlah ; vs , vs tab
-   Yang paling banyak = delimiter yang dipakai
-*/
 function detectDelimiter(string $filePath): string
 {
     $handle = fopen($filePath, 'r');
     $line = fgets($handle);
     fclose($handle);
-
     $counts = [
         ',' => substr_count($line, ','),
         ';' => substr_count($line, ';'),
@@ -26,7 +16,6 @@ function detectDelimiter(string $filePath): string
     return array_key_first($counts);
 }
 
-/* ══ helper: auto-detect encoding & konversi ke UTF-8 ══ */
 function bacaCSVutf8(string $filePath): string
 {
     $content = file_get_contents($filePath);
@@ -34,12 +23,9 @@ function bacaCSVutf8(string $filePath): string
     if ($encoding && strtolower($encoding) !== 'utf-8') {
         $content = mb_convert_encoding($content, 'UTF-8', $encoding);
     }
-    // Hapus BOM UTF-8
-    $content = ltrim($content, "\xEF\xBB\xBF");
-    return $content;
+    return ltrim($content, "\xEF\xBB\xBF");
 }
 
-/* ══ helper: cari index kolom berdasarkan substring ══ */
 function cariKolom(array $header, array $kemungkinan): int
 {
     foreach ($header as $i => $col) {
@@ -52,7 +38,6 @@ function cariKolom(array $header, array $kemungkinan): int
     return -1;
 }
 
-/* ══ helper: parse CSV dari string konten ══ */
 function parseCSV(string $content, string $delimiter): array
 {
     $rows = [];
@@ -66,7 +51,7 @@ function parseCSV(string $content, string $delimiter): array
     return $rows;
 }
 
-/* ══ IMPORT MURID (Bisa diakses Semua Admin) ══ */
+/* ══ IMPORT MURID ══ */
 if ($action === 'tools_import_murid') {
     $skipDuplikat = isset($_POST['skip_duplikat']);
     $berhasil = $dilewati = $gagal = 0;
@@ -85,9 +70,7 @@ if ($action === 'tools_import_murid') {
         if (empty($rows)) {
             $feedback = ['type' => 'error', 'msg' => 'File CSV kosong atau tidak terbaca.'];
         } else {
-            // Baris pertama = header
             $header = array_map('trim', $rows[0]);
-
             $colNisn = cariKolom($header, ['nisn']);
             $colNama = cariKolom($header, ['nama lengkap', 'nama_lengkap', 'nama']);
             $colPassword = cariKolom($header, ['password', 'sandi', 'pw']);
@@ -95,29 +78,40 @@ if ($action === 'tools_import_murid') {
             $colJurusan = cariKolom($header, ['id_jurusan', 'jurusan', 'kompetensi', 'program keahlian', 'prodi']);
 
             if ($colNisn === -1 || $colNama === -1) {
-                $feedback = ['type' => 'error', 'msg' => 'Kolom NISN atau Nama tidak ditemukan. Pastikan header CSV mengandung kolom "nisn" dan "nama".'];
+                $feedback = ['type' => 'error', 'msg' => 'Kolom NISN atau Nama tidak ditemukan.'];
             } else {
-                // Cache mapping kelas & jurusan nama → id
-                $mapKelas = [];
+                // Build map kelas
+                $mapKelasToJurusan = []; // id_kelas → id_jurusan
                 $res = mysqli_query($conn, "
-                    SELECT k.id_kelas, 
-                        CONCAT(k.kelas, ' ', j.nama_jurusan, ' ', k.rombel) as nama_lengkap,
-                        k.kelas, k.rombel, j.nama_jurusan
-                    FROM kelas k 
-                    JOIN jurusan j ON j.id_jurusan = k.id_jurusan
-                ");
+    SELECT k.id_kelas, k.kelas, k.rombel, j.id_jurusan, j.nama_jurusan
+    FROM kelas k
+    JOIN jurusan j ON j.id_jurusan = k.id_jurusan
+");
                 while ($r = mysqli_fetch_assoc($res)) {
-                    $mapKelas[strtolower($r['nama_lengkap'])] = $r['id_kelas'];
-                    $mapKelas[strtolower($r['kelas'] . $r['nama_jurusan'] . $r['rombel'])] = $r['id_kelas'];
-                    $mapKelas[strtolower($r['kelas'])] = $r['id_kelas']; // fallback
+                    $id = (int) $r['id_kelas'];
+                    $jid = (int) $r['id_jurusan'];
+                    $tk = strtolower(trim($r['kelas']));
+                    $jur = strtolower(trim($r['nama_jurusan']));
+                    $rb = (string) (int) $r['rombel'];
+
+                    $mapKelas[(string) $id] = $id;
+                    $mapKelas["$tk $jur $rb"] = $id;
+                    $mapKelas["$tk-$jur-$rb"] = $id;
+                    $mapKelas["$tk/$jur/$rb"] = $id;
+                    $mapKelas["$tk$jur$rb"] = $id;
+                    $mapKelas["$tk $jur"] = $id;
+
+                    $mapKelasToJurusan[$id] = $jid; // ← simpan mapping kelas → jurusan
                 }
 
+                // Build map jurusan
                 $mapJurusan = [];
                 $res = mysqli_query($conn, "SELECT id_jurusan, nama_jurusan FROM jurusan");
-                while ($r = mysqli_fetch_assoc($res))
-                    $mapJurusan[strtolower(trim($r['nama_jurusan']))] = $r['id_jurusan'];
+                while ($r = mysqli_fetch_assoc($res)) {
+                    $mapJurusan[strtolower(trim($r['nama_jurusan']))] = (int) $r['id_jurusan'];
+                    $mapJurusan[(string) $r['id_jurusan']] = (int) $r['id_jurusan']; // ID langsung
+                }
 
-                // Proses baris data (skip header di index 0)
                 foreach (array_slice($rows, 1) as $rowNum => $data) {
                     $row = $rowNum + 2;
                     if (count($data) < 2)
@@ -127,32 +121,12 @@ if ($action === 'tools_import_murid') {
                     $nama = trim($data[$colNama] ?? '');
                     $password = $colPassword !== -1 ? trim($data[$colPassword] ?? '') : '';
 
-                    if (ctype_digit($nisn) && strlen($nisn) < 10 && strlen($nisn) >= 8) {
+                    // Pad NISN
+                    if (ctype_digit($nisn) && strlen($nisn) >= 8 && strlen($nisn) < 10) {
                         $nisn = str_pad($nisn, 10, '0', STR_PAD_LEFT);
                     }
 
-                    // Resolve kelas
-                    $id_kelas = 0;
-                    if ($colKelas !== -1) {
-                        $kelasRaw = strtolower(trim($data[$colKelas] ?? ''));
-                        if (is_numeric($kelasRaw) && in_array((int) $kelasRaw, array_values($mapKelas))) {
-                            $id_kelas = (int) $kelasRaw;
-                        } else {
-                            $id_kelas = $mapKelas[$kelasRaw] ?? 0;
-                        }
-                    }
-
-                    // Resolve jurusan
-                    $id_jurusan = 0;
-                    if ($colJurusan !== -1) {
-                        $jurusanRaw = strtolower(trim($data[$colJurusan] ?? ''));
-                        if (is_numeric($jurusanRaw) && in_array((int) $jurusanRaw, array_values($mapJurusan))) {
-                            $id_jurusan = (int) $jurusanRaw;
-                        } else {
-                            $id_jurusan = $mapJurusan[$jurusanRaw] ?? 0;
-                        }
-                    }
-
+                    // Validasi NISN & nama dulu sebelum resolve kelas
                     if ($nisn === '' || $nama === '') {
                         $errors[] = "Baris $row: NISN dan nama wajib diisi.";
                         $gagal++;
@@ -160,6 +134,31 @@ if ($action === 'tools_import_murid') {
                     }
                     if (!ctype_digit($nisn) || strlen($nisn) !== 10) {
                         $errors[] = "Baris $row: NISN '$nisn' harus 10 digit angka.";
+                        $gagal++;
+                        continue;
+                    }
+
+                    // Resolve kelas
+                    // Resolve kelas dulu
+                    $id_kelas = null;
+                    $kelasRaw = $colKelas !== -1 ? trim($data[$colKelas] ?? '') : '';
+                    if ($kelasRaw !== '') {
+                        $id_kelas = $mapKelas[strtolower($kelasRaw)] ?? null;
+                    }
+
+                    // Resolve jurusan — dari kolom CSV kalau ada, fallback dari kelas
+                    $id_jurusan = null;
+                    $jurusanRaw = $colJurusan !== -1 ? trim($data[$colJurusan] ?? '') : '';
+                    if ($jurusanRaw !== '') {
+                        $id_jurusan = $mapJurusan[strtolower($jurusanRaw)] ?? null;
+                    }
+                    // Kalau kolom jurusan kosong/tidak ada, ambil dari id_kelas yang sudah resolve
+                    if ($id_jurusan === null && $id_kelas !== null) {
+                        $id_jurusan = $mapKelasToJurusan[$id_kelas] ?? null;
+                    }
+
+                    if ($id_kelas === null || $id_jurusan === null) {
+                        $errors[] = "Baris $row: Kelas '$kelasRaw' tidak ditemukan.";
                         $gagal++;
                         continue;
                     }
@@ -180,12 +179,10 @@ if ($action === 'tools_import_murid') {
                         continue;
                     }
 
-                    $kelasVal = $id_kelas ?: 'NULL';
-                    $jurusanVal = $id_jurusan ?: 'NULL';
-
+                    // INSERT — id_kelas & id_jurusan sudah pasti integer, tidak NULL
                     if (
                         mysqli_query($conn, "INSERT INTO murid (nisn, nama, password, id_kelas, id_jurusan, status)
-                                             VALUES ('$ni','$n','$hash',$kelasVal,$jurusanVal,'aktif')")
+                                             VALUES ('$ni','$n','$hash',$id_kelas,$id_jurusan,'aktif')")
                     ) {
                         $berhasil++;
                     } else {
@@ -202,7 +199,7 @@ if ($action === 'tools_import_murid') {
     }
 }
 
-/* ══ IMPORT GURU (Bisa diakses Semua Admin) ══ */
+/* ══ IMPORT GURU ══ */
 if ($action === 'tools_import_guru') {
     $skipDuplikat = isset($_POST['skip_duplikat']);
     $berhasil = $dilewati = $gagal = 0;
@@ -222,13 +219,12 @@ if ($action === 'tools_import_guru') {
             $feedback = ['type' => 'error', 'msg' => 'File CSV kosong atau tidak terbaca.'];
         } else {
             $header = array_map('trim', $rows[0]);
-
             $colNuptk = cariKolom($header, ['nuptk']);
             $colNama = cariKolom($header, ['nama lengkap', 'nama_lengkap', 'nama']);
             $colPassword = cariKolom($header, ['password', 'sandi', 'pw']);
 
             if ($colNuptk === -1 || $colNama === -1) {
-                $feedback = ['type' => 'error', 'msg' => 'Kolom NUPTK atau Nama tidak ditemukan. Pastikan header CSV mengandung kolom "nuptk" dan "nama".'];
+                $feedback = ['type' => 'error', 'msg' => 'Kolom NUPTK atau Nama tidak ditemukan.'];
             } else {
                 foreach (array_slice($rows, 1) as $rowNum => $data) {
                     $row = $rowNum + 2;
@@ -239,7 +235,7 @@ if ($action === 'tools_import_guru') {
                     $nama = trim($data[$colNama] ?? '');
                     $password = $colPassword !== -1 ? trim($data[$colPassword] ?? '') : '';
 
-                    if (ctype_digit($nuptk) && strlen($nuptk) < 16 && strlen($nuptk) >= 14) {
+                    if (ctype_digit($nuptk) && strlen($nuptk) >= 14 && strlen($nuptk) < 16) {
                         $nuptk = str_pad($nuptk, 16, '0', STR_PAD_LEFT);
                     }
 
@@ -290,12 +286,9 @@ if ($action === 'tools_import_guru') {
 }
 
 /* ══ RESTORE DATA (Hanya Super Admin) ══ */
-/* ══ RESTORE DATA (Hanya Super Admin & Sinkronisasi Kantin) ══ */
 if ($action === 'tools_restore') {
-    // KUNCI UTAMA: Gunakan variabel $isAdminSuper dari file utama agar lebih aman & akurat dibanding session mentah
-    if (!$isAdminSuper) {
-        die("Akses Ilegal: Aksi restore data hanya diperbolehkan untuk Super Admin!");
-    }
+    if (!$isAdminSuper)
+        die("Akses Ilegal.");
 
     $tabel = $_POST['tabel'] ?? '';
     $id_col = $_POST['id_col'] ?? '';
@@ -306,19 +299,16 @@ if ($action === 'tools_restore') {
 
     if (in_array($tabel, $allowedTabel) && in_array($id_col, $allowedCol) && $id_val !== '') {
         $id = mysqli_real_escape_string($conn, $id_val);
-
-        // 1. Eksekusi Restore Utama (misal: menghidupkan toko)
         mysqli_query($conn, "UPDATE `$tabel` SET deleted_at = NULL WHERE `$id_col` = '$id'");
 
-        // 🔥 2. SINKRONISASI KANTIN: Jika yang di-restore adalah toko/kantin, otomatis hidupkan menunya sekalian!
         if ($tabel === 'toko') {
             mysqli_query($conn, "UPDATE menu SET deleted_at = NULL WHERE id_toko = '$id'");
-            catatLog($conn, 'Restore Kantin Bertingkat', "Memulihkan toko ID $id beserta seluruh menu di dalamnya");
+            catatLog($conn, 'Restore Kantin Bertingkat', "Toko ID $id + seluruh menu dipulihkan");
         } else {
             catatLog($conn, 'Restore Data', "Restore $tabel dengan $id_col: $id");
         }
 
-        $feedback = ['type' => 'success', 'msg' => "Data berhasil dipulihkan ke sistem."];
+        $feedback = ['type' => 'success', 'msg' => 'Data berhasil dipulihkan.'];
     } else {
         $feedback = ['type' => 'error', 'msg' => 'Request tidak valid.'];
     }
@@ -326,9 +316,8 @@ if ($action === 'tools_restore') {
 
 /* ══ PERMANENT DELETE (Hanya Super Admin) ══ */
 if ($action === 'tools_permanent_delete') {
-    if (!$isAdminSuper) {
-        die("Akses Ilegal: Aksi hapus permanen hanya diperbolehkan untuk Super Admin!");
-    }
+    if (!$isAdminSuper)
+        die("Akses Ilegal.");
 
     $tabel = $_POST['tabel'] ?? '';
     $id_col = $_POST['id_col'] ?? '';
@@ -352,7 +341,7 @@ if ($action === 'tools_permanent_delete') {
 
         mysqli_query($conn, "DELETE FROM `$tabel` WHERE `$id_col` = '$id'");
         catatLog($conn, 'Permanent Delete', "Hapus permanen $tabel dengan $id_col: $id");
-        $feedback = ['type' => 'success', 'msg' => "Data berhasil dihapus permanen dari database."];
+        $feedback = ['type' => 'success', 'msg' => 'Data berhasil dihapus permanen.'];
     } else {
         $feedback = ['type' => 'error', 'msg' => 'Request tidak valid.'];
     }
@@ -360,56 +349,8 @@ if ($action === 'tools_permanent_delete') {
 
 /* ══ HAPUS LOG (Hanya Super Admin) ══ */
 if ($action === 'tools_hapus_log') {
-    if (!$isAdminSuper) {
-        die("Akses Ilegal: Aksi pengosongan log hanya diperbolehkan untuk Super Admin!");
-    }
-
-    mysqli_query($conn, "DELETE FROM log_sistem");
-    catatLog($conn, 'Hapus Log', 'Semua log sistem dihapus');
-    $feedback = ['type' => 'success', 'msg' => 'Semua log sistem berhasil dikosongkan.'];
-}
-
-/* ══ PERMANENT DELETE (Hanya Super Admin) ══ */
-if ($action === 'tools_permanent_delete') {
-    // FIX VALIDASI: Hapus spasi casting dan gunakan perbandingan longgar !=
-    if (!isset($_SESSION['role_level']) || (int) $_SESSION['role_level'] != 1) {
-        die("Akses Ilegal: Aksi hapus permanen hanya diperbolehkan untuk Super Admin!");
-    }
-
-    $tabel = $_POST['tabel'] ?? '';
-    $id_col = $_POST['id_col'] ?? '';
-    $id_val = $_POST['id_val'] ?? '';
-
-    $allowedTabel = ['murid', 'guru', 'penjual', 'toko', 'menu', 'admin'];
-    $allowedCol = ['nisn', 'nuptk', 'id_penjual', 'id_toko', 'id_menu', 'id_admin'];
-
-    if (in_array($tabel, $allowedTabel) && in_array($id_col, $allowedCol) && $id_val !== '') {
-        $id = mysqli_real_escape_string($conn, $id_val);
-
-        if ($tabel === 'toko') {
-            mysqli_query($conn, "DELETE dp FROM detail_pesanan dp JOIN pesanan p ON p.id_pesanan = dp.id_pesanan WHERE p.id_toko = '$id'");
-            mysqli_query($conn, "DELETE FROM pesanan WHERE id_toko = '$id'");
-            mysqli_query($conn, "DELETE FROM menu WHERE id_toko = '$id'");
-            mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_toko = '$id'");
-        }
-        if ($tabel === 'penjual') {
-            mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_penjual = '$id'");
-        }
-
-        mysqli_query($conn, "DELETE FROM `$tabel` WHERE `$id_col` = '$id'");
-        catatLog($conn, 'Permanent Delete', "Hapus permanen $tabel dengan $id_col: $id");
-        $feedback = ['type' => 'success', 'msg' => "Data berhasil dihapus permanen."];
-    } else {
-        $feedback = ['type' => 'error', 'msg' => 'Request tidak valid.'];
-    }
-}
-
-/* ══ HAPUS LOG (Hanya Super Admin) ══ */
-if ($action === 'tools_hapus_log') {
-    // FIX VALIDASI: Hapus spasi casting dan gunakan perbandingan longgar !=
-    if (!isset($_SESSION['role_level']) || (int) $_SESSION['role_level'] != 1) {
-        die("Akses Ilegal: Aksi pengosongan log hanya diperbolehkan untuk Super Admin!");
-    }
+    if (!$isAdminSuper)
+        die("Akses Ilegal.");
 
     mysqli_query($conn, "DELETE FROM log_sistem");
     catatLog($conn, 'Hapus Log', 'Semua log sistem dihapus');

@@ -156,8 +156,15 @@
 }
 
 @keyframes badgePulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
 }
 
 /* State Kosong */
@@ -229,11 +236,12 @@
 
 /* Balon Kata / Bubbles */
 .chat-bubble {
-    max-width: 70%;
+    min-width: fit-content; /* ← tambah ini */
     padding: 10px 14px;
     font-size: 13px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     line-height: 1.4;
+    word-break: break-word; /* ← tambah ini */
+    white-space: normal;    /* ← tambah ini */
 }
 
 /* Jika Pengirim adalah Kita Sendiri (Kanan) */
@@ -301,7 +309,7 @@
 
 .chat-btn-send {
     padding: 0 20px;
-    background: #2d7a2d;
+    background: #4ea54e;
     color: #ffffff;
     border: none;
     border-radius: 10px;
@@ -315,7 +323,7 @@
 }
 
 .chat-btn-send:hover {
-    background: #215921;
+    background: #6be66b;
 }
 
 /* ==========================================================================
@@ -349,11 +357,167 @@
     }
 
     /* 🔥 KUNCI RESPOND: Sembunyikan obrolan jika daftar kontak sedang terbuka */
-    .chat-sidebar:not(.collapsed) ~ .chat-main {
+    .chat-sidebar:not(.collapsed)~.chat-main {
         display: none;
     }
 
     .btn-close-chat-sidebar {
         display: block !important;
     }
+}
+
+/* ==========================================================================
+   HAPUS PESAN
+   ========================================================================== */
+.chat-bubble-wrapper {
+    max-width: 70%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chat-bubble-wrapper.me {
+    flex-direction: row;
+    align-self: flex-end;
+}
+
+.chat-bubble-wrapper.them {
+    flex-direction: row;
+    align-self: flex-start;
+}
+
+/* Override align-self bubble karena wrapper yang atur posisi */
+.chat-bubble-wrapper .chat-bubble.me,
+.chat-bubble-wrapper .chat-bubble.them {
+    align-self: unset;
+}
+
+.chat-btn-hapus {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 5px 7px;
+    border-radius: 6px;
+    line-height: 1;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(8px);
+    flex-shrink: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.chat-bubble-wrapper.me:hover .chat-btn-hapus {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.chat-bubble-wrapper.me:not(:hover) .chat-btn-hapus {
+    transition: opacity 0.2s ease 0.5s, transform 0.2s ease 0.5s;
+}
+
+.chat-btn-hapus:hover {
+    background: #fee2e2;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translateX(0px) !important;
+}
+
+.chat-bubble.me:not(:hover) .chat-btn-hapus:not(:hover) {
+    transition: opacity 0.2s ease 5s, transform 0.2s ease 0.5s;
+}
+
+/* Modal Konfirmasi Hapus */
+.chat-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-modal-overlay.show {
+    display: flex;
+}
+
+.chat-modal-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    animation: modalPop 0.2s ease;
+}
+
+@keyframes modalPop {
+    from {
+        transform: scale(0.85);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.chat-modal-box i {
+    font-size: 32px;
+    color: #ef4444;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.chat-modal-box p {
+    font-size: 14px;
+    color: #374151;
+    margin: 0 0 18px;
+    font-weight: 500;
+}
+
+.chat-modal-box span {
+    font-size: 12px;
+    color: #9ca3af;
+    display: block;
+    margin-bottom: 20px;
+}
+
+.chat-modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.chat-modal-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.btn-modal-batal {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-modal-batal:hover {
+    background: #e5e7eb;
+}
+
+.btn-modal-hapus {
+    background: #ef4444;
+    color: #fff;
+}
+
+.btn-modal-hapus:hover {
+    background: #dc2626;
 }

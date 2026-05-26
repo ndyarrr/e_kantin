@@ -46,6 +46,7 @@ if ($terakhir_id > 0) {
               LEFT JOIN penjual p ON p.id_penjual = pc.id_staf_balasan
               WHERE ((pc.id_pengirim = ? AND pc.id_penerima = ?) OR (pc.id_pengirim = ? AND pc.id_penerima = ?))
               AND pc.id_pesan > ?
+              AND pc.deleted_at IS NULL  -- ← tambah ini
               ORDER BY pc.id_pesan ASC";
     $stmt = $db->prepare($query);
     $stmt->bind_param("ssssi", $user_sekarang, $id_lawan, $id_lawan, $user_sekarang, $terakhir_id);
@@ -58,6 +59,7 @@ if ($terakhir_id > 0) {
                 FROM pesan_chat pc
                 LEFT JOIN penjual p ON p.id_penjual = pc.id_staf_balasan
                 WHERE ((pc.id_pengirim = ? AND pc.id_penerima = ?) OR (pc.id_pengirim = ? AND pc.id_penerima = ?))
+                AND pc.deleted_at IS NULL  -- ← tambah ini
                 ORDER BY pc.id_pesan DESC
                 LIMIT 40
               ) AS sub_chat ORDER BY id_pesan ASC";

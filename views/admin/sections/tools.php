@@ -120,7 +120,8 @@
         <div id="csvPanelMurid">
             <div class="csv-info">
                 <i class="fa-solid fa-circle-info"></i>
-                Format kolom: <code>nisn, nama, password, id_kelas, id_jurusan</code>
+                Format kolom: <code>nisn, nama, password, id_kelas</code>
+                &nbsp;·&nbsp; Contoh kelas: <code>10 RPL 1</code>, <code>11 TKJ 2</code>, <code>12 Akuntansi 1</code>
                 <a href="?section=tools&download=template_murid" class="csv-download-link">
                     <i class="fa-solid fa-download"></i> Download Template
                 </a>
@@ -522,6 +523,28 @@
         background: var(--green-light);
     }
 
+    .restore-tab-container {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .restore-tab-container .tools-tab {
+        flex: 0 0 auto;
+        padding: 6px 12px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+
+    .restore-tab-container .tools-tab span {
+        flex-shrink: 0;
+    }
+
     @media(max-width:1100px) {
         .tools-grid {
             grid-template-columns: 1fr;
@@ -574,11 +597,11 @@
 
     function switchDeletedTab(label, event) {
         <?php foreach ($allDeleted as $l => $d): ?>
-                if (document.getElementById('deletedTab<?= $l ?>')) {
+            if (document.getElementById('deletedTab<?= $l ?>')) {
                 document.getElementById('deletedTab<?= $l ?>').style.display = 'none';
             }
         <?php endforeach; ?>
-        
+
         if (document.getElementById('deletedTab' + label)) {
             document.getElementById('deletedTab' + label).style.display = 'block';
         }
