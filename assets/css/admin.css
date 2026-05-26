@@ -43,7 +43,7 @@
             position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, .45);
-            z-index: 30;
+            z-index: 990;
             backdrop-filter: blur(2px)
         }
 
@@ -63,7 +63,7 @@
             flex-shrink: 0;
             transition: margin-left var(--transition), transform var(--transition);
             overflow-y: auto;
-            z-index: 40;
+            z-index: 1000;
             position: relative
         }
 
@@ -146,6 +146,18 @@
             width: 18px;
             text-align: center;
             font-size: 15px
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--red);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 20px;
+            min-width: 20px;
+            text-align: center;
         }
 
         .sidebar-bottom {
@@ -1001,7 +1013,7 @@
                 bottom: 0;
                 height: 100%;
                 transform: translateX(-100%);
-                z-index: 40;
+                z-index: 1000;
                 margin-left: 0 !important
             }
 

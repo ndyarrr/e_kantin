@@ -165,6 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             WHERE id_menu = $id_menu AND id_toko = $idToko";
 
             if (mysqli_query($conn, $queryUpdate)) {
+                catatLog($conn, 'Edit Menu', "Staf memperbarui menu: $nama_menu (Harga: Rp $harga, Stok: $stok)");
                 $feedback = ['type' => 'success', 'msg' => 'Menu berhasil diperbarui!'];
             } else {
                 $feedback = ['type' => 'danger', 'msg' => 'Gagal memperbarui menu: ' . mysqli_error($conn)];
@@ -200,6 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'dibatalkan'   => 'dibatalkan',
                         default        => $status_baru,
                     };
+                    catatLog($conn, 'Update Status Pesanan', "Staf memperbarui status pesanan #$id_pesanan menjadi $labelStatus");
                     $feedback = ['type' => 'success', 'msg' => "Pesanan #$id_pesanan berhasil ditandai $labelStatus."];
                 } else {
                     $feedback = ['type' => 'danger', 'msg' => 'Gagal mengubah status: ' . mysqli_error($conn)];
@@ -252,6 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          WHERE id_penjual=$penjualId"
                     );
                     $_SESSION['user_nama'] = $nama;
+                    catatLog($conn, 'Update Profil', "Staf memperbarui data profil");
                     $feedback = ['type' => 'success', 'msg' => 'Profil berhasil diperbarui!'];
                 }
             }
@@ -278,6 +281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hash = password_hash($pwBaru, PASSWORD_DEFAULT);
             $hash = mysqli_real_escape_string($conn, $hash);
             mysqli_query($conn, "UPDATE penjual SET password='$hash' WHERE id_penjual=$penjualId");
+            catatLog($conn, 'Update Password', "Staf memperbarui password");
             $feedback = ['type' => 'success', 'msg' => 'Password berhasil diganti!'];
         }
     }
@@ -471,6 +475,45 @@ if (feedbackEl) {
         setTimeout(() => feedbackEl.remove(), 500);
     }, 4000);
 }
+
+// Polling Realtime Chat Notification Badge in Sidebar
+function updateChatUnreadBadge() {
+    const scriptPath = window.location.pathname;
+    let backendUrl = '../../backend/ambil_unread_chat.php';
+    if (scriptPath.includes('/owner/') || scriptPath.includes('/staf/')) {
+        backendUrl = '../../../backend/ambil_unread_chat.php';
+    }
+    
+    fetch(backendUrl)
+        .then(res => res.json())
+        .then(data => {
+            const count = data.unread_count || 0;
+            const chatBtn = document.querySelector('.nav-link[data-section="chat"]');
+            if (chatBtn) {
+                let badge = chatBtn.querySelector('.nav-badge');
+                if (count > 0) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'nav-badge';
+                        chatBtn.appendChild(badge);
+                    }
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    if (badge) {
+                        badge.style.display = 'none';
+                    }
+                }
+            }
+        })
+        .catch(err => console.error('Error fetching unread chat:', err));
+}
+
+// Jalankan saat load pertama kali
+document.addEventListener('DOMContentLoaded', () => {
+    updateChatUnreadBadge();
+    setInterval(updateChatUnreadBadge, 4000);
+});
 </script>
 </body>
 </html>
