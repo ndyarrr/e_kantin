@@ -461,6 +461,23 @@ require __DIR__ . '/sections/tools_data.php';
             background: #cbd5e1;
             border-radius: 10px;
         }
+        /* ── RESPONSIVE DROPDOWN NOTIFIKASI (HP) ── */
+        @media (max-width: 768px) {
+            .topbar {
+                position: relative; /* Menjadikan kotak hijau (topbar) sebagai patokan ukuran */
+            }
+            .notif-wrapper {
+                position: static !important; /* Melepas paksa ikatan dari ikon lonceng */
+            }
+            .notif-dropdown {
+                position: absolute !important;
+                top: calc(100% + 5px) !important; /* Muncul tepat 5px di bawah kotak hijau */
+                left: 0 !important; /* Sejajar persis dengan ujung kiri topbar */
+                right: 0 !important; /* Sejajar persis dengan ujung kanan topbar */
+                width: 100% !important; /* Memenuhi lebar topbar dengan sempurna */
+                z-index: 9999 !important;
+            }
+        }
     </style>
 </head>
 
