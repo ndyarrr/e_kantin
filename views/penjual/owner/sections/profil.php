@@ -55,7 +55,7 @@ if (!isset($profilPenjual['role']) || strtolower($profilPenjual['role']) !== 'ow
             <div class="profil-info-row">
                 <span><i class="fa-solid fa-crown icon-gold"></i> Tingkat Akun</span>
                 <span class="profil-role-badge badge-gold">
-                    <i class="fa-solid fa-circle-check"></i> Owner Utama
+                    <i class="fa-solid fa-circle-check"></i> Owner
                 </span>
             </div>
             <div class="profil-info-row">

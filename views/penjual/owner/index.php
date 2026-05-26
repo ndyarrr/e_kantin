@@ -35,6 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'edit_profil' || $action === 'ganti_password' || $action === 'hapus_foto_profil') {
         require_once __DIR__ . '/../actions/proses_profil.php';
         exit;
+    } elseif (strpos($action, 'staf') !== false) {
+        require_once __DIR__ . '/../actions/proses_staf.php';
+        exit;
     }
 }
 
@@ -194,10 +197,7 @@ require __DIR__ . '/sections/menu_data.php';
         </div>
 
         <div class="section" id="section-staf">
-            <div class="placeholder-box">
-                <i class="fa-solid fa-users"></i>
-                <p>Halaman Staf & Shift — segera diisi</p>
-            </div>
+            <?php require __DIR__ . '/sections/staf.php'; ?>
         </div>
 
         <div class="section" id="section-inbox">

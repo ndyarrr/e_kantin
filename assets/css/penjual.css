@@ -2531,3 +2531,400 @@ aside img {
 .btn-password-blue:hover {
     background-color: #2563eb !important;
 }
+/* ==========================================================================
+   1. STATISTIK CARDS (TEMA ORIGINAL E-KANTIN)
+   ========================================================================== */
+.staf-stats-container {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.staf-stat-card {
+    flex: 1;
+    min-width: 200px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.staf-stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.staf-stat-title {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.staf-stat-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 4px;
+}
+
+.staf-stat-sub {
+    font-size: 14px;
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.staf-stat-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+/* Icon Statistik Berganti ke Hijau E-Kantin */
+.staf-stat-icon-wrap.icon-green-light {
+    background: #f0fdf4;
+    color: #5aab55;
+}
+
+
+/* ==========================================================================
+   2. TABEL UTAMA & HEADER TAMPILAN
+   ========================================================================== */
+.staf-table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.staf-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.staf-table-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #1e293b;
+}
+
+.staf-table-header p {
+    width: 100%;
+    font-size: 12px;
+    color: #64748b;
+    margin: 4px 0 0 0;
+}
+
+/* Tombol Tambah Staf Berganti ke Hijau E-Kantin */
+.btn-tambah-staf-link {
+    background: #5aab55;
+    color: #ffffff;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+
+.btn-tambah-staf-link:hover {
+    background: #489344;
+}
+
+.staf-responsive-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+
+/* ==========================================================================
+   3. DESAIN ROW & SEKAT INTERAKSI TABEL (FIX GARIS VERTIKAL)
+   ========================================================================== */
+.staf-custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+}
+
+.staf-custom-table th {
+    background: #f8fafc;
+    color: #64748b;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.staf-custom-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
+}
+
+.row-staf-clickable {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.row-staf-clickable:hover {
+    background-color: #f8fafc;
+}
+
+/* KETIKA ROW DISELECT: Background Hijau Soft, Border Kiri Solid */
+.row-staf-clickable.active-edit {
+    background-color: #f0fdf4 !important;
+    border-left: 3px solid #5aab55;
+}
+
+/* Efek Sekat Pembatas Kolom Horizontal Berwarna Hijau | saat aktif */
+.row-staf-clickable.active-edit td {
+    border-right: 1px solid rgba(90, 171, 85, 0.3);
+}
+
+/* Bersihkan sekat terluar kanan biar tidak merusak outline tabel */
+.row-staf-clickable.active-edit td:last-child {
+    border-right: none;
+}
+
+/* Profil Cell (Avatar + Nama) */
+.staf-profile-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.staf-avatar-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+.staf-avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.staf-cell-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.staf-text-muted {
+    color: #64748b;
+}
+
+/* Badge Shift & Status Hijau E-Kantin */
+.staf-shift-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.staf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 20px;
+}
+
+.staf-badge.badge-active {
+    background: #dcfce7;
+    color: #489344;
+}
+
+.staf-badge.badge-inactive {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.staf-badge i {
+    font-size: 8px;
+}
+
+.staf-table-empty {
+    text-align: center !important;
+    padding: 40px !important;
+    color: #94a3b8;
+}
+
+.staf-table-empty i {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+
+/* ==========================================================================
+   4. TOMBOL UTILITAS AKSI (TOGGLE STATUS & HAPUS)
+   ========================================================================== */
+.staf-action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.staf-btn-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.staf-btn-action.btn-status-staf:hover {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+.staf-btn-action.btn-delete-staf:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+
+/* ==========================================================================
+   5. CONTAINER FORM DINAMIS (EDIT & SIMPAN PERUBAHAN FULL GREEN)
+   ========================================================================== */
+.form-staf-container {
+    display: none; 
+    margin-top: 25px;
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Mengubah warna teks judul (Edit Staf / Shift) jadi Ijo */
+.form-staf-container h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 16px;
+    color: #489344; 
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+.form-staf-group {
+    margin-bottom: 16px;
+}
+
+.form-staf-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: #334155;
+}
+
+.form-staf-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #334155;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Focus input dan select mengarah ke Hijau E-Kantin */
+.form-staf-control:focus {
+    outline: none;
+    border-color: #5aab55;
+    box-shadow: 0 0 0 3px rgba(90, 171, 85, 0.15);
+}
+
+select.form-staf-control {
+    cursor: pointer;
+    height: 41px;
+}
+
+.form-staf-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.btn-staf-batal {
+    background: #64748b;
+    color: #ffffff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.btn-staf-batal:hover {
+    background: #475569;
+}
+
+/* TOMBOL SUBMIT UTAMA: Hijau E-Kantin Murni */
+.btn-staf-submit {
+    background: #5aab55;
+    color: #ffffff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.btn-staf-submit:hover {
+    background: #489344;
+}
