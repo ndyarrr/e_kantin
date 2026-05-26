@@ -35,6 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'edit_profil' || $action === 'ganti_password' || $action === 'hapus_foto_profil') {
         require_once __DIR__ . '/../actions/proses_profil.php';
         exit;
+    } elseif (strpos($action, 'staf') !== false) {
+        require_once __DIR__ . '/../actions/proses_staf.php';
+        exit;
     }
 }
 
@@ -194,10 +197,7 @@ require __DIR__ . '/sections/menu_data.php';
         </div>
 
         <div class="section" id="section-staf">
-            <div class="placeholder-box">
-                <i class="fa-solid fa-users"></i>
-                <p>Halaman Staf & Shift — segera diisi</p>
-            </div>
+            <?php require __DIR__ . '/sections/staf.php'; ?>
         </div>
 
         <div class="section" id="section-inbox">
@@ -323,6 +323,45 @@ if (feedbackEl) {
         setTimeout(() => feedbackEl.remove(), 500);
     }, 4000);
 }
+
+// Polling Realtime Chat Notification Badge in Sidebar
+function updateChatUnreadBadge() {
+    const scriptPath = window.location.pathname;
+    let backendUrl = '../../backend/ambil_unread_chat.php';
+    if (scriptPath.includes('/owner/') || scriptPath.includes('/staf/')) {
+        backendUrl = '../../../backend/ambil_unread_chat.php';
+    }
+    
+    fetch(backendUrl)
+        .then(res => res.json())
+        .then(data => {
+            const count = data.unread_count || 0;
+            const chatBtn = document.querySelector('.nav-link[data-section="chat"]');
+            if (chatBtn) {
+                let badge = chatBtn.querySelector('.nav-badge');
+                if (count > 0) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'nav-badge';
+                        chatBtn.appendChild(badge);
+                    }
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    if (badge) {
+                        badge.style.display = 'none';
+                    }
+                }
+            }
+        })
+        .catch(err => console.error('Error fetching unread chat:', err));
+}
+
+// Jalankan saat load pertama kali
+document.addEventListener('DOMContentLoaded', () => {
+    updateChatUnreadBadge();
+    setInterval(updateChatUnreadBadge, 4000);
+});
 </script>
 </body>
 </html>

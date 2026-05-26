@@ -91,8 +91,17 @@ $role_label = match(true) {
     let terakhirIdPesan  = 0;
     let intervalPollingChat = null;
 
+    let intervalPollingKontak = null;
+
     document.addEventListener("DOMContentLoaded", function () {
         muatDaftarKontak('');
+        // Polling daftar kontak setiap 5 detik untuk update badge unread realtime
+        intervalPollingKontak = setInterval(() => {
+            const searchInput = document.getElementById('inputSearchGlobal');
+            if (!searchInput || searchInput.value.trim() === '') {
+                muatDaftarKontak('');
+            }
+        }, 5000);
     });
 
     /* ══════════════════════════════════════════════

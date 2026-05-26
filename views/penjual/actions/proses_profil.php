@@ -59,6 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Update nama toko ke tabel toko
         mysqli_query($conn, "UPDATE toko SET nama_toko = '$nama_toko' WHERE id_toko = (SELECT id_toko FROM toko_penjual WHERE id_penjual = '$id_penjual' LIMIT 1)");
 
+        catatLog($conn, 'Update Profil', 'Owner memperbarui data profil & toko');
+
         // Kirim feedback banner sukses
         $_SESSION['feedback'] = [
             'type' => 'success',
@@ -96,6 +98,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $password_fix = password_hash($password_baru, PASSWORD_BCRYPT);
                 mysqli_query($conn, "UPDATE penjual SET password = '$password_fix' WHERE id_penjual = '$id_penjual'");
                 
+                catatLog($conn, 'Update Password', 'Owner memperbarui password keamanan');
+
                 // 🌟 FIX: Set session sukses DI SINI setelah query database berhasil jalan!
                 $_SESSION['feedback'] = [
                     'type' => 'success',
@@ -133,6 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $query_hapus_foto = "UPDATE penjual SET foto_profil = NULL WHERE id_penjual = '$id_penjual'";
         
         if (mysqli_query($conn, $query_hapus_foto)) {
+            catatLog($conn, 'Hapus Foto Profil', 'Owner menghapus foto profil');
             $_SESSION['feedback'] = [
                 'type' => 'success',
                 'msg'  => 'Foto profil berhasil dihapus, inisial akun diaktifkan!'
