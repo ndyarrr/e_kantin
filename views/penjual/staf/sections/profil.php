@@ -2,11 +2,18 @@
 /** @var array $profilPenjual */
 /** @var string $penjualNama */
 /** @var int $penjualId */
+
+// 🌟 VALIDASI AKSES: Pastikan yang mengakses adalah Staf atau Owner/Penjual
+if (!isset($profilPenjual['role']) || !in_array(strtolower($profilPenjual['role']), ['staf', 'owner', 'penjual'])) {
+    echo "<div class='akses-ditolak-banner' style='padding: 20px; background: #fee2e2; color: #991b1b; text-align: center; font-family: sans-serif;'>
+            <i class='fa-solid fa-triangle-exclamation'></i> Akses Ditolak: Halaman tidak dikenali!
+          </div>";
+    exit;
+}
 ?>
 
 <div class="profil-grid">
 
-    <!-- Kartu Avatar -->
     <div class="profil-avatar-card">
         <div class="profil-avatar-big" id="previewWrap">
             <?php if (!empty($profilPenjual['foto_profil'])): ?>
@@ -28,10 +35,19 @@
             Shift <?= htmlspecialchars($profilPenjual['shift'] ?? '-') ?>
         </div>
 
-        <div style="margin-top:18px">
-            <label class="profil-btn-foto" for="inputFotoTrigger">
+        <div class="profil-action-foto-group" style="margin-top:18px; display:flex; flex-direction:column; gap:8px; align-items:center;">
+            <label class="profil-btn-foto" for="inputFotoTrigger" style="cursor:pointer;">
                 <i class="fa-solid fa-camera"></i> Ganti Foto
             </label>
+            
+            <?php if (!empty($profilPenjual['foto_profil'])): ?>
+                <form method="POST" action="" class="form-hapus-foto-wrap" style="margin:0;">
+                    <input type="hidden" name="action" value="hapus_foto_profil">
+                    <button type="submit" class="btn-hapus-foto" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:13px;">
+                        <i class="fa-solid fa-trash-can"></i> Hapus Foto
+                    </button>
+                </form>
+            <?php endif; ?>
         </div>
 
         <div class="profil-info-kecil" style="margin-top:14px">
@@ -46,16 +62,14 @@
         </div>
     </div>
 
-    <!-- Form Edit -->
-    <div style="display:flex;flex-direction:column;gap:18px;">
+    <div style="display:flex;flex-direction:column;gap:18px; flex:1;">
 
-        <!-- Form Data Diri -->
         <div class="form-card">
-            <h2><i class="fa-solid fa-pen-to-square" style="color:var(--green);margin-right:8px"></i>Data Diri</h2>
-            <form method="POST" enctype="multipart/form-data" onsubmit="console.log('submit fired')">
+            <h2><i class="fa-solid fa-pen-to-square" style="color:var(--green);margin-right:8px"></i>Data Diri Staf</h2>
+            <form id="formDataDiri" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="_section" value="profil">
                 <input type="hidden" name="action"   value="edit_profil">
-                <!-- Input foto tersembunyi, dipicu label di kartu kiri -->
+                
                 <input type="file" id="inputFotoTrigger" name="foto_profil"
                        accept="image/*" style="display:none"
                        onchange="previewFoto(this)">
@@ -78,7 +92,6 @@
             </form>
         </div>
 
-        <!-- Form Ganti Password -->
         <div class="form-card">
             <h2><i class="fa-solid fa-lock" style="color:var(--green);margin-right:8px"></i>Ganti Password</h2>
             <form method="POST">
@@ -129,12 +142,15 @@ function previewFoto(input) {
     const reader = new FileReader();
     reader.onload = e => {
         const wrap = document.getElementById('previewWrap');
-        wrap.innerHTML = `<img src="${e.target.result}"
-                               style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        wrap.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     };
     reader.readAsDataURL(input.files[0]);
-    /* Auto-submit form data diri supaya foto langsung tersimpan */
-    input.closest('form') && input.closest('form').submit();
+    
+    /* 🌟 FIX: Menembak ID form data diri secara presisi */
+    const form = document.getElementById('formDataDiri');
+    if (form) {
+        form.submit();
+    }
 }
 
 function togglePw(id, btn) {

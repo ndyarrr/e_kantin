@@ -2928,3 +2928,70 @@ select.form-staf-control {
 .btn-staf-submit:hover {
     background: #489344;
 }
+/* ==========================================================================
+   SOLUSI FINAL: LOCKING VERTICAL POSITION (HARGA & STOK DIAM DI TEMPAT)
+   ========================================================================= */
+
+/* Wrapper luar bertugas menahan posisi agar Harga & Stok TIDAK IKUT NAIK */
+.menu-desc-wrapper {
+    position: relative;
+    width: 100%;
+    height: 20px; /* Mengunci ruang deskripsi awal agar konstan */
+    margin: 6px 0 12px 0;
+}
+
+/* Box deskripsi (Kondisi Awal rapat) */
+.menu-overlay-desc-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: transparent;
+    border-radius: 4px;
+    z-index: 10;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* Teks awal: Vertikal, 1 baris, berujung titik-titik (...) */
+.menu-desc-text {
+    font-size: 0.85rem;
+    color: #4b5563;
+    line-height: 1.4;
+    white-space: normal !important;
+    word-break: break-word;
+    
+    display: -webkit-box !important;
+    -webkit-line-clamp: 1; 
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 🌟 KONDISI DIKLIK (BUKA): Melar ke bawah menutupi harga & stok tanpa mengubah layout dasar */
+.menu-overlay-desc-container.buka {
+    background-color: #ffffff; /* Warna putih solid menutupi harga/stok di belakangnya */
+    max-height: 85px;          /* Batas maksimal melar ke bawah */
+    overflow-y: auto;          /* Nyalakan scroll jika teks sangat panjang */
+    overflow-x: hidden;        /* Matikan horizontal scroll */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e2e8f0;
+    padding: 4px 6px;
+}
+
+/* Teks loss tanpa batasan baris saat dibuka */
+.menu-overlay-desc-container.buka .menu-desc-text {
+    display: block !important;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+/* Scrollbar vertikal minimalis */
+.menu-overlay-desc-container::-webkit-scrollbar {
+    width: 4px;
+}
+.menu-overlay-desc-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}

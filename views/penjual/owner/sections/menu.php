@@ -49,18 +49,15 @@
                         <div class="menu-img-placeholder <?= $kat ?>" style="display:none;">
                             <?php if ($kat === 'minuman'): ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" />
+                                    <path d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" />
                                 </svg>
                             <?php elseif ($kat === 'snack'): ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" />
+                                    <path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" />
                                 </svg>
                             <?php else: ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
+                                    <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
                                 </svg>
                             <?php endif; ?>
                         </div>
@@ -68,18 +65,15 @@
                         <div class="menu-img-placeholder <?= $kat ?>">
                             <?php if ($kat === 'minuman'): ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" />
+                                    <path d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" />
                                 </svg>
                             <?php elseif ($kat === 'snack'): ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" />
+                                    <path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" />
                                 </svg>
                             <?php else: ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
+                                    <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
                                 </svg>
                             <?php endif; ?>
                         </div>
@@ -105,6 +99,14 @@
                     <h3 class="menu-title" title="<?= htmlspecialchars($m['nama_menu']) ?>">
                         <?= htmlspecialchars($m['nama_menu']) ?>
                     </h3>
+
+                    <div class="menu-desc-wrapper">
+                        <div class="menu-overlay-desc-container" onclick="toggleOverlayDesc(this)">
+                            <div class="menu-desc-text">
+                                <?= !empty($m['deskripsi']) ? htmlspecialchars($m['deskripsi']) : 'Tidak ada deskripsi.' ?>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="menu-price">Rp <?= number_format($m['harga'], 0, ',', '.') ?></div>
 
@@ -147,6 +149,11 @@
             </div>
 
             <div class="form-group">
+                <label for="deskripsi_menu">Deskripsi Menu</label>
+                <textarea id="deskripsi_menu" name="deskripsi" rows="2" placeholder="Masukkan deskripsi menu..." style="resize: none;"></textarea>
+            </div>
+
+            <div class="form-group">
                 <label for="kategori_menu">Kategori</label>
                 <select id="kategori_menu" name="kategori" required>
                     <option value="makanan">Makanan</option>
@@ -163,11 +170,6 @@
             <div class="form-group">
                 <label for="stok_menu">Stok Awal</label>
                 <input type="number" id="stok_menu" name="stok" placeholder="Contoh: 50" min="0" value="50" required>
-            </div>
-
-            <div class="form-group">
-                <label for="deskripsi_menu">Deskripsi Menu</label>
-                <textarea id="deskripsi_menu" name="deskripsi" rows="2" placeholder="Masukkan deskripsi menu..." style="resize: none;"></textarea>
             </div>
 
             <div class="form-group">
@@ -200,6 +202,11 @@
             </div>
 
             <div class="form-group">
+                <label for="edit_deskripsi_menu">Deskripsi Menu</label>
+                <textarea id="edit_deskripsi_menu" name="deskripsi" rows="2" placeholder="Masukkan deskripsi menu..." style="resize: none;"></textarea>
+            </div>
+
+            <div class="form-group">
                 <label for="edit_kategori_menu">Kategori</label>
                 <select id="edit_kategori_menu" name="kategori" required>
                     <option value="makanan">Makanan</option>
@@ -216,11 +223,6 @@
             <div class="form-group">
                 <label for="edit_stok_menu">Stok</label>
                 <input type="number" id="edit_stok_menu" name="stok" min="0" required>
-            </div>
-
-            <div class="form-group">
-                <label for="edit_deskripsi_menu">Deskripsi Menu</label>
-                <textarea id="edit_deskripsi_menu" name="deskripsi" rows="2" placeholder="Masukkan deskripsi menu..." style="resize: none;"></textarea>
             </div>
 
             <div class="form-group">
@@ -260,15 +262,19 @@
         document.getElementById('edit_kategori_menu').value = menu.kategori ? menu.kategori.toLowerCase() : 'makanan';
         document.getElementById('edit_harga_menu').value = menu.harga;
         document.getElementById('edit_stok_menu').value = menu.stok;
+        document.getElementById('edit_deskripsi_menu').value = menu.deskripsi ?? '';
 
         formEdit.classList.add('show');
         formEdit.scrollIntoView({ behavior: 'smooth', block: 'center' });
         document.getElementById('edit_nama_menu').focus();
     }
 
-    // Perbaikan bug reset form agar tombol filter data GET tidak terganggu
     function tutupFormEdit() {
         const formEdit = document.getElementById('containerEditMenu');
         formEdit.classList.remove('show');
+    }
+
+    function toggleOverlayDesc(elemen) {
+        elemen.classList.toggle('buka');
     }
 </script>

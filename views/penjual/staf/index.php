@@ -10,8 +10,8 @@ if (isset($_SESSION['feedback'])) {
     unset($_SESSION['feedback']);
 }
 
-if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
-    header('Location: ../../auth/login.php');
+if (!isset($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['penjual', 'staf'])) {
+    header('Location: ' . $base_path . '/auth/login.php');
     exit;
 }
 
@@ -64,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
             $fileTmpPath   = $_FILES['foto']['tmp_name'];
             $fileName      = $_FILES['foto']['name'];
+            $deskripsi = mysqli_real_escape_string($conn, $_POST['deskripsi'] ?? '');
             $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
             $newFileName   = 'menu_' . time() . '.' . $fileExtension;
             $uploadFileDir = '/opt/lampp/htdocs/e_kantin/assets/img/menu/';
@@ -82,8 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $queryInsert = "INSERT INTO menu (id_toko, nama_menu, deskripsi, harga, foto_menu, stok, tersedia, kategori)
-                        VALUES ($idToko, '$nama_menu', NULL, $harga, "
-                        . ($nama_foto ? "'$nama_foto'" : "NULL") . ", $stok, $tersedia, '$kategori')";
+                    VALUES ($idToko, '$nama_menu', '$deskripsi', $harga, "
+                    . ($nama_foto ? "'$nama_foto'" : "NULL") . ", $stok, $tersedia, '$kategori')";
 
         if (mysqli_query($conn, $queryInsert)) {
             catatLog($conn, 'Tambah Menu', "Staf menambahkan menu baru: $nama_menu (Kategori: $kategori, Harga: Rp $harga)");
@@ -115,7 +116,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ════ EDIT MENU ════  ← FIX: sudah di luar blok tambah_menu
     if ($action === 'edit_menu') {
         $id_menu   = (int)($_POST['id_menu'] ?? 0);
-        $nama_menu = mysqli_real_escape_string($conn, $_POST['nama_menu']);
+        $nama_menu = mysqli_real_escape_string($conn, $_POST['nama_menu']); $deskripsi = mysqli_real_escape_string($conn, $_POST['deskripsi'] ?? '');
+        $deskripsi = mysqli_real_escape_string($conn, $_POST['deskripsi'] ?? '');
         $harga     = (int)($_POST['harga'] ?? 0);
         $stok      = (int)($_POST['stok'] ?? 0);
         $tersedia  = $stok > 0 ? 1 : 0;
@@ -156,13 +158,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $queryUpdate = "UPDATE menu SET
-                            nama_menu = '$nama_menu',
-                            harga     = $harga,
-                            stok      = $stok,
-                            tersedia  = $tersedia,
-                            kategori  = '$kategori',
-                            foto_menu = " . ($nama_foto ? "'$nama_foto'" : "NULL") . "
-                            WHERE id_menu = $id_menu AND id_toko = $idToko";
+                    nama_menu = '$nama_menu',
+                    deskripsi = '$deskripsi', -- 🌟 Tambahkan baris ini!
+                    harga     = $harga,
+                    stok      = $stok,
+                    tersedia  = $tersedia,
+                    kategori  = '$kategori',
+                    foto_menu = " . ($nama_foto ? "'$nama_foto'" : "NULL") . "
+                    WHERE id_menu = $id_menu AND id_toko = $idToko";
 
             if (mysqli_query($conn, $queryUpdate)) {
                 catatLog($conn, 'Edit Menu', "Staf memperbarui menu: $nama_menu (Harga: Rp $harga, Stok: $stok)");
@@ -288,6 +291,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ← FIX: satu titik redirect, tidak ada duplikat
     if ($feedback) $_SESSION['feedback'] = $feedback;
+
+    // 🌟 SOLUSI: Jika action-nya berhubungan dengan menu, pastikan redirect balik ke halaman menu
+    if (in_array($action, ['tambah_menu', 'edit_menu', 'hapus_menu'])) {
+        $activeSection = 'menu';
+    }
+
     header('Location: ?section=' . $activeSection . '&t=' . time());
     exit;
 }

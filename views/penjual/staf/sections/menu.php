@@ -2,7 +2,7 @@
 /** @var array $daftarMenu */
 ?>
 
-<form method="GET" action="" class="menu-action-bar" id="formFilterMenu">
+<form method="GET" action="index.php" class="menu-action-bar" id="formFilterMenu">
     <input type="hidden" name="section" value="menu">
 
     <div class="search-filter-group">
@@ -21,29 +21,26 @@
         </select>
     </div>
 
-    <button type="button" class="btn-primary"
-        style="background-color: #5aab55; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer;"
-        onclick="toggleFormTambah()">
+    <button type="button" class="btn-primary" onclick="toggleFormTambah()">
         <i class="fa-solid fa-plus"></i> New Item
     </button>
 </form>
 
-<h2 style="margin: 20px 0; font-size: 22px; color: #1f2937;">Menu Listing</h2>
+<h2 class="menu-listing-title">Menu Listing</h2>
 
-<div class="menu-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;">
+<div class="menu-grid">
     <?php if (empty($daftarMenu)): ?>
-        <div style="grid-column: 1/-1; text-align: center; color: #9ca3af; padding: 40px 0;">
-            <i class="fa-solid fa-utensils" style="font-size: 40px; margin-bottom: 10px; display: block;"></i>
-            Belum ada produk di menu ini.
+        <div class="menu-empty-state">
+            <i class="fa-solid fa-utensils"></i>
+            <p>Belum ada produk di menu ini.</p>
         </div>
     <?php else:
         foreach ($daftarMenu as $m):
-            $stok = $m['stok'] ?? 1;
+            $stok = (int) ($m['stok'] ?? 0);
             $isTersedia = $stok > 0;
             $kat = strtolower($m['kategori'] ?? 'makanan');
             ?>
-            <div class="menu-card"
-                style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <div class="menu-card <?= !$isTersedia ? 'card-habis' : '' ?>">
 
                 <div class="menu-img-wrap">
                     <?php if (!empty($m['foto_menu'])): ?>
@@ -52,18 +49,15 @@
                         <div class="menu-img-placeholder <?= $kat ?>" style="display:none;">
                             <?php if ($kat === 'minuman'): ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" />
+                                    <path d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" />
                                 </svg>
                             <?php elseif ($kat === 'snack'): ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" />
+                                    <path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" />
                                 </svg>
                             <?php else: ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
+                                    <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
                                 </svg>
                             <?php endif; ?>
                         </div>
@@ -71,18 +65,15 @@
                         <div class="menu-img-placeholder <?= $kat ?>">
                             <?php if ($kat === 'minuman'): ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" />
+                                    <path d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" />
                                 </svg>
                             <?php elseif ($kat === 'snack'): ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" />
+                                    <path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" />
                                 </svg>
                             <?php else: ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path
-                                        d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
+                                    <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
                                 </svg>
                             <?php endif; ?>
                         </div>
@@ -93,52 +84,47 @@
                     </span>
                 </div>
 
-                <div class="menu-info"
-                    style="padding: 15px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
-                    <div>
-                        <h3 class="menu-title" title="<?= htmlspecialchars($m['nama_menu']) ?>"
-                            style="margin: 0 0 10px 0; font-size: 16px; font-weight: bold; color: #1f2937;">
-                            <?= htmlspecialchars($m['nama_menu']) ?>
-                        </h3>
+                <div class="menu-info">
+                    <span class="menu-kategori">
+                        <?php if ($kat === 'minuman'): ?>
+                            <i class="fa-solid fa-glass-water"></i>
+                        <?php elseif ($kat === 'snack'): ?>
+                            <i class="fa-solid fa-cookie-bite"></i>
+                        <?php else: ?>
+                            <i class="fa-solid fa-bowl-food"></i>
+                        <?php endif; ?>
+                        <?= htmlspecialchars($kat) ?>
+                    </span>
 
-                        <span
-                            style="font-size: 12px; color: #6b7280; text-transform: capitalize; background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">
-                            <?php if ($kat === 'minuman'): ?>
-                                <i class="fa-solid fa-glass-water"></i>
-                            <?php elseif ($kat === 'snack'): ?>
-                                <i class="fa-solid fa-cookie-bite"></i>
-                            <?php else: ?>
-                                <i class="fa-solid fa-bowl-food"></i>
-                            <?php endif; ?>
-                            <?= htmlspecialchars($kat) ?>
-                        </span>
+                    <h3 class="menu-title" title="<?= htmlspecialchars($m['nama_menu']) ?>">
+                        <?= htmlspecialchars($m['nama_menu']) ?>
+                    </h3>
+
+                    <div class="menu-desc-wrapper">
+                        <div class="menu-overlay-desc-container" onclick="toggleOverlayDesc(this)">
+                            <div class="menu-desc-text">
+                                <?= !empty($m['deskripsi']) ? htmlspecialchars($m['deskripsi']) : 'Tidak ada deskripsi.' ?>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="menu-row-flex"
-                        style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; margin-bottom: 15px;">
-                        <span class="menu-price" style="font-weight: bold; color: #5aab55; font-size: 15px;">Rp
-                            <?= number_format($m['harga'], 0, ',', '.') ?></span>
+                    <div class="menu-price">Rp <?= number_format($m['harga'], 0, ',', '.') ?></div>
 
-                        <span class="badge-status-tersedia"
-                            style="padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; <?= !$isTersedia ? 'background-color:#fde8e8; color:#9b1c1c;' : 'background-color:#e1f5fe; color:#0288d1;' ?>">
-                            <?= $isTersedia ? 'Tersedia' : 'Habis' ?>
-                        </span>
+                    <div class="menu-stock">
+                        <i class="fa-solid fa-boxes-stacked"></i> Stok: <strong><?= $stok ?></strong> unit
                     </div>
                 </div>
 
-                <div class="menu-actions" style="display: flex; border-top: 1px solid #e5e7eb;">
+                <div class="menu-actions">
                     <button type="button" class="btn-outline-edit"
-                        style="flex: 1; padding: 10px; background: none; border: none; border-right: 1px solid #e5e7eb; color: #2563eb; cursor: pointer; font-weight: 600;"
                         onclick="bukaFormEdit(<?= htmlspecialchars(json_encode($m)) ?>)">
                         <i class="fa-solid fa-pen"></i> Edit
                     </button>
-                    <form method="POST" style="display:inline; flex:1;"
-                        onsubmit="return confirm('Hapus menu <?= htmlspecialchars($m['nama_menu']) ?>?')">
-                        <input type="hidden" name="_section" value="menu">
+                    <form action="index.php?section=menu" method="POST"
+                        onsubmit="return confirm('Apakah anda yakin ingin menghapus menu ini?')" style="flex: 1; margin: 0;">
                         <input type="hidden" name="action" value="hapus_menu">
                         <input type="hidden" name="id_menu" value="<?= $m['id_menu'] ?>">
-                        <button type="submit" class="btn-outline-delete"
-                            style="width: 100%; padding: 10px; background: none; border: none; color: #dc2626; cursor: pointer; font-weight: 600;">
+                        <button type="submit" class="btn-outline-delete">
                             <i class="fa-solid fa-trash"></i> Hapus
                         </button>
                     </form>
@@ -153,8 +139,7 @@
         <h3>Form Tambah Menu Baru</h3>
     </div>
 
-    <form action="" method="POST" enctype="multipart/form-data" class="static-form">
-        <input type="hidden" name="_section" value="menu">
+    <form action="index.php?section=menu" method="POST" enctype="multipart/form-data" class="static-form">
         <input type="hidden" name="action" value="tambah_menu">
 
         <div class="form-grid-layout">
@@ -164,9 +149,13 @@
             </div>
 
             <div class="form-group">
+                <label for="deskripsi_menu">Deskripsi Menu</label>
+                <textarea id="deskripsi_menu" name="deskripsi" rows="2" placeholder="Masukkan deskripsi menu..." style="resize: none;"></textarea>
+            </div>
+
+            <div class="form-group">
                 <label for="kategori_menu">Kategori</label>
-                <select id="kategori_menu" name="kategori"
-                    style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;" required>
+                <select id="kategori_menu" name="kategori" required>
                     <option value="makanan">Makanan</option>
                     <option value="minuman">Minuman</option>
                     <option value="snack">Snack</option>
@@ -175,8 +164,7 @@
 
             <div class="form-group">
                 <label for="harga_menu">Harga (Rp)</label>
-                <input type="number" id="harga_menu" name="harga" placeholder="Contoh: 12000" min="0" max="99999"
-                    required>
+                <input type="number" id="harga_menu" name="harga" placeholder="Contoh: 12000" min="0" required>
             </div>
 
             <div class="form-group">
@@ -197,14 +185,13 @@
     </form>
 </div>
 
-<div id="containerEditMenu" class="form-tambah-container toggle-form" style="border-top: 4px solid #2563eb;">
+<div id="containerEditMenu" class="form-tambah-container toggle-form" style="border-top: 4px solid #3b82f6;">
     <div class="form-tambah-header">
-        <i class="fa-solid fa-pen-to-square" style="color: #2563eb; font-size: 20px;"></i>
-        <h3>Form Edit Menu: <span id="judul_edit_menu" style="color:#1f2937;"></span></h3>
+        <i class="fa-solid fa-pen-to-square" style="color: #3b82f6; font-size: 20px;"></i>
+        <h3>Form Edit Menu: <span id="judul_edit_menu"></span></h3>
     </div>
 
-    <form action="" method="POST" enctype="multipart/form-data" class="static-form">
-        <input type="hidden" name="_section" value="menu">
+    <form action="index.php?section=menu" method="POST" enctype="multipart/form-data" class="static-form">
         <input type="hidden" name="action" value="edit_menu">
         <input type="hidden" id="edit_id_menu" name="id_menu">
 
@@ -215,9 +202,13 @@
             </div>
 
             <div class="form-group">
+                <label for="edit_deskripsi_menu">Deskripsi Menu</label>
+                <textarea id="edit_deskripsi_menu" name="deskripsi" rows="2" placeholder="Masukkan deskripsi menu..." style="resize: none;"></textarea>
+            </div>
+
+            <div class="form-group">
                 <label for="edit_kategori_menu">Kategori</label>
-                <select id="edit_kategori_menu" name="kategori"
-                    style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;" required>
+                <select id="edit_kategori_menu" name="kategori" required>
                     <option value="makanan">Makanan</option>
                     <option value="minuman">Minuman</option>
                     <option value="snack">Snack</option>
@@ -226,7 +217,7 @@
 
             <div class="form-group">
                 <label for="edit_harga_menu">Harga (Rp)</label>
-                <input type="number" id="edit_harga_menu" name="harga" min="0" max="99999" required>
+                <input type="number" id="edit_harga_menu" name="harga" min="0" required>
             </div>
 
             <div class="form-group">
@@ -235,16 +226,15 @@
             </div>
 
             <div class="form-group">
-                <label for="edit_foto_menu">Ganti Foto Menu <small style="color:gray;">(Kosongkan jika tidak
-                        diubah)</small></label>
+                <label for="edit_foto_menu">Ganti Foto Menu <small>(Kosongkan jika tidak diubah)</small></label>
                 <input type="file" id="edit_foto_menu" name="foto" accept="image/*">
             </div>
         </div>
 
         <div class="form-tambah-footer">
             <button type="button" class="btn-reset" onclick="tutupFormEdit()">Batal</button>
-            <button type="submit" class="btn-save" style="background-color: #2563eb;"><i
-                    class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
+            <button type="submit" class="btn-save" style="background: #3b82f6;"><i class="fa-solid fa-floppy-disk"></i>
+                Simpan Perubahan</button>
         </div>
     </form>
 </div>
@@ -272,6 +262,7 @@
         document.getElementById('edit_kategori_menu').value = menu.kategori ? menu.kategori.toLowerCase() : 'makanan';
         document.getElementById('edit_harga_menu').value = menu.harga;
         document.getElementById('edit_stok_menu').value = menu.stok;
+        document.getElementById('edit_deskripsi_menu').value = menu.deskripsi ?? '';
 
         formEdit.classList.add('show');
         formEdit.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -281,6 +272,9 @@
     function tutupFormEdit() {
         const formEdit = document.getElementById('containerEditMenu');
         formEdit.classList.remove('show');
-        formEdit.querySelector('form').reset();
+    }
+
+    function toggleOverlayDesc(elemen) {
+        elemen.classList.toggle('buka');
     }
 </script>
