@@ -180,7 +180,7 @@
                     <input type="file" id="foto_menu" name="foto" accept="image/*" onchange="updateFileName(this, 'text-foto-tambah')">
                     <label for="foto_menu" class="btn-upload-kustom">
                         <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <span id="text-foto-tambah"> AMBIL FOTO...</span>
+                        <span id="text-foto-tambah">Choose File...</span>
                     </label>
                 </div>
             </div>
