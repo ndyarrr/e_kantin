@@ -68,12 +68,9 @@ try {
 
         } elseif (in_array($role_sekarang, ['siswa', 'guru'])) {
             // Pembeli: cari kantin saja
-           // ══ MODE DEFAULT: Riwayat Chat ══
-        $query = "SELECT CASE WHEN id_pengirim = ? THEN id_penerima ELSE id_pengirim END as id_lawan
-                  FROM pesan_chat 
-                  WHERE id_pengirim = ? OR id_penerima = ? 
-                  GROUP BY id_lawan 
-                  ORDER BY MAX(id_pesan) DESC LIMIT 20";
+            $query = "SELECT id_user, nama, role_user, foto_profil FROM (
+                SELECT CONCAT('toko_', id_toko) as id_user, nama_toko as nama, 'kantin' as role_user, foto_toko as foto_profil FROM toko WHERE deleted_at IS NULL
+            ) AS u WHERE nama LIKE ? LIMIT 20";
 
         } else {
             echo json_encode([]);
