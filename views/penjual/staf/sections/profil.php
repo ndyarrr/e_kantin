@@ -1,4 +1,6 @@
 <?php
+//staf//
+
 /** @var array $profilPenjual */
 /** @var string $penjualNama */
 /** @var int $penjualId */
@@ -35,16 +37,16 @@ if (!isset($profilPenjual['role']) || !in_array(strtolower($profilPenjual['role'
             Shift <?= htmlspecialchars($profilPenjual['shift'] ?? '-') ?>
         </div>
 
-        <div class="profil-action-foto-group" style="margin-top:18px; display:flex; flex-direction:column; gap:8px; align-items:center;">
-            <label class="profil-btn-foto" for="inputFotoTrigger" style="cursor:pointer;">
-                <i class="fa-solid fa-camera"></i> Ganti Foto
+        <div class="profil-action-foto-group">
+            <label class="profil-btn-foto" for="inputFotoTrigger">
+                <i class="fa-solid fa-camera"></i> Ganti Foto Profil
             </label>
             
             <?php if (!empty($profilPenjual['foto_profil'])): ?>
-                <form method="POST" action="" class="form-hapus-foto-wrap" style="margin:0;">
+                <form method="POST" action="../actions/proses_profil.php" class="form-hapus-foto-wrap">
                     <input type="hidden" name="action" value="hapus_foto_profil">
-                    <button type="submit" class="btn-hapus-foto" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:13px;">
-                        <i class="fa-solid fa-trash-can"></i> Hapus Foto
+                    <button type="submit" class="btn-hapus-foto">
+                        <i class="fa-solid fa-trash-can"></i> Hapus Foto Profil
                     </button>
                 </form>
             <?php endif; ?>
@@ -66,7 +68,7 @@ if (!isset($profilPenjual['role']) || !in_array(strtolower($profilPenjual['role'
 
         <div class="form-card">
             <h2><i class="fa-solid fa-pen-to-square" style="color:var(--green);margin-right:8px"></i>Data Diri Staf</h2>
-            <form id="formDataDiri" method="POST" enctype="multipart/form-data">
+            <form id="formDataDiri" method="POST" action="../actions/proses_profil.php" enctype="multipart/form-data">
                 <input type="hidden" name="_section" value="profil">
                 <input type="hidden" name="action"   value="edit_profil">
                 
@@ -94,7 +96,7 @@ if (!isset($profilPenjual['role']) || !in_array(strtolower($profilPenjual['role'
 
         <div class="form-card">
             <h2><i class="fa-solid fa-lock" style="color:var(--green);margin-right:8px"></i>Ganti Password</h2>
-            <form method="POST">
+            <form method="POST" action="../actions/proses_profil.php">
                 <input type="hidden" name="_section" value="profil">
                 <input type="hidden" name="action"   value="ganti_password">
 
@@ -146,7 +148,6 @@ function previewFoto(input) {
     };
     reader.readAsDataURL(input.files[0]);
     
-    /* 🌟 FIX: Menembak ID form data diri secara presisi */
     const form = document.getElementById('formDataDiri');
     if (form) {
         form.submit();

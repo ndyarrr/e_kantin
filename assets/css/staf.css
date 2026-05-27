@@ -3099,3 +3099,53 @@ aside img {
     background: #cbd5e1;
     border-radius: 4px;
 }
+
+
+/* Layout Tombol Foto Profil */
+.profil-action-foto-group {
+    margin-top: 18px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; 
+    align-items: center; 
+    width: 100%;
+}
+
+.profil-btn-foto {
+    margin: 0; 
+    cursor: pointer; 
+    text-align: center; 
+    width: 80%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Jarak antara icon kamera dan teks */
+}
+
+.form-hapus-foto-wrap {
+    margin: 0; 
+    width: 80%;
+}
+
+/* Tombol Hapus Foto Profil (Merah) */
+.btn-hapus-foto {
+    width: 100%; 
+    padding: 8px 12px; 
+    background-color: #ef4444; 
+    color: white; 
+    border: none; 
+    border-radius: 6px; 
+    font-size: 13px; 
+    font-weight: 500; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 6px; 
+    transition: background 0.2s;
+}
+.btn-hapus-foto:hover {
+    background-color: #dc2626;
+}
+
+

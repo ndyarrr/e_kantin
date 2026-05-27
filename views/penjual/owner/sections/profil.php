@@ -1,4 +1,6 @@
 <?php
+//owner//
+
 /** @var array $profilPenjual */
 /** @var string $penjualNama */
 /** @var int $penjualId */
@@ -38,11 +40,11 @@ if (!isset($profilPenjual['role']) || strtolower($profilPenjual['role']) !== 'ow
 
         <div class="profil-action-foto-group">
             <label class="profil-btn-foto" for="inputFotoTrigger">
-                <i class="fa-solid fa-camera"></i> Ganti Foto Owner
+                <i class="fa-solid fa-camera"></i> Ganti Foto Profil
             </label>
             
             <?php if (!empty($profilPenjual['foto_profil'])): ?>
-                <form method="POST" action="" class="form-hapus-foto-wrap">
+                <form method="POST" action="../actions/proses_profil.php" class="form-hapus-foto-wrap">
                     <input type="hidden" name="action" value="hapus_foto_profil">
                     <button type="submit" class="btn-hapus-foto">
                         <i class="fa-solid fa-trash-can"></i> Hapus Foto Profil
@@ -69,7 +71,7 @@ if (!isset($profilPenjual['role']) || strtolower($profilPenjual['role']) !== 'ow
 
         <div class="form-card">
             <h2><i class="fa-solid fa-user-gear icon-header-section"></i>Pengaturan Akun & Toko</h2>
-            <form method="POST" enctype="multipart/form-data" onsubmit="console.log('submit fired')">
+            <form id="formDataDiriOwner" method="POST" enctype="multipart/form-data" onsubmit="console.log('submit fired')">
                 <input type="hidden" name="_section" value="profil">
                 <input type="hidden" name="action"   value="edit_profil">
                 
@@ -157,7 +159,12 @@ function previewFoto(input) {
         wrap.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     };
     reader.readAsDataURL(input.files[0]);
-    input.closest('form') && input.closest('form').submit();
+    
+    /* 🌟 FIX OWNER: Mengincar ID form secara presisi dan aman */
+    const form = document.getElementById('formDataDiriOwner');
+    if (form) {
+        form.submit();
+    }
 }
 
 function togglePw(id, btn) {

@@ -41,7 +41,7 @@ $_SESSION['id_toko'] = $idToko;
 
 $activeSection = $_POST['_section'] ?? $_GET['section'] ?? 'dashboard';
 
-/* ── ACTIONS ── */
+/* ── ACTIONS (HANYA UNTUK MANAJEMEN MENU & PESANAN) ── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action        = $_POST['action'] ?? '';
     $activeSection = $_POST['_section'] ?? 'dashboard';
@@ -94,8 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // ════ HAPUS MENU ════  ← FIX: sudah di luar blok tambah_menu
+    // ════ HAPUS MENU ════
     if ($action === 'hapus_menu') {
+        $id_menu = (int)($_POST['id_menu'] ?? 0);
         $cek = mysqli_fetch_assoc(mysqli_query($conn,
             "SELECT foto_menu, nama_menu FROM menu WHERE id_menu=$id_menu AND id_toko=$idToko LIMIT 1"
         ));
@@ -113,10 +114,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // ════ EDIT MENU ════  ← FIX: sudah di luar blok tambah_menu
+    // ════ EDIT MENU ════
     if ($action === 'edit_menu') {
         $id_menu   = (int)($_POST['id_menu'] ?? 0);
-        $nama_menu = mysqli_real_escape_string($conn, $_POST['nama_menu']); $deskripsi = mysqli_real_escape_string($conn, $_POST['deskripsi'] ?? '');
+        $nama_menu = mysqli_real_escape_string($conn, $_POST['nama_menu']);
         $deskripsi = mysqli_real_escape_string($conn, $_POST['deskripsi'] ?? '');
         $harga     = (int)($_POST['harga'] ?? 0);
         $stok      = (int)($_POST['stok'] ?? 0);
@@ -132,7 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $resLama  = mysqli_query($conn, "SELECT foto_menu FROM menu WHERE id_menu=$id_menu AND id_toko=$idToko LIMIT 1");
         $menuLama = mysqli_fetch_assoc($resLama);
 
-        // Keamanan: pastikan menu ini milik toko yang login
         if (!$menuLama) {
             $feedback = ['type' => 'danger', 'msg' => 'Menu tidak ditemukan atau bukan milik toko ini.'];
         } else {
@@ -159,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $queryUpdate = "UPDATE menu SET
                     nama_menu = '$nama_menu',
-                    deskripsi = '$deskripsi', -- 🌟 Tambahkan baris ini!
+                    deskripsi = '$deskripsi',
                     harga     = $harga,
                     stok      = $stok,
                     tersedia  = $tersedia,
@@ -185,7 +185,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!in_array($status_baru, $statusValid)) {
             $feedback = ['type' => 'danger', 'msg' => 'Status tidak valid.'];
         } else {
-            // Pastikan pesanan milik toko ini
             $cekPesanan = mysqli_fetch_assoc(mysqli_query($conn,
                 "SELECT id_pesanan FROM pesanan WHERE id_pesanan=$id_pesanan AND id_toko=$idToko LIMIT 1"
             ));
@@ -213,86 +212,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // ════ EDIT PROFIL ════
-    if ($action === 'edit_profil') {
-        $nama     = mysqli_real_escape_string($conn, trim($_POST['nama'] ?? ''));
-        $username = mysqli_real_escape_string($conn, trim($_POST['username'] ?? ''));
-
-        if (empty($nama) || empty($username)) {
-            $feedback = ['type' => 'danger', 'msg' => 'Nama dan username tidak boleh kosong.'];
-        } else {
-            /* Cek username duplikat (selain diri sendiri) */
-            $cekUser = mysqli_fetch_assoc(mysqli_query($conn,
-                "SELECT id_penjual FROM penjual
-                 WHERE username='$username' AND id_penjual != $penjualId LIMIT 1"
-            ));
-            if ($cekUser) {
-                $feedback = ['type' => 'danger', 'msg' => 'Username sudah dipakai oleh akun lain.'];
-            } else {
-                $fotoField = '';
-                if (isset($_FILES['foto_profil']) && $_FILES['foto_profil']['error'] === UPLOAD_ERR_OK) {
-                    $ext         = strtolower(pathinfo($_FILES['foto_profil']['name'], PATHINFO_EXTENSION));
-                    $allowed     = ['jpg','jpeg','png','webp'];
-                    if (!in_array($ext, $allowed)) {
-                        $feedback = ['type' => 'danger', 'msg' => 'Format foto tidak didukung.'];
-                    } else {
-                        $uploadDir = '/opt/lampp/htdocs/e_kantin/assets/img/penjual/';
-                        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-                        $newFile = 'penjual_' . $penjualId . '_' . time() . '.' . $ext;
-                        if (move_uploaded_file($_FILES['foto_profil']['tmp_name'], $uploadDir . $newFile)) {
-                            /* Hapus foto lama */
-                            $fotoLama = $profilPenjual['foto_profil'] ?? '';
-                            if ($fotoLama && file_exists($uploadDir . $fotoLama)) unlink($uploadDir . $fotoLama);
-                            $fotoField = ", foto_profil = '$newFile'";
-                            $_SESSION['user_foto'] = $newFile;
-                        } else {
-                            $feedback = ['type' => 'danger', 'msg' => 'Gagal mengunggah foto profil. Periksa permission folder assets/img/penjual/!'];
-                        }
-                    }
-                }
-
-                if (!isset($feedback)) {
-                    mysqli_query($conn,
-                        "UPDATE penjual SET nama='$nama', username='$username'$fotoField
-                         WHERE id_penjual=$penjualId"
-                    );
-                    $_SESSION['user_nama'] = $nama;
-                    catatLog($conn, 'Update Profil', "Staf memperbarui data profil");
-                    $feedback = ['type' => 'success', 'msg' => 'Profil berhasil diperbarui!'];
-                }
-            }
-        }
-    }
-
-    // ════ GANTI PASSWORD ════
-    if ($action === 'ganti_password') {
-        $pwLama    = $_POST['password_lama']  ?? '';
-        $pwBaru    = $_POST['password_baru']  ?? '';
-        $pwKonfirm = $_POST['password_konfirm'] ?? '';
-
-        $akun = mysqli_fetch_assoc(mysqli_query($conn,
-            "SELECT password FROM penjual WHERE id_penjual=$penjualId LIMIT 1"
-        ));
-
-        if (!password_verify($pwLama, $akun['password'])) {
-            $feedback = ['type' => 'danger', 'msg' => 'Password lama tidak sesuai.'];
-        } elseif (strlen($pwBaru) < 6) {
-            $feedback = ['type' => 'danger', 'msg' => 'Password baru minimal 6 karakter.'];
-        } elseif ($pwBaru !== $pwKonfirm) {
-            $feedback = ['type' => 'danger', 'msg' => 'Konfirmasi password tidak cocok.'];
-        } else {
-            $hash = password_hash($pwBaru, PASSWORD_DEFAULT);
-            $hash = mysqli_real_escape_string($conn, $hash);
-            mysqli_query($conn, "UPDATE penjual SET password='$hash' WHERE id_penjual=$penjualId");
-            catatLog($conn, 'Update Password', "Staf memperbarui password");
-            $feedback = ['type' => 'success', 'msg' => 'Password berhasil diganti!'];
-        }
-    }
-
-    // ← FIX: satu titik redirect, tidak ada duplikat
     if ($feedback) $_SESSION['feedback'] = $feedback;
 
-    // 🌟 SOLUSI: Jika action-nya berhubungan dengan menu, pastikan redirect balik ke halaman menu
     if (in_array($action, ['tambah_menu', 'edit_menu', 'hapus_menu'])) {
         $activeSection = 'menu';
     }
@@ -403,18 +324,12 @@ require __DIR__ . '/sections/inbox_data.php';
             </div>
         <?php endif; ?>
 
-        <!-- DASHBOARD -->
         <div class="section active" id="section-dashboard">
-            <?php
-                require __DIR__ . '/sections/dashboard.php';
-                ?>
+            <?php require __DIR__ . '/sections/dashboard.php'; ?>
         </div>
 
-        <!-- PLACEHOLDER sections lainnya -->
         <div class="section" id="section-menu">
-            <?php 
-                require __DIR__ . '/sections/menu.php';
-                ?>
+            <?php require __DIR__ . '/sections/menu.php'; ?>
         </div>
 
         <div class="section" id="section-inbox">
@@ -456,7 +371,7 @@ const pageMeta = {
     dashboard : { title: 'Dashboard',  sub: 'Monitor semua penjualan dan keuangan E-Kantin' },
     menu      : { title: 'Menu',       sub: 'Kelola menu dan stok kantin' },
     inbox     : { title: 'Inbox',      sub: 'Pesanan masuk dan riwayat transaksi' },
-    chat      : { title: 'Chat', sub: 'Komunikasi dengan pembeli' },
+    chat      : { title: 'Chat',       sub: 'Komunikasi dengan pembeli' },
     profil    : { title: 'Profil',     sub: 'Kelola data akun penjual' },
 };
 
@@ -485,7 +400,6 @@ if (feedbackEl) {
     }, 4000);
 }
 
-// Polling Realtime Chat Notification Badge in Sidebar
 function updateChatUnreadBadge() {
     const scriptPath = window.location.pathname;
     let backendUrl = '../../backend/ambil_unread_chat.php';
@@ -518,7 +432,6 @@ function updateChatUnreadBadge() {
         .catch(err => console.error('Error fetching unread chat:', err));
 }
 
-// Jalankan saat load pertama kali
 document.addEventListener('DOMContentLoaded', () => {
     updateChatUnreadBadge();
     setInterval(updateChatUnreadBadge, 4000);
