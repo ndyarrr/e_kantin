@@ -461,20 +461,29 @@ require __DIR__ . '/sections/tools_data.php';
             background: #cbd5e1;
             border-radius: 10px;
         }
+
         /* ── RESPONSIVE DROPDOWN NOTIFIKASI (HP) ── */
         @media (max-width: 768px) {
             .topbar {
-                position: relative; /* Menjadikan kotak hijau (topbar) sebagai patokan ukuran */
+                position: relative;
+                /* Menjadikan kotak hijau (topbar) sebagai patokan ukuran */
             }
+
             .notif-wrapper {
-                position: static !important; /* Melepas paksa ikatan dari ikon lonceng */
+                position: static !important;
+                /* Melepas paksa ikatan dari ikon lonceng */
             }
+
             .notif-dropdown {
                 position: absolute !important;
-                top: calc(100% + 5px) !important; /* Muncul tepat 5px di bawah kotak hijau */
-                left: 0 !important; /* Sejajar persis dengan ujung kiri topbar */
-                right: 0 !important; /* Sejajar persis dengan ujung kanan topbar */
-                width: 100% !important; /* Memenuhi lebar topbar dengan sempurna */
+                top: calc(100% + 5px) !important;
+                /* Muncul tepat 5px di bawah kotak hijau */
+                left: 0 !important;
+                /* Sejajar persis dengan ujung kiri topbar */
+                right: 0 !important;
+                /* Sejajar persis dengan ujung kanan topbar */
+                width: 100% !important;
+                /* Memenuhi lebar topbar dengan sempurna */
                 z-index: 9999 !important;
             }
         }
@@ -514,15 +523,16 @@ require __DIR__ . '/sections/tools_data.php';
                 <i class="fa-solid fa-user-plus"></i> Tambah Akun
             </button>
             <button class="nav-link" data-section="chat" onclick="switchSection('chat')"><i
-                    class="fa-solid fa-comments"></i> Chat 
+                    class="fa-solid fa-comments"></i> Chat
             </button>
         </nav>
         <div class="sidebar-bottom">
             <button class="nav-link" data-section="tools" onclick="switchSection('tools')">
                 <i class="fa-solid fa-wrench"></i> Tools & Log
             </button>
-            <a href="../../auth/logout.php" class="nav-link logout"><i class="fa-solid fa-arrow-right-from-bracket"></i>
-                Log out</a>
+            <button class="nav-link logout" onclick="document.getElementById('modalLogout').style.display='flex'">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Log out
+            </button>
         </div>
     </aside>
 
@@ -692,257 +702,274 @@ require __DIR__ . '/sections/tools_data.php';
     </div>
     </div>
 
-    <script>
-        /* ── sidebar ── */
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        function toggleSidebar() {
-            if (window.innerWidth <= 768) {
-                if (sidebar) sidebar.classList.toggle('open');
-                if (overlay) overlay.classList.toggle('show');
-            } else {
-                if (sidebar) {
-                    const hidden = sidebar.style.marginLeft === '-256px';
-                    sidebar.style.marginLeft = hidden ? '0' : '-256px';
-                    const mainEl = document.getElementById('main');
-                    if (mainEl) mainEl.style.width = hidden ? '' : '100%';
-                }
+<div id="modalLogout" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div style="background:#fff; border-radius:16px; padding:32px 28px; max-width:340px; width:90%; text-align:center; font-family:'Poppins',sans-serif; animation:muncul 0.3s ease-out;">
+        <h3 style="font-size:18px; font-weight:700; margin-bottom:8px; color:#111;">Apakah anda yakin ingin logout?</h3>
+        <p style="font-size:13px; color:#888; margin-bottom:24px;">Kamu akan di arahkan keluar dan harus login kembali.</p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button onclick="document.getElementById('modalLogout').style.display='none'"
+                style="padding:10px 24px; border-radius:10px; border:1.5px solid #ddd; background:#fff; font-family:'Poppins',sans-serif; font-size:14px; cursor:pointer; color:#555;">
+                Batal
+            </button>
+            <a href="../../auth/logout.php"
+                style="padding:10px 24px; border-radius:10px; background:#e45c5cff; color:#fff; font-family:'Poppins',sans-serif; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center;">
+                Keluar
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+
+<script>
+    /* ── sidebar ── */
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    function toggleSidebar() {
+        if (window.innerWidth <= 768) {
+            if (sidebar) sidebar.classList.toggle('open');
+            if (overlay) overlay.classList.toggle('show');
+        } else {
+            if (sidebar) {
+                const hidden = sidebar.style.marginLeft === '-256px';
+                sidebar.style.marginLeft = hidden ? '0' : '-256px';
+                const mainEl = document.getElementById('main');
+                if (mainEl) mainEl.style.width = hidden ? '' : '100%';
             }
         }
-        function closeSidebar() {
-            if (sidebar) sidebar.classList.remove('open');
-            if (overlay) overlay.classList.remove('show');
-        }
-        window.addEventListener('resize', () => { if (window.innerWidth > 768) closeSidebar(); });
+    }
+    function closeSidebar() {
+        if (sidebar) sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('show');
+    }
+    window.addEventListener('resize', () => { if (window.innerWidth > 768) closeSidebar(); });
 
-        /* ── section switcher ── */
+    /* ── section switcher ── */
 
 
-        /* Inisialisasi awal saat halaman pertama kali di-load */
-        document.addEventListener("DOMContentLoaded", function () {
-            const urlParams = new URLSearchParams(window.location.search);
-            let initSection = urlParams.get('section') || '<?= htmlspecialchars($activeSection ?? "dashboard") ?>';
+    /* Inisialisasi awal saat halaman pertama kali di-load */
+    document.addEventListener("DOMContentLoaded", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        let initSection = urlParams.get('section') || '<?= htmlspecialchars($activeSection ?? "dashboard") ?>';
 
-            // Bersihkan string jikalau ada sisa parameter nempel
-            initSection = initSection.split('&')[0];
+        // Bersihkan string jikalau ada sisa parameter nempel
+        initSection = initSection.split('&')[0];
 
-            // Jalankan switch otomatis ke halaman terakhir yang dibuka
-            switchSection(initSection);
+        // Jalankan switch otomatis ke halaman terakhir yang dibuka
+        switchSection(initSection);
+    });
+
+    // MODIFIKASI: Filter redirect toko agar tidak mengganggu section chat
+    if (window.location.search.includes('toko=') && !window.location.search.includes('section=')) {
+        history.replaceState(null, '', '?section=kantin');
+    }
+
+    /* aktifkan section dari URL / POST */
+    const initSection = '<?= htmlspecialchars($activeSection ?? "dashboard") ?>';
+    if (initSection !== 'dashboard' && document.getElementById('section-' + initSection)) {
+        switchSection(initSection);
+    }
+
+    /* ── charts ── */
+    const grafikLabels = <?= json_encode($grafikLabels ?? []) ?>;
+    const grafikValues = <?= json_encode($grafikValues ?? []) ?>;
+    const proporsiLabels = <?= json_encode($proporsiLabels ?? []) ?>;
+    const proporsiValues = <?= json_encode($proporsiValues ?? []) ?>;
+    const greens = ['#79b775', '#8cd48a', '#b5d7b4', '#4a9e4a', '#2d7a2d'];
+
+    const lineChartEl = document.getElementById('lineChart');
+    if (lineChartEl) {
+        const ctxL = lineChartEl.getContext('2d');
+        const grad = ctxL.createLinearGradient(0, 0, 0, 180);
+        grad.addColorStop(0, 'rgba(121,183,117,.35)');
+        grad.addColorStop(1, 'rgba(121,183,117,0)');
+        new Chart(ctxL, { type: 'line', data: { labels: grafikLabels, datasets: [{ data: grafikValues, borderColor: '#79b775', borderWidth: 2.5, backgroundColor: grad, fill: true, tension: 0.4, pointBackgroundColor: '#79b775', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { grid: { color: '#e5e7eb' }, ticks: { display: false }, beginAtZero: true, border: { display: false } } } } });
+    }
+
+    const ctxD = document.getElementById('donutChart');
+    if (ctxD) {
+        new Chart(ctxD, {
+            type: 'doughnut',
+            data: { labels: proporsiLabels, datasets: [{ data: proporsiValues, backgroundColor: greens.slice(0, proporsiLabels.length), borderWidth: 3, borderColor: '#f8f9fa' }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { display: false } } }
         });
-
-        // MODIFIKASI: Filter redirect toko agar tidak mengganggu section chat
-        if (window.location.search.includes('toko=') && !window.location.search.includes('section=')) {
-            history.replaceState(null, '', '?section=kantin');
-        }
-
-        /* aktifkan section dari URL / POST */
-        const initSection = '<?= htmlspecialchars($activeSection ?? "dashboard") ?>';
-        if (initSection !== 'dashboard' && document.getElementById('section-' + initSection)) {
-            switchSection(initSection);
-        }
-
-        /* ── charts ── */
-        const grafikLabels = <?= json_encode($grafikLabels ?? []) ?>;
-        const grafikValues = <?= json_encode($grafikValues ?? []) ?>;
-        const proporsiLabels = <?= json_encode($proporsiLabels ?? []) ?>;
-        const proporsiValues = <?= json_encode($proporsiValues ?? []) ?>;
-        const greens = ['#79b775', '#8cd48a', '#b5d7b4', '#4a9e4a', '#2d7a2d'];
-
-        const lineChartEl = document.getElementById('lineChart');
-        if (lineChartEl) {
-            const ctxL = lineChartEl.getContext('2d');
-            const grad = ctxL.createLinearGradient(0, 0, 0, 180);
-            grad.addColorStop(0, 'rgba(121,183,117,.35)');
-            grad.addColorStop(1, 'rgba(121,183,117,0)');
-            new Chart(ctxL, { type: 'line', data: { labels: grafikLabels, datasets: [{ data: grafikValues, borderColor: '#79b775', borderWidth: 2.5, backgroundColor: grad, fill: true, tension: 0.4, pointBackgroundColor: '#79b775', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { grid: { color: '#e5e7eb' }, ticks: { display: false }, beginAtZero: true, border: { display: false } } } } });
-        }
-
-        const ctxD = document.getElementById('donutChart');
-        if (ctxD) {
-            new Chart(ctxD, {
-                type: 'doughnut',
-                data: { labels: proporsiLabels, datasets: [{ data: proporsiValues, backgroundColor: greens.slice(0, proporsiLabels.length), borderWidth: 3, borderColor: '#f8f9fa' }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { display: false } } }
+        const legend = document.getElementById('legend');
+        if (legend) {
+            legend.innerHTML = ''; // reset container
+            proporsiLabels.forEach((label, i) => {
+                legend.innerHTML += `<div class="legend-item"><span class="legend-dot" style="background:${greens[i]}"></span>${label}</div>`;
             });
-            const legend = document.getElementById('legend');
-            if (legend) {
-                legend.innerHTML = ''; // reset container
-                proporsiLabels.forEach((label, i) => {
-                    legend.innerHTML += `<div class="legend-item"><span class="legend-dot" style="background:${greens[i]}"></span>${label}</div>`;
-                });
-            }
         }
+    }
 
-        /* ── kode aktivasi ── */
-        function randomKode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let c = 'EK';
-            for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
-            return c;
-        }
-        function regenKode() {
-            const k = randomKode();
-            const preview = document.getElementById('kodePreview');
-            const hidden = document.getElementById('kodeHidden');
-            if (preview) preview.textContent = k;
-            if (hidden) hidden.value = k;
-        }
+    /* ── kode aktivasi ── */
+    function randomKode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let c = 'EK';
+        for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
+        return c;
+    }
+    function regenKode() {
+        const k = randomKode();
+        const preview = document.getElementById('kodePreview');
+        const hidden = document.getElementById('kodeHidden');
+        if (preview) preview.textContent = k;
+        if (hidden) hidden.value = k;
+    }
 
-        /* ── toggle password (sidebar/tabel bawaan) ── */
-        function togglePass() {
-            const inp = document.getElementById('inputPass');
-            const ico = document.getElementById('eyeIcon');
-            if (inp && ico) {
-                inp.type = inp.type === 'password' ? 'text' : 'password';
-                ico.className = inp.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
-            }
-        }
-
-        /* ── reveal kode di tabel ── */
-        function revealKode(id) {
-            const el = document.getElementById('kode-' + id);
-            const eye = document.getElementById('eye-' + id);
-            if (!el || !eye) return;
-            if (el.dataset.hidden === '1') {
-                el.textContent = el.dataset.plain;
-                el.dataset.hidden = '0';
-                eye.className = 'fa-solid fa-eye-slash';
-            } else {
-                const p = el.dataset.plain || '';
-                el.textContent = p.substring(0, 2) + '•'.repeat(Math.max(0, p.length - 2));
-                el.dataset.hidden = '1';
-                eye.className = 'fa-solid fa-eye';
-            }
-        }
-
-        /* ── modal profil ── */
-        function bukaProfil() {
-            const modal = document.getElementById('modalProfil');
-            if (modal) modal.style.display = 'flex';
-
-            const activeLink = document.querySelector('.nav-link.active[data-section]');
-            const inputSection = document.getElementById('profilSection');
-            if (inputSection) {
-                inputSection.value = activeLink?.dataset?.section || 'dashboard';
-            }
-        }
-        function tutupProfil() {
-            const modal = document.getElementById('modalProfil');
-            if (modal) modal.style.display = 'none';
-        }
-        function revealModalKode() {
-            const el = document.getElementById('modalKode');
-            const eyeBtn = document.getElementById('modalKodeEye');
-            if (!el || !eyeBtn) return;
-            const eye = eyeBtn.querySelector('i');
-            if (!eye) return;
-
-            if (el.dataset.hidden === '1') {
-                el.textContent = el.dataset.plain;
-                el.dataset.hidden = '0';
-                eye.className = 'fa-solid fa-eye-slash';
-            } else {
-                const p = el.dataset.plain || '';
-                el.textContent = p.substring(0, 2) + '•'.repeat(Math.max(0, p.length - 2));
-                el.dataset.hidden = '1';
-                eye.className = 'fa-solid fa-eye';
-            }
-        }
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') tutupProfil(); });
-
-        /* ── auto dismiss feedback ── */
-        const feedbackEl = document.getElementById('feedbackBanner');
-        if (feedbackEl) {
-            setTimeout(() => {
-                feedbackEl.style.transition = 'opacity .5s';
-                feedbackEl.style.opacity = '0';
-                setTimeout(() => { if (feedbackEl.parentNode) feedbackEl.remove(); }, 500);
-            }, 4000);
-        }
-
-        /* ── toggle password input dinamis ── */
-        function togglePw(inputId, iconId) {
-            const inp = document.getElementById(inputId);
-            const ico = document.getElementById(iconId);
-            if (!inp || !ico) return;
+    /* ── toggle password (sidebar/tabel bawaan) ── */
+    function togglePass() {
+        const inp = document.getElementById('inputPass');
+        const ico = document.getElementById('eyeIcon');
+        if (inp && ico) {
             inp.type = inp.type === 'password' ? 'text' : 'password';
             ico.className = inp.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
         }
+    }
 
-        /* ── modal foto profil admin ── */
-        function bukaFotoAdmin(src) {
-            const img = document.getElementById('modalFotoAdminImg');
-            const modal = document.getElementById('modalFotoAdmin');
-            if (img) img.src = src;
-            if (modal) modal.classList.add('show');
+    /* ── reveal kode di tabel ── */
+    function revealKode(id) {
+        const el = document.getElementById('kode-' + id);
+        const eye = document.getElementById('eye-' + id);
+        if (!el || !eye) return;
+        if (el.dataset.hidden === '1') {
+            el.textContent = el.dataset.plain;
+            el.dataset.hidden = '0';
+            eye.className = 'fa-solid fa-eye-slash';
+        } else {
+            const p = el.dataset.plain || '';
+            el.textContent = p.substring(0, 2) + '•'.repeat(Math.max(0, p.length - 2));
+            el.dataset.hidden = '1';
+            eye.className = 'fa-solid fa-eye';
         }
-        function tutupFotoAdmin() {
-            const modal = document.getElementById('modalFotoAdmin');
-            if (modal) modal.classList.remove('show');
+    }
+
+    /* ── modal profil ── */
+    function bukaProfil() {
+        const modal = document.getElementById('modalProfil');
+        if (modal) modal.style.display = 'flex';
+
+        const activeLink = document.querySelector('.nav-link.active[data-section]');
+        const inputSection = document.getElementById('profilSection');
+        if (inputSection) {
+            inputSection.value = activeLink?.dataset?.section || 'dashboard';
+        }
+    }
+    function tutupProfil() {
+        const modal = document.getElementById('modalProfil');
+        if (modal) modal.style.display = 'none';
+    }
+    function revealModalKode() {
+        const el = document.getElementById('modalKode');
+        const eyeBtn = document.getElementById('modalKodeEye');
+        if (!el || !eyeBtn) return;
+        const eye = eyeBtn.querySelector('i');
+        if (!eye) return;
+
+        if (el.dataset.hidden === '1') {
+            el.textContent = el.dataset.plain;
+            el.dataset.hidden = '0';
+            eye.className = 'fa-solid fa-eye-slash';
+        } else {
+            const p = el.dataset.plain || '';
+            el.textContent = p.substring(0, 2) + '•'.repeat(Math.max(0, p.length - 2));
+            el.dataset.hidden = '1';
+            eye.className = 'fa-solid fa-eye';
+        }
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') tutupProfil(); });
+
+    /* ── auto dismiss feedback ── */
+    const feedbackEl = document.getElementById('feedbackBanner');
+    if (feedbackEl) {
+        setTimeout(() => {
+            feedbackEl.style.transition = 'opacity .5s';
+            feedbackEl.style.opacity = '0';
+            setTimeout(() => { if (feedbackEl.parentNode) feedbackEl.remove(); }, 500);
+        }, 4000);
+    }
+
+    /* ── toggle password input dinamis ── */
+    function togglePw(inputId, iconId) {
+        const inp = document.getElementById(inputId);
+        const ico = document.getElementById(iconId);
+        if (!inp || !ico) return;
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+        ico.className = inp.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+    }
+
+    /* ── modal foto profil admin ── */
+    function bukaFotoAdmin(src) {
+        const img = document.getElementById('modalFotoAdminImg');
+        const modal = document.getElementById('modalFotoAdmin');
+        if (img) img.src = src;
+        if (modal) modal.classList.add('show');
+    }
+    function tutupFotoAdmin() {
+        const modal = document.getElementById('modalFotoAdmin');
+        if (modal) modal.classList.remove('show');
+    }
+
+    /* ── JavaScript Operasional Dropdown Notifikasi Kendala ── */
+    const notifDropdown = document.getElementById('notifDropdown');
+    const notifDot = document.getElementById('notifDot');
+
+    function toggleNotifDropdown(event) {
+        if (event) event.stopPropagation();
+        if (!notifDropdown) return;
+
+        if (notifDropdown.style.display === 'none' || notifDropdown.style.display === '') {
+            notifDropdown.style.display = 'block';
+            notifDropdown.style.animation = 'fadeInNotif 0.2s ease-out';
+        } else {
+            notifDropdown.style.display = 'none';
+        }
+    }
+
+    // Tutup dropdown otomatis jika klik di luar area komponen notifikasi
+    document.addEventListener('click', function (event) {
+        if (notifDropdown && !event.target.closest('.notif-wrapper')) {
+            notifDropdown.style.display = 'none';
+        }
+    });
+
+    // Polling Realtime Chat Notification Badge in Sidebar
+    function updateChatUnreadBadge() {
+        const scriptPath = window.location.pathname;
+        let backendUrl = '../../backend/ambil_unread_chat.php';
+        if (scriptPath.includes('/owner/') || scriptPath.includes('/staf/')) {
+            backendUrl = '../../../backend/ambil_unread_chat.php';
         }
 
-        /* ── JavaScript Operasional Dropdown Notifikasi Kendala ── */
-        const notifDropdown = document.getElementById('notifDropdown');
-        const notifDot = document.getElementById('notifDot');
-
-        function toggleNotifDropdown(event) {
-            if (event) event.stopPropagation();
-            if (!notifDropdown) return;
-
-            if (notifDropdown.style.display === 'none' || notifDropdown.style.display === '') {
-                notifDropdown.style.display = 'block';
-                notifDropdown.style.animation = 'fadeInNotif 0.2s ease-out';
-            } else {
-                notifDropdown.style.display = 'none';
-            }
-        }
-
-        // Tutup dropdown otomatis jika klik di luar area komponen notifikasi
-        document.addEventListener('click', function (event) {
-            if (notifDropdown && !event.target.closest('.notif-wrapper')) {
-                notifDropdown.style.display = 'none';
-            }
-        });
-
-        // Polling Realtime Chat Notification Badge in Sidebar
-        function updateChatUnreadBadge() {
-            const scriptPath = window.location.pathname;
-            let backendUrl = '../../backend/ambil_unread_chat.php';
-            if (scriptPath.includes('/owner/') || scriptPath.includes('/staf/')) {
-                backendUrl = '../../../backend/ambil_unread_chat.php';
-            }
-            
-            fetch(backendUrl)
-                .then(res => res.json())
-                .then(data => {
-                    const count = data.unread_count || 0;
-                    const chatBtn = document.querySelector('.nav-link[data-section="chat"]');
-                    if (chatBtn) {
-                        let badge = chatBtn.querySelector('.nav-badge');
-                        if (count > 0) {
-                            if (!badge) {
-                                badge = document.createElement('span');
-                                badge.className = 'nav-badge';
-                                chatBtn.appendChild(badge);
-                            }
-                            badge.textContent = count;
-                            badge.style.display = 'inline-block';
-                        } else {
-                            if (badge) {
-                                badge.style.display = 'none';
-                            }
+        fetch(backendUrl)
+            .then(res => res.json())
+            .then(data => {
+                const count = data.unread_count || 0;
+                const chatBtn = document.querySelector('.nav-link[data-section="chat"]');
+                if (chatBtn) {
+                    let badge = chatBtn.querySelector('.nav-badge');
+                    if (count > 0) {
+                        if (!badge) {
+                            badge = document.createElement('span');
+                            badge.className = 'nav-badge';
+                            chatBtn.appendChild(badge);
+                        }
+                        badge.textContent = count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        if (badge) {
+                            badge.style.display = 'none';
                         }
                     }
-                })
-                .catch(err => console.error('Error fetching unread chat:', err));
-        }
+                }
+            })
+            .catch(err => console.error('Error fetching unread chat:', err));
+    }
 
-        // Jalankan saat load pertama kali
-        document.addEventListener('DOMContentLoaded', () => {
-            updateChatUnreadBadge();
-            setInterval(updateChatUnreadBadge, 4000);
-        });
-    </script>
-</body>
+    // Jalankan saat load pertama kali
+    document.addEventListener('DOMContentLoaded', () => {
+        updateChatUnreadBadge();
+        setInterval(updateChatUnreadBadge, 4000);
+    });
+</script>
 
 </html>

@@ -537,12 +537,16 @@ body {
     height: 90px;
     font-size: 30px;
 }
+
 .lb-table-wrap {
     flex: 1;
     min-width: 0;
-    max-height: 295px; /* Membatasi tinggi tabel leaderboard agar muat sekitar 5 baris sekaligus */
-    overflow-y: auto; /* Aktifkan scroll vertikal */
-    overflow-x: auto; /* Aktifkan scroll horizontal di mobile */
+    max-height: 295px;
+    /* Membatasi tinggi tabel leaderboard agar muat sekitar 5 baris sekaligus */
+    overflow-y: auto;
+    /* Aktifkan scroll vertikal */
+    overflow-x: auto;
+    /* Aktifkan scroll horizontal di mobile */
     border-radius: 10px;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
     background: #fff;
@@ -560,14 +564,16 @@ body {
 .lb-table thead th {
     position: sticky;
     top: 0;
-    background: #fff; /* Agar tidak transparan saat baris di bawahnya bergeser */
+    background: #fff;
+    /* Agar tidak transparan saat baris di bawahnya bergeser */
     z-index: 2;
     text-align: left;
     color: #888;
     font-size: 13px;
     font-weight: 500;
     padding: 12px 16px;
-    border-bottom: 2px solid #eee; /* Pembatas header yang sticky */
+    border-bottom: 2px solid #eee;
+    /* Pembatas header yang sticky */
 }
 
 .lb-table tbody tr {
@@ -765,74 +771,113 @@ body {
 .about-links a:hover {
     color: #84c180;
 }
+
 /* BACKGROUND GELAP POP-UP */
 .modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background: rgba(0, 0, 0, 0.5);
     z-index: 99999;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     backdrop-filter: blur(4px);
 }
 
 /* KOTAK PUTIHNYA */
 .modal-content {
-    background: #fff; width: 90%; max-width: 500px;
-    border-radius: 16px; padding: 24px; position: relative;
-    max-height: 80vh; overflow-y: auto;
+    background: #fff;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    max-height: 80vh;
+    overflow-y: auto;
     font-family: 'Poppins', sans-serif;
     animation: muncul 0.3s ease-out;
 }
 
 @keyframes muncul {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .modal-close {
-    position: absolute; top: 16px; right: 16px;
-    background: #eee; border: none; font-size: 20px;
-    width: 32px; height: 32px; border-radius: 50%;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: #eee;
+    border: none;
+    font-size: 20px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.modal-close:hover { background: #ff4d4d; color: #fff; }
 
-.modal-title { font-size: 20px; margin-bottom: 4px; color: #111; }
-.modal-desc { font-size: 13px; color: #666; margin-bottom: 16px; }
+.modal-close:hover {
+    background: #ff4d4d;
+    color: #fff;
+}
+
+.modal-title {
+    font-size: 20px;
+    margin-bottom: 4px;
+    color: #111;
+}
+
+.modal-desc {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 16px;
+}
 
 /* TAMPILAN MENU DI DALAM POP-UP */
-.modal-menu-list { display: flex; flex-direction: column; gap: 10px; }
-.menu-item-modal {
-    border: 1px solid #eee; padding: 12px; border-radius: 10px;
-    display: flex; justify-content: space-between; align-items: center;
+.modal-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
-.menu-item-nama { font-weight: 600; font-size: 14px; color: #111;}
-.menu-item-harga { font-weight: 700; color: #71B668; font-size: 14px;}
+
+.menu-item-modal {
+    border: 1px solid #eee;
+    padding: 12px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.menu-item-nama {
+    font-weight: 600;
+    font-size: 14px;
+    color: #111;
+}
+
+.menu-item-harga {
+    font-weight: 700;
+    color: #71B668;
+    font-size: 14px;
+}
+
 /* =========================================
    ANIMASI MAKANAN MELAYANG (FLOATING)
    ========================================= */
 
-/* Membuat kunci pergerakan (naik 15px lalu turun lagi) */
-@keyframes floating {
-    0% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-15px); /* Bergerak ke atas 15 pixel */
-    }
-    100% {
-        transform: translateY(0);
-    }
-}
-
-/* Menerapkan animasi ke gambar makanan */
-.col-food {
-    animation: floating 2s ease-in-out infinite;
-}
-
-/* Memberikan jeda pada piring soto (kanan) agar bergeraknya bergantian dengan ayam geprek (kiri) */
-.col-food-right {
-    animation-delay: 1s;
-}
 /* =========================================
    POSISI & ANIMASI PIRING MAKANAN
    ========================================= */
@@ -847,51 +892,70 @@ body {
     align-items: center;
 }
 
-/* Gaya dasar untuk piring makanan */
+@keyframes floating {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-18px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+@keyframes floating-reverse {
+    0% {
+        transform: translateY(-18px);
+    }
+
+    50% {
+        transform: translateY(0px);
+    }
+
+    100% {
+        transform: translateY(-18px);
+    }
+}
+
 .col-food {
     position: absolute;
-    width: 220px; /* Ukuran piring, sesuaikan jika kurang besar/kecil */
+    width: 220px;
     height: auto;
-    z-index: 5; /* Angka 5 agar posisinya pas (tidak menutupi teks penting) */
-    
-    /* Efek bayangan jatuh yang halus agar terlihat 3D dan melayang beneran */
-    filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.2)); 
-    
-    /* Panggil animasi gerak naik-turun */
-    animation: floating 2.5s ease-in-out infinite; 
+    z-index: 5;
+    pointer-events: none;
+    filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.25));
+    animation: floating 4s ease-in-out infinite;
 }
 
-/* Posisi piring Ayam Geprek (Kiri) */
 .col-food-left {
-    left: -80px; /* Geser ke kiri hingga agak keluar dari tengah */
-    top: 10%;    /* Posisi vertikal */
+    left: 10px;
+    top: 10%;
 }
 
-/* Posisi piring Soto (Kanan) */
 .col-food-right {
-    right: -80px; /* Geser ke kanan */
-    top: 25%;     /* Posisinya sengaja dibikin agak lebih bawah dari ayam geprek */
-    animation-delay: 1.2s; /* Jeda biar melayangnya bergantian (jungkat-jungkit) */
+    right: 10px;
+    top: 25%;
+    animation: floating-reverse 4s ease-in-out infinite; /* ganti ini */
 }
 
-/* Kunci Animasi Melayang */
-@keyframes floating {
-    0% { transform: translateY(0); }
-    50% { transform: translateY(-20px); } /* Terangkat 20px */
-    100% { transform: translateY(0); }
-}
-
-/* Responsif untuk layar HP agar piring tidak terlalu memakan tempat */
+/* Mobile */
 @media (max-width: 768px) {
     .col-food {
-        width: 130px;
+        width: 155px;
     }
+
     .col-food-left {
-        left: -10px;
-        top: 5%;
+        left: 10px;
+        /* masuk ke dalam, tidak terpotong tepi */
+        top: 100px;
     }
+
     .col-food-right {
-        right: -10px;
-        top: 15%;
+        right: 10px;
+        /* masuk ke dalam, tidak terpotong tepi */
+        top: 100px;
     }
 }

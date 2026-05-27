@@ -63,7 +63,7 @@
             flex-shrink: 0;
             transition: margin-left var(--transition), transform var(--transition);
             overflow-y: auto;
-            z-index: 1000;
+            z-index: 99;
             position: relative
         }
 

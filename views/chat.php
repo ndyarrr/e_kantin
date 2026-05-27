@@ -90,7 +90,7 @@ $role_label = match (true) {
     <div class="chat-modal-box">
         <i class="fa-solid fa-trash-can"></i>
         <p>Hapus pesan ini?</p>
-        <span>Pesan akan dihapus permanen dan tidak dapat di lihat oleh orang lain.</span>
+        <span>Pesan akan dihapus permanen dan tidak dapat di lihat oleh orang lain,namun notifikasi akan di perlihatkan pada riwayat.</span>
         <div class="chat-modal-actions">
             <button class="btn-modal-batal" onclick="tutupModalHapus()">Batal</button>
             <button class="btn-modal-hapus" id="btnKonfirmasiHapus">Hapus</button>
