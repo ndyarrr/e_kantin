@@ -223,10 +223,7 @@ require __DIR__ . '/sections/menu_data.php';
         </div>
         
         <div class="section" id="section-kas">
-            <div class="placeholder-box">
-                <i class="fa-solid fa-book"></i>
-                <p>Halaman Buku Kas — khusus owner</p>
-            </div>
+            <?php require __DIR__ . '/sections/kas.php'; ?>
         </div>
     </div>
 </div>
