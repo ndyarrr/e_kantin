@@ -2,6 +2,7 @@
 /** @var array $daftarMenu */
 ?>
 
+
 <form method="GET" action="index.php" class="menu-action-bar" id="formFilterMenu">
     <input type="hidden" name="section" value="menu">
 
@@ -174,7 +175,13 @@
 
             <div class="form-group">
                 <label for="foto_menu">Foto Menu</label>
-                <input type="file" id="foto_menu" name="foto" accept="image/*">
+                <div class="custom-file-upload">
+                    <input type="file" id="foto_menu" name="foto" accept="image/*" onchange="updateFileName(this, 'text-foto-tambah')">
+                    <label for="foto_menu" class="btn-upload-kustom">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span id="text-foto-tambah">Choose File...</span>
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -227,7 +234,13 @@
 
             <div class="form-group">
                 <label for="edit_foto_menu">Ganti Foto Menu <small>(Kosongkan jika tidak diubah)</small></label>
-                <input type="file" id="edit_foto_menu" name="foto" accept="image/*">
+                <div class="custom-file-upload">
+                    <input type="file" id="edit_foto_menu" name="foto" accept="image/*" onchange="updateFileName(this, 'text-foto-edit')">
+                    <label for="edit_foto_menu" class="btn-upload-kustom edit-mode">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span id="text-foto-edit">Choose File...</span>
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -240,10 +253,29 @@
 </div>
 
 <script>
+    // 🌟 REALTME FILE-NAME HANDLER JS
+    function updateFileName(input, targetSpanId) {
+        const textSpan = document.getElementById(targetSpanId);
+        if (input.files && input.files.length > 0) {
+            textSpan.textContent = input.files[0].name;
+            textSpan.style.fontWeight = '600';
+            textSpan.style.color = '#1e293b'; 
+        } else {
+            textSpan.textContent = 'Choose File...';
+            textSpan.style.fontWeight = 'normal';
+            textSpan.style.color = '#64748b';
+        }
+    }
+
     function toggleFormTambah() {
         tutupFormEdit();
         const formBox = document.getElementById('containerTambahMenu');
         formBox.classList.toggle('show');
+        
+        // Reset text span kustom pas tombol batal/tutup diklik
+        document.getElementById('text-foto-tambah').textContent = 'Choose File...';
+        document.getElementById('text-foto-tambah').style.color = '#64748b';
+
         if (formBox.classList.contains('show')) {
             formBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
             document.getElementById('nama_menu').focus();
@@ -255,6 +287,10 @@
     function bukaFormEdit(menu) {
         document.getElementById('containerTambahMenu').classList.remove('show');
         const formEdit = document.getElementById('containerEditMenu');
+
+        // Reset teks pencarian file kustom edit ke mode semula tiap form dibuka
+        document.getElementById('text-foto-edit').textContent = 'Choose File...';
+        document.getElementById('text-foto-edit').style.color = '#64748b';
 
         document.getElementById('judul_edit_menu').textContent = menu.nama_menu;
         document.getElementById('edit_id_menu').value = menu.id_menu;

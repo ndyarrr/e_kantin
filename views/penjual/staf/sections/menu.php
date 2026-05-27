@@ -133,6 +133,7 @@
         <?php endforeach; endif; ?>
 </div>
 
+<!-- ================= FORM TAMBAH MENU ================= -->
 <div id="containerTambahMenu" class="form-tambah-container toggle-form">
     <div class="form-tambah-header">
         <i class="fa-solid fa-circle-plus" style="color: #5aab55; font-size: 20px;"></i>
@@ -172,9 +173,16 @@
                 <input type="number" id="stok_menu" name="stok" placeholder="Contoh: 50" min="0" value="50" required>
             </div>
 
+            <!-- PERBAIKAN: Tombol Upload Kustom Diaktifkan Kembali -->
             <div class="form-group">
                 <label for="foto_menu">Foto Menu</label>
-                <input type="file" id="foto_menu" name="foto" accept="image/*">
+                <div class="custom-file-upload">
+                    <input type="file" id="foto_menu" name="foto" accept="image/*" onchange="updateFileName(this, 'text-foto-tambah')">
+                    <label for="foto_menu" class="btn-upload-kustom">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span id="text-foto-tambah"> AMBIL FOTO...</span>
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -185,6 +193,7 @@
     </form>
 </div>
 
+<!-- ================= FORM EDIT MENU ================= -->
 <div id="containerEditMenu" class="form-tambah-container toggle-form" style="border-top: 4px solid #3b82f6;">
     <div class="form-tambah-header">
         <i class="fa-solid fa-pen-to-square" style="color: #3b82f6; font-size: 20px;"></i>
@@ -225,9 +234,16 @@
                 <input type="number" id="edit_stok_menu" name="stok" min="0" required>
             </div>
 
+            <!-- PERBAIKAN: Tombol Ganti Foto Kustom Diaktifkan Kembali -->
             <div class="form-group">
                 <label for="edit_foto_menu">Ganti Foto Menu <small>(Kosongkan jika tidak diubah)</small></label>
-                <input type="file" id="edit_foto_menu" name="foto" accept="image/*">
+                <div class="custom-file-upload">
+                    <input type="file" id="edit_foto_menu" name="foto" accept="image/*" onchange="updateFileName(this, 'text-foto-edit')">
+                    <label for="edit_foto_menu" class="btn-upload-kustom edit-mode">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span id="text-foto-edit">Choose File...</span>
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -240,10 +256,29 @@
 </div>
 
 <script>
+    // 🌟 REALTME FILE-NAME HANDLER JS (Mengambil kembali file nama secara dinamis)
+    function updateFileName(input, targetSpanId) {
+        const textSpan = document.getElementById(targetSpanId);
+        if (input.files && input.files.length > 0) {
+            textSpan.textContent = input.files[0].name;
+            textSpan.style.fontWeight = '600';
+            textSpan.style.color = '#1e293b'; 
+        } else {
+            textSpan.textContent = 'Choose File...';
+            textSpan.style.fontWeight = 'normal';
+            textSpan.style.color = '#64748b';
+        }
+    }
+
     function toggleFormTambah() {
         tutupFormEdit();
         const formBox = document.getElementById('containerTambahMenu');
         formBox.classList.toggle('show');
+        
+        // Reset tulisan tombol file pas batal/tutup diklik
+        document.getElementById('text-foto-tambah').textContent = 'Choose File...';
+        document.getElementById('text-foto-tambah').style.color = '#64748b';
+
         if (formBox.classList.contains('show')) {
             formBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
             document.getElementById('nama_menu').focus();
@@ -255,6 +290,10 @@
     function bukaFormEdit(menu) {
         document.getElementById('containerTambahMenu').classList.remove('show');
         const formEdit = document.getElementById('containerEditMenu');
+
+        // Reset tulisan ganti file pas form edit dibuka
+        document.getElementById('text-foto-edit').textContent = 'Choose File...';
+        document.getElementById('text-foto-edit').style.color = '#64748b';
 
         document.getElementById('judul_edit_menu').textContent = menu.nama_menu;
         document.getElementById('edit_id_menu').value = menu.id_menu;

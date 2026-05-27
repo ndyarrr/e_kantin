@@ -1,5 +1,5 @@
 <?php
-// views/penjual/owner/actions/proses_menu.php
+// views/penjual/actions/proses_menu.php
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -8,21 +8,33 @@ if (session_status() === PHP_SESSION_NONE) {
 $is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
 $base_url = $is_php_s ? '' : '/e_kantin';
 
+// ✅ PERBAIKAN 1: Pastikan user terautentikasi sebagai penjual (Owner/Staf)
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
     header('Location: ' . $base_url . '/auth/login.php');
     exit;
 }
 
-// ✅ PERBAIKAN 1: Path mundur 3 kali menggunakan __DIR__ agar akurat
 require_once __DIR__ . '/../../../config/database.php';
 
 $penjualId = (int) ($_SESSION['user_id'] ?? 0);
 
-$rToko = mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT id_toko FROM toko_penjual WHERE id_penjual=$penjualId LIMIT 1"
-));
-$idToko = (int) ($rToko['id_toko'] ?? 0);
+// ✅ PERBAIKAN 2: Gunakan $_SESSION['user_sub_role'] untuk menentukan label role
+$roleLabel = (isset($_SESSION['user_sub_role']) && $_SESSION['user_sub_role'] === 'staf') ? 'Staf' : 'Owner';
+
+// ✅ PERBAIKAN 3: Gunakan $_SESSION['user_sub_role'] untuk menentukan path redirect secara dinamis
+$rolePath  = (isset($_SESSION['user_sub_role']) && $_SESSION['user_sub_role'] === 'staf') 
+    ? '/views/penjual/staf/index.php' 
+    : '/views/penjual/owner/index.php';
+
+// ✅ OPTIMALISASI: Ambil ID Toko dari session terlebih dahulu, jika kosong baru query database
+$idToko = (int) ($_SESSION['id_toko'] ?? 0);
+if ($idToko === 0) {
+    $rToko = mysqli_fetch_assoc(mysqli_query(
+        $conn,
+        "SELECT id_toko FROM toko_penjual WHERE id_penjual=$penjualId LIMIT 1"
+    ));
+    $idToko = (int) ($rToko['id_toko'] ?? 0);
+}
 
 $uploadFileDir = realpath(__DIR__ . '/../../../assets/img/menu') . DIRECTORY_SEPARATOR;
 
@@ -81,17 +93,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $harga = (int) ($_POST['harga'] ?? 0);
         $stok = (int) ($_POST['stok'] ?? 0);
         $tersedia = $stok > 0 ? 1 : 0;
-        
-        // ✅ PERBAIKAN 2: Tangkap data deskripsi dari form HTML
         $deskripsi = mysqli_real_escape_string($conn, trim($_POST['deskripsi'] ?? ''));
 
         if ($harga > 99999) {
             $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal: Harga tidak boleh melebihi Rp 99.999!'];
-            header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=' . $activeSection);
+            header('Location: ' . $base_url . $rolePath . '?section=' . $activeSection);
             exit;
         }
 
-        // ✅ PERBAIKAN 3: Masukkan variabel $deskripsi ke dalam Query INSERT (ganti NULL)
         $ok = mysqli_query(
             $conn,
             "INSERT INTO menu (id_toko, nama_menu, kategori, deskripsi, harga, foto_menu, stok, tersedia)
@@ -100,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$ok) {
             $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal menambahkan menu: ' . mysqli_error($conn)];
-            header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=' . $activeSection);
+            header('Location: ' . $base_url . $rolePath . '?section=' . $activeSection);
             exit;
         }
 
@@ -114,14 +123,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_query($conn, "UPDATE menu SET foto_menu = '$nama_foto' WHERE id_menu = $id_menu_baru");
             } else {
                 $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Menu tersimpan, tapi foto gagal diunggah. Cek format/ukuran file.'];
-                header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=' . $activeSection);
+                header('Location: ' . $base_url . $rolePath . '?section=' . $activeSection);
                 exit;
             }
         }
 
-        // Pastikan fungsi catatLog tersedia, jika error hapus atau comment baris ini
         if (function_exists('catatLog')) {
-            catatLog($conn, 'Tambah Menu', "Owner menambahkan menu baru: $nama_menu (Kategori: $kategori, Harga: Rp $harga)");
+            catatLog($conn, 'Tambah Menu', "$roleLabel menambahkan menu baru: $nama_menu (Kategori: $kategori, Harga: Rp $harga)");
         }
 
         $feedback = ['type' => 'success', 'msg' => 'Menu baru berhasil ditambahkan!'];
@@ -135,18 +143,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $harga = (int) ($_POST['harga'] ?? 0);
         $stok = (int) ($_POST['stok'] ?? 0);
         $tersedia = $stok > 0 ? 1 : 0;
-        
-        // ✅ PERBAIKAN 4: Tangkap data deskripsi dari form edit HTML
         $deskripsi = mysqli_real_escape_string($conn, trim($_POST['deskripsi'] ?? ''));
 
         if ($harga > 99999) {
             $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal: Harga tidak boleh melebihi Rp 99.999!'];
-            header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=' . $activeSection);
+            header('Location: ' . $base_url . $rolePath . '?section=' . $activeSection);
             exit;
         }
 
-        $resLama = mysqli_query($conn, "SELECT foto_menu FROM menu WHERE id_menu = $id_menu LIMIT 1");
+        $resLama = mysqli_query($conn, "SELECT foto_menu FROM menu WHERE id_menu = $id_menu AND id_toko = $idToko LIMIT 1");
         $menuLama = mysqli_fetch_assoc($resLama);
+        
+        if (!$menuLama) {
+            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Menu tidak ditemukan atau bukan milik toko ini.'];
+            header('Location: ' . $base_url . $rolePath . '?section=' . $activeSection);
+            exit;
+        }
+
         $nama_foto = $menuLama['foto_menu'] ?? null;
 
         if (!empty($_FILES['foto']['name'])) {
@@ -159,7 +172,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $fotoSql = $nama_foto ? ", foto_menu = '$nama_foto'" : '';
         
-        // ✅ PERBAIKAN 5: Tambahkan deskripsi = '$deskripsi' ke query UPDATE
         $ok = mysqli_query(
             $conn,
             "UPDATE menu SET
@@ -174,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
 
         if ($ok && function_exists('catatLog')) {
-            catatLog($conn, 'Edit Menu', "Owner mengubah menu ID $id_menu: $nama_menu (Kategori: $kategori, Harga: Rp $harga)");
+            catatLog($conn, 'Edit Menu', "$roleLabel mengubah menu ID $id_menu: $nama_menu (Kategori: $kategori, Harga: Rp $harga)");
         }
 
         $feedback = $ok
@@ -182,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             : ['type' => 'danger', 'msg' => 'Gagal memperbarui menu: ' . mysqli_error($conn)];
     }
 
-    // ── 3. HAPUS MENU (soft delete) ──────────────────────────────────────────
+    // ── 3. HAPUS MENU ────────────────────────────────────────────────────────
     if ($action === 'hapus_menu') {
         $id_menu = (int) ($_POST['id_menu'] ?? 0);
 
@@ -193,10 +205,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             if ($ok && function_exists('catatLog')) {
                 $nama_menu_del = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama_menu FROM menu WHERE id_menu=$id_menu"))['nama_menu'] ?? '';
-                catatLog($conn, 'Hapus Menu', "Owner menghapus menu: $nama_menu_del (ID: $id_menu)");
+                catatLog($conn, 'Hapus Menu', "$roleLabel menghapus menu: $nama_menu_del (ID: $id_menu)");
             }
             $feedback = $ok
-                ? ['type' => 'success', 'msg' => 'Menu berhasil deleted!']
+                ? ['type' => 'success', 'msg' => 'Menu berhasil dihapus!']
                 : ['type' => 'danger', 'msg' => 'Gagal menghapus menu: ' . mysqli_error($conn)];
         }
     }
@@ -205,6 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['feedback'] = $feedback;
     }
 
-    header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=' . $activeSection);
+    // ✅ REDIRECT DINAMIS SESUAI HALAMAN YANG DIKIRIM (DAN ROLE)
+    header('Location: ' . $base_url . $rolePath . '?section=' . $activeSection . '&t=' . time());
     exit;
 }

@@ -1711,11 +1711,18 @@ tbody tr:hover {
     font-weight: bold;
 }
 
-/* Mengatur inputan berjejer menyamping agar hemat tempat */
+/* Mengatur inputan berjejer menyamping di desktop, dan mengantre ke bawah di HP */
 .form-grid-layout {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
+}
+
+/* 🌟 Tambahkan ini tepat di bawahnya biar di HP dia insaf */
+@media screen and (max-width: 480px) {
+    .form-grid-layout {
+        grid-template-columns: 1fr !important; /* Paksa jadi 1 kolom lurus ke bawah */
+    }
 }
 
 .static-form .form-group {
@@ -1733,7 +1740,6 @@ tbody tr:hover {
 /* PERBAIKAN: Memasukkan elemen select agar desainnya seragam dengan input box lainnya */
 .static-form input[type="text"],
 .static-form input[type="number"],
-.static-form input[type="file"],
 .static-form select {
     padding: 10px 14px;
     border: 1.5px solid #d1d5db;
@@ -1746,7 +1752,6 @@ tbody tr:hover {
     transition: 0.2s;
     box-sizing: border-box;
 }
-
 .static-form input[type="file"] {
     padding: 7px 10px;
     font-size: 12px;
@@ -1785,6 +1790,20 @@ tbody tr:hover {
     margin-top: 25px;
     border-top: 1px solid #e5e7eb;
     padding-top: 16px;
+    box-sizing: border-box; /* 🌟 Amankan ukuran border box */
+}
+
+/* 🌟 Tambahkan ini biar tombolnya rapi di HP dan tidak memotong */
+@media screen and (max-width: 480px) {
+    .form-tambah-footer {
+        flex-direction: column-reverse; /* Tombol simpan di atas, batal di bawah */
+        align-items: stretch;
+    }
+    .btn-reset, .btn-save {
+        justify-content: center;
+        text-align: center;
+        width: 100%; /* Tombol jadi full lebar di HP */
+    }
 }
 
 .btn-reset {
@@ -1835,8 +1854,7 @@ tbody tr:hover {
 
 /* Saat class .show aktif dipicu JavaScript */
 .form-tambah-container.toggle-form.show {
-    max-height: 600px;
-    /* Ditambah sedikit biar space kategori & snack muat longgar */
+    max-height: 1000px; /* Diubah dari 600px menjadi 1000px */
     opacity: 1;
     padding: 24px;
     margin-top: 40px;
@@ -1845,9 +1863,52 @@ tbody tr:hover {
     border-radius: 14px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
     overflow: visible !important;
-    /* 🌟 KUNCI UTAMA: Dibuka gemboknya agar list dropdown bisa menyembul keluar */
 }
 
+/* ================= UMPAN KUSTOM UPLOAD FOTO ================= */
+
+/* 1. Sembunyikan input file asli bawaan browser */
+.custom-file-upload input[type="file"] {
+    display: none !important;
+}
+
+/* 2. Style tombol kustom (label) agar rapi & serasi */
+.btn-upload-kustom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px dashed #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Hover effect saat kursor mendekat (Tema Hijau E-Kantin) */
+.btn-upload-kustom:hover {
+    border-color: #5aab55;
+    background: #f0f9f0;
+    color: #5aab55;
+}
+
+.btn-upload-kustom i {
+    font-size: 16px;
+    color: inherit;
+}
+
+/* Hover khusus untuk Mode Edit (Tema Biru) */
+.btn-upload-kustom.edit-mode:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    color: #3b82f6;
+}
 /* ================= CSS RESPONSIF FINAL PENYELAMAT MENU ================= */
 @media (max-width: 768px) {
 
