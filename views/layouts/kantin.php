@@ -20,7 +20,15 @@ $kantins = mysqli_fetch_all(mysqli_query(
                 <img class="kantin-card-img" src="./assets/img/kantin/<?= htmlspecialchars($kantin['foto_toko']) ?>"
                     alt="<?= htmlspecialchars($kantin['nama_toko']) ?>">
             <?php else: ?>
-                <div class="kantin-card-img-placeholder"></div>
+                <div class="kantin-card-img-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                        stroke="#d1d5db" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l1-5h16l1 5" />
+                        <path d="M3 9a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2" />
+                        <path d="M5 11v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" />
+                        <line x1="10" y1="15" x2="14" y2="15" />
+                    </svg>
+                </div>
             <?php endif; ?>
             <div class="kantin-card-body">
                 <span class="kantin-card-badge"><?= htmlspecialchars($kantin['nama_toko']) ?></span>

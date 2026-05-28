@@ -41,7 +41,7 @@ if ($id_toko_owner > 0) {
         <button type="button" onclick="bukaFormTambahStaf()" class="btn-tambah-staf-link" style="border:none; cursor:pointer;">
             <i class="fa-solid fa-user-plus"></i> Tambah Staf Baru
         </button>
-        <p>💡 *Klik pada baris tabel staf untuk langsung mengedit data di form bawah.</p>
+        <p>Klik pada baris tabel staf untuk langsung mengedit data di form bawah.</p>
     </div>
     <div class="staf-responsive-table-wrapper">
         <table class="staf-custom-table">

@@ -1,10 +1,11 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 require_once __DIR__ . '/../../../config/database.php';
 global $conn;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action  = $_POST['action'] ?? '';
+    $action = $_POST['action'] ?? '';
     $id_staf = mysqli_real_escape_string($conn, $_POST['id_staf'] ?? '');
 
     // 1. TOGGLE STATUS AKTIF / NONAKTIF
@@ -25,30 +26,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($res_foto && $row = mysqli_fetch_assoc($res_foto)) {
             if (!empty($row['foto_profil'])) {
                 $path_foto = __DIR__ . '/../../../assets/img/penjual/' . $row['foto_profil'];
-                if (file_exists($path_foto)) unlink($path_foto);
+                if (file_exists($path_foto))
+                    unlink($path_foto);
             }
         }
         // Hapus relasi toko dan data akun penjual-nya
         mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_penjual = '$id_staf'");
         mysqli_query($conn, "DELETE FROM penjual WHERE id_penjual = '$id_staf'");
-        
+
         $_SESSION['feedback'] = ['type' => 'success', 'msg' => 'Data staf berhasil dihapus secara permanen!'];
         echo "<script>window.location.href='../owner/index.php?section=staf';</script>";
         exit;
     }
     // 🌟 3. PROSES SIMPAN AKUN STAF KANTIN BARU (MENGATASI LAYAR PUTIH)
     if ($action === 'action_staf_tambah') {
-        $nama     = mysqli_real_escape_string($conn, $_POST['nama'] ?? '');
+        $nama = mysqli_real_escape_string($conn, $_POST['nama'] ?? '');
         $username = mysqli_real_escape_string($conn, $_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
-        $shift    = mysqli_real_escape_string($conn, $_POST['shift'] ?? 'Pagi');
-        
-        $id_owner = (int)($_SESSION['user_id'] ?? 0);
+        $shift = mysqli_real_escape_string($conn, $_POST['shift'] ?? 'Pagi');
+
+        $id_owner = (int) ($_SESSION['user_id'] ?? 0);
 
         // Ambil id_toko milik owner agar staf terikat ke toko yang sama
-        $q_toko = mysqli_query($conn, "SELECT id_toko FROM toko_penjual WHERE id_penjual = $id_owner LIMIT 1");
+        $q_toko = mysqli_query($conn, "SELECT id_toko FROM toko_penjual WHERE id_penjual = $id_owner AND status = 'aktif' ORDER BY id DESC LIMIT 1");
         $r_toko = mysqli_fetch_assoc($q_toko);
-        $id_toko = (int)($r_toko['id_toko'] ?? 0);
+        $id_toko = (int) ($r_toko['id_toko'] ?? 0);
 
         // Cek username ganda
         $cek_user = mysqli_query($conn, "SELECT id_penjual FROM penjual WHERE username = '$username'");
@@ -59,17 +61,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Gunakan enkripsi MD5 (sesuaikan dengan gambar database kamu yang menggunakan md5 hash)
-        $password_md5 = md5($password); 
+        $password_md5 = md5($password);
 
         // Insert ke tabel penjual asli milikmu
         $insert_user = mysqli_query($conn, "
             INSERT INTO penjual (nama, username, password, role, status) 
             VALUES ('$nama', '$username', '$password_md5', 'staf', 'aktif')
         ");
-        
+
         if ($insert_user) {
             $id_staf_baru = mysqli_insert_id($conn);
-            
+
             // Masukkan ikatan toko ke tabel toko_penjual
             mysqli_query($conn, "
                 INSERT INTO toko_penjual (id_toko, id_penjual, shift) 
@@ -80,18 +82,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $_SESSION['feedback'] = ['type' => 'error', 'msg' => 'Gagal menyimpan data staf.'];
         }
-        
+
         // Kembalikan ke halaman daftar staf agar tidak memicu layar putih murni
         echo "<script>window.location.href='../owner/index.php?section=staf';</script>";
         exit;
     }
     // 🌟 4. PROSES UPDATE DATA STAF (PILIHAN DARI KLIK BARIS TABEL)
     if ($action === 'action_staf_edit') {
-        $id_staf  = mysqli_real_escape_string($conn, $_POST['id_staf'] ?? '');
-        $nama     = mysqli_real_escape_string($conn, $_POST['nama'] ?? '');
+        $id_staf = mysqli_real_escape_string($conn, $_POST['id_staf'] ?? '');
+        $nama = mysqli_real_escape_string($conn, $_POST['nama'] ?? '');
         $username = mysqli_real_escape_string($conn, $_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
-        $shift    = mysqli_real_escape_string($conn, $_POST['shift'] ?? 'Pagi');
+        $shift = mysqli_real_escape_string($conn, $_POST['shift'] ?? 'Pagi');
 
         // Cek apakah username ganda dipakai orang lain selain staf itu sendiri
         $cek_user = mysqli_query($conn, "SELECT id_penjual FROM penjual WHERE username = '$username' AND id_penjual != '$id_staf'");
@@ -103,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Jalankan update data dasar dulu
         $update = mysqli_query($conn, "UPDATE penjual SET nama = '$nama', username = '$username' WHERE id_penjual = '$id_staf'");
-        
+
         if ($update) {
             // Update shift di tabel relasi toko_penjual
             mysqli_query($conn, "UPDATE toko_penjual SET shift = '$shift' WHERE id_penjual = '$id_staf'");
