@@ -102,139 +102,124 @@ function resolveTokoImg($foto, $nama)
 
     <!-- ── TOP HEADER ── -->
     <header class="main-header">
-        <div class="header-pattern-left"></div>
-        <div class="header-pattern-right"></div>
-        <div class="header-inner">
-            <div class="top-bar">
-                <div class="logo-area">
-                    <img src="../../assets/img/logo-esemkita.png" class="school-logo"
-                        style="width:38px;height:38px;object-fit:contain;flex-shrink:0;border-radius:50%;background:#fff;padding:2px"
-                        alt="Logo">
-                    <span class="brand-name">E-Kantin</span>
-                </div>
-                <div class="search-container">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="searchInput" placeholder="Cari menu atau kantin..."
-                        oninput="handleSearch(this.value)">
-                </div>
-                <div class="header-icons">
-                    <!-- Notifikasi -->
-                    <div class="dropdown-wrapper">
-                        <div class="icon-badge" onclick="toggleDropdown('notifDrop')">
-                            <i class="fa-regular fa-bell"></i>
-                            <span class="badge" id="notifBadge">3</span>
-                        </div>
-                        <div class="dropdown-panel" id="notifDrop">
-                            <div class="dropdown-header">Notifikasi</div>
-                            <div class="dropdown-body" id="notifBody">
-                                <div class="dropdown-item">
-                                    <div class="notif-dot"></div>
-                                    <div class="item-info">
-                                        <h4>Pesanan #001 sedang diproses</h4>
-                                        <p>Kantin Bu Tika sedang menyiapkan pesananmu</p>
-                                    </div>
-                                    <span class="notif-time">2m</span>
-                                </div>
-                                <div class="dropdown-item">
-                                    <div class="notif-dot"></div>
-                                    <div class="item-info">
-                                        <h4>Promo baru tersedia!</h4>
-                                        <p>Diskon 25% untuk semua menu hari ini</p>
-                                    </div>
-                                    <span class="notif-time">15m</span>
-                                </div>
-                                <div class="dropdown-item">
-                                    <div class="notif-dot"></div>
-                                    <div class="item-info">
-                                        <h4>Selamat datang di E-Kantin!</h4>
-                                        <p>Jelajahi menu favorit dari kantin sekolahmu</p>
-                                    </div>
-                                    <span class="notif-time">1j</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Keranjang -->
-                    <div class="dropdown-wrapper">
-                        <div class="icon-badge" onclick="toggleDropdown('cartDrop')">
-                            <i class="fa-solid fa-cart-shopping"></i>
-                            <span class="badge" id="cartBadge">0</span>
-                        </div>
-                        <div class="dropdown-panel" id="cartDrop" style="min-width:340px">
-                            <div class="dropdown-header">Keranjang <span id="cartCount"
-                                    style="color:#64748b;font-weight:600;font-size:13px"></span></div>
-                            <div class="dropdown-body" id="cartBody"></div>
-                            <div class="dropdown-footer" id="cartFooter" style="display:none">
-                                <div><span class="total-label">Total</span><br><span class="total-amount"
-                                        id="cartTotal">Rp 0</span></div>
-                                <button class="btn-checkout"
-                                    onclick="event.stopPropagation(); showToast('Fitur checkout segera hadir!','success')">Checkout</button>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Profil -->
-                    <div class="dropdown-wrapper">
-                        <?php if ($has_avatar): ?>
-                            <img src="<?= $avatar_path; ?>" class="blank-avatar" alt="Profil"
-                                onclick="toggleDropdown('profileDrop')">
-                        <?php else: ?>
-                            <div class="avatar-initials size-sm" onclick="toggleDropdown('profileDrop')">
-                                <?= strtoupper(substr($user_nama, 0, 1)); ?>
-                            </div>
-                        <?php endif; ?>
-                        <div class="dropdown-panel profile-dropdown" id="profileDrop">
-                            <div class="profile-header">
-                                <?php if ($has_avatar): ?>
-                                    <img src="<?= $avatar_path; ?>" alt="Avatar">
-                                <?php else: ?>
-                                    <div class="avatar-initials size-md"><?= strtoupper(substr($user_nama, 0, 1)); ?></div>
-                                <?php endif; ?>
-                                <div class="profile-info">
-                                    <h4><?= htmlspecialchars($user_nama); ?></h4>
-                                    <p><?= htmlspecialchars($user_role); ?></p>
-                                </div>
-                            </div>
-                            <a href="#" class="profile-menu-item" onclick="switchNav('beranda')"><i
-                                    class="fa-solid fa-house"></i> Beranda</a>
-                            <a href="#" class="profile-menu-item" onclick="switchNav('pesanan')"><i
-                                    class="fa-solid fa-receipt"></i> Pesanan Saya</a>
-                            <a href="#" class="profile-menu-item" onclick="switchNav('favorit')"><i
-                                    class="fa-solid fa-heart"></i> Favorit</a>
-                            <a href="#" class="profile-menu-item" onclick="switchNav('chat')"><i
-                                    class="fa-solid fa-comment-dots"></i> Chat Kantin</a>
-                            <div style="border-top:1px solid #f1f5f9;margin:4px 0"></div>
-                            <a href="../../auth/logout.php" class="profile-menu-item danger"><i
-                                    class="fa-solid fa-right-from-bracket"></i> Keluar</a>
-                        </div>
-                    </div>
-                </div>
+    <div class="header-inner">
+        <div class="top-bar">
+            <div class="logo-area">
+                <img src="../../assets/img/logo-esemkita.png" class="school-logo" alt="Logo">
+                <span class="brand-name">E-Kantin</span>
             </div>
+            
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="searchInput" placeholder="Cari menu atau kantin..." oninput="handleSearch(this.value)">
+            </div>
+            
+            <div class="header-icons">
+                
+                <div class="dropdown-wrapper">
+                    <div class="icon-badge" onclick="toggleDropdown('notifDrop')">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="badge" id="notifBadge">3</span>
+                    </div>
+                    <div class="dropdown-panel" id="notifDrop">
+                        <div class="dropdown-header" style="border-bottom: 1px solid #f1f5f9; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin:0; font-size: 16px; font-weight: 700; color: #1e293b;">Notifikasi</h3>
+                            <span style="font-size: 12px; color: #79b775; font-weight: 600; cursor: pointer;">Tandai dibaca</span>
+                        </div>
+                        <div class="dropdown-body" id="notifBody" style="padding: 0; max-height: 400px; overflow-y: auto;">
+                            <div class="notif-item-modern unread">
+                                <div class="notif-icon-wrap bg-blue"><i class="fa-solid fa-receipt"></i></div>
+                                <div class="notif-content">
+                                    <h4>Pesanan #001 Diproses</h4>
+                                    <p>Kantin Bu Tika sedang menyiapkan pesananmu.</p>
+                                    <span class="notif-time">2 menit yang lalu</span>
+                                </div>
+                                <div class="unread-indicator"></div>
+                            </div>
+                            <div class="notif-item-modern">
+                                <div class="notif-icon-wrap bg-orange"><i class="fa-solid fa-tag"></i></div>
+                                <div class="notif-content">
+                                    <h4>Promo Spesial Hari Ini!</h4>
+                                    <p>Diskon 25% untuk semua menu (KANTINJOSS25).</p>
+                                    <span class="notif-time">15 menit yang lalu</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <nav class="nav-menu">
-                <a class="nav-item active" data-nav="beranda" onclick="switchNav('beranda')">
-                    <i class="fa-solid fa-house"></i>
-                    <span>Beranda</span>
-                </a>
-                <a class="nav-item" data-nav="pesanan" onclick="switchNav('pesanan')">
-                    <i class="fa-solid fa-receipt"></i>
-                    <span>Pesanan</span>
-                </a>
-                <a class="nav-item" data-nav="favorit" onclick="switchNav('favorit')">
-                    <i class="fa-solid fa-heart"></i>
-                    <span>Favorit</span>
-                </a>
-                <a class="nav-item" data-nav="kantin" onclick="switchNav('kantin')">
-                    <i class="fa-solid fa-store"></i>
-                    <span>Kantin</span>
-                </a>
-                <a class="nav-item" data-nav="chat" onclick="switchNav('chat')">
-                    <i class="fa-solid fa-comment-dots"></i>
-                    <span>Chat</span>
-                </a>
-            </nav>
+                <div class="dropdown-wrapper">
+                    <div class="icon-badge" onclick="toggleCartDrawer()">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span class="badge" id="headerCartBadge">0</span>
+                    </div>
+                </div>
+
+                <div class="dropdown-wrapper">
+                    <?php if ($has_avatar): ?>
+                        <img src="<?= $avatar_path; ?>" class="blank-avatar" alt="Profil" onclick="toggleDropdown('profileDrop')">
+                    <?php else: ?>
+                        <div class="avatar-initials size-sm" onclick="toggleDropdown('profileDrop')">
+                            <?= strtoupper(substr($user_nama, 0, 1)); ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <div class="dropdown-panel profile-dropdown" id="profileDrop">
+                        <div class="profile-header">
+                            <?php if ($has_avatar): ?>
+                                <img src="<?= $avatar_path; ?>" alt="Avatar">
+                            <?php else: ?>
+                                <div class="avatar-initials size-md"><?= strtoupper(substr($user_nama, 0, 1)); ?></div>
+                            <?php endif; ?>
+                            <div class="profile-info">
+                                <h4><?= htmlspecialchars($user_nama); ?></h4>
+                                <p><?= htmlspecialchars($user_role); ?></p>
+                            </div>
+                        </div>
+                        <a href="#" class="profile-menu-item" onclick="switchNav('beranda')"><i class="fa-solid fa-house"></i> Beranda</a>
+                        <a href="#" class="profile-menu-item" onclick="switchNav('pesanan')"><i class="fa-solid fa-receipt"></i> Pesanan Saya</a>
+                        <div style="border-top:1px solid #f1f5f9;margin:4px 0"></div>
+                        <a href="../../auth/logout.php" class="profile-menu-item danger"><i class="fa-solid fa-right-from-bracket"></i> Keluar</a>
+                    </div>
+                </div>
+                
+            </div>
         </div>
-    </header>
 
+        <nav class="nav-menu-wrapper">
+            <div class="nav-menu-container">
+                <a href="#" class="nav-item active" data-nav="beranda" onclick="switchNav('beranda')">
+                    <i class="fa-solid fa-house"></i> <span>Beranda</span>
+                </a>
+                <a href="#" class="nav-item" data-nav="pesanan" onclick="switchNav('pesanan')">
+                    <i class="fa-solid fa-receipt"></i> <span>Pesanan</span>
+                </a>
+                <a href="#" class="nav-item" data-nav="favorit" onclick="switchNav('favorit')">
+                    <i class="fa-solid fa-heart"></i> <span>Favorit</span>
+                </a>
+                <a href="#" class="nav-item" data-nav="kantin" onclick="switchNav('kantin')">
+                    <i class="fa-solid fa-store"></i> <span>Kantin</span>
+                </a>
+                <a href="#" class="nav-item" data-nav="chat" onclick="switchNav('chat')">
+                    <i class="fa-solid fa-comment-dots"></i> <span>Chat</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+</header>
+
+    <div id="section-kategori-detail" class="kategori-overlay-page">
+        <div class="kategori-detail-header">
+            <button class="btn-back-kategori" onclick="tutupDetailKategori()">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h2 class="kategori-detail-title" id="kategoriDetailTitle">Kategori</h2>
+        </div>
+        <div class="kategori-detail-content">
+            <div class="all-menu-grid" id="kategoriDetailGrid">
+                </div>
+        </div>
+    </div>
     <main class="content-container">
         <div class="content-inner">
             <?php require __DIR__ . '/sections/beranda.php'; ?>
@@ -244,6 +229,30 @@ function resolveTokoImg($foto, $nama)
             <?php require __DIR__ . '/sections/chat.php'; ?>
         </div>
     </main>
+    <button class="fab-cart" onclick="toggleCartDrawer()" title="Lihat Keranjang">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span class="fab-cart-badge" id="fabCartBadge">0</span>
+    </button>
+
+    <div class="cart-drawer-overlay" id="cartOverlay" onclick="toggleCartDrawer()"></div>
+
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-drawer-header">
+            <h3><i class="fa-solid fa-cart-shopping"></i> Keranjang Belanja</h3>
+            <button class="cart-drawer-close" onclick="toggleCartDrawer()">&times;</button>
+        </div>
+        <div class="cart-drawer-body" id="cartDrawerBody">
+            </div>
+        <div class="cart-drawer-footer" id="cartDrawerFooter">
+            <div class="cart-drawer-total">
+                <span class="label">Total Belanja</span>
+                <span class="amount" id="cartDrawerTotal">Rp 0</span>
+            </div>
+            <button class="cart-drawer-btn" onclick="showToast('Fitur checkout segera hadir!', 'success')">
+                <i class="fa-solid fa-cash-register"></i> Checkout Sekarang
+            </button>
+        </div>
+    </div>
 
     <!-- Toast container -->
     <div class="toast-container" id="toastContainer"></div>
@@ -341,7 +350,7 @@ function resolveTokoImg($foto, $nama)
         });
 
         // ════════════════════════════════════════════
-        //  CART (localStorage)
+        //  CART (localStorage) - VERSI DRAWER FULLSCREEN
         // ════════════════════════════════════════════
         function getCart() {
             try { return JSON.parse(localStorage.getItem('ekantin_cart') || '[]'); }
@@ -350,7 +359,26 @@ function resolveTokoImg($foto, $nama)
 
         function saveCart(cart) {
             localStorage.setItem('ekantin_cart', JSON.stringify(cart));
-            renderCart();
+            updateBadges();
+            if (document.getElementById('cartDrawer').classList.contains('show')) {
+                renderCartDrawer();
+            }
+        }
+
+        function updateBadges() {
+            const cart = getCart();
+            const totalItems = cart.reduce((sum, item) => sum + (item.jumlah || 0), 0);
+            const headerBadge = document.getElementById('headerCartBadge');
+            const fabBadge = document.getElementById('fabCartBadge');
+
+            if (headerBadge) {
+                headerBadge.textContent = totalItems;
+                headerBadge.style.display = totalItems > 0 ? 'flex' : 'none';
+            }
+            if (fabBadge) {
+                fabBadge.textContent = totalItems;
+                fabBadge.style.display = totalItems > 0 ? 'flex' : 'none';
+            }
         }
 
         function addToCart(id, nama, harga, foto, toko, idToko) {
@@ -366,7 +394,7 @@ function resolveTokoImg($foto, $nama)
         }
 
         function updateCartQty(id, delta, event) {
-            event && event.stopPropagation(); // ← tambah ini
+            if(event) event.stopPropagation();
             const cart = getCart();
             const item = cart.find(c => c.id_menu === id);
             if (item) {
@@ -378,29 +406,47 @@ function resolveTokoImg($foto, $nama)
             saveCart(cart);
         }
 
-        function renderCart() {
+        function toggleCartDrawer() {
+            const drawer = document.getElementById('cartDrawer');
+            const overlay = document.getElementById('cartOverlay');
+            if (drawer && overlay) {
+                const isShown = drawer.classList.contains('show');
+                if (isShown) {
+                    drawer.classList.remove('show');
+                    overlay.classList.remove('show');
+                    document.body.style.overflow = '';
+                } else {
+                    renderCartDrawer();
+                    drawer.classList.add('show');
+                    overlay.classList.add('show');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+        }
+
+        function renderCartDrawer() {
             const cart = getCart();
-            const body = document.getElementById('cartBody');
-            const footer = document.getElementById('cartFooter');
-            const badge = document.getElementById('cartBadge');
-            const count = document.getElementById('cartCount');
-            const totalEl = document.getElementById('cartTotal');
+            const body = document.getElementById('cartDrawerBody');
+            const footer = document.getElementById('cartDrawerFooter');
+            const totalEl = document.getElementById('cartDrawerTotal');
 
-            const totalItems = cart.reduce((s, c) => s + c.jumlah, 0);
-            const totalPrice = cart.reduce((s, c) => s + (c.harga * c.jumlah), 0);
+            if (!body) return;
 
-            badge.textContent = totalItems;
-            badge.style.display = totalItems > 0 ? 'flex' : 'none';
-            count.textContent = totalItems > 0 ? '(' + totalItems + ' item)' : '';
+            const totalPrice = cart.reduce((sum, item) => sum + (item.harga * item.jumlah), 0);
 
             if (cart.length === 0) {
-                body.innerHTML = '<div class="dropdown-empty"><i class="fa-solid fa-cart-shopping"></i>Keranjang masih kosong</div>';
-                footer.style.display = 'none';
+                body.innerHTML = `
+                    <div class="empty-state" style="padding: 40px 20px;">
+                        <i class="fa-solid fa-cart-flatbed-suitcase" style="font-size: 48px; color: #cbd5e1; margin-bottom: 12px; display: block; text-align: center;"></i>
+                        <h3 style="font-size: 16px; font-weight: 700; color: #475569; margin-bottom: 4px; text-align: center;">Keranjangmu Kosong</h3>
+                        <p style="font-size: 13px; color: #94a3b8; text-align: center;">Yuk, tambahkan menu lezat ke keranjang belanjaanmu!</p>
+                    </div>`;
+                if (footer) footer.style.display = 'none';
                 return;
             }
 
-            footer.style.display = 'flex';
-            totalEl.textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
+            if (footer) footer.style.display = 'block';
+            if (totalEl) totalEl.textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
 
             let html = '';
             cart.forEach(item => {
@@ -411,21 +457,26 @@ function resolveTokoImg($foto, $nama)
                     imgHTML = `<div class="cart-img-placeholder"><i class="fa-solid fa-utensils"></i></div>`;
                 }
                 html += `
-            <div class="dropdown-item">
-                ${imgHTML}
-                <div class="item-info">
-                    <h4>${item.nama_menu}</h4>
-                    <p>${item.nama_toko}</p>
-                </div>
-                <div style="text-align:right">
-                    <div class="item-price">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
-                    <div class="item-qty" style="margin-top:4px">
-                        <button onclick="updateCartQty(${item.id_menu},-1,event)">−</button>
-                        <span>${item.jumlah}</span>
-                        <button onclick="updateCartQty(${item.id_menu},1,event)">+</button>
-                    </div>
-                </div>
-            </div>`;
+                    <div class="dropdown-item" style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                            <div style="width: 50px; height: 50px; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
+                                ${imgHTML}
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nama_menu}</h4>
+                                <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nama_toko}</p>
+                                <div style="font-size: 13px; font-weight: 800; color: #5cb85c; margin-top: 4px;">Rp ${item.harga.toLocaleString('id-ID')}</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
+                            <div style="font-size: 14px; font-weight: 800; color: #1e293b;">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
+                            <div class="item-qty" style="display: inline-flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc;">
+                                <button onclick="updateCartQty(${item.id_menu}, -1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">−</button>
+                                <span style="font-size: 13px; font-weight: 700; color: #1e293b; min-width: 20px; text-align: center;">${item.jumlah}</span>
+                                <button onclick="updateCartQty(${item.id_menu}, 1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">+</button>
+                            </div>
+                        </div>
+                    </div>`;
             });
             body.innerHTML = html;
         }
@@ -669,6 +720,64 @@ function resolveTokoImg($foto, $nama)
                 }
             });
         }
+        // ════════════════════════════════════════════
+        //  LAYAR DETAIL KATEGORI (FULL PAGE)
+        // ════════════════════════════════════════════
+        function bukaDetailKategori(kat) {
+            const detailSec = document.getElementById('section-kategori-detail');
+            const grid = document.getElementById('kategoriDetailGrid');
+            const title = document.getElementById('kategoriDetailTitle');
+            const navMenu = document.querySelector('.nav-menu');
+
+            // Ganti Judul
+            title.textContent = kat === 'semua' ? 'Semua Kategori' : kat;
+
+            // Filter data dari ALL_MENUS
+            const results = ALL_MENUS.filter(m => kat === 'semua' || m.kategori === kat);
+
+            if (results.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1; margin-top:40px;">
+                        <i class="fa-solid fa-utensils"></i>
+                        <h3>Kosong</h3>
+                        <p>Belum ada menu di kategori ini.</p>
+                    </div>`;
+            } else {
+                grid.innerHTML = results.map(m => {
+                    const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu);
+                    return `
+                    <div class="menu-card-full">
+                        ${imgWrapHTML}
+                        <div class="mc-info">
+                            <h4>${m.nama_menu}</h4>
+                            <p class="mc-toko">${m.nama_toko}</p>
+                            <p class="mc-price">Rp. ${Number(m.harga).toLocaleString('id-ID')}</p>
+                            <button class="btn-tambah-keranjang" onclick="addToCart(${m.id_menu},'${m.nama_menu.replace(/'/g, "\\'")}',${m.harga},'${(m.foto_menu || '').replace(/'/g, "\\'")}','${m.nama_toko.replace(/'/g, "\\'")}',${m.id_toko})">
+                                <i class="fa-solid fa-cart-plus"></i> Tambah
+                            </button>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            // Sembunyikan navbar bawah dan tampilkan layar overlay
+            if (navMenu) navMenu.style.display = 'none';
+            document.body.style.overflow = 'hidden'; // Kunci scroll di belakang
+            detailSec.classList.add('active');
+        }
+
+        function tutupDetailKategori() {
+            const detailSec = document.getElementById('section-kategori-detail');
+            const navMenu = document.querySelector('.nav-menu');
+
+            detailSec.classList.remove('active');
+            document.body.style.overflow = ''; // Lepas kunci scroll
+            
+            // Tunggu animasi meluncur selesai (0.3s) baru munculkan navbar lagi
+            setTimeout(() => {
+                if (navMenu) navMenu.style.display = 'flex';
+            }, 300);
+        }
 
         // ════════════════════════════════════════════
         //  TOAST NOTIFICATION
@@ -688,7 +797,7 @@ function resolveTokoImg($foto, $nama)
         //  INIT
         // ════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', () => {
-            renderCart();
+            updateBadges(); // Ganti ini agar sesuai dengan format drawer
             renderFavorites();
         });
     </script>

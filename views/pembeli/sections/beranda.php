@@ -82,38 +82,37 @@
     <!-- Kategori -->
     <section class="section-block" id="kategoriSection">
         <h2 class="section-title">Kategori</h2>
-        <div class="category-list">
-            <a href="#" class="category-item active-cat" data-kat="semua" onclick="filterKategori('semua',this)">
-                <div class="blank-circle icon-grid-center"><i class="fa-solid fa-table-cells-large"></i>
+        
+        <div class="category-list-modern">
+            <a href="#" class="cat-modern-item" onclick="event.preventDefault(); bukaDetailKategori('semua')">
+                <div class="cat-modern-circle semua">
+                    <i class="fa-solid fa-table-cells-large"></i>
                 </div>
                 <span>Semua</span>
             </a>
-            <a href="#" class="category-item" data-kat="makanan" onclick="filterKategori('makanan',this)">
-                <div class="blank-circle makanan">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                        style="width: 28px; height: 28px; fill: #ff7a45; filter: drop-shadow(0 2px 4px rgba(255, 122, 69, 0.2));">
-                        <path
-                            d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
+            
+            <a href="#" class="cat-modern-item" onclick="event.preventDefault(); bukaDetailKategori('makanan')">
+                <div class="cat-modern-circle">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 32px; height: 32px; fill: #ff7a45; filter: drop-shadow(0 2px 4px rgba(255, 122, 69, 0.2));">
+                        <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
                     </svg>
                 </div>
                 <span>Makanan</span>
             </a>
-            <a href="#" class="category-item" data-kat="snack" onclick="filterKategori('snack',this)">
-                <div class="blank-circle snack">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                        style="width: 28px; height: 28px; fill: #9254de; filter: drop-shadow(0 2px 4px rgba(146, 84, 222, 0.2));">
-                        <path
-                            d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" />
+            
+            <a href="#" class="cat-modern-item" onclick="event.preventDefault(); bukaDetailKategori('snack')">
+                <div class="cat-modern-circle">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 32px; height: 32px; fill: #9254de; filter: drop-shadow(0 2px 4px rgba(146, 84, 222, 0.2));">
+                        <path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" />
                     </svg>
                 </div>
                 <span>Snack</span>
             </a>
-            <a href="#" class="category-item" data-kat="minuman" onclick="filterKategori('minuman',this)">
-                <div class="blank-circle minuman">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                        style="width: 28px; height: 28px; fill: #1890ff; filter: drop-shadow(0 2px 4px rgba(24, 144, 255, 0.2));">
-                        <path
-                            d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" />
+            
+            <a href="#" class="cat-modern-item" onclick="event.preventDefault(); bukaDetailKategori('minuman')">
+                <div class="cat-modern-circle">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 32px; height: 32px; fill: #1890ff; filter: drop-shadow(0 2px 4px rgba(24, 144, 255, 0.2));">
+                        <path d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" />
                     </svg>
                 </div>
                 <span>Minuman</span>

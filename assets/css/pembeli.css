@@ -33,6 +33,10 @@ body {
 }
 
 /* ── TOP HEADER (GLASSMORPHISM WITH BLURRED CANTEEN BACKGROUND) ── */
+/* =========================================
+   HEADER & NAVBAR (DESAIN GABUNGAN)
+   ========================================= */
+
 .main-header {
     width: 100%;
     position: sticky;
@@ -57,15 +61,19 @@ body {
 .header-inner {
     position: relative;
     width: 100%;
+    max-width: 1200px;
     margin: 0 auto;
+    padding: 0 16px;
+    z-index: 2; /* Memastikan konten di atas efek blur */
 }
 
+/* ── BARIS ATAS (Top Bar) ── */
 .top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 16px;
-    padding: 14px 16px;
+    padding: 14px 0; 
 }
 
 .logo-area {
@@ -130,10 +138,17 @@ body {
 
 /* ── HEADER ICONS & BADGES ── */
 .header-icons {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 16px !important;
     flex-shrink: 0;
+}
+
+.header-icons .dropdown-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    position: relative;
 }
 
 .icon-badge {
@@ -176,32 +191,42 @@ body {
     box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
 }
 
-.blank-avatar {
+.blank-avatar, .avatar-initials {
     width: 38px;
     height: 38px;
-    border-radius: 10px;
+    border-radius: 50%;
     border: 1.5px solid #cbd5e0;
     object-fit: cover;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    background-color: #f1f5f9;
+    background-color: #5cb85c;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.blank-avatar:hover {
+.blank-avatar:hover, .avatar-initials:hover {
     transform: scale(1.05);
     border-color: #5cb85c;
 }
 
-/* ── SUB NAVIGATION BAR (WHITE CHANNELS) ── */
-.nav-menu {
+/* ── BARIS BAWAH (Sub Navigation Bar) ── */
+.nav-menu-wrapper {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 14px;
+}
+
+.nav-menu-container {
     display: flex;
     background-color: #ffffff;
-    border-radius: 0;
-    padding: 10px 16px 12px 16px;
-    justify-content: center;
-    gap: 16px;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 6px;
+    border-radius: 999px; /* Bentuk pil / kapsul */
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .nav-item {
@@ -237,7 +262,7 @@ body {
     background-color: #f0fdf4;
 }
 
-/* ── DECORATIVE ORNAMENTS (DIAGONAL STRIPES) ── */
+/* ── ORNAMEN DEKORATIF ── */
 .header-pattern-left {
     position: absolute;
     left: 20px;
@@ -268,7 +293,7 @@ body {
     z-index: 1;
 }
 
-/* ── CONTENT CONTAINER ── */
+/* ── KONTEN BAWAH ── */
 .content-container {
     width: 100%;
     padding: 24px 16px;
@@ -285,6 +310,32 @@ body {
     color: #0f172a;
     margin-bottom: 18px;
     letter-spacing: -0.2px;
+}
+
+/* ── PENGECUALIAN HP (RESPONSIVE MOBILE) ── */
+@media (max-width: 768px) {
+    .brand-name, .nav-item span {
+        display: none !important; /* Sembunyikan tulisan di HP agar muat */
+    }
+    
+    .header-icons .dropdown-wrapper {
+        position: static !important; /* Membebaskan dropdown agar bisa full-screen di HP */
+    }
+    
+    .nav-menu-wrapper {
+        padding: 0 10px 10px 10px;
+    }
+    
+    .nav-menu-container {
+        width: 100%;
+        justify-content: space-around;
+        border-radius: 14px; /* Sesuaikan bentuk untuk layar HP */
+    }
+    
+    .nav-item {
+        padding: 10px 16px;
+        border-radius: 10px;
+    }
 }
 
 /* ── BANNER PROMO HARI INI ── */
@@ -2774,4 +2825,347 @@ body {
 .menu-grid-item {
     content-visibility: auto;
     contain-intrinsic-size: 150px 300px;
+} 
+/* ── REVISI DROPDOWN HEADER (HP) ── */
+@media (max-width: 768px) {
+    .header-icons .dropdown-wrapper {
+        position: static !important;
+    }
+    /* ── PERBAIKAN POSISI IKON HEADER (HP) ── */
+    .header-icons {
+        display: flex !important;
+        flex-direction: row !important; /* Paksa berbaris ke samping */
+        align-items: center !important; /* Posisikan pas di tengah secara vertikal */
+        gap: 14px !important; /* Beri jarak antar ikon agar tidak dempet */
+    }
+
+    .header-icons .dropdown-wrapper {
+        position: static !important;
+        display: flex !important; /* Pastikan wrapper juga ikut sejajar */
+        align-items: center !important;
+    }
+    
+    .dropdown-panel {
+        position: fixed !important; /* Melepaskan diri dari potongan header */
+        top: 75px !important; /* Jarak dari atap layar (sesuaikan sedikit jika kurang turun/naik) */
+        left: 16px !important;
+        right: 16px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        
+        /* Tambahan agar isi dropdown tidak bablas ke bawah layar */
+        max-height: 75vh !important; 
+        overflow-y: auto !important; 
+        
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+        z-index: 99999 !important; /* Wajib sangat tinggi agar tembus pandang dari efek blur/backdrop */
+        border-radius: 16px !important;
+    }
+    
+    .dropdown-panel::before,
+    .dropdown-panel::after {
+        display: none !important;
+    }
+}
+/* --- DESAIN LINGKARAN KATEGORI BARU --- */
+        .category-list-modern {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+        }
+        .cat-modern-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #475569;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .cat-modern-circle {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .cat-modern-item:active .cat-modern-circle {
+            transform: scale(0.95);
+        }
+        .cat-modern-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .cat-modern-circle.semua {
+            border-color: #79b775;
+        }
+        .cat-modern-circle.semua i {
+            font-size: 24px;
+            color: #333;
+        }
+
+        /* --- OVERLAY HALAMAN DETAIL KATEGORI --- */
+        .kategori-overlay-page {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #f4f7f6;
+            z-index: 99999;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .kategori-overlay-page.active {
+            transform: translateX(0);
+        }
+        .kategori-detail-header {
+            background: #fff;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .btn-back-kategori {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #1f2937;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .kategori-detail-title {
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: capitalize;
+            margin: 0;
+        }
+        .kategori-detail-content {
+            padding: 20px;
+        }
+        /* ════════════════════════════════════════════
+   DESAIN NOTIFIKASI MODERN (UI/UX)
+   ════════════════════════════════════════════ */
+.notif-item-modern {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f8fafc;
+    transition: background 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.notif-item-modern:hover {
+    background: #f8fafc; /* Efek hover abu-abu sangat muda */
+}
+
+/* Notifikasi yang belum dibaca diberi warna hijau sangat pudar */
+.notif-item-modern.unread {
+    background: #f0fdf4; 
+}
+
+.notif-item-modern.unread:hover {
+    background: #e6fced;
+}
+
+/* Lingkaran Ikon */
+.notif-icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* Varian Warna Ikon */
+.notif-icon-wrap.bg-blue { background: #e0f2fe; color: #0284c7; }
+.notif-icon-wrap.bg-orange { background: #ffedd5; color: #ea580c; }
+.notif-icon-wrap.bg-green { background: #dcfce7; color: #166534; }
+
+/* Teks Konten */
+.notif-content {
+    flex: 1;
+    min-width: 0;
+    padding-right: 15px; /* Jarak agar tidak menabrak titik unread */
+}
+
+.notif-content h4 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.notif-content p {
+    margin: 0 0 6px 0;
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.notif-time {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+/* Titik Indikator Belum Dibaca di Kanan Atas */
+.unread-indicator {
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+/* =========================================
+   PERBAIKAN TOTAL IKON HEADER (DESKTOP & HP)
+   ========================================= */
+
+/* 1. Aturan Wajib untuk Semua Layar (Desktop & HP) */
+.header-icons {
+    display: flex !important;
+    flex-direction: row !important; /* Paksa ikon berbaris ke samping */
+    align-items: center !important;
+    gap: 16px !important; /* Jarak antar ikon */
+}
+
+.header-icons .dropdown-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    position: relative; /* PENTING: Agar dropdown desktop tidak terbang */
+}
+
+/* ── PENGECUALIAN HP (RESPONSIVE MOBILE) ── */
+@media (max-width: 768px) {
+    /* 1. Rapikan Top Bar agar Search Bar turun dengan cantik */
+    .top-bar {
+        flex-wrap: wrap; /* Izinkan elemen turun ke baris baru */
+        padding: 12px 0 16px 0;
+        gap: 12px;
+    }
+
+    .logo-area {
+        flex: 1; /* Dorong ikon lonceng dll ke kanan */
+    }
+
+    .brand-name {
+        font-size: 18px; /* Perkecil teks E-Kantin sedikit */
+    }
+
+    .header-icons {
+        gap: 12px !important;
+    }
+
+    /* Hanya targetkan ikon yang ada di top bar, JANGAN yang di dalam kotak dropdown */
+    .header-icons > .dropdown-wrapper > .icon-badge, 
+    .header-icons > .dropdown-wrapper > .blank-avatar, 
+    .header-icons > .dropdown-wrapper > .avatar-initials {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 16px;
+        border-radius: 50% !important;
+    }
+
+    /* 2. Search Bar Full Width di baris kedua */
+    .search-container {
+        order: 3; /* Paksa turun ke urutan paling bawah */
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .search-container input {
+        padding: 12px 16px 12px 42px;
+        border-radius: 14px; /* Lebih modern, kotak membulat lembut */
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    /* 3. Navbar Bawah Khas Aplikasi Native (GoFood/ShopeeFood style) */
+    .nav-menu-wrapper {
+        position: fixed !important;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 8px 0 12px 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+        z-index: 9999;
+    }
+
+    .nav-menu-container {
+        width: 100%;
+        justify-content: space-around;
+        background: transparent;
+        box-shadow: none;
+        padding: 0 10px;
+    }
+
+    .nav-item {
+        flex-direction: column; /* Ikon di atas, teks di bawah */
+        padding: 6px 10px;
+        gap: 4px;
+        border-radius: 12px;
+        background: transparent !important;
+        color: #94a3b8;
+    }
+
+    .nav-item.active {
+        color: #5cb85c !important;
+        box-shadow: none;
+    }
+
+    .nav-item i {
+        font-size: 22px; /* Besarkan ikonnya agar proporsional */
+        margin-bottom: 2px;
+    }
+
+    .nav-item span {
+        display: block !important; /* Munculkan teks kecil di bawah ikon */
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    /* Bebaskan dropdown notifikasi di HP */
+    .header-icons .dropdown-wrapper {
+        position: static !important;
+    }
+
+    /* Cegah konten nabrak navbar bawah */
+    .content-container {
+        padding-bottom: 90px !important;
+    }
+    /* ── PERBAIKAN FLOATING CART (KERANJANG MENGAMBANG) DI HP ── */
+    .fab-cart {
+        bottom: 95px !important; /* Diangkat ke atas melewati navbar bawah */
+        right: 16px !important; /* Digeser sedikit agar pas di pojok */
+        z-index: 9990 !important; /* Pastikan selalu tampil di atas konten */
+        transform: scale(0.9); /* Sedikit dikecilkan agar proporsional dan tidak menutupi layar */
+        box-shadow: 0 6px 16px rgba(92, 184, 92, 0.4) !important; /* Efek glow hijau estetik */
+    }
+}
+/* ── PERBAIKAN Z-INDEX DROPDOWN (AGAR TIDAK KENA BLUR) ── */
+.main-header.has-open-dropdown {
+    z-index: 999999 !important; /* Memaksa header naik ke atas backdrop */
 }
