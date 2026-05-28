@@ -91,7 +91,7 @@
             <tbody>
                 <?php if (empty($kendala)): ?>
                     <tr class="empty-row">
-                        <td colspan="5">
+                        <td colspan="6">
                             <i class="fa-solid fa-circle-check"
                                 style="color:var(--green);font-size:22px;display:block;margin-bottom:8px"></i>
                             Sistem aman! Tidak ada report kendala saat ini.

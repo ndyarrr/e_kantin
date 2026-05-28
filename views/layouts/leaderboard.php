@@ -39,6 +39,14 @@ function renderLb($rows, $type)
                 <div class="pod-photo rank-<?= $rank ?>">
                     <?php if (!empty($k['foto'])): ?>
                         <img src="./assets/img/<?= $type ?>/<?= htmlspecialchars($k['foto']) ?>" alt="">
+                    <?php else: ?>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
+                            stroke="#d1d5db" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l1-5h16l1 5" />
+                            <path d="M3 9a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2" />
+                            <path d="M5 11v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" />
+                            <line x1="10" y1="15" x2="14" y2="15" />
+                        </svg>
                     <?php endif; ?>
                 </div>
                 <div class="pod-stand rank-<?= $rank ?>"><?= $rank ?></div>

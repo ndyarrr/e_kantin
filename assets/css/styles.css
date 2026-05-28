@@ -382,7 +382,10 @@ body {
 .kantin-card-img-placeholder {
     width: 100%;
     height: 160px;
-    background: #d5d5d5;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .kantin-card-body {
@@ -474,9 +477,16 @@ body {
 }
 
 .pod-photo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 12px;
-    background: #d5d5d5;
+    background: #f3f4f6;
     overflow: hidden;
+}
+
+.pod-photo svg {
+    flex-shrink: 0;
 }
 
 .pod-photo img {
@@ -938,7 +948,8 @@ body {
 .col-food-right {
     right: 10px;
     top: 25%;
-    animation: floating-reverse 4s ease-in-out infinite; /* ganti ini */
+    animation: floating-reverse 4s ease-in-out infinite;
+    /* ganti ini */
 }
 
 /* Mobile */
