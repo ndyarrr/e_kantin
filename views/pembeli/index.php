@@ -362,7 +362,7 @@ function resolveTokoImg($foto, $nama)
                 cart.push({ id_menu: id, nama_menu: nama, harga: harga, jumlah: 1, foto_menu: foto, nama_toko: toko, id_toko: idToko });
             }
             saveCart(cart);
-            showToast('✅ ' + nama + ' ditambahkan ke keranjang!', 'success');
+            showToast(+ nama + ' ditambahkan ke keranjang!', 'success');
         }
 
         function updateCartQty(id, delta, event) {

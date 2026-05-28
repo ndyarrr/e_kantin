@@ -83,6 +83,7 @@
                     <th class="center">Waktu</th>
                     <th>Pelapor</th>
                     <th>Judul Kendala</th>
+                    <th>Deskripsi</th> <!-- ← tambah ini -->
                     <th>Status</th>
                     <th class="center">Aksi</th>
                 </tr>
@@ -121,6 +122,14 @@
                                     <?= htmlspecialchars($k['judul_kendala']) ?>
                                 </strong>
                             </td>
+
+                            
+                            <td style="font-size:12px;color:#6b7280;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer"
+                                onmouseenter="showTooltip(event, this.dataset.full)" onmouseleave="hideTooltip()"
+                                data-full="<?= htmlspecialchars($k['deskripsi'] ?? '-') ?>">
+                                <?= htmlspecialchars($k['deskripsi'] ?? '-') ?>
+                            </td>
+
                             <td>
                                 <?php if ($k['status'] === 'menunggu'): ?>
                                     <span class="badge badge-batal" style="background:#fee2e2;color:#ef4444;">
@@ -139,7 +148,9 @@
                             <td class="center" style="white-space:nowrap">
                                 <!-- Lihat detail -->
                                 <button class="btn-aksi reset" title="Lihat Detail"
-                                    onclick="bukaDetailKendala('<?= addslashes(htmlspecialchars($k['judul_kendala'])) ?>','<?= addslashes(htmlspecialchars($k['deskripsi'])) ?>')">
+                                    data-judul="<?= htmlspecialchars($k['judul_kendala'], ENT_QUOTES) ?>"
+                                    data-deskripsi="<?= htmlspecialchars($k['deskripsi'], ENT_QUOTES) ?>"
+                                    onclick="bukaDetailKendala(this)">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
 
@@ -189,6 +200,9 @@
                 endif; ?>
             </tbody>
         </table>
+        <div id="logTooltip"
+            style="display:none;position:fixed;background:#1f2937;color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;max-width:300px;word-break:break-word;z-index:9999;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.3);">
+        </div>
     </div>
 </div>
 
@@ -208,12 +222,24 @@
     </div>
 </div>
 <script>
-    function bukaDetailKendala(judul, deskripsi) {
-        document.getElementById('modalKendalaJudul').textContent = judul;
-        document.getElementById('modalKendalaDesc').textContent = deskripsi;
+    function bukaDetailKendala(btn) {
+        document.getElementById('modalKendalaJudul').textContent = btn.getAttribute('data-judul');
+        document.getElementById('modalKendalaDesc').textContent = btn.getAttribute('data-deskripsi');
         document.getElementById('modalDetailKendala').style.display = 'flex';
     }
     function tutupDetailKendala() {
         document.getElementById('modalDetailKendala').style.display = 'none';
+    }
+
+    const tooltipEl = document.getElementById('logTooltip');
+    function showTooltip(e, text) {
+        if (!tooltipEl) return;
+        tooltipEl.textContent = text;
+        tooltipEl.style.display = 'block';
+        tooltipEl.style.left = (e.clientX + 12) + 'px';
+        tooltipEl.style.top = (e.clientY + 12) + 'px';
+    }
+    function hideTooltip() {
+        if (tooltipEl) tooltipEl.style.display = 'none';
     }
 </script>
