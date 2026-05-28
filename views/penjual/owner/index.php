@@ -38,6 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (strpos($action, 'staf') !== false) {
         require_once __DIR__ . '/../actions/proses_staf.php';
         exit;
+    } elseif (strpos($action, 'kantin') !== false || strpos($action, 'banner') !== false) {
+        require_once __DIR__ . '/../actions/proses_kantin.php';
+        exit;
     }
 }
 
@@ -123,6 +126,9 @@ require __DIR__ . '/sections/menu_data.php';
         <button class="nav-link" data-section="staf" onclick="switchSection('staf')">
             <i class="fa-solid fa-users"></i> Kelola Staf & Shift
         </button>
+        <button class="nav-link" data-section="kantin" onclick="switchSection('kantin')">
+            <i class="fa-solid fa-store"></i> Pengaturan Kantin
+        </button>
         <button class="nav-link" data-section="inbox" onclick="switchSection('inbox')">
             <i class="fa-solid fa-inbox"></i> Inbox
         </button>
@@ -203,6 +209,10 @@ require __DIR__ . '/sections/menu_data.php';
             <?php require __DIR__ . '/sections/staf.php'; ?>
         </div>
 
+        <div class="section" id="section-kantin">
+            <?php require __DIR__ . '/sections/kantin.php'; ?>
+        </div>
+
         <div class="section" id="section-inbox">
             <?php require __DIR__ . '/sections/inbox.php'; ?>
         </div>
@@ -235,11 +245,9 @@ const mainContent = document.getElementById('main');
 
 function toggleSidebar() {
     if (window.innerWidth <= 768) {
-        // Mode Mobile (HP)
         sidebar.classList.toggle('open');
         overlay.classList.toggle('show');
     } else {
-        // Mode Desktop (Laptop)
         const isHidden = sidebar.style.marginLeft === '-256px';
         sidebar.style.marginLeft = isHidden ? '0px' : '-256px';
         if (mainContent) {
@@ -254,16 +262,13 @@ function closeSidebar() {
     overlay.classList.remove('show');
 }
 
-// 🌟 PERBAIKAN 1: Saat overlay di klik di HP, otomatis menutup sidebar
 if (overlay) {
     overlay.addEventListener('click', closeSidebar);
 }
 
-// 🌟 PERBAIKAN 2: Reset total inline style desktop agar tidak merusak CSS Mobile saat resize layar
 window.addEventListener('resize', () => { 
     if (window.innerWidth > 768) {
         closeSidebar();
-        // Bersihkan bekas manipulasi javascript desktop
         sidebar.style.marginLeft = '';
         if (mainContent) {
             mainContent.style.marginLeft = '';
@@ -273,19 +278,20 @@ window.addEventListener('resize', () => {
 });
 
 const pageMeta = {
-    dashboard : { title: 'Dashboard',      sub: 'Monitor semua penjualan dan keuangan E-Kantin' },
-    menu      : { title: 'Menu',           sub: 'Kelola menu dan stok kantin' },
-    staf      : { title: 'Staf & Shift',   sub: 'Kelola jadwal kerja dan petugas kasir' },
-    inbox     : { title: 'Inbox',          sub: 'Pesanan masuk dan riwayat transaksi' },
-    pesanan   : { title: 'Antrean Pesanan', sub: 'Kelola pesanan pelanggan' },
-    profil    : { title: 'Profil',         sub: 'Kelola data akun penjual' },
-    chat      : { title: 'Chat',           sub: 'Balas pesan pembeli atas nama kantin kamu' },
-    kas       : { title: 'Buku Kas',       sub: 'Catatan pemasukan dan keuangan toko' },
+    dashboard : { title: 'Dashboard',         sub: 'Monitor semua penjualan dan keuangan E-Kantin' },
+    menu      : { title: 'Menu',              sub: 'Kelola menu dan stok kantin' },
+    staf      : { title: 'Staf & Shift',      sub: 'Kelola jadwal kerja dan petugas kasir' },
+    kantin    : { title: 'Pengaturan Kantin', sub: 'Kelola informasi toko, deskripsi, dan banner promo' },
+    inbox     : { title: 'Inbox',             sub: 'Pesanan masuk dan riwayat transaksi' },
+    pesanan   : { title: 'Antrean Pesanan',    sub: 'Kelola pesanan pelanggan' },
+    profil    : { title: 'Profil',            sub: 'Kelola data akun penjual' },
+    chat      : { title: 'Chat',              sub: 'Balas pesan pembeli atas nama kantin kamu' },
+    kas       : { title: 'Buku Kas',          sub: 'Catatan pemasukan dan keuangan toko' },
 };
 
 function switchSection(name) {
     const targetSection = document.getElementById('section-' + name);
-    if (!targetSection) return; // Mencegah error jika section tidak ditemukan
+    if (!targetSection) return;
 
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-link[data-section]').forEach(l => l.classList.remove('active'));
@@ -299,12 +305,10 @@ function switchSection(name) {
     document.getElementById('pageTitle').textContent    = meta.title || '';
     document.getElementById('pageSubtitle').textContent = meta.sub   || '';
     
-    // 🌟 PERBAIKAN 3: Tiap ganti menu, scroll otomatis balik ke paling atas (Bagus untuk HP)
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     if (window.innerWidth <= 768) closeSidebar();
     
-    // Sinkronisasi URL Browser
     if (name === 'menu') {
         history.replaceState(null, '', '?section=' + name + '&search=<?=urlencode($_GET['search']??'')?>&kategori=<?=$_GET['kategori']??'semua'?>');
     } else {
@@ -312,13 +316,11 @@ function switchSection(name) {
     }
 }
 
-// Inisialisasi awal halaman
 const initSection = <?= json_encode($activeSection ?? 'dashboard') ?>;
 if (initSection && initSection !== 'dashboard') {
     switchSection(initSection);
 }
 
-// Menghilangkan banner feedback otomatis dalam 4 detik
 const feedbackEl = document.getElementById('feedbackBanner');
 if (feedbackEl) {
     setTimeout(() => {
@@ -328,7 +330,6 @@ if (feedbackEl) {
     }, 4000);
 }
 
-// Polling Realtime Chat Notification Badge in Sidebar
 function updateChatUnreadBadge() {
     const scriptPath = window.location.pathname;
     let backendUrl = '../../backend/ambil_unread_chat.php';
@@ -361,7 +362,6 @@ function updateChatUnreadBadge() {
         .catch(err => console.error('Error fetching unread chat:', err));
 }
 
-// Jalankan saat load pertama kali
 document.addEventListener('DOMContentLoaded', () => {
     updateChatUnreadBadge();
     setInterval(updateChatUnreadBadge, 4000);

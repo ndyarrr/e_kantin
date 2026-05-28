@@ -3056,3 +3056,303 @@ select.form-staf-control {
     background: #cbd5e1;
     border-radius: 4px;
 }
+
+/* =========================================================================
+   KANTIN SETTINGS & BANNER STYLES (SEPARATED FILE VERSION)
+   ========================================================================= */
+
+/* Wadah Utama Keseluruhan (Ditarik naik ke atas dengan margin-top kecil) */
+.kantin-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin: 5px 0 20px 0; /* Mengurangi margin-top dari 20px menjadi 5px agar naik ke atas */
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+
+/* KUNCI UTAMA: Mengembalikan Box/Container (.pcard) Yang Hilang 
+   ========================================================================= */
+.pcard {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid #eef2f5 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 0 !important;
+}
+
+.pcard-inner {
+    padding: 25px !important;
+    box-sizing: border-box !important;
+}
+
+/* Form Group Layout & Input Kontrol */
+.kantin-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.kantin-form-group label {
+    font-weight: 600;
+    font-size: 13.5px;
+    color: #4a5568;
+}
+
+/* Penyeragaman Input Controls & Dropdown */
+.kantin-form-group input[type="text"],
+.kantin-form-group select,
+.kantin-form-group textarea,
+.kantin-form-group input[type="date"] {
+    padding: 11px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #334155;
+    background-color: #f8fafc;
+    transition: all 0.2s ease-in-out;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Efek Fokus Input Berkilau Lembut */
+.kantin-form-group input:focus,
+.kantin-form-group select:focus,
+.kantin-form-group textarea:focus {
+    border-color: #3498db;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+    outline: none;
+}
+
+.kantin-form-group textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+/* Pratinjau Foto Profil Toko (Bagian Atas) */
+.profile-preview-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: #f8fafc;
+    padding: 18px;
+    border-radius: 10px;
+    border: 1px dashed #cbd5e1;
+}
+
+.profile-avatar-circle {
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #e2e8f0;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+.profile-avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #94a3b8;
+    font-size: 32px;
+}
+
+/* Flex Grid Layout Utama Form Profil */
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-col-2 { flex: 2; }
+.form-col-1 { flex: 1; }
+
+/* =========================================================================
+   STYLE PENAKLUK BENTURAN GRID BANNER (ANTI-PINCANG)
+   ========================================================================= */
+.banner-super-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 2fr !important; /* Kiri 1 porsi, kanan 2 porsi murni */
+    gap: 24px !important;
+    align-items: stretch !important; /* KUNCI UTAMA: Memaksa tinggi lurus sejajar */
+    width: 100% !important;
+    margin-top: 5px;
+}
+
+.banner-box-item {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+
+/* Pengganti .pcard khusus area banner agar kebal dari aturan global index.php */
+.pcard-banner-lokal {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid #eef2f5 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.pcard-inner-lokal {
+    padding: 24px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    height: 100% !important;
+}
+
+/* Memastikan form melar sampai bawah */
+.form-banner-lokal {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    height: 100% !important;
+}
+
+/* Menendang tombol "Simpan Banner" ke paling dasar lantai card */
+.form-banner-lokal button[type="submit"] {
+    margin-top: auto !important; 
+}
+
+/* =========================================================================
+   BADGES, TABLES, & ACCENTS
+   ========================================================================= */
+.banner-badge-status {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.banner-badge-status.active {
+    background-color: #e6f4ea;
+    color: #137333;
+    border: 1px solid #c2e7cd;
+}
+
+.banner-badge-status.locked {
+    background-color: #fce8e6;
+    color: #c5221f;
+    border: 1px solid #fad2cf;
+}
+
+.alert-limit-banner {
+    background: #fee2e2; 
+    color: #b91c1c; 
+    padding: 14px; 
+    border-radius: 6px; 
+    margin-bottom: 20px; 
+    font-size: 13px; 
+    line-height: 1.4;
+}
+
+.banner-table-custom {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 13.5px;
+}
+
+.banner-table-custom th {
+    padding: 14px 12px;
+    border-bottom: 2px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+}
+
+.banner-table-custom td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    color: #334155;
+}
+
+.banner-table-custom tr:hover td {
+    background-color: #f8fafc;
+}
+
+.banner-thumbnail {
+    width: 120px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease-in-out;
+}
+
+.banner-thumbnail:hover {
+    transform: scale(1.05);
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11.5px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.status-pill.active {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.status-pill.expired {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-pill.inactive {
+    background: #f1f3f4;
+    color: #5f6368;
+}
+
+.btn-delete-banner {
+    background: #ea4335;
+    color: white;
+    border: none;
+    padding: 7px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(234, 67, 53, 0.2);
+    transition: all 0.2s ease;
+}
+
+.btn-delete-banner:hover {
+    background: #d93025;
+    box-shadow: 0 4px 8px rgba(217, 48, 37, 0.3);
+    transform: translateY(-0.5px);
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 850px) {
+    .form-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .banner-super-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
