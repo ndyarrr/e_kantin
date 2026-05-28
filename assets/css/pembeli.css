@@ -1919,7 +1919,7 @@ body {
        sehingga bottom sheet berada di atas backdrop (z-index 1999) sedangkan header-nya sendiri 
        tetap berada di bawah backdrop (dimmed dan blurred secara visual). */
     .main-header.has-open-dropdown {
-        z-index: auto ;
+        z-index: auto;
 
     }
 
@@ -2168,7 +2168,7 @@ body {
 
     .btn-tambah-keranjang,
     .btn-tambah {
-        padding: 6px 0;
+        padding: 6px 12px;
         font-size: 11px;
         border-radius: 8px;
     }
@@ -2184,7 +2184,7 @@ body {
         gap: 12px;
     }
 
-    .toko-avatar {
+    .toko-avatar, .toko-avatar-placeholder {
         width: 64px;
         height: 64px;
         border-radius: 16px;
@@ -2239,7 +2239,7 @@ body {
         height: 280px;
     }
 
-    .toko-avatar {
+    .toko-avatar, .toko-avatar-placeholder {
         width: 96px;
         height: 96px;
     }
@@ -2251,6 +2251,234 @@ body {
     .toko-hero-info {
         padding: 24px 32px 28px;
     }
+}
+
+/* Beautiful & Elegant Placeholder Menu Cards (Imported from Penjual for visually stunning UI) */
+.menu-img-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    gap: 8px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #f8fafc;
+}
+
+/* Food Category Placeholder styling */
+.menu-img-placeholder.makanan {
+    background: linear-gradient(135deg, #fffcf9 0%, #ffe8d6 100%);
+    border-bottom: 2.5px solid #ff7a45;
+}
+.menu-img-placeholder.makanan svg {
+    fill: #ff7a45;
+    filter: drop-shadow(0 4px 8px rgba(255, 122, 69, 0.2));
+}
+.menu-img-placeholder.makanan::after {
+    content: 'Delicious Food';
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #ff7a45;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+/* Drink Category Placeholder styling */
+.menu-img-placeholder.minuman {
+    background: linear-gradient(135deg, #f4faff 0%, #d2ebff 100%);
+    border-bottom: 2.5px solid #1890ff;
+}
+.menu-img-placeholder.minuman svg {
+    fill: #1890ff;
+    filter: drop-shadow(0 4px 8px rgba(24, 144, 255, 0.2));
+}
+.menu-img-placeholder.minuman::after {
+    content: 'Fresh Drink';
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #1890ff;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+/* Snack Category Placeholder styling */
+.menu-img-placeholder.snack {
+    background: linear-gradient(135deg, #faf5ff 0%, #ebd3ff 100%);
+    border-bottom: 2.5px solid #9254de;
+}
+.menu-img-placeholder.snack svg {
+    fill: #9254de;
+    filter: drop-shadow(0 4px 8px rgba(146, 84, 222, 0.2));
+}
+.menu-img-placeholder.snack::after {
+    content: 'Tasty Snack';
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #9254de;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.menu-img-placeholder svg {
+    width: 44px;
+    height: 44px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.menu-card:hover .menu-img-placeholder svg,
+.menu-card-full:hover .menu-img-placeholder svg,
+.menu-grid-item:hover .menu-img-placeholder svg {
+    transform: scale(1.15) translateY(-3px);
+}
+
+/* ── WRAPPERS FOR PREMIUM ALIGNMENT ── */
+.menu-img-wrap-beranda {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.1 / 1;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 2.5px solid #a3e635;
+    padding: 3px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    box-sizing: border-box;
+}
+
+.menu-img-wrap-beranda img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.menu-img-wrap-beranda .menu-img-placeholder {
+    border-radius: 12px;
+}
+
+.menu-card-full-img-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 2.5px solid #a3e635;
+    padding: 3px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    box-sizing: border-box;
+}
+
+.menu-card-full-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.menu-card-full-img-wrap .menu-img-placeholder {
+    border-radius: 12px;
+}
+
+/* Premium Canteen/Toko Image Placeholder */
+.toko-img-placeholder {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 2.5px solid #5cb85c;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(92, 184, 92, 0.1);
+    color: #5cb85c;
+    text-align: center;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.toko-img-placeholder i {
+    font-size: 36px;
+    filter: drop-shadow(0 4px 8px rgba(92, 184, 92, 0.2));
+}
+
+.toko-img-placeholder span {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4cae4c;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kantin-card:hover .toko-img-placeholder {
+    transform: scale(1.03);
+    box-shadow: 0 8px 20px rgba(92, 184, 92, 0.2);
+}
+
+/* Toko Banner & Avatar Placeholders */
+.toko-banner-placeholder {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 50%, #166534 100%) !important;
+    position: relative;
+}
+.toko-banner-placeholder::before {
+    content: "E-KANTIN ESEMKITA";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: 2px;
+    white-space: nowrap;
+}
+
+.toko-avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+    color: #5cb85c;
+    font-size: 32px;
+    box-sizing: border-box;
+}
+
+.cart-img-placeholder, .dropdown-item img.cart-img-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    color: #5cb85c;
+    font-size: 16px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border: 1px solid #bce4bc;
 }
 
 /* ── DESKTOP & WIDE SCREEN OVERRIDES ── */
@@ -2294,4 +2522,256 @@ body {
     .menu-grid-item {
         border-radius: 12px;
     }
+}
+
+/* Category Circle Gradients & Initials Fallbacks */
+.blank-circle.makanan {
+    background: linear-gradient(135deg, #fffcf9 0%, #ffe8d6 100%) !important;
+    border-color: #ff7a45 !important;
+}
+
+.blank-circle.minuman {
+    background: linear-gradient(135deg, #f4faff 0%, #d2ebff 100%) !important;
+    border-color: #1890ff !important;
+}
+
+.blank-circle.snack {
+    background: linear-gradient(135deg, #faf5ff 0%, #ebd3ff 100%) !important;
+    border-color: #9254de !important;
+}
+
+.avatar-initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #ffffff;
+    background: linear-gradient(135deg, #5cb85c 0%, #4cae4c 100%);
+    text-transform: uppercase;
+    box-shadow: 0 4px 10px rgba(92, 184, 92, 0.2);
+}
+
+.avatar-initials.size-sm {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 16px;
+    border: 1.5px solid #cbd5e0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.avatar-initials.size-sm:hover {
+    transform: scale(1.05);
+    border-color: #5cb85c;
+}
+
+.avatar-initials.size-md {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 20px;
+}
+
+/* E-Kantin Store Favorite Button */
+.btn-favorite-toko {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    color: #94a3b8;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 0;
+}
+
+.btn-favorite-toko:hover {
+    transform: scale(1.1);
+    background: #ffffff;
+    color: #ef4444;
+    box-shadow: 0 6px 14px rgba(239, 68, 68, 0.25);
+}
+
+.btn-favorite-toko.active {
+    color: #ef4444;
+    background: #ffffff;
+    box-shadow: 0 6px 14px rgba(239, 68, 68, 0.25);
+}
+
+.btn-favorite-toko.active i {
+    animation: heartBeat 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes heartBeat {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
+/* E-Kantin Cart Drawer Panel */
+.cart-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.cart-drawer-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.cart-drawer {
+    position: fixed;
+    top: 0;
+    right: -420px; /* Hidden by default */
+    width: 100%;
+    max-width: 400px;
+    height: 100%;
+    background: #ffffff;
+    box-shadow: -8px 0 32px rgba(15, 23, 42, 0.15);
+    z-index: 2000;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 480px) {
+    .cart-drawer {
+        max-width: 100%;
+        right: -100%;
+    }
+}
+
+.cart-drawer.show {
+    right: 0;
+}
+
+.cart-drawer-header {
+    padding: 20px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+}
+
+.cart-drawer-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cart-drawer-header h3 i {
+    color: #5cb85c;
+}
+
+.cart-drawer-close {
+    background: #f1f5f9;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    color: #64748b;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+
+.cart-drawer-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: rotate(90deg);
+}
+
+.cart-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 20px;
+}
+
+.cart-drawer-footer {
+    padding: 20px;
+    border-top: 1px solid #f1f5f9;
+    background: #f8fafc;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.cart-drawer-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.cart-drawer-total .label {
+    font-weight: 700;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.cart-drawer-total .amount {
+    font-size: 20px;
+    font-weight: 900;
+    color: #5cb85c;
+}
+
+.cart-drawer-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #5cb85c, #4cae4c);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(92, 184, 92, 0.35);
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.cart-drawer-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(92, 184, 92, 0.45);
+}
+
+.cart-drawer-btn:active {
+    transform: translateY(0);
+}
+
+/* Performance Containment for smooth scrolling on mobile */
+.menu-grid-item {
+    content-visibility: auto;
+    contain-intrinsic-size: 150px 300px;
 }

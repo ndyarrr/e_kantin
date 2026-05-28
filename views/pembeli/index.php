@@ -1,4 +1,5 @@
 <?php
+//pembeli.index.php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -8,10 +9,8 @@ $koneksi = $conn;
 
 // Ambil foto profil pembeli dari session
 $avatar_file = $_SESSION['user_foto'] ?? '';
-$avatar_path = '../../assets/img/' . $avatar_file;
-if (empty($avatar_file) || !file_exists(__DIR__ . '/../../assets/img/' . $avatar_file)) {
-    $avatar_path = '../../assets/img/PPAril.jpeg';
-}
+$has_avatar = !empty($avatar_file) && file_exists(__DIR__ . '/../../assets/img/' . $avatar_file);
+$avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 $user_nama = $_SESSION['user_nama'] ?? 'Pembeli';
 $user_role = $_SESSION['user_role'] ?? 'siswa';
 $user_id = $_SESSION['user_id'] ?? '';
@@ -25,6 +24,18 @@ $q_all_menu = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko, toko.id_tok
 if ($q_all_menu) {
     while ($r = mysqli_fetch_assoc($q_all_menu))
         $all_menus[] = $r;
+}
+
+// ── Ambil favorit dari DB ──
+$user_favs = [];
+if (!empty($user_id)) {
+    $stmt_fav = mysqli_prepare($koneksi, "SELECT id_menu FROM favorit WHERE user_id = ? AND user_role = ?");
+    mysqli_stmt_bind_param($stmt_fav, 'ss', $user_id, $user_role);
+    mysqli_stmt_execute($stmt_fav);
+    $res_fav = mysqli_stmt_get_result($stmt_fav);
+    while ($r = mysqli_fetch_assoc($res_fav))
+        $user_favs[] = (int) $r['id_menu'];
+    mysqli_stmt_close($stmt_fav);
 }
 
 // ── Ambil SEMUA toko ──
@@ -44,7 +55,7 @@ function resolveMenuImg($foto)
         if (file_exists(__DIR__ . '/../../assets/img/' . $foto))
             return '../../assets/img/' . $foto;
     }
-    return '../../assets/img/ayam.png';
+    return '';
 }
 
 function resolveTokoImg($foto, $nama)
@@ -72,7 +83,7 @@ function resolveTokoImg($foto, $nama)
         if (str_contains($n, $key) && file_exists(__DIR__ . '/../../assets/img/' . $file))
             return '../../assets/img/' . $file;
     }
-    return '../../assets/img/ayam.png';
+    return '';
 }
 ?>
 <!DOCTYPE html>
@@ -157,17 +168,27 @@ function resolveTokoImg($foto, $nama)
                                 <div><span class="total-label">Total</span><br><span class="total-amount"
                                         id="cartTotal">Rp 0</span></div>
                                 <button class="btn-checkout"
-                                    onclick="showToast('Fitur checkout segera hadir!','success')">Checkout</button>
+                                    onclick="event.stopPropagation(); showToast('Fitur checkout segera hadir!','success')">Checkout</button>
                             </div>
                         </div>
                     </div>
                     <!-- Profil -->
                     <div class="dropdown-wrapper">
-                        <img src="<?= $avatar_path; ?>" class="blank-avatar" alt="Profil"
-                            onclick="toggleDropdown('profileDrop')">
+                        <?php if ($has_avatar): ?>
+                            <img src="<?= $avatar_path; ?>" class="blank-avatar" alt="Profil"
+                                onclick="toggleDropdown('profileDrop')">
+                        <?php else: ?>
+                            <div class="avatar-initials size-sm" onclick="toggleDropdown('profileDrop')">
+                                <?= strtoupper(substr($user_nama, 0, 1)); ?>
+                            </div>
+                        <?php endif; ?>
                         <div class="dropdown-panel profile-dropdown" id="profileDrop">
                             <div class="profile-header">
-                                <img src="<?= $avatar_path; ?>" alt="Avatar">
+                                <?php if ($has_avatar): ?>
+                                    <img src="<?= $avatar_path; ?>" alt="Avatar">
+                                <?php else: ?>
+                                    <div class="avatar-initials size-md"><?= strtoupper(substr($user_nama, 0, 1)); ?></div>
+                                <?php endif; ?>
                                 <div class="profile-info">
                                     <h4><?= htmlspecialchars($user_nama); ?></h4>
                                     <p><?= htmlspecialchars($user_role); ?></p>
@@ -234,15 +255,19 @@ function resolveTokoImg($foto, $nama)
     <script>
         const ALL_MENUS = <?= json_encode(array_map(function ($m) {
             return [
-                'id_menu' => $m['id_menu'],
+                'id_menu' => (int) $m['id_menu'],
                 'nama_menu' => $m['nama_menu'],
                 'harga' => $m['harga'],
                 'foto_menu' => $m['foto_menu'] ?? '',
                 'kategori' => strtolower($m['kategori'] ?? 'makanan'),
                 'nama_toko' => $m['nama_toko'],
-                'id_toko' => $m['id_toko']
+                'id_toko' => (int) $m['id_toko']
             ];
         }, $all_menus)); ?>;
+
+        // Favorit awal dari DB (sync lintas device)
+        let USER_FAVS = <?= json_encode($user_favs) ?>;
+        const FAV_API = 'actions/favorit.php';
     </script>
 
     <script>
@@ -311,7 +336,8 @@ function resolveTokoImg($foto, $nama)
         }
 
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.dropdown-wrapper') && !e.target.closest('.dropdown-panel')) closeAllDropdowns();
+            if (e.target.closest('.dropdown-panel')) return;
+            if (!e.target.closest('.dropdown-wrapper')) closeAllDropdowns();
         });
 
         // ════════════════════════════════════════════
@@ -339,14 +365,14 @@ function resolveTokoImg($foto, $nama)
             showToast('✅ ' + nama + ' ditambahkan ke keranjang!', 'success');
         }
 
-        function updateCartQty(id, delta) {
+        function updateCartQty(id, delta, event) {
+            event && event.stopPropagation(); // ← tambah ini
             const cart = getCart();
             const item = cart.find(c => c.id_menu === id);
             if (item) {
                 item.jumlah += delta;
                 if (item.jumlah <= 0) {
-                    const idx = cart.indexOf(item);
-                    cart.splice(idx, 1);
+                    cart.splice(cart.indexOf(item), 1);
                 }
             }
             saveCart(cart);
@@ -378,11 +404,15 @@ function resolveTokoImg($foto, $nama)
 
             let html = '';
             cart.forEach(item => {
-                let imgSrc = '../../assets/img/ayam.png';
-                if (item.foto_menu) imgSrc = '../../assets/img/menu/' + item.foto_menu;
+                let imgHTML = '';
+                if (item.foto_menu) {
+                    imgHTML = `<img src="../../assets/img/menu/${item.foto_menu}" alt="${item.nama_menu}" onerror="this.outerHTML='<div class=\\'cart-img-placeholder\\'><i class=\\'fa-solid fa-utensils\\'></i></div>';">`;
+                } else {
+                    imgHTML = `<div class="cart-img-placeholder"><i class="fa-solid fa-utensils"></i></div>`;
+                }
                 html += `
             <div class="dropdown-item">
-                <img src="${imgSrc}" alt="${item.nama_menu}">
+                ${imgHTML}
                 <div class="item-info">
                     <h4>${item.nama_menu}</h4>
                     <p>${item.nama_toko}</p>
@@ -390,9 +420,9 @@ function resolveTokoImg($foto, $nama)
                 <div style="text-align:right">
                     <div class="item-price">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
                     <div class="item-qty" style="margin-top:4px">
-                        <button onclick="updateCartQty(${item.id_menu},-1)">−</button>
+                        <button onclick="updateCartQty(${item.id_menu},-1,event)">−</button>
                         <span>${item.jumlah}</span>
-                        <button onclick="updateCartQty(${item.id_menu},1)">+</button>
+                        <button onclick="updateCartQty(${item.id_menu},1,event)">+</button>
                     </div>
                 </div>
             </div>`;
@@ -401,25 +431,96 @@ function resolveTokoImg($foto, $nama)
         }
 
         // ════════════════════════════════════════════
-        //  FAVORIT (localStorage)
+        //  FAVORIT (database-backed via AJAX)
         // ════════════════════════════════════════════
         function getFavorites() {
-            try { return JSON.parse(localStorage.getItem('ekantin_fav') || '[]'); }
-            catch { return []; }
+            return USER_FAVS; // already loaded from DB on page load
         }
 
         function toggleFavorite(id) {
-            let favs = getFavorites();
-            const idx = favs.indexOf(id);
-            if (idx > -1) {
-                favs.splice(idx, 1);
-                showToast('Dihapus dari favorit', '');
-            } else {
-                favs.push(id);
+            id = Number(id);
+            // Optimistic UI update
+            const idx = USER_FAVS.indexOf(id);
+            const isLiked = idx === -1;
+            if (isLiked) {
+                USER_FAVS.push(id);
                 showToast('❤️ Ditambahkan ke favorit!', 'success');
+            } else {
+                USER_FAVS.splice(idx, 1);
+                showToast('Dihapus dari favorit', '');
             }
-            localStorage.setItem('ekantin_fav', JSON.stringify(favs));
             renderFavorites();
+            updateAllHeartButtons();
+
+            // Sync ke DB
+            const fd = new FormData();
+            fd.append('action', 'toggle');
+            fd.append('id_menu', id);
+            fetch(FAV_API, { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        // Rollback jika gagal
+                        if (isLiked) USER_FAVS.splice(USER_FAVS.indexOf(id), 1);
+                        else USER_FAVS.push(id);
+                        renderFavorites();
+                        updateAllHeartButtons();
+                        showToast('Gagal menyimpan favorit', 'error');
+                    }
+                })
+                .catch(() => {
+                    showToast('Koneksi gagal', 'error');
+                });
+        }
+
+        // Update semua tombol heart di halaman berdasarkan USER_FAVS
+        function updateAllHeartButtons() {
+            document.querySelectorAll('[data-fav-id]').forEach(btn => {
+                const id = Number(btn.getAttribute('data-fav-id'));
+                const icon = btn.querySelector('i');
+                if (USER_FAVS.includes(id)) {
+                    btn.classList.add('active');
+                    if (icon) icon.className = 'fa-solid fa-heart';
+                } else {
+                    btn.classList.remove('active');
+                    if (icon) icon.className = 'fa-regular fa-heart';
+                }
+            });
+        }
+
+        // Helper function to render a beautiful category-specific placeholder menu card
+        function renderMenuImageHTML(foto_menu, kategori, nama_menu) {
+            const kat = (kategori || 'makanan').toLowerCase();
+            let img_src = '';
+            if (foto_menu) {
+                img_src = '../../assets/img/menu/' + foto_menu;
+            }
+
+            let svgContent = '';
+            if (kat === 'minuman') {
+                svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" /></svg>`;
+            } else if (kat === 'snack') {
+                svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" /></svg>`;
+            } else {
+                svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" /></svg>`;
+            }
+
+            if (img_src) {
+                return `
+                <div class="menu-card-full-img-wrap">
+                    <img src="${img_src}" alt="${nama_menu}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="menu-img-placeholder ${kat}" style="display:none;">
+                        ${svgContent}
+                    </div>
+                </div>`;
+            } else {
+                return `
+                <div class="menu-card-full-img-wrap">
+                    <div class="menu-img-placeholder ${kat}">
+                        ${svgContent}
+                    </div>
+                </div>`;
+            }
         }
 
         function renderFavorites() {
@@ -434,7 +535,7 @@ function resolveTokoImg($foto, $nama)
             }
             empty.style.display = 'none';
 
-            const favMenus = ALL_MENUS.filter(m => favs.includes(m.id_menu));
+            const favMenus = ALL_MENUS.filter(m => favs.includes(Number(m.id_menu)));
             if (favMenus.length === 0) {
                 grid.innerHTML = '';
                 empty.style.display = 'block';
@@ -442,11 +543,10 @@ function resolveTokoImg($foto, $nama)
             }
 
             grid.innerHTML = favMenus.map(m => {
-                let img = '../../assets/img/ayam.png';
-                if (m.foto_menu) img = '../../assets/img/menu/' + m.foto_menu;
+                const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu);
                 return `
             <div class="menu-card-full">
-                <img src="${img}" alt="${m.nama_menu}">
+                ${imgWrapHTML}
                 <div class="mc-info">
                     <h4>${m.nama_menu}</h4>
                     <p class="mc-toko">${m.nama_toko}</p>
@@ -510,11 +610,10 @@ function resolveTokoImg($foto, $nama)
                     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-magnifying-glass"></i><h3>Tidak ditemukan</h3><p>Coba kata kunci lain</p></div>';
                 } else {
                     grid.innerHTML = results.map(m => {
-                        let img = '../../assets/img/ayam.png';
-                        if (m.foto_menu) img = '../../assets/img/menu/' + m.foto_menu;
+                        const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu);
                         return `
                     <div class="menu-card-full">
-                        <img src="${img}" alt="${m.nama_menu}">
+                        ${imgWrapHTML}
                         <div class="mc-info">
                             <h4>${m.nama_menu}</h4>
                             <p class="mc-toko">${m.nama_toko}</p>

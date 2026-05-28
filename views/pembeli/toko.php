@@ -1,4 +1,5 @@
 <?php
+//pembeli/toko.php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -53,14 +54,14 @@ if ($id_toko <= 0) {
             } elseif (str_contains($nama_kecil, 'basuni')) {
                 $toko_img_src = '../../assets/img/kantin_pak_basuni.jpeg';
             } else {
-                $toko_img_src = '../../assets/img/ayam.png';
+                $toko_img_src = '';
             }
         }
 
         // ── Status toko ──
         $is_buka = (strtolower($toko['status'] ?? '') === 'buka');
         $status_kelas = $is_buka ? 'online' : 'offline';
-        $status_teks  = $is_buka ? 'Buka' : 'Tutup';
+        $status_teks = $is_buka ? 'Buka' : 'Tutup';
 
         // ── Ambil menu toko ──
         $stmt_menu = mysqli_prepare($conn, "SELECT * FROM menu WHERE id_toko = ? ORDER BY kategori ASC, nama_menu ASC");
@@ -86,13 +87,14 @@ if ($id_toko <= 0) {
 
 // Ambil avatar pembeli
 $avatar_file = $_SESSION['user_foto'] ?? '';
-$avatar_path = '../../assets/img/' . $avatar_file;
-if (empty($avatar_file) || !file_exists(__DIR__ . '/../../assets/img/' . $avatar_file)) {
-    $avatar_path = '../../assets/img/PPAril.jpeg';
-}
+$user_nama   = $_SESSION['user_nama'] ?? 'Pembeli';
+$user_role   = $_SESSION['user_role'] ?? 'siswa';
+$has_avatar  = !empty($avatar_file) && file_exists(__DIR__ . '/../../assets/img/' . $avatar_file);
+$avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -101,7 +103,21 @@ if (empty($avatar_file) || !file_exists(__DIR__ . '/../../assets/img/' . $avatar
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Stylesheets consolidated in assets/css/pembeli.css -->
 </head>
+
 <body>
+
+    <!-- SVG Symbols for Category Fallbacks (Performance Optimization) -->
+    <svg style="display: none;">
+        <symbol id="icon-minuman" viewBox="0 0 24 24">
+            <path d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" />
+        </symbol>
+        <symbol id="icon-snack" viewBox="0 0 24 24">
+            <path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" />
+        </symbol>
+        <symbol id="icon-makanan" viewBox="0 0 24 24">
+            <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" />
+        </symbol>
+    </svg>
 
     <!-- ── TOP HEADER ── -->
     <header class="main-header">
@@ -110,7 +126,9 @@ if (empty($avatar_file) || !file_exists(__DIR__ . '/../../assets/img/' . $avatar
         <div class="header-inner">
             <div class="top-bar">
                 <div class="logo-area">
-                    <img src="../../assets/img/logo-esemkita.png" class="school-logo" style="width: 38px; height: 38px; object-fit: contain; flex-shrink: 0; border-radius: 50%; background-color: #ffffff; padding: 2px;" alt="Logo Esemkita">
+                    <img src="../../assets/img/logo-esemkita.png" class="school-logo"
+                         style="width: 38px; height: 38px; object-fit: contain; flex-shrink: 0; border-radius: 50%; background-color: #ffffff; padding: 2px;"
+                         alt="Logo Esemkita">
                     <span class="brand-name">E-Kantin</span>
                 </div>
                 <div class="search-container">
@@ -118,11 +136,34 @@ if (empty($avatar_file) || !file_exists(__DIR__ . '/../../assets/img/' . $avatar
                     <input type="text" placeholder="Cari menu..." id="searchInput" oninput="searchMenu(this.value)">
                 </div>
                 <div class="header-icons">
-                    <div class="icon-badge" onclick="location.href='index.php'">
+                    <div class="icon-badge" onclick="toggleCartDrawer()">
                         <i class="fa-solid fa-cart-shopping"></i>
                         <span class="badge" id="headerCartBadge">0</span>
                     </div>
-                    <img src="<?= $avatar_path; ?>" class="blank-avatar" alt="Profil Pembeli">
+                    <!-- Profil -->
+                    <div class="dropdown-wrapper">
+                        <?php if ($has_avatar): ?>
+                            <img src="<?= $avatar_path; ?>" class="blank-avatar" alt="Profil"
+                                onclick="toggleProfileDrop()" style="cursor:pointer;">
+                        <?php else: ?>
+                            <div class="avatar-initials size-sm" onclick="toggleProfileDrop()" style="cursor:pointer;"><?= strtoupper(substr($user_nama, 0, 1)); ?></div>
+                        <?php endif; ?>
+                        <div class="dropdown-panel profile-dropdown" id="tokoProfileDrop" style="display:none;">
+                            <div class="profile-header">
+                                <?php if ($has_avatar): ?>
+                                    <img src="<?= $avatar_path; ?>" alt="Avatar">
+                                <?php else: ?>
+                                    <div class="avatar-initials size-md"><?= strtoupper(substr($user_nama, 0, 1)); ?></div>
+                                <?php endif; ?>
+                                <div class="profile-info">
+                                    <h4><?= htmlspecialchars($user_nama); ?></h4>
+                                    <p><?= htmlspecialchars($user_role); ?></p>
+                                </div>
+                            </div>
+                            <a href="index.php" class="profile-menu-item"><i class="fa-solid fa-house"></i> Beranda</a>
+                            <a href="../../auth/logout.php" class="profile-menu-item" style="color:#ef4444;"><i class="fa-solid fa-right-from-bracket"></i> Keluar</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -157,14 +198,29 @@ if (empty($avatar_file) || !file_exists(__DIR__ . '/../../assets/img/' . $avatar
 
                 <!-- ── Store Hero ── -->
                 <div class="toko-hero">
-                    <div class="toko-hero-banner">
-                        <img src="<?= $toko_img_src; ?>" alt="<?= htmlspecialchars($toko['nama_toko']); ?>">
+                    <div class="toko-hero-banner <?= empty($toko_img_src) ? 'toko-banner-placeholder' : ''; ?>">
+                        <?php if (!empty($toko_img_src)): ?>
+                            <img src="<?= $toko_img_src; ?>" alt="<?= htmlspecialchars($toko['nama_toko']); ?>"
+                                onerror="this.style.display='none'; this.parentElement.classList.add('toko-banner-placeholder');">
+                        <?php endif; ?>
                     </div>
                     <div class="toko-hero-info">
-                        <img src="<?= $toko_img_src; ?>" class="toko-avatar" alt="<?= htmlspecialchars($toko['nama_toko']); ?>">
+                        <?php if (!empty($toko_img_src)): ?>
+                            <img src="<?= $toko_img_src; ?>" class="toko-avatar"
+                                alt="<?= htmlspecialchars($toko['nama_toko']); ?>"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="toko-avatar-placeholder" style="display:none;">
+                                <i class="fa-solid fa-store"></i>
+                            </div>
+                        <?php else: ?>
+                            <div class="toko-avatar-placeholder">
+                                <i class="fa-solid fa-store"></i>
+                            </div>
+                        <?php endif; ?>
                         <div class="toko-details">
                             <h1><?= htmlspecialchars($toko['nama_toko']); ?></h1>
-                            <p class="toko-desc"><?= htmlspecialchars($toko['deskripsi'] ?? 'Makanan, Snack, & Minuman'); ?></p>
+                            <p class="toko-desc"><?= htmlspecialchars($toko['deskripsi'] ?? 'Makanan, Snack, & Minuman'); ?>
+                            </p>
                             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                                 <span class="toko-status-badge <?= $is_buka ? 'buka' : 'tutup'; ?>">
                                     <?= $status_teks; ?>
@@ -200,54 +256,74 @@ if (empty($avatar_file) || !file_exists(__DIR__ . '/../../assets/img/' . $avatar
                 <div class="menu-grid" id="menuGrid">
                     <?php if (count($menus) > 0): ?>
                         <?php foreach ($menus as $menu):
-                            // Gambar menu
                             $foto_menu = $menu['foto_menu'] ?? '';
-                            $menu_img_src = '../../assets/img/ayam.png';
-                            if (!empty($foto_menu)) {
-                                if (file_exists(__DIR__ . '/../../assets/img/menu/' . $foto_menu)) {
-                                    $menu_img_src = '../../assets/img/menu/' . $foto_menu;
-                                } elseif (file_exists(__DIR__ . '/../../assets/img/' . $foto_menu)) {
-                                    $menu_img_src = '../../assets/img/' . $foto_menu;
-                                }
-                            }
-
-                            $kategori = strtolower($menu['kategori'] ?? 'lainnya');
+                            $kategori = strtolower($menu['kategori'] ?? 'makanan');
                             $stok = intval($menu['stok'] ?? 0);
                             $tersedia = intval($menu['tersedia'] ?? 0);
                             $is_available = ($tersedia && $stok > 0 && $is_buka);
-                        ?>
-                        <div class="menu-grid-item" data-kategori="<?= htmlspecialchars($kategori); ?>" data-nama="<?= htmlspecialchars(strtolower($menu['nama_menu'])); ?>">
-                            <div class="menu-item-img-wrap">
-                                <img src="<?= $menu_img_src; ?>" alt="<?= htmlspecialchars($menu['nama_menu']); ?>" loading="lazy">
-                                <span class="menu-item-category <?= htmlspecialchars($kategori); ?>">
-                                    <?= htmlspecialchars(ucfirst($kategori)); ?>
-                                </span>
-                                <?php if ($stok <= 0): ?>
-                                    <span class="menu-item-stock out">Habis</span>
-                                <?php elseif ($stok <= 5): ?>
-                                    <span class="menu-item-stock low">Sisa <?= $stok; ?></span>
-                                <?php else: ?>
-                                    <span class="menu-item-stock">Stok <?= $stok; ?></span>
-                                <?php endif; ?>
-                            </div>
-                            <div class="menu-item-body">
-                                <div>
-                                    <div class="menu-item-name"><?= htmlspecialchars($menu['nama_menu']); ?></div>
-                                    <?php if (!empty($menu['deskripsi'])): ?>
-                                        <div class="menu-item-desc"><?= htmlspecialchars($menu['deskripsi']); ?></div>
+
+                            // Cek foto ada atau tidak
+                            $menu_has_foto = false;
+                            $menu_img_src = '';
+                            if (!empty($foto_menu)) {
+                                if (file_exists(__DIR__ . '/../../assets/img/menu/' . $foto_menu)) {
+                                    $menu_img_src = '../../assets/img/menu/' . $foto_menu;
+                                    $menu_has_foto = true;
+                                }
+                            }
+                            ?>
+                            <div class="menu-grid-item" data-kategori="<?= htmlspecialchars($kategori); ?>"
+                                 data-nama="<?= htmlspecialchars(strtolower($menu['nama_menu'])); ?>">
+                                <div class="menu-item-img-wrap">
+                                    <button class="btn-favorite-toko" data-id="<?= $menu['id_menu']; ?>" 
+                                            onclick="toggleFavoriteToko(<?= $menu['id_menu']; ?>, this)" title="Tambah ke Favorit">
+                                        <i class="fa-regular fa-heart"></i>
+                                    </button>
+
+                                    <?php if ($menu_has_foto): ?>
+                                        <img src="<?= $menu_img_src ?>" alt="<?= htmlspecialchars($menu['nama_menu']) ?>" loading="lazy"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="menu-img-placeholder <?= $kategori ?>" style="display:none;">
+                                            <svg><use href="#icon-<?= $kategori === 'minuman' || $kategori === 'snack' ? $kategori : 'makanan' ?>"></use></svg>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="menu-img-placeholder <?= $kategori ?>">
+                                            <svg><use href="#icon-<?= $kategori === 'minuman' || $kategori === 'snack' ? $kategori : 'makanan' ?>"></use></svg>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <span class="menu-item-category <?= htmlspecialchars($kategori) ?>">
+                                        <?= htmlspecialchars(ucfirst($kategori)) ?>
+                                    </span>
+                                    <?php if ($stok <= 0): ?>
+                                        <span class="menu-item-stock out">Habis</span>
+                                    <?php elseif ($stok <= 5): ?>
+                                        <span class="menu-item-stock low">Sisa
+                                            <?= $stok ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="menu-item-stock">Stok
+                                            <?= $stok ?>
+                                        </span>
                                     <?php endif; ?>
                                 </div>
-                                <div class="menu-item-footer">
-                                    <span class="menu-item-price">Rp <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
-                                    <button class="btn-tambah"
-                                        <?= !$is_available ? 'disabled' : ''; ?>
-                                        onclick="tambahKeKeranjang(<?= $menu['id_menu']; ?>, '<?= htmlspecialchars(addslashes($menu['nama_menu']), ENT_QUOTES); ?>', <?= $menu['harga']; ?>, '<?= htmlspecialchars(addslashes($menu_img_src), ENT_QUOTES); ?>', '<?= htmlspecialchars(addslashes($toko['nama_toko']), ENT_QUOTES); ?>', <?= $toko['id_toko']; ?>)">
-                                        <i class="fa-solid fa-plus"></i>
-                                        <?= $is_available ? 'Tambah' : ($stok <= 0 ? 'Habis' : 'Tutup'); ?>
-                                    </button>
+                                <div class="menu-item-body">
+                                    <div>
+                                        <div class="menu-item-name"><?= htmlspecialchars($menu['nama_menu']); ?></div>
+                                        <?php if (!empty($menu['deskripsi'])): ?>
+                                            <div class="menu-item-desc"><?= htmlspecialchars($menu['deskripsi']); ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="menu-item-footer">
+                                        <span class="menu-item-price">Rp <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
+                                        <button class="btn-tambah" <?= !$is_available ? 'disabled' : ''; ?>
+                                            onclick="tambahKeKeranjang(<?= $menu['id_menu']; ?>, '<?= htmlspecialchars(addslashes($menu['nama_menu']), ENT_QUOTES); ?>', <?= $menu['harga']; ?>, '<?= htmlspecialchars(addslashes($foto_menu), ENT_QUOTES); ?>', '<?= htmlspecialchars(addslashes($toko['nama_toko']), ENT_QUOTES); ?>', <?= $toko['id_toko']; ?>)">
+                                            <i class="fa-solid fa-plus"></i>
+                                            <?= $is_available ? 'Tambah' : ($stok <= 0 ? 'Habis' : 'Tutup'); ?>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <div class="empty-menu-state">
@@ -264,158 +340,365 @@ if (empty($avatar_file) || !file_exists(__DIR__ . '/../../assets/img/' . $avatar
     </main>
 
     <?php if (empty($error_page) || !$error_page): ?>
-    <!-- ── Toast Notification ── -->
-    <div class="toast-notification" id="toastNotif">
-        <i class="fa-solid fa-circle-check"></i>
-        <span id="toastMessage">Item ditambahkan ke keranjang!</span>
-    </div>
+        <!-- Toast container -->
+        <div class="toast-container" id="toastContainer"></div>
 
-    <!-- ── Floating Cart Button ── -->
-    <a href="index.php" class="fab-cart" title="Lihat Keranjang">
-        <i class="fa-solid fa-cart-shopping"></i>
-        <span class="fab-cart-badge" id="fabCartBadge">0</span>
-    </a>
+        <!-- ── Floating Cart Button ── -->
+        <button class="fab-cart" onclick="toggleCartDrawer()" title="Lihat Keranjang">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="fab-cart-badge" id="fabCartBadge">0</span>
+        </button>
 
-    <script>
-    // ══════════════════════════════════════════════
-    //  CART & FILTER LOGIC
-    // ══════════════════════════════════════════════
+        <!-- ── Cart Drawer Overlay ── -->
+        <div class="cart-drawer-overlay" id="cartOverlay" onclick="toggleCartDrawer()"></div>
 
-    const CART_KEY = 'ekantin_cart';
+        <!-- ── Cart Drawer ── -->
+        <div class="cart-drawer" id="cartDrawer">
+            <div class="cart-drawer-header">
+                <h3><i class="fa-solid fa-cart-shopping"></i> Keranjang Belanja</h3>
+                <button class="cart-drawer-close" onclick="toggleCartDrawer()">&times;</button>
+            </div>
+            <div class="cart-drawer-body" id="cartDrawerBody">
+                <!-- Cart items will be dynamically generated by JS -->
+            </div>
+            <div class="cart-drawer-footer" id="cartDrawerFooter">
+                <div class="cart-drawer-total">
+                    <span class="label">Total Belanja</span>
+                    <span class="amount" id="cartDrawerTotal">Rp 0</span>
+                </div>
+                <button class="cart-drawer-btn" onclick="checkoutCart()">
+                    <i class="fa-solid fa-cash-register"></i> Checkout Sekarang
+                </button>
+            </div>
+        </div>
 
-    // ── Get cart from localStorage ──
-    function getCart() {
-        try {
-            const data = localStorage.getItem(CART_KEY);
-            return data ? JSON.parse(data) : [];
-        } catch (e) {
-            return [];
-        }
-    }
+        <script>
+            // ══════════════════════════════════════════════
+            //  CART & FILTER LOGIC
+            // ══════════════════════════════════════════════
 
-    // ── Save cart to localStorage ──
-    function saveCart(cart) {
-        localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    }
+            const CART_KEY = 'ekantin_cart';
 
-    // ── Update all badge counts ──
-    function updateBadges() {
-        const cart = getCart();
-        const totalItems = cart.reduce((sum, item) => sum + (item.jumlah || 0), 0);
+            // ── Get cart from localStorage ──
+            function getCart() {
+                try {
+                    const data = localStorage.getItem(CART_KEY);
+                    return data ? JSON.parse(data) : [];
+                } catch (e) {
+                    return [];
+                }
+            }
 
-        const headerBadge = document.getElementById('headerCartBadge');
-        const fabBadge = document.getElementById('fabCartBadge');
+            // ── Save cart to localStorage ──
+            function saveCart(cart) {
+                localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            }
 
-        if (headerBadge) {
-            headerBadge.textContent = totalItems;
-            headerBadge.style.display = totalItems > 0 ? 'flex' : 'none';
-        }
-        if (fabBadge) {
-            fabBadge.textContent = totalItems;
-            fabBadge.style.display = totalItems > 0 ? 'flex' : 'none';
-        }
-    }
+            // ── Update all badge counts ──
+            function updateBadges() {
+                const cart = getCart();
+                const totalItems = cart.reduce((sum, item) => sum + (item.jumlah || 0), 0);
 
-    // ── Add to cart ──
-    function tambahKeKeranjang(id_menu, nama_menu, harga, foto_menu, nama_toko, id_toko) {
-        let cart = getCart();
+                const headerBadge = document.getElementById('headerCartBadge');
+                const fabBadge = document.getElementById('fabCartBadge');
 
-        const existingIndex = cart.findIndex(item => item.id_menu === id_menu);
+                if (headerBadge) {
+                    headerBadge.textContent = totalItems;
+                    headerBadge.style.display = totalItems > 0 ? 'flex' : 'none';
+                }
+                if (fabBadge) {
+                    fabBadge.textContent = totalItems;
+                    fabBadge.style.display = totalItems > 0 ? 'flex' : 'none';
+                }
+            }
 
-        if (existingIndex !== -1) {
-            cart[existingIndex].jumlah += 1;
-        } else {
-            cart.push({
-                id_menu: id_menu,
-                nama_menu: nama_menu,
-                harga: harga,
-                jumlah: 1,
-                foto_menu: foto_menu,
-                nama_toko: nama_toko,
-                id_toko: id_toko
+            // ── Add to cart ──
+            function tambahKeKeranjang(id_menu, nama_menu, harga, foto_menu, nama_toko, id_toko) {
+                let cart = getCart();
+
+                const existingIndex = cart.findIndex(item => item.id_menu === id_menu);
+
+                if (existingIndex !== -1) {
+                    cart[existingIndex].jumlah += 1;
+                } else {
+                    cart.push({
+                        id_menu: id_menu,
+                        nama_menu: nama_menu,
+                        harga: harga,
+                        jumlah: 1,
+                        foto_menu: foto_menu,
+                        nama_toko: nama_toko,
+                        id_toko: id_toko
+                    });
+                }
+
+                saveCart(cart);
+                updateBadges();
+                showToast('✅ Item ditambahkan ke keranjang!', 'success');
+                if (document.getElementById('cartDrawer').classList.contains('show')) {
+                    renderCartDrawer();
+                }
+            }
+
+            // ── Show toast notification ──
+            function showToast(message, type) {
+                const container = document.getElementById('toastContainer');
+                if (!container) return;
+                const toast = document.createElement('div');
+                toast.className = 'toast ' + (type || '');
+                toast.textContent = message;
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }
+
+            // ── Toggle Cart Drawer ──
+            function toggleCartDrawer() {
+                const drawer = document.getElementById('cartDrawer');
+                const overlay = document.getElementById('cartOverlay');
+                if (drawer && overlay) {
+                    const isShown = drawer.classList.contains('show');
+                    if (isShown) {
+                        drawer.classList.remove('show');
+                        overlay.classList.remove('show');
+                        document.body.style.overflow = '';
+                    } else {
+                        renderCartDrawer();
+                        drawer.classList.add('show');
+                        overlay.classList.add('show');
+                        document.body.style.overflow = 'hidden';
+                    }
+                }
+            }
+
+            // ── Toggle Profile Dropdown ──
+            function toggleProfileDrop() {
+                const drop = document.getElementById('tokoProfileDrop');
+                if (!drop) return;
+                const isVisible = drop.style.display === 'block';
+                drop.style.display = isVisible ? 'none' : 'block';
+            }
+            // Close profile drop when clicking outside
+            document.addEventListener('click', function(e) {
+                const drop = document.getElementById('tokoProfileDrop');
+                if (!drop) return;
+                const wrapper = drop.closest('.dropdown-wrapper');
+                if (wrapper && !wrapper.contains(e.target)) {
+                    drop.style.display = 'none';
+                }
             });
-        }
 
-        saveCart(cart);
-        updateBadges();
-        showToast('Item ditambahkan ke keranjang!');
-    }
+            // ── Render Cart Drawer Content ──
+            function renderCartDrawer() {
+                const cart = getCart();
+                const body = document.getElementById('cartDrawerBody');
+                const footer = document.getElementById('cartDrawerFooter');
+                const totalEl = document.getElementById('cartDrawerTotal');
 
-    // ── Show toast notification ──
-    function showToast(message) {
-        const toast = document.getElementById('toastNotif');
-        const toastMsg = document.getElementById('toastMessage');
-        if (toastMsg) toastMsg.textContent = message;
+                if (!body) return;
 
-        toast.classList.add('show');
+                const totalPrice = cart.reduce((sum, item) => sum + (item.harga * item.jumlah), 0);
 
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 2500);
-    }
+                if (cart.length === 0) {
+                    body.innerHTML = `
+                        <div class="empty-state" style="padding: 40px 20px;">
+                            <i class="fa-solid fa-cart-flatbed-suitcase" style="font-size: 48px; color: #cbd5e1; margin-bottom: 12px; display: block; text-align: center;"></i>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #475569; margin-bottom: 4px; text-align: center;">Keranjangmu Kosong</h3>
+                            <p style="font-size: 13px; color: #94a3b8; text-align: center;">Yuk, tambahkan menu lezat ke keranjang belanjaanmu!</p>
+                        </div>
+                    `;
+                    if (footer) footer.style.display = 'none';
+                    return;
+                }
 
-    // ── Filter by category ──
-    function filterKategori(kategori, btnEl) {
-        // Update active tab
-        document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
-        if (btnEl) btnEl.classList.add('active');
+                if (footer) footer.style.display = 'block';
+                if (totalEl) totalEl.textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
 
-        // Filter menu items
-        const items = document.querySelectorAll('.menu-grid-item');
-        let visibleCount = 0;
-
-        items.forEach(item => {
-            const itemKategori = item.getAttribute('data-kategori');
-            if (kategori === 'semua' || itemKategori === kategori) {
-                item.classList.remove('hidden');
-                visibleCount++;
-            } else {
-                item.classList.add('hidden');
+                let html = '';
+                cart.forEach(item => {
+                    let imgHTML = '';
+                    if (item.foto_menu) {
+                        imgHTML = `<img src="../../assets/img/menu/${item.foto_menu}" alt="${item.nama_menu}" onerror="this.outerHTML='<div class=\\'cart-img-placeholder\\'><i class=\\'fa-solid fa-utensils\\'></i></div>';">`;
+                    } else {
+                        imgHTML = `<div class="cart-img-placeholder"><i class="fa-solid fa-utensils"></i></div>`;
+                    }
+                    html += `
+                        <div class="dropdown-item" style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                                <div style="width: 50px; height: 50px; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
+                                    ${imgHTML}
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nama_menu}</h4>
+                                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nama_toko}</p>
+                                    <div style="font-size: 13px; font-weight: 800; color: #5cb85c; margin-top: 4px;">Rp ${item.harga.toLocaleString('id-ID')}</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
+                                <div style="font-size: 14px; font-weight: 800; color: #1e293b;">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
+                                <div class="item-qty" style="display: inline-flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc;">
+                                    <button onclick="updateCartQtyToko(${item.id_menu}, -1)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">−</button>
+                                    <span style="font-size: 13px; font-weight: 700; color: #1e293b; min-width: 20px; text-align: center;">${item.jumlah}</span>
+                                    <button onclick="updateCartQtyToko(${item.id_menu}, 1)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                body.innerHTML = html;
             }
-        });
 
-        // Show empty state if no items match
-        let emptyState = document.getElementById('emptyFilterState');
-        if (visibleCount === 0 && items.length > 0) {
-            if (!emptyState) {
-                emptyState = document.createElement('div');
-                emptyState.id = 'emptyFilterState';
-                emptyState.className = 'empty-menu-state';
-                emptyState.innerHTML = '<i class="fa-solid fa-filter-circle-xmark"></i><h3>Tidak ada menu</h3><p>Tidak ada menu untuk kategori ini.</p>';
-                document.getElementById('menuGrid').appendChild(emptyState);
+            // ── Update Cart Item Quantity in Canteen page ──
+            function updateCartQtyToko(id_menu, delta) {
+                let cart = getCart();
+                const existingIndex = cart.findIndex(item => item.id_menu === id_menu);
+                if (existingIndex !== -1) {
+                    cart[existingIndex].jumlah += delta;
+                    if (cart[existingIndex].jumlah <= 0) {
+                        cart.splice(existingIndex, 1);
+                    }
+                    saveCart(cart);
+                    updateBadges();
+                    renderCartDrawer();
+                }
             }
-            emptyState.style.display = 'block';
-        } else if (emptyState) {
-            emptyState.style.display = 'none';
-        }
-    }
 
-    // ── Search menu ──
-    function searchMenu(query) {
-        const q = query.toLowerCase().trim();
-        const items = document.querySelectorAll('.menu-grid-item');
-
-        items.forEach(item => {
-            const nama = item.getAttribute('data-nama') || '';
-            if (q === '' || nama.includes(q)) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
+            // ── Mock Checkout ──
+            function checkoutCart() {
+                showToast('Fitur checkout segera hadir!');
             }
-        });
 
-        // Reset active filter tab
-        if (q !== '') {
-            document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
-        }
-    }
+            // ── Favorites (DB-backed) ──
+            const FAV_API = 'actions/favorit.php';
+            let TOKO_FAVS = []; // diisi saat initFavorites()
 
-    // ── Initialize on page load ──
-    document.addEventListener('DOMContentLoaded', function() {
-        updateBadges();
-    });
-    </script>
+            function getFavorites() {
+                return TOKO_FAVS;
+            }
+
+            // ── Toggle favorite via DB ──
+            function toggleFavoriteToko(id, btn) {
+                id = Number(id);
+                const icon = btn.querySelector('i');
+                const idx = TOKO_FAVS.indexOf(id);
+                const isLiked = idx === -1;
+
+                // Optimistic UI
+                if (isLiked) {
+                    TOKO_FAVS.push(id);
+                    btn.classList.add('active');
+                    if (icon) icon.className = 'fa-solid fa-heart';
+                    showToast('❤️ Ditambahkan ke favorit!', 'success');
+                } else {
+                    TOKO_FAVS.splice(idx, 1);
+                    btn.classList.remove('active');
+                    if (icon) icon.className = 'fa-regular fa-heart';
+                    showToast('Dihapus dari favorit', '');
+                }
+
+                // Sync ke DB
+                const fd = new FormData();
+                fd.append('action', 'toggle');
+                fd.append('id_menu', id);
+                fetch(FAV_API, { method: 'POST', body: fd })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.error) {
+                            // Rollback jika gagal
+                            if (isLiked) TOKO_FAVS.splice(TOKO_FAVS.indexOf(id), 1);
+                            else TOKO_FAVS.push(id);
+                            btn.classList.toggle('active');
+                            if (icon) icon.className = isLiked ? 'fa-regular fa-heart' : 'fa-solid fa-heart';
+                            showToast('Gagal menyimpan favorit', 'error');
+                        }
+                    })
+                    .catch(() => showToast('Koneksi gagal', 'error'));
+            }
+
+            // ── Load favorit dari DB lalu init tombol ──
+            function initFavorites() {
+                fetch(FAV_API + '?action=list')
+                    .then(r => r.json())
+                    .then(data => {
+                        TOKO_FAVS = (data.favorites || []).map(Number);
+                        document.querySelectorAll('.btn-favorite-toko').forEach(btn => {
+                            const id = Number(btn.getAttribute('data-id'));
+                            const icon = btn.querySelector('i');
+                            if (TOKO_FAVS.includes(id)) {
+                                btn.classList.add('active');
+                                if (icon) icon.className = 'fa-solid fa-heart';
+                            } else {
+                                btn.classList.remove('active');
+                                if (icon) icon.className = 'fa-regular fa-heart';
+                            }
+                        });
+                    })
+                    .catch(() => console.warn('Gagal load favorit dari server'));
+            }
+
+            // ── Filter by category ──
+            function filterKategori(kategori, btnEl) {
+                // Update active tab
+                document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+                if (btnEl) btnEl.classList.add('active');
+
+                // Filter menu items
+                const items = document.querySelectorAll('.menu-grid-item');
+                let visibleCount = 0;
+
+                items.forEach(item => {
+                    const itemKategori = item.getAttribute('data-kategori');
+                    if (kategori === 'semua' || itemKategori === kategori) {
+                        item.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+
+                // Show empty state if no items match
+                let emptyState = document.getElementById('emptyFilterState');
+                if (visibleCount === 0 && items.length > 0) {
+                    if (!emptyState) {
+                        emptyState = document.createElement('div');
+                        emptyState.id = 'emptyFilterState';
+                        emptyState.className = 'empty-menu-state';
+                        emptyState.innerHTML = '<i class="fa-solid fa-filter-circle-xmark"></i><h3>Tidak ada menu</h3><p>Tidak ada menu untuk kategori ini.</p>';
+                        document.getElementById('menuGrid').appendChild(emptyState);
+                    }
+                    emptyState.style.display = 'block';
+                } else if (emptyState) {
+                    emptyState.style.display = 'none';
+                }
+            }
+
+            // ── Search menu ──
+            function searchMenu(query) {
+                const q = query.toLowerCase().trim();
+                const items = document.querySelectorAll('.menu-grid-item');
+
+                items.forEach(item => {
+                    const nama = item.getAttribute('data-nama') || '';
+                    if (q === '' || nama.includes(q)) {
+                        item.classList.remove('hidden');
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+
+                // Reset active filter tab
+                if (q !== '') {
+                    document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+                }
+            }
+
+            // ── Initialize on page load ──
+            document.addEventListener('DOMContentLoaded', function () {
+                updateBadges();
+                initFavorites();
+            });
+        </script>
     <?php endif; ?>
 
 </body>
+
 </html>

@@ -6,7 +6,7 @@
         <div class="empty-state" id="favoritEmpty">
             <i class="fa-solid fa-heart"></i>
             <h3>Belum Ada Favorit</h3>
-            <p>Tandai menu favoritmu dengan menekan ikon ❤️ agar mudah ditemukan nanti!</p>
+            <p>Tandai menu favoritmu dengan menekan ikon like agar mudah ditemukan</p>
             <br>
             <button class="btn-promo-blank" onclick="switchNav('beranda')"
                 style="font-size:13px;padding:10px 28px">Jelajahi Menu</button>
