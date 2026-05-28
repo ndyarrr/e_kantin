@@ -1,0 +1,182 @@
+<?php
+// views/penjual/actions/proses_kantin.php
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Proteksi agar yang mengeksekusi file ini murni user ber-role owner
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
+    exit('Unauthorized access!');
+}
+
+require_once __DIR__ . '/../../../config/database.php';
+
+$idToko = (int)($_SESSION['id_toko'] ?? 0);
+$action = $_POST['action'] ?? '';
+
+// Deteksi server dinamis untuk path redirect
+$is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
+$base_url = $is_php_s ? '' : '/e_kantin';
+
+$uploadFileDir = __DIR__ . '/../../../assets/img/';
+
+// ════════════════════════════════════════════════════════════
+// 1. UPDATE KANTIN (NAMA, STATUS, DESKRIPSI & FOTO KANTIN)
+// ════════════════════════════════════════════════════════════
+if ($action === 'update_kantin_full') {
+    $nama_toko         = mysqli_real_escape_string($conn, $_POST['nama_toko'] ?? '');
+    $status_toko       = $_POST['status_toko'] ?? 'buka';
+    $deskripsi_singkat = mysqli_real_escape_string($conn, $_POST['deskripsi_singkat'] ?? '');
+    $deskripsi_panjang = mysqli_real_escape_string($conn, $_POST['deskripsi_panjang'] ?? '');
+    
+    $qLama = mysqli_query($conn, "SELECT `foto_toko` FROM `toko` WHERE `id_toko` = $idToko LIMIT 1");
+    $dataLama = mysqli_fetch_assoc($qLama);
+    $nama_foto_final = $dataLama['foto_toko'] ?? '';
+
+    if (isset($_FILES['foto_toko']) && $_FILES['foto_toko']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['foto_toko']['tmp_name'];
+        $fileName    = $_FILES['foto_toko']['name'];
+        $fileExt     = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        
+        $newFileName = 'kantin_' . $idToko . '.' . $fileExt;
+        
+        $files = glob($uploadFileDir . 'kantin_' . $idToko . '.*');
+        if ($files) {
+            foreach ($files as $file) {
+                if (file_exists($file)) @unlink($file);
+            }
+        }
+        
+        if (move_uploaded_file($fileTmpPath, $uploadFileDir . $newFileName)) {
+            $nama_foto_final = $newFileName;
+        }
+    }
+
+    $queryUpdate = "UPDATE `toko` SET 
+                    `nama_toko` = '$nama_toko', 
+                    `status` = '$status_toko', 
+                    `deskripsi` = '$deskripsi_singkat', 
+                    `deskripsi_panjang` = '$deskripsi_panjang', 
+                    `foto_toko` = '$nama_foto_final' 
+                    WHERE `id_toko` = $idToko";
+
+    if (mysqli_query($conn, $queryUpdate)) {
+        $_SESSION['feedback'] = ['type' => 'success', 'msg' => 'Informasi kantin berhasil diperbarui!'];
+    } else {
+        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal memperbarui database: ' . mysqli_error($conn)];
+    }
+    
+    header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin&t=" . time());
+    exit;
+}
+
+// ════════════════════════════════════════════════════════════
+// 2. ADD BANNER PROMO (MENDUKUNG BERLAKU_HINGGA & SOFT DELETE CHECK)
+// ════════════════════════════════════════════════════════════
+if ($action === 'add_banner') {
+    $berlaku_hingga = $_POST['berlaku_hingga'] ?? '';
+
+    if (empty($berlaku_hingga)) {
+        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal! Tanggal berlaku banner wajib diisi.'];
+        header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin");
+        exit;
+    }
+
+    // ATURAN BISNIS: Hitung hanya banner yang aktif=1, belum expired, dan tidak di-soft delete
+    $queryCekAktif = "SELECT COUNT(*) as total FROM `banner_promo` 
+                      WHERE `id_toko` = $idToko 
+                      AND `aktif` = 1 
+                      AND `deleted_at` IS NULL 
+                      AND `berlaku_hingga` >= CURDATE()";
+                      
+    $qCek = mysqli_query($conn, $queryCekAktif);
+    $dataCek = mysqli_fetch_assoc($qCek);
+    
+    if ((int)$dataCek['total'] >= 2) {
+        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal! Batas maksimal 2 banner aktif terpenuhi. Hapus atau tunggu banner lama expired.'];
+        header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin");
+        exit;
+    }
+
+    if (isset($_FILES['gambar_banner']) && $_FILES['gambar_banner']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['gambar_banner']['tmp_name'];
+        $fileName    = $_FILES['gambar_banner']['name'];
+        $fileSize    = $_FILES['gambar_banner']['size'];
+        $fileExt     = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        
+        $allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+        $maxFileSize = 2097152; // 2MB
+
+        if (!in_array($fileExt, $allowedExts)) {
+            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal! Format gambar wajib JPG, JPEG, PNG, atau WEBP.'];
+            header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin");
+            exit;
+        }
+
+        if ($fileSize > $maxFileSize) {
+            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal! Ukuran gambar maksimal adalah 2MB.'];
+            header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin");
+            exit;
+        }
+
+        // Insert awal data banner (mengisi juga kolom berlaku_hingga)
+        $queryInsertBanner = "INSERT INTO `banner_promo` (`id_toko`, `gambar`, `berlaku_hingga`, `aktif`, `dibuat_pada`, `deleted_at`) 
+                              VALUES ($idToko, '', '$berlaku_hingga', 1, NOW(), NULL)";
+                              
+        if (mysqli_query($conn, $queryInsertBanner)) {
+            $id_banner_baru = mysqli_insert_id($conn);
+            $newFileName = 'banner_' . $idToko . '_' . $id_banner_baru . '.' . $fileExt;
+            
+            $files = glob($uploadFileDir . 'banner_' . $idToko . '_' . $id_banner_baru . '.*');
+            if ($files) {
+                foreach ($files as $file) {
+                    if (file_exists($file)) @unlink($file);
+                }
+            }
+
+            if (move_uploaded_file($fileTmpPath, $uploadFileDir . $newFileName)) {
+                mysqli_query($conn, "UPDATE `banner_promo` SET `gambar` = '$newFileName' WHERE `id_banner` = $id_banner_baru");
+                $_SESSION['feedback'] = ['type' => 'success', 'msg' => 'Banner promosi baru berhasil ditambahkan!'];
+            } else {
+                // Hard delete baris saja jika file fisik gagal di-upload ke server
+                mysqli_query($conn, "DELETE FROM `banner_promo` WHERE `id_banner` = $id_banner_baru");
+                $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal mengunggah file gambar banner ke folder server.'];
+            }
+        } else {
+            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal menyimpan ke database: ' . mysqli_error($conn)];
+        }
+    } else {
+        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal! File gambar banner tidak terdeteksi.'];
+    }
+    
+    header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin&t=" . time());
+    exit;
+}
+
+// ════════════════════════════════════════════════════════════
+// 3. DELETE BANNER (SISTEM SOFT DELETE SESUAI ATURAN BISNIS)
+// ════════════════════════════════════════════════════════════
+if ($action === 'hapus_banner_direct') {
+    $id_banner = (int)($_POST['id_banner'] ?? 0);
+
+    if ($id_banner > 0) {
+        // ATURAN BISNIS: Cukup isi deleted_at dengan waktu sekarang dan nonaktifkan banner (aktif = 0)
+        // File fisik gambar TIDAK DIAPUS dari server untuk kebutuhan audit trail / riwayat data murni
+        $querySoftDelete = "UPDATE `banner_promo` 
+                            SET `deleted_at` = NOW(), `aktif` = 0 
+                            WHERE `id_banner` = $id_banner AND `id_toko` = $idToko";
+        
+        if (mysqli_query($conn, $querySoftDelete)) {
+            $_SESSION['feedback'] = ['type' => 'success', 'msg' => 'Banner promosi berhasil dihapus (Soft Delete)!'];
+        } else {
+            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal menghapus banner: ' . mysqli_error($conn)];
+        }
+    }
+    
+    header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin&t=" . time());
+    exit;
+}
+
+header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin");
+exit;
