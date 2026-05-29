@@ -85,6 +85,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             foreach ($items as $item) {
                 $id_menu = (int) $item['id_menu'];
                 $jumlah = (int) $item['jumlah'];
+                
+                // Validasi ketersediaan stok
+                $cek_stok = mysqli_query($conn, "SELECT nama_menu, stok, tersedia FROM menu WHERE id_menu = $id_menu LIMIT 1");
+                if (mysqli_num_rows($cek_stok) > 0) {
+                    $r_menu = mysqli_fetch_assoc($cek_stok);
+                    if (!$r_menu['tersedia']) {
+                        throw new Exception("Menu '" . $r_menu['nama_menu'] . "' sedang tidak tersedia.");
+                    }
+                    if ($jumlah > $r_menu['stok']) {
+                        throw new Exception("Stok '" . $r_menu['nama_menu'] . "' tidak mencukupi (Tersedia: " . $r_menu['stok'] . ", Diminta: " . $jumlah . ").");
+                    }
+                } else {
+                    throw new Exception("Menu tidak ditemukan.");
+                }
+
                 $harga_satuan = (int) $item['harga'];
                 $catatan = isset($item['catatan']) ? trim($item['catatan']) : '';
                 
@@ -105,8 +120,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
             // Catat log sistem
             catatLog($conn, 'Buat Pesanan', "Pembeli $user_nama membuat pesanan #$id_pesanan senilai Rp $total_pembayaran");
-        }
 
+            // ── AUTO-REPLY CHAT dari kantin ke pembeli ──
+            // Kumpulkan detail item pesanan lengkap (dengan foto + kategori)
+            $chat_items = [];
+            foreach ($items as $item) {
+                $mid = (int) $item['id_menu'];
+                $r_detail = mysqli_fetch_assoc(mysqli_query($conn,
+                    "SELECT nama_menu, foto_menu, kategori, harga FROM menu WHERE id_menu = $mid LIMIT 1"
+                ));
+                if ($r_detail) {
+                    $chat_items[] = [
+                        'nama'     => $r_detail['nama_menu'],
+                        'foto'     => $r_detail['foto_menu'],
+                        'kategori' => strtolower($r_detail['kategori'] ?? 'makanan'),
+                        'jumlah'   => (int) $item['jumlah'],
+                        'harga'    => (int) $item['harga'],
+                    ];
+                }
+            }
+
+            // Bangun HTML kartu order untuk dikirim ke chat
+            $items_html = '';
+            foreach ($chat_items as $ci) {
+                $subtotal_item = number_format($ci['harga'] * $ci['jumlah'], 0, ',', '.');
+                $harga_fmt     = number_format($ci['harga'], 0, ',', '.');
+
+                // Tentukan SVG fallback berdasarkan kategori
+                if ($ci['kategori'] === 'minuman') {
+                    $svg_path  = 'M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z';
+                    $svg_color = '#1890ff';
+                    $svg_bg    = '#eff6ff';
+                } elseif ($ci['kategori'] === 'snack') {
+                    $svg_path  = 'M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z';
+                    $svg_color = '#9254de';
+                    $svg_bg    = '#f5f3ff';
+                } else {
+                    $svg_path  = 'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z';
+                    $svg_color = '#ff7a45';
+                    $svg_bg    = '#fff2e8';
+                }
+
+                // Gambar atau SVG fallback
+                if (!empty($ci['foto'])) {
+                    $img_html = '<img src="{BASE_PATH}assets/img/menu/' . htmlspecialchars($ci['foto']) . '" 
+                        onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';" 
+                        style="width:56px;height:56px;object-fit:cover;border-radius:10px;flex-shrink:0;">
+                        <div style="display:none;width:56px;height:56px;border-radius:10px;background:' . $svg_bg . ';align-items:center;justify-content:center;flex-shrink:0;">
+                            <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'24\' height=\'24\' fill=\'' . $svg_color . '\'><path d=\'' . $svg_path . '\'/></svg>
+                        </div>';
+                } else {
+                    $img_html = '<div style="width:56px;height:56px;border-radius:10px;background:' . $svg_bg . ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'24\' height=\'24\' fill=\'' . $svg_color . '\'><path d=\'' . $svg_path . '\'/></svg>
+                        </div>';
+                }
+
+                $items_html .= '
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                    ' . $img_html . '
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;font-size:13px;color:#0f172a;margin-bottom:2px;">' . htmlspecialchars($ci['nama']) . '</div>
+                        <div style="font-size:12px;color:#64748b;">Rp ' . $harga_fmt . ' &times; ' . $ci['jumlah'] . '</div>
+                    </div>
+                    <div style="font-weight:700;font-size:13px;color:#16a34a;flex-shrink:0;">Rp ' . $subtotal_item . '</div>
+                </div>';
+            }
+
+            $total_fmt = number_format($total_pembayaran, 0, ',', '.');
+            $auto_msg  = '[AUTO_REPLY_ORDER]
+            <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <div style="background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'18\' height=\'18\' fill=\'white\'><path d=\'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z\'/></svg>
+                    </div>
+                    <div>
+                        <div style="font-weight:800;font-size:13px;color:#0f172a;">Pesanan #' . $id_pesanan . ' Diterima!</div>
+                        <div style="font-size:11px;color:#64748b;">Terima kasih telah memesan 🙏</div>
+                    </div>
+                </div>
+                <div>' . $items_html . '</div>
+                <div style="margin-top:12px;padding:10px 12px;background:#f0fdf4;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12px;font-weight:600;color:#374151;">Total Pembayaran</span>
+                    <span style="font-size:14px;font-weight:800;color:#16a34a;">Rp ' . $total_fmt . '</span>
+                </div>
+                <div style="margin-top:10px;font-size:11px;color:#94a3b8;text-align:center;">Pesanan sedang diproses oleh kantin ⏳</div>
+            </div>';
+
+            // Tentukan prefix ID pembeli
+            $prefix_pembeli = ($user_role === 'siswa') ? 'murid_' : 'guru_';
+            $id_pembeli_chat = $prefix_pembeli . $user_id;
+            $id_toko_chat    = 'toko_' . $id_toko;
+
+            $msg_escaped = mysqli_real_escape_string($conn, $auto_msg);
+            mysqli_query($conn, "INSERT INTO pesan_chat (id_pengirim, id_penerima, isi_pesan, waktu_kirim, sudah_dibaca)
+                                 VALUES ('$id_toko_chat', '$id_pembeli_chat', '$msg_escaped', NOW(), 0)");
+
+        }
         mysqli_commit($conn);
         echo json_encode(['status' => 'success', 'message' => 'Pesanan berhasil dibuat.', 'ids' => $id_pesanan_dibuat]);
         exit;
@@ -666,7 +775,7 @@ if ($q_reco) {
                             <?php else: ?>
                                 <i class="fa-solid fa-utensils" style="color: #cbd5e1; font-size: 20px;"></i>
                             <?php endif; ?>
-                            <button class="btn-add-reco" onclick="addRecommendationToCart(<?= $item['id_menu']; ?>, '<?= htmlspecialchars(addslashes($item['nama_menu']), ENT_QUOTES); ?>', <?= $item['harga']; ?>, '<?= htmlspecialchars(addslashes($foto), ENT_QUOTES); ?>', '<?= htmlspecialchars(addslashes($item['nama_toko']), ENT_QUOTES); ?>', <?= $item['id_toko']; ?>)">
+                            <button class="btn-add-reco" onclick="addRecommendationToCart(<?= $item['id_menu']; ?>, '<?= htmlspecialchars(addslashes($item['nama_menu']), ENT_QUOTES); ?>', <?= $item['harga']; ?>, '<?= htmlspecialchars(addslashes($foto), ENT_QUOTES); ?>', '<?= htmlspecialchars(addslashes($item['nama_toko']), ENT_QUOTES); ?>', <?= $item['id_toko']; ?>, <?= (int)$item['stok']; ?>)">
                                 <i class="fa-solid fa-plus"></i>
                             </button>
                         </div>
@@ -814,7 +923,7 @@ if ($q_reco) {
                         <div class="checkout-item-info" style="justify-content: flex-start; gap: 4px;">
                             <div>
                                 <h4 class="checkout-item-title">${item.nama_menu}</h4>
-                                <div class="checkout-item-meta">Kantin : ${item.nama_toko}</div>
+                                <div class="checkout-item-meta">Kantin : ${item.nama_toko} <span style="color:#eab308; font-weight:800; margin-left:8px;">(Stok: ${item.stok !== undefined ? item.stok : '?'})</span></div>
                                 <div class="checkout-item-meta">Catatan : <i>${catatan}</i></div>
                             </div>
                             <div class="checkout-item-price">Rp. ${(item.harga).toLocaleString('id-ID')}</div>
@@ -861,6 +970,13 @@ if ($q_reco) {
             const cart = getCart();
             const item = cart.find(c => c.id_menu === id);
             if (item) {
+                if (delta > 0) {
+                    const stock = item.stok !== undefined ? item.stok : 999;
+                    if (item.jumlah >= stock) {
+                        showToast('Stok tidak mencukupi! Maksimum stok: ' + stock, 'error');
+                        return;
+                    }
+                }
                 item.jumlah += delta;
                 if (item.jumlah <= 0) {
                     if (confirm("Hapus " + item.nama_menu + " dari pesanan?")) {
@@ -896,13 +1012,21 @@ if ($q_reco) {
         }
 
         // ── Add recommended menu item to current order selection ──
-        function addRecommendationToCart(id, nama, harga, foto, toko, idToko) {
+        function addRecommendationToCart(id, nama, harga, foto, toko, idToko, stok) {
             let cart = getCart();
             const existing = cart.find(c => c.id_menu === id);
             if (existing) {
+                if (existing.jumlah >= stok) {
+                    showToast('Stok tidak mencukupi! Maksimum stok: ' + stok, 'error');
+                    return;
+                }
                 existing.jumlah++;
                 existing.selected = true;
             } else {
+                if (stok <= 0) {
+                    showToast('Stok habis!', 'error');
+                    return;
+                }
                 cart.push({
                     id_menu: id,
                     nama_menu: nama,
@@ -912,7 +1036,8 @@ if ($q_reco) {
                     nama_toko: toko,
                     id_toko: idToko,
                     selected: true,
-                    catatan: ''
+                    catatan: '',
+                    stok: stok
                 });
             }
             saveCart(cart);

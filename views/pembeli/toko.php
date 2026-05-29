@@ -317,7 +317,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                                     <div class="menu-item-footer">
                                         <span class="menu-item-price">Rp <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
                                         <button class="btn-tambah" <?= !$is_available ? 'disabled' : ''; ?>
-                                            onclick="tambahKeKeranjang(<?= $menu['id_menu']; ?>, '<?= htmlspecialchars(addslashes($menu['nama_menu']), ENT_QUOTES); ?>', <?= $menu['harga']; ?>, '<?= htmlspecialchars(addslashes($foto_menu), ENT_QUOTES); ?>', '<?= htmlspecialchars(addslashes($toko['nama_toko']), ENT_QUOTES); ?>', <?= $toko['id_toko']; ?>)">
+                                            onclick="tambahKeKeranjang(<?= $menu['id_menu']; ?>, '<?= htmlspecialchars(addslashes($menu['nama_menu']), ENT_QUOTES); ?>', <?= $menu['harga']; ?>, '<?= htmlspecialchars(addslashes($foto_menu), ENT_QUOTES); ?>', '<?= htmlspecialchars(addslashes($toko['nama_toko']), ENT_QUOTES); ?>', <?= $toko['id_toko']; ?>, <?= $stok; ?>)">
                                             <i class="fa-solid fa-plus"></i>
                                             <?= $is_available ? 'Tambah' : ($stok <= 0 ? 'Habis' : 'Tutup'); ?>
                                         </button>
@@ -417,15 +417,23 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
             }
 
             // ── Add to cart ──
-            function tambahKeKeranjang(id_menu, nama_menu, harga, foto_menu, nama_toko, id_toko) {
+            function tambahKeKeranjang(id_menu, nama_menu, harga, foto_menu, nama_toko, id_toko, stok) {
                 let cart = getCart();
 
                 const existingIndex = cart.findIndex(item => item.id_menu === id_menu);
 
                 if (existingIndex !== -1) {
+                    if (cart[existingIndex].jumlah >= stok) {
+                        showToast('Stok tidak mencukupi! Maksimum stok: ' + stok, 'error');
+                        return;
+                    }
                     cart[existingIndex].jumlah += 1;
                     cart[existingIndex].selected = true; // Auto select if added again
                 } else {
+                    if (stok <= 0) {
+                        showToast('Stok habis!', 'error');
+                        return;
+                    }
                     cart.push({
                         id_menu: id_menu,
                         nama_menu: nama_menu,
@@ -434,7 +442,8 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                         foto_menu: foto_menu,
                         nama_toko: nama_toko,
                         id_toko: id_toko,
-                        selected: true
+                        selected: true,
+                        stok: stok
                     });
                 }
 
@@ -607,6 +616,14 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                 let cart = getCart();
                 const existingIndex = cart.findIndex(item => item.id_menu === id_menu);
                 if (existingIndex !== -1) {
+                    if (delta > 0) {
+                        const item = cart[existingIndex];
+                        const stok = item.stok || 999;
+                        if (item.jumlah >= stok) {
+                            showToast('Stok tidak mencukupi! Maksimum stok: ' + stok, 'error');
+                            return;
+                        }
+                    }
                     cart[existingIndex].jumlah += delta;
                     if (cart[existingIndex].jumlah <= 0) {
                         cart.splice(existingIndex, 1);

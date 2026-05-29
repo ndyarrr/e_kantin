@@ -59,7 +59,7 @@
         <h2 class="section-title">Menu Terlaris</h2>
         <div class="horizontal-scroll">
             <?php
-            $top_menus = array_slice($all_menus, 0, 6);
+            $top_menus = $terlaris_menus ?? [];
             if (!empty($top_menus)) {
                 foreach ($top_menus as $menu) {
                     $img = resolveMenuImg($menu['foto_menu'] ?? '');

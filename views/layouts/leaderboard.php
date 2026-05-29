@@ -1,23 +1,23 @@
 <?php
-// Ambil data kantin
+// Ambil data kantin — hitung pembeli unik dari pesanan yang sudah SELESAI
 $rowsKantin = mysqli_fetch_all(mysqli_query(
     $conn,
     "SELECT t.id_toko as id, t.nama_toko as nama, t.foto_toko as foto,
-    COUNT(DISTINCT p.nisn_pembeli) + COUNT(DISTINCT p.nuptk_pembeli) as total_pembeli
+    COUNT(p.id_pesanan) as total_pembeli
     FROM toko t
-    LEFT JOIN pesanan p ON p.id_toko = t.id_toko
+    LEFT JOIN pesanan p ON p.id_toko = t.id_toko AND p.status = 'selesai'
     WHERE t.deleted_at IS NULL
     GROUP BY t.id_toko
     ORDER BY total_pembeli DESC"
 ), MYSQLI_ASSOC);
 
-// Ambil data menu
 $rowsMenu = mysqli_fetch_all(mysqli_query(
     $conn,
     "SELECT m.id_menu as id, m.nama_menu as nama, m.foto_menu as foto,
-    COUNT(dp.id_detail_pesanan) as total_pembeli
+    COALESCE(SUM(CASE WHEN p.status = 'selesai' THEN dp.jumlah ELSE 0 END), 0) as total_pembeli
     FROM menu m
     LEFT JOIN detail_pesanan dp ON dp.id_menu = m.id_menu
+    LEFT JOIN pesanan p ON p.id_pesanan = dp.id_pesanan
     WHERE m.deleted_at IS NULL
     GROUP BY m.id_menu
     ORDER BY total_pembeli DESC"
@@ -88,7 +88,7 @@ function renderLb($rows, $type)
                 <tr>
                     <th>No</th>
                     <th>Nama <?= $type === 'menu' ? 'Menu' : 'Kantin' ?></th>
-                    <th>Total Pembeli</th>
+                    <th><?= $type === 'menu' ? 'Total Terjual' : 'Total Pembeli' ?></th>
                 </tr>
             </thead>
             <tbody>

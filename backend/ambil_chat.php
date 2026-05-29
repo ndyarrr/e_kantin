@@ -12,11 +12,11 @@ if (!$db) {
     exit;
 }
 
-$user_id_raw   = $_SESSION['user_id'] ?? '';
+$user_id_raw = $_SESSION['user_id'] ?? '';
 $role_sekarang = $_SESSION['user_role'] ?? $_SESSION['role'] ?? '';
-$id_toko_sesi  = (int)($_SESSION['id_toko'] ?? 0);
-$id_lawan      = $_GET['id_lawan'] ?? '';
-$terakhir_id   = isset($_GET['terakhir_id']) ? (int)$_GET['terakhir_id'] : 0;
+$id_toko_sesi = (int) ($_SESSION['id_toko'] ?? 0);
+$id_lawan = $_GET['id_lawan'] ?? '';
+$terakhir_id = isset($_GET['terakhir_id']) ? (int) $_GET['terakhir_id'] : 0;
 
 if (empty($user_id_raw) || empty($id_lawan)) {
     echo json_encode([]);
@@ -72,11 +72,11 @@ $result = $stmt->get_result();
 
 while ($row = $result->fetch_assoc()) {
     $chats[] = [
-        'id'          => (int)$row['id_pesan'],
-        'is_me'       => ($row['id_pengirim'] === $user_sekarang),
-        'pesan'       => htmlspecialchars($row['isi_pesan']),
-        'jam'         => $row['jam'],
-        'nama_staf'   => $row['nama_staf'] ?? null // Info "dibalas oleh siapa"
+        'id' => (int) $row['id_pesan'],
+        'is_me' => ($row['id_pengirim'] === $user_sekarang),
+        'pesan' => $row['isi_pesan'],
+        'jam' => $row['jam'],
+        'nama_staf' => $row['nama_staf'] ?? null // Info "dibalas oleh siapa"
     ];
 }
 

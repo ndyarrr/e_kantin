@@ -90,7 +90,8 @@ $role_label = match (true) {
     <div class="chat-modal-box">
         <i class="fa-solid fa-trash-can"></i>
         <p>Hapus pesan ini?</p>
-        <span>Pesan akan dihapus permanen dan tidak dapat di lihat oleh orang lain,namun notifikasi akan di perlihatkan pada riwayat.</span>
+        <span>Pesan akan dihapus permanen dan tidak dapat di lihat oleh orang lain,namun notifikasi akan di perlihatkan
+            pada riwayat.</span>
         <div class="chat-modal-actions">
             <button class="btn-modal-batal" onclick="tutupModalHapus()">Batal</button>
             <button class="btn-modal-hapus" id="btnKonfirmasiHapus">Hapus</button>
@@ -303,10 +304,15 @@ $role_label = match (true) {
                         const bubble = document.createElement('div');
                         bubble.className = `chat-bubble ${msg.is_me ? 'me' : 'them'}`;
                         bubble.dataset.id = msg.id;
+                        const isAutoReply = msg.pesan.startsWith('[AUTO_REPLY_ORDER]');
+                        const isiPesan = isAutoReply
+                            ? msg.pesan.replace('[AUTO_REPLY_ORDER]', '').trim()
+                            : `<div style="word-break:break-word;">${escapeHtml(msg.pesan)}</div>`;
+
                         bubble.innerHTML = `
-            <div style="word-break: break-word;">${escapeHtml(msg.pesan)}</div>
-            <div class="chat-time">${msg.jam}</div>
-            ${infoStaf}`;
+                        ${isiPesan}
+                        <div class="chat-time">${msg.jam}</div>
+                        ${infoStaf}`;
 
                         wrapper.appendChild(bubble);
                         box.appendChild(wrapper);
@@ -334,7 +340,7 @@ $role_label = match (true) {
         formData.append('isi_pesan', teks);
         input.value = '';
 
-        fetch(`${BASE_URL_CHAT}backend/kirim_chat.php`, { method: 'POST', body: formData })
+        fetch(`${ BASE_URL_CHAT }backend/kirim_chat.php`, { method: 'POST', body: formData })
             .then(res => res.json())
             .then(res => { if (res.status === 'success') loadChat(); })
             .catch(err => console.error("Error kirim:", err));
@@ -389,7 +395,7 @@ $role_label = match (true) {
         const formData = new FormData();
         formData.append('id_pesan', idYangDihapus);
 
-        fetch(`${BASE_URL_CHAT}backend/hapus_chat.php`, { method: 'POST', body: formData })
+        fetch(`${ BASE_URL_CHAT }backend/hapus_chat.php`, { method: 'POST', body: formData })
             .then(res => res.json())
             .then(res => {
                 tutupModalHapus(); // aman di-null-kan sekarang

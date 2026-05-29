@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // KUNCI PERBAIKAN: Jika status berubah menjadi 'selesai' dan sebelumnya bukan selesai
                     if ($status_baru === 'selesai' && $status_lama !== 'selesai') {
                         // 1. Ubah status pembayaran
-                        mysqli_query($conn, "UPDATE pembayaran SET status = 'sudah_bayar' WHERE id_pesanan = $id_pesanan");
+                        mysqli_query($conn, "UPDATE pembayaran SET status = 'lunas' WHERE id_pesanan = $id_pesanan");
                         
                         // 2. Ambil barang-barang yang dibeli, lalu tambahkan ke kolom 'terjual' di tabel menu
                         $items = mysqli_query($conn, "SELECT id_menu, jumlah FROM detail_pesanan WHERE id_pesanan = $id_pesanan");

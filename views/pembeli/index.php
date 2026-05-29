@@ -49,6 +49,19 @@ if ($q_all_menu) {
         $all_menus[] = $r;
 }
 
+// ── Ambil 6 menu terlaris untuk section Beranda ──
+$terlaris_menus = [];
+$q_terlaris = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko, toko.id_toko FROM menu 
+                                      JOIN toko ON menu.id_toko = toko.id_toko 
+                                      WHERE menu.tersedia = 1 AND menu.stok > 0 
+                                      ORDER BY menu.terjual DESC, menu.id_menu DESC 
+                                      LIMIT 6");
+if ($q_terlaris) {
+    while ($r = mysqli_fetch_assoc($q_terlaris)) {
+        $terlaris_menus[] = $r;
+    }
+}
+
 // ── Ambil favorit dari DB ──
 $user_favs = [];
 if (!empty($user_id)) {
@@ -369,7 +382,8 @@ function resolveTokoImg($foto, $nama)
                 'foto_menu' => $m['foto_menu'] ?? '',
                 'kategori' => strtolower($m['kategori'] ?? 'makanan'),
                 'nama_toko' => $m['nama_toko'],
-                'id_toko' => (int) $m['id_toko']
+                'id_toko' => (int) $m['id_toko'],
+                'stok' => (int) $m['stok']
             ];
         }, $all_menus)); ?>;
 
@@ -484,12 +498,22 @@ function resolveTokoImg($foto, $nama)
 
         function addToCart(id, nama, harga, foto, toko, idToko) {
             const cart = getCart();
+            const menuItem = ALL_MENUS.find(m => m.id_menu === id);
+            const stock = menuItem ? menuItem.stok : 999;
             const existing = cart.find(c => c.id_menu === id);
             if (existing) {
+                if (existing.jumlah >= stock) {
+                    showToast('Stok tidak mencukupi! Maksimum stok: ' + stock, 'error');
+                    return;
+                }
                 existing.jumlah++;
                 existing.selected = true; // Auto select if added again
             } else {
-                cart.push({ id_menu: id, nama_menu: nama, harga: harga, jumlah: 1, foto_menu: foto, nama_toko: toko, id_toko: idToko, selected: true });
+                if (stock <= 0) {
+                    showToast('Stok habis!', 'error');
+                    return;
+                }
+                cart.push({ id_menu: id, nama_menu: nama, harga: harga, jumlah: 1, foto_menu: foto, nama_toko: toko, id_toko: idToko, selected: true, stok: stock });
             }
             saveCart(cart);
             showToast(nama, 'success', { foto: foto, toko: toko });
@@ -500,6 +524,14 @@ function resolveTokoImg($foto, $nama)
             const cart = getCart();
             const item = cart.find(c => c.id_menu === id);
             if (item) {
+                if (delta > 0) {
+                    const menuItem = ALL_MENUS.find(m => m.id_menu === id);
+                    const stock = menuItem ? menuItem.stok : (item.stok || 999);
+                    if (item.jumlah >= stock) {
+                        showToast('Stok tidak mencukupi! Maksimum stok: ' + stock, 'error');
+                        return;
+                    }
+                }
                 item.jumlah += delta;
                 if (item.jumlah <= 0) {
                     cart.splice(cart.indexOf(item), 1);

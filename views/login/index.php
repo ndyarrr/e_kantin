@@ -11,7 +11,15 @@ unset($_SESSION['last_tipe_pembeli']);
 require_once __DIR__ . '/../../config/database.php';
 $daftarToko = mysqli_fetch_all(mysqli_query(
     $conn,
-    "SELECT id_toko, nama_toko FROM toko WHERE deleted_at IS NULL ORDER BY nama_toko ASC"
+    "SELECT DISTINCT t.id_toko, t.nama_toko 
+     FROM toko t 
+     JOIN toko_penjual tp ON tp.id_toko = t.id_toko 
+     JOIN penjual p ON p.id_penjual = tp.id_penjual 
+     WHERE t.deleted_at IS NULL 
+       AND tp.status = 'aktif' 
+       AND p.status = 'aktif' 
+       AND p.deleted_at IS NULL 
+     ORDER BY t.nama_toko ASC"
 ), MYSQLI_ASSOC);
 
 $roles = [
