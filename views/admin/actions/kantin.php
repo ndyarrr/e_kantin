@@ -19,22 +19,32 @@ if ($action === 'kantin_tambah') {
         $idBaru = (int) mysqli_insert_id($conn);
 
         if ($idBaru > 0) {
-            $upload = tokoFotoProsesUpload($idBaru, $_FILES['foto_toko'] ?? []);
-            if ($upload['attempted']) {
-                if ($upload['error']) {
-                    $feedback = ['type' => 'error', 'msg' => $upload['error']];
-                } elseif ($upload['filename']) {
-                    $f = mysqli_real_escape_string($conn, $upload['filename']);
-                    mysqli_query($conn, "UPDATE toko SET foto_toko='$f' WHERE id_toko=$idBaru");
+            // Cek apakah ada file yang dikirim (bukan hanya no-file)
+            $fileFoto = $_FILES['foto_toko'] ?? [];
+            if (!empty($fileFoto) && isset($fileFoto['error']) && $fileFoto['error'] !== UPLOAD_ERR_NO_FILE) {
+                $upload = tokoFotoProsesUpload($idBaru, $fileFoto);
+                if ($upload['attempted']) {
+                    if ($upload['error']) {
+                        $feedback = ['type' => 'error', 'msg' => 'Kantin berhasil dibuat, tapi foto gagal diupload: ' . $upload['error']];
+                    } elseif ($upload['filename']) {
+                        $f = mysqli_real_escape_string($conn, $upload['filename']);
+                        mysqli_query($conn, "UPDATE toko SET foto_toko='$f' WHERE id_toko=$idBaru");
+                    }
                 }
             }
         }
 
         if (!isset($feedback) || $feedback['type'] !== 'error') {
             catatLog($conn, 'Tambah Kantin', 'Menambahkan data kantin baru bernama: ' . $nama);
-            $feedback = ['type' => 'success', 'msg' => "Kantin <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan."];
+            $msgFoto = '';
+            if (!empty($fileFoto) && isset($fileFoto['error']) && $fileFoto['error'] === UPLOAD_ERR_OK) {
+                $msgFoto = ' (dengan foto)';
+            }
+            $feedback = ['type' => 'success', 'msg' => "Kantin <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan{$msgFoto}."];
             $selectedToko = $idBaru;
         }
+    } else {
+        $feedback = ['type' => 'error', 'msg' => 'Nama kantin tidak boleh kosong.'];
     }
 }
 

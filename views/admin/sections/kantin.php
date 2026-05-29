@@ -155,21 +155,25 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                     <input type="hidden" name="id_toko" value="<?= (int) $selectedToko ?>">
 
                     <div class="profile-preview-wrapper">
-                        <div class="profile-avatar-circle">
+                        <div class="profile-avatar-circle" id="editKantinAvatarCircle">
                             <?php if (!empty($detailToko['foto_toko'])): ?>
-                                <img src="<?= htmlspecialchars(tokoFotoUrl($detailToko['foto_toko'], '../../')) ?>?v=<?= time() ?>"
+                                <img id="editKantinAvatarImg" src="<?= htmlspecialchars(tokoFotoUrl($detailToko['foto_toko'], '../../')) ?>?v=<?= time() ?>"
                                     alt="Foto kantin">
                             <?php else: ?>
-                                <div class="profile-avatar-placeholder"><i class="fa-solid fa-image"></i></div>
+                                <div class="profile-avatar-placeholder" id="editKantinAvatarPlaceholder"><i class="fa-solid fa-image"></i></div>
+                                <img id="editKantinAvatarImg" src="" alt="Foto kantin" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:inherit;">
                             <?php endif; ?>
                         </div>
                         <div>
                             <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px;">Foto Profil Kantin</label>
-                            <input type="file" name="foto_toko" accept="image/jpeg, image/jpg, image/png, image/webp" style="font-size: 13px;">
+                            <input type="file" name="foto_toko" id="inputFotoEditKantin" accept="image/jpeg, image/jpg, image/png, image/webp"
+                                style="font-size: 13px; display:block; width:100%;"
+                                onchange="previewFotoKantinEdit(this)">
                             <small style="color: #666; display: block; margin-top: 3px;">Format: JPG, JPEG, PNG, WEBP (Max 2MB)</small>
                             <?php if (!empty($detailToko['foto_toko'])): ?>
                                 <label style="display:flex; align-items:center; gap:6px; margin-top:8px; font-size:12px; cursor:pointer;">
-                                    <input type="checkbox" name="hapus_foto" value="1"> Hapus foto saat ini
+                                    <input type="checkbox" name="hapus_foto" value="1" id="hapusFotoCheck"
+                                        onchange="toggleHapusFoto(this)"> Hapus foto saat ini
                                 </label>
                             <?php endif; ?>
                         </div>
@@ -344,5 +348,42 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
 
     function tutupDetailToko() {
         window.location.href = '?section=kantin';
+    }
+
+    // Live preview foto kantin saat edit
+    function previewFotoKantinEdit(input) {
+        const imgEl = document.getElementById('editKantinAvatarImg');
+        const placeholder = document.getElementById('editKantinAvatarPlaceholder');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (imgEl) {
+                    imgEl.src = e.target.result;
+                    imgEl.style.display = 'block';
+                    imgEl.style.width = '100%';
+                    imgEl.style.height = '100%';
+                    imgEl.style.objectFit = 'cover';
+                    imgEl.style.borderRadius = 'inherit';
+                }
+                if (placeholder) placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Saat hapus_foto dicentang, disable file input
+    function toggleHapusFoto(checkbox) {
+        const fileInput = document.getElementById('inputFotoEditKantin');
+        if (fileInput) {
+            fileInput.disabled = checkbox.checked;
+            fileInput.value = '';
+            if (checkbox.checked) {
+                const imgEl = document.getElementById('editKantinAvatarImg');
+                if (imgEl) { imgEl.style.opacity = '0.3'; }
+            } else {
+                const imgEl = document.getElementById('editKantinAvatarImg');
+                if (imgEl) { imgEl.style.opacity = '1'; }
+            }
+        }
     }
 </script>
