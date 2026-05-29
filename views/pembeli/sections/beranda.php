@@ -11,18 +11,47 @@
     <!-- Promo -->
     <section class="section-block" id="promoSection">
         <h2 class="section-title">Promo Hari ini</h2>
-        <div class="promo-banner-blank">
-            <div class="promo-text-placeholder">
-                <h3>DISKON 25%</h3>
-                <p>UNTUK MENU SPESIAL HARI INI!</p>
+        
+        <?php if (empty($promo_banners)): ?>
+            <!-- Fallback Empty State -->
+            <div class="promo-banner-empty" style="width: 100%; min-height: 120px; border-radius: 20px; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: #f8fafc; color: #64748b; padding: 20px; text-align: center; box-sizing: border-box; margin-bottom: 20px;">
+                <i class="fa-solid fa-rectangle-ad" style="font-size: 28px; color: #cbd5e1;"></i>
+                <p style="margin: 0; font-size: 13px; font-weight: 700;">Belum ada banner sama sekali di sini</p>
             </div>
-            <div class="promo-action-area">
-                <span class="promo-code-right">KODE PROMO: <strong>KANTINJOSS25</strong></span>
-                <button class="btn-promo-blank"
-                    onclick="switchNav('kantin');showToast('Gunakan kode KANTINJOSS25 saat checkout!','success')">Pesan
-                    Sekarang</button>
+        <?php else: ?>
+            <!-- Dynamic Slider -->
+            <div class="promo-slider-container">
+                <div class="promo-slider-wrapper" id="promoSliderWrapper">
+                    <?php foreach ($promo_banners as $index => $banner): ?>
+                        <div class="promo-slide <?= $index === 0 ? 'active' : ''; ?>">
+                            <img src="../../assets/img/<?= htmlspecialchars($banner['gambar']); ?>" alt="Banner Promo <?= htmlspecialchars($banner['nama_toko']); ?>">
+                            <!-- Overlay Info on slide -->
+                            <div class="promo-slide-overlay">
+                                <div class="promo-slide-content">
+                                    <span class="promo-slide-badge"><i class="fa-solid fa-tag"></i> Promo Kantin</span>
+                                    <h3>Kunjungi <?= htmlspecialchars($banner['nama_toko']); ?></h3>
+                                    <p>Penawaran menarik terbatas hingga <strong><?= date('d M Y', strtotime($banner['berlaku_hingga'])); ?></strong>!</p>
+                                    <a href="toko.php?id=<?= $banner['id_toko']; ?>" class="btn-promo-slide">Kunjungi Sekarang</a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <!-- Navigation Arrows -->
+                <?php if (count($promo_banners) > 1): ?>
+                    <button class="promo-slider-prev" onclick="movePromoSlide(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button class="promo-slider-next" onclick="movePromoSlide(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                    
+                    <!-- Navigation Dots -->
+                    <div class="promo-slider-dots">
+                        <?php foreach ($promo_banners as $index => $banner): ?>
+                            <span class="promo-dot <?= $index === 0 ? 'active' : ''; ?>" onclick="setPromoSlide(<?= $index; ?>)"></span>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
-        </div>
+        <?php endif; ?>
     </section>
 
     <!-- Menu Terlaris -->
