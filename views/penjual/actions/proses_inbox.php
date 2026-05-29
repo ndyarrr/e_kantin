@@ -52,9 +52,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Update status pesanan
                     mysqli_query($conn, "UPDATE pesanan SET status = '$status_baru' WHERE id_pesanan = $id_pesanan");
                     
-                    // Jika status_baru selesai, ubah status pembayaran menjadi 'sudah_bayar'
-                    if ($status_baru === 'selesai') {
+                    // KUNCI PERBAIKAN: Jika status berubah menjadi 'selesai' dan sebelumnya bukan selesai
+                    if ($status_baru === 'selesai' && $status_lama !== 'selesai') {
+                        // 1. Ubah status pembayaran
                         mysqli_query($conn, "UPDATE pembayaran SET status = 'sudah_bayar' WHERE id_pesanan = $id_pesanan");
+                        
+                        // 2. Ambil barang-barang yang dibeli, lalu tambahkan ke kolom 'terjual' di tabel menu
+                        $items = mysqli_query($conn, "SELECT id_menu, jumlah FROM detail_pesanan WHERE id_pesanan = $id_pesanan");
+                        while ($item = mysqli_fetch_assoc($items)) {
+                            $id_menu = (int)$item['id_menu'];
+                            $jumlah = (int)$item['jumlah'];
+                            mysqli_query($conn, "UPDATE menu SET terjual = terjual + $jumlah WHERE id_menu = $id_menu");
+                        }
                     }
                     
                     // Jika status_baru dibatalkan dan status sebelumnya bukan dibatalkan, kembalikan stok menu
