@@ -97,7 +97,7 @@ for ($i = 6; $i >= 0; $i--) {
 // agar tidak menghasilkan error Unknown Column.
 $distribusi = mysqli_fetch_all(mysqli_query(
     $conn,
-    "SELECT 'Menu' AS kategori, SUM(dp.jumlah) AS total
+    "SELECT m.nama_menu AS kategori, SUM(dp.jumlah) AS total
      FROM detail_pesanan dp
      JOIN pesanan p ON p.id_pesanan = dp.id_pesanan
      JOIN menu m ON m.id_menu = dp.id_menu
@@ -105,9 +105,9 @@ $distribusi = mysqli_fetch_all(mysqli_query(
        AND WEEK(p.waktu_pesan) = WEEK(CURDATE())
        AND p.status = 'selesai'
      GROUP BY m.id_menu
-     ORDER BY total DESC"
+     ORDER BY total DESC
+     LIMIT 5"
 ), MYSQLI_ASSOC);
-
 /* ── Pesanan terbaru ── */
 $pesananTerbaru = mysqli_fetch_all(mysqli_query(
     $conn,
