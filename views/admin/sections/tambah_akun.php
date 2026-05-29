@@ -166,8 +166,25 @@
                     <input type="text" name="deskripsi" placeholder="cth. Nasi, lauk, dan minuman">
                 </div>
                 <div class="form-group">
-                    <label>Foto Kantin <span style="color:var(--text-light);font-weight:400">(opsional)</span></label>
-                    <input type="file" name="foto_toko" accept="image/*">
+                    <label>Foto Profil Kantin <span style="color:var(--text-light);font-weight:400">(opsional)</span></label>
+
+                    <!-- Preview sebelum upload -->
+                    <div id="previewTambahKantin"
+                        style="width:100%; height:140px; background:#f3f4f6; border:2px dashed #ddd; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; overflow:hidden; cursor:pointer;"
+                        onclick="document.getElementById('inputFotoTambahKantin').click()">
+                        <div id="previewTambahKantinPlaceholder" style="text-align:center; color:#9ca3af;">
+                            <i class="fa-solid fa-cloud-arrow-up" style="font-size:28px; display:block; margin-bottom:6px;"></i>
+                            <span style="font-size:12px;">Klik untuk pilih foto</span>
+                        </div>
+                        <img id="previewTambahKantinImg" src="" alt=""
+                            style="width:100%; height:100%; object-fit:contain; display:none; background:#111;">
+                    </div>
+
+                    <input type="file" name="foto_toko" id="inputFotoTambahKantin"
+                        accept="image/jpeg, image/jpg, image/png, image/webp"
+                        style="display:block; width:100%; font-size:12px;"
+                        onchange="previewFotoKantinTambah(this)">
+                    <small style="color:var(--text-light);font-size:11px;display:block;margin-top:4px;">Format: JPG, JPEG, PNG, WEBP (Max 2MB)</small>
                 </div>
                 <button type="submit" class="btn-submit">
                     <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Daftarkan Stand
@@ -196,5 +213,23 @@
         const off = 'flex:1; padding:9px; border-radius:8px; border:1.5px solid var(--border); background:transparent; color:var(--text-muted); font-weight:600; font-size:13px; cursor:pointer; transition:.2s';
         document.getElementById('tabMuridAkun').style.cssText = isMurid ? on : off;
         document.getElementById('tabGuruAkun').style.cssText = isMurid ? off : on;
+    }
+
+    function previewFotoKantinTambah(input) {
+        const img = document.getElementById('previewTambahKantinImg');
+        const placeholder = document.getElementById('previewTambahKantinPlaceholder');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                img.style.display = 'block';
+                if (placeholder) placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            img.src = '';
+            img.style.display = 'none';
+            if (placeholder) placeholder.style.display = 'flex';
+        }
     }
 </script>

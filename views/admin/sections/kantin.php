@@ -1,4 +1,6 @@
-<?php // sections/kantin.php ?>
+<?php // sections/kantin.php
+require_once __DIR__ . '/../../../config/toko_foto.php';
+?>
 
 <div class="stats-grid col2">
     <div class="stat-card">
@@ -58,7 +60,7 @@
                                 <td>
                                     <div class="toko-name-cell">
                                         <?php if (!empty($t['foto_toko'])): ?>
-                                            <img src="../../assets/img/kantin/<?= htmlspecialchars($t['foto_toko']) ?>"
+                                            <img src="<?= htmlspecialchars(tokoFotoUrl($t['foto_toko'], '../../')) ?>"
                                                 class="toko-thumb" onclick="event.stopPropagation();bukaFotoKantin(this.src)"
                                                 style="cursor:zoom-in">
                                         <?php else: ?>
@@ -121,7 +123,7 @@
             <div class="detail-toko-header-info">
                 <div class="detail-toko-avatar">
                     <?php if (!empty($detailToko['foto_toko'])): ?>
-                        <img src="../../assets/img/kantin/<?= htmlspecialchars($detailToko['foto_toko']) ?>?v=<?= time() ?>">
+                        <img src="<?= htmlspecialchars(tokoFotoUrl($detailToko['foto_toko'], '../../')) ?>?v=<?= time() ?>">
                     <?php else: ?>
                         <i class="fa-solid fa-store"></i>
                     <?php endif; ?>
@@ -145,18 +147,45 @@
             <div class="form-card">
                 <h2><i class="fa-solid fa-circle-info" style="color:var(--green);margin-right:8px"></i>Profil Kantin
                 </h2>
-                <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
-                    <div>
-                        <span style="font-size:11px; color:var(--text-light); display:block;">NAMA STAND</span>
-                        <strong style="font-size:16px;">
-                            <?= htmlspecialchars($detailToko['nama_toko']) ?>
-                        </strong>
+                <form method="POST" enctype="multipart/form-data" action="?section=kantin&toko=<?= (int) $selectedToko ?>"
+                    style="display:flex; flex-direction:column; gap:14px; margin-top:12px;">
+                    <input type="hidden" name="action" value="kantin_edit">
+                    <input type="hidden" name="_section" value="kantin">
+                    <input type="hidden" name="_selected_toko" value="<?= (int) $selectedToko ?>">
+                    <input type="hidden" name="id_toko" value="<?= (int) $selectedToko ?>">
+
+                    <div class="profile-preview-wrapper">
+                        <div class="profile-avatar-circle" id="editKantinAvatarCircle">
+                            <?php if (!empty($detailToko['foto_toko'])): ?>
+                                <img id="editKantinAvatarImg" src="<?= htmlspecialchars(tokoFotoUrl($detailToko['foto_toko'], '../../')) ?>?v=<?= time() ?>"
+                                    alt="Foto kantin">
+                            <?php else: ?>
+                                <div class="profile-avatar-placeholder" id="editKantinAvatarPlaceholder"><i class="fa-solid fa-image"></i></div>
+                                <img id="editKantinAvatarImg" src="" alt="Foto kantin" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:inherit;">
+                            <?php endif; ?>
+                        </div>
+                        <div>
+                            <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px;">Foto Profil Kantin</label>
+                            <input type="file" name="foto_toko" id="inputFotoEditKantin" accept="image/jpeg, image/jpg, image/png, image/webp"
+                                style="font-size: 13px; display:block; width:100%;"
+                                onchange="previewFotoKantinEdit(this)">
+                            <small style="color: #666; display: block; margin-top: 3px;">Format: JPG, JPEG, PNG, WEBP (Max 2MB)</small>
+                            <?php if (!empty($detailToko['foto_toko'])): ?>
+                                <label style="display:flex; align-items:center; gap:6px; margin-top:8px; font-size:12px; cursor:pointer;">
+                                    <input type="checkbox" name="hapus_foto" value="1" id="hapusFotoCheck"
+                                        onchange="toggleHapusFoto(this)"> Hapus foto saat ini
+                                </label>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                    <div>
-                        <span style="font-size:11px; color:var(--text-light); display:block;">DESKRIPSI STAND</span>
-                        <span style="font-size:14px;">
-                            <?= htmlspecialchars($detailToko['deskripsi'] ?: '-') ?>
-                        </span>
+
+                    <div class="form-group">
+                        <label>Nama Stand</label>
+                        <input type="text" name="nama_toko" value="<?= htmlspecialchars($detailToko['nama_toko']) ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Deskripsi</label>
+                        <input type="text" name="deskripsi" value="<?= htmlspecialchars($detailToko['deskripsi'] ?? '') ?>">
                     </div>
                     <div>
                         <span style="font-size:11px; color:var(--text-light); display:block;">TANGGAL BERDIRI</span>
@@ -164,17 +193,10 @@
                             <?= date('d F Y', strtotime($detailToko['dibuat_pada'])) ?>
                         </span>
                     </div>
-
-                    <div
-                        style="background:#fff8e1; border-left:4px solid #ffb300; padding:10px; border-radius:4px; margin-top:10px;">
-                        <span style="font-size:11px; font-weight:600; color:#b78103; display:block;">
-                            <i class="fa-solid fa-circle-exclamation"></i> CATATAN OTORITAS
-                        </span>
-                        <span style="font-size:11px; color:#5d4037; line-height:1.4; display:block; margin-top:3px;">
-                            Perubahan bisa di lakukan oleh owner kantin
-                        </span>
-                    </div>
-                </div>
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Simpan Perubahan
+                    </button>
+                </form>
             </div>
 
             <div class="form-card">
@@ -326,5 +348,42 @@
 
     function tutupDetailToko() {
         window.location.href = '?section=kantin';
+    }
+
+    // Live preview foto kantin saat edit
+    function previewFotoKantinEdit(input) {
+        const imgEl = document.getElementById('editKantinAvatarImg');
+        const placeholder = document.getElementById('editKantinAvatarPlaceholder');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (imgEl) {
+                    imgEl.src = e.target.result;
+                    imgEl.style.display = 'block';
+                    imgEl.style.width = '100%';
+                    imgEl.style.height = '100%';
+                    imgEl.style.objectFit = 'cover';
+                    imgEl.style.borderRadius = 'inherit';
+                }
+                if (placeholder) placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Saat hapus_foto dicentang, disable file input
+    function toggleHapusFoto(checkbox) {
+        const fileInput = document.getElementById('inputFotoEditKantin');
+        if (fileInput) {
+            fileInput.disabled = checkbox.checked;
+            fileInput.value = '';
+            if (checkbox.checked) {
+                const imgEl = document.getElementById('editKantinAvatarImg');
+                if (imgEl) { imgEl.style.opacity = '0.3'; }
+            } else {
+                const imgEl = document.getElementById('editKantinAvatarImg');
+                if (imgEl) { imgEl.style.opacity = '1'; }
+            }
+        }
     }
 </script>

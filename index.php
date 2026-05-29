@@ -78,8 +78,9 @@
 
             <!-- Foto kantin full-width di atas -->
             <div id="modalFotoWrap"
-                style="width:100%; height:200px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                <img id="modalFoto" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:none;">
+                style="width:100%; background:#f3f4f6; display:flex; align-items:center; justify-content:center; min-height:160px; max-height:300px; overflow:hidden; position:relative;">
+                <img id="modalFoto" src="" alt=""
+                    style="width:100%; max-height:300px; object-fit:contain; background:#1a1a1a; display:none; border-radius:0;">
                 <svg id="modalFotoPlaceholder" xmlns="http://www.w3.org/2000/svg" width="80" height="80"
                     viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.2" stroke-linecap="round"
                     stroke-linejoin="round">
@@ -189,7 +190,7 @@
 
                 // Foto kantin
                 if (data.toko.foto_toko) {
-                    foto.src = './assets/img/toko/' + data.toko.foto_toko;
+                    foto.src = './assets/img/kantin/' + data.toko.foto_toko;
                     foto.style.display = 'block';
                     fotoPlaceholder.style.display = 'none';
                     foto.onerror = () => {

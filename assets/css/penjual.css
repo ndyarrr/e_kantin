@@ -3070,9 +3070,9 @@ select.form-staf-control {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
 }
 
-/* KUNCI UTAMA: Mengembalikan Box/Container (.pcard) Yang Hilang 
+/* KUNCI UTAMA: Mengembalikan Box/Container (.pcard) Yang Hilang (kantin saja)
    ========================================================================= */
-.pcard {
+#section-kantin .pcard {
     background: #ffffff !important;
     border-radius: 12px !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
@@ -3082,7 +3082,7 @@ select.form-staf-control {
     margin-bottom: 0 !important;
 }
 
-.pcard-inner {
+#section-kantin .pcard-inner {
     padding: 25px !important;
     box-sizing: border-box !important;
 }
@@ -3354,5 +3354,833 @@ select.form-staf-control {
     }
     .banner-super-grid {
         grid-template-columns: 1fr !important;
+    }
+}
+
+/* ═══════════════════════════════════════
+   INBOX PESANAN (owner) — dari staf.css
+   ═══════════════════════════════════════ */
+
+/* ── Tab bar ── */
+.inbox-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 8px;
+    box-shadow: var(--shadow);
+}
+
+.inbox-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+}
+
+.inbox-tab:hover {
+    background: var(--green-light);
+    color: var(--green-dark);
+}
+
+.inbox-tab.active {
+    background: var(--green);
+    color: #fff;
+}
+
+.inbox-tab.active .tab-count {
+    background: rgba(255, 255, 255, .3);
+    color: #fff;
+}
+
+.tab-count {
+    background: var(--green-muted);
+    color: var(--green-dark);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 20px;
+    min-width: 20px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* ── Empty state ── */
+.inbox-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 10px;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+}
+
+.inbox-empty-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--green-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: var(--green);
+    margin-bottom: 6px;
+}
+
+.inbox-empty-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.inbox-empty-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* ── Pesanan card ── */
+.inbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#section-inbox .pcard {
+    background: var(--card-bg);
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border-left-width: 4px;
+    transition: box-shadow .15s, transform .15s;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0;
+}
+
+#section-inbox .pcard:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.bar-menunggu {
+    border-left-color: #f59e0b;
+}
+
+.bar-proses {
+    border-left-color: #3b82f6;
+}
+
+.bar-siap {
+    border-left-color: #8b5cf6;
+}
+
+.bar-selesai {
+    border-left-color: #10b981;
+}
+
+.bar-batal {
+    border-left-color: #ef4444;
+}
+
+#section-inbox .pcard-inner {
+    padding: 16px 18px;
+    box-sizing: border-box;
+}
+
+#section-inbox .pcard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.pcard-buyer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pcard-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--green-muted);
+    color: var(--green-dark);
+    font-size: 15px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pcard-nama {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.pcard-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.pcard-dot {
+    opacity: .5;
+}
+
+.pcard-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.status-menunggu {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-proses {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-siap {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+.status-selesai {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-batal {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+#section-inbox .pcard-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0 0 12px;
+}
+
+.pcard-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.pcard-item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.pcard-qty {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--green-dark);
+    background: var(--green-light);
+    padding: 2px 7px;
+    border-radius: 6px;
+    min-width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.pcard-item-name {
+    flex: 1;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.pcard-item-price {
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.pcard-catatan {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: #f9fafb;
+    border-left: 2px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 0 6px 6px 0;
+    margin-left: 36px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#section-inbox .pcard-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.pcard-total {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.pcard-total-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--text-muted);
+}
+
+.pcard-total-value {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--green-dark);
+}
+
+.pcard-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+#section-inbox .pcard-btn,
+.nota-actions .pcard-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 9px;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+}
+
+#section-inbox .pcard-btn:active,
+.nota-actions .pcard-btn:active {
+    transform: scale(.97);
+}
+
+.pcard-btn-proses {
+    background: var(--green);
+    color: #fff;
+}
+
+.pcard-btn-proses:hover {
+    background: var(--green-dark);
+}
+
+.pcard-btn-siap {
+    background: #8b5cf6;
+    color: #fff;
+}
+
+.pcard-btn-siap:hover {
+    background: #7c3aed;
+}
+
+.pcard-btn-selesai {
+    background: #10b981;
+    color: #fff;
+}
+
+.pcard-btn-selesai:hover {
+    background: #059669;
+}
+
+.pcard-btn-batal {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #fca5a5;
+}
+
+.pcard-btn-batal:hover {
+    background: #fecaca;
+}
+
+.pcard-btn-nota {
+    background: #f59e0b;
+    color: #fff;
+}
+
+.pcard-btn-nota:hover {
+    background: #d97706;
+}
+
+.pcard-btn-print {
+    background: #2563eb;
+    color: #fff;
+}
+
+.pcard-btn-print:hover {
+    background: #1d4ed8;
+}
+
+.pcard-btn-selesai-locked {
+    opacity: .4;
+    cursor: not-allowed !important;
+}
+
+/* ── Responsive inbox ── */
+@media (max-width: 768px) {
+    .inbox-tabs {
+        gap: 4px;
+        padding: 6px;
+    }
+
+    .inbox-tab {
+        padding: 7px 10px;
+        font-size: 12px;
+        gap: 5px;
+    }
+
+    .tab-label {
+        display: none;
+    }
+
+    #section-inbox .pcard-inner {
+        padding: 14px;
+    }
+
+    #section-inbox .pcard-header {
+        flex-wrap: wrap;
+    }
+
+    .pcard-total-value {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    #section-inbox .pcard-btn,
+    .nota-actions .pcard-btn {
+        padding: 7px 12px;
+        font-size: 12px;
+    }
+
+    .pcard-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
+}
+
+/* ═══════════════════════════════════════
+   NOTA MODAL
+   ═══════════════════════════════════════ */
+
+.nota-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .55);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.nota-overlay.show {
+    display: flex;
+}
+
+.nota-box {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 340px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .25);
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+}
+
+#notaKonten {
+    padding: 36px 22px 24px;
+}
+
+.nota-header {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.nota-logo {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.nota-toko-nama {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: .3px;
+}
+
+.nota-sub {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.nota-garis {
+    border-top: 1px dashed #d1d5db;
+    margin: 10px 0;
+}
+
+.nota-info {
+    margin-bottom: 4px;
+}
+
+.nota-info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 2px 0;
+    color: #374151;
+}
+
+.nota-info-row span:first-child {
+    color: #6b7280;
+}
+
+.nota-info-row span:last-child {
+    font-weight: 600;
+    text-align: right;
+    max-width: 55%;
+}
+
+.nota-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    color: #374151;
+}
+
+.nota-table th {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #9ca3af;
+    padding: 4px 0;
+    letter-spacing: .4px;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.nota-table td {
+    padding: 5px 0;
+    vertical-align: top;
+}
+
+.nota-table .center {
+    text-align: center;
+}
+
+.nota-table .right {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.nota-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    font-weight: 800;
+    color: #1a1a1a;
+    padding: 4px 0;
+}
+
+.nota-footer {
+    text-align: center;
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+    padding-bottom: 4px;
+}
+
+.nota-actions {
+    display: flex;
+    gap: 10px;
+    padding: 14px 22px;
+    border-top: 1px solid #f3f4f6;
+    background: #f9fafb;
+}
+
+.nota-actions .pcard-btn {
+    flex: 1;
+    justify-content: center;
+}
+
+/* ── Print nota ── */
+@media print {
+    body>* {
+        display: none !important;
+    }
+
+    .nota-overlay {
+        display: block !important;
+        position: static !important;
+        background: none !important;
+        padding: 0 !important;
+    }
+
+    .nota-box {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    #notaKonten {
+        padding: 0 !important;
+    }
+}
+
+@media (max-width: 400px) {
+    .nota-box {
+        max-width: 100%;
+        border-radius: 12px;
+    }
+}
+
+/* =========================================================================
+   HALAMAN MANAJEMEN KEUANGAN KANTIN
+   ========================================================================= */
+
+.kas-grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.kas-card {
+    background: #fff;
+    border: 1px solid #eef2f5;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.kas-card i {
+    font-size: 26px;
+    color: #3498db;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.kas-card .kas-label {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.kas-card .kas-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 6px;
+}
+
+.kas-filter-bar {
+    background: #ffffff;
+    border: 1px solid #eef2f5;
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.kas-filter-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.kas-select, .kas-input-date {
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+    font-size: 13px;
+    color: #334155;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.kas-select:focus, .kas-input-date:focus {
+    border-color: #3498db;
+    background: #fff;
+}
+
+.kas-btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.kas-btn-print {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+    transition: all 0.2s;
+}
+
+.kas-btn-print:hover {
+    background: #f8fafc;
+}
+
+.kas-btn-add {
+    background: #22c55e;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+    transition: all 0.2s;
+}
+
+.kas-btn-add:hover {
+    background: #16a34a;
+}
+
+.kas-table-container {
+    background: #fff;
+    border: 1px solid #eef2f5;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.kas-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 13.5px;
+}
+
+.kas-table th {
+    background: #f8fafc;
+    color: #475569;
+    padding: 14px 16px;
+    font-weight: 600;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.kas-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
+}
+
+.kas-table tr:hover td {
+    background-color: #f8fafc;
+}
+
+.text-pemasukan {
+    color: #16a34a !important;
+    font-weight: 600;
+}
+
+.text-pengeluaran {
+    color: #dc2626 !important;
+    font-weight: 600;
+}
+
+.btn-delete-kas {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11.5px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-delete-kas:hover {
+    background: #dc2626;
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .kas-filter-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .kas-btn-group {
+        width: 100%;
+    }
+    .kas-btn-group button {
+        flex: 1;
+        justify-content: center;
     }
 }

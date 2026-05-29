@@ -284,3 +284,40 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Pratinjau foto profil kantin (selaras owner) */
+.profile-preview-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: #f8fafc;
+    padding: 18px;
+    border-radius: 10px;
+    border: 1px dashed #cbd5e1;
+}
+
+.profile-avatar-circle {
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #e2e8f0;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+.profile-avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #94a3b8;
+    font-size: 32px;
+}

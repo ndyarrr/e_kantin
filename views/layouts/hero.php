@@ -118,18 +118,18 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
     }
 
     .search-dropdown {
-    position: absolute;
-    top: 100%; 
-    left: 0;
-    margin-top: 8px; 
-    width: 100%; 
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    max-height: 480px;
-    overflow-y: auto;
-    z-index: 9999;
-}
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 8px;
+        width: 100%;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        max-height: 480px;
+        overflow-y: auto;
+        z-index: 9999;
+    }
 
     .search-item {
         display: flex;
@@ -226,8 +226,8 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
             <input type="text" placeholder="Cari menu..." id="heroSearchInput" autocomplete="off" />
             <div id="searchDropdown" class="search-dropdown" style="display:none"></div>
         </div>
-        </div>
     </div>
+</div>
 
 
 <script>
@@ -258,9 +258,14 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
             <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 12px;">
                 ${hasil.slice(0, 8).map(m => `
                     <a class="search-item" href="./kantin/detail.php?id=${m.id_toko}" style="display: flex; flex-direction: column; align-items: flex-start; padding: 0; border-radius: 12px; border: 1.5px solid #eee; overflow: hidden; text-decoration: none; width: 220px; box-sizing: border-box;">
-                        <img style="width: 100%; height: 140px; object-fit: cover; display: block; background: #eee;"
-                            src="${m.foto_menu ? './assets/img/menu/' + m.foto_menu : ''}"
-                            onerror="this.style.background='#eee';this.style.minHeight='140px'">
+                        ${m.foto_menu
+                    ? `<img style="width:100%;height:140px;object-fit:cover;display:block;" 
+           src="./assets/img/menu/${m.foto_menu}" 
+           data-nama="${m.nama_menu.replace(/"/g, '&quot;')}"
+           onerror="gantiKeFallback(this)">`
+                    : fallbackSVG(m.nama_menu)
+                }
+        
                         <div style="padding: 10px 12px 12px; width: 100%; box-sizing: border-box;">
                             <div class="search-item-nama">${m.nama_menu}</div>
                             <div style="font-size: 12px; color: #555; font-family: Poppins, sans-serif; margin: 2px 0 6px;">Rp ${parseInt(m.harga).toLocaleString('id-ID')}</div>
@@ -277,10 +282,46 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
         dropdown.style.display = 'block';
     });
 
+    function getKategoriIcon(nama) {
+        const n = nama.toLowerCase();
+        if (n.includes('minum') || n.includes('es') || n.includes('jus') || n.includes('teh') || n.includes('kopi')) {
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:32px;height:32px;fill:#1890ff;filter:drop-shadow(0 2px 4px rgba(24,144,255,0.2));">
+            <path d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z"/>
+        </svg>`;
+        } else if (n.includes('snack') || n.includes('gorengan') || n.includes('keripik') || n.includes('cemilan')) {
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:32px;height:32px;fill:#9254de;filter:drop-shadow(0 2px 4px rgba(146,84,222,0.2));">
+            <path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z"/>
+        </svg>`;
+        } else {
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:32px;height:32px;fill:#ff7a45;filter:drop-shadow(0 2px 4px rgba(255,122,69,0.2));">
+            <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>
+        </svg>`;
+        }
+    }
+
+    function fallbackSVG(nama) {
+        const n = nama.toLowerCase();
+        let bg, border;
+        if (n.includes('minum') || n.includes('es') || n.includes('jus') || n.includes('teh') || n.includes('kopi')) {
+            bg = '#eff6ff'; border = '#bfdbfe';
+        } else if (n.includes('snack') || n.includes('gorengan') || n.includes('keripik') || n.includes('cemilan')) {
+            bg = '#f5f3ff'; border = '#ddd6fe';
+        } else {
+            bg = '#fff2e8'; border = '#fed7aa';
+        }
+        return `<div style="width:100%;height:140px;background:${bg};border-bottom:2px solid ${border};display:flex;align-items:center;justify-content:center;">${getKategoriIcon(nama)}</div>`;
+    }
+
     // Tutup dropdown kalau klik di luar
     document.addEventListener('click', function (e) {
         if (!e.target.closest('.hero-search') && !e.target.closest('#searchDropdown')) {
             dropdown.style.display = 'none';
         }
     });
+    function gantiKeFallback(el) {
+        const nama = el.getAttribute('data-nama') || '';
+        const div = document.createElement('div');
+        div.innerHTML = fallbackSVG(nama);
+        el.parentNode.replaceChild(div.firstChild, el);
+    }
 </script>
