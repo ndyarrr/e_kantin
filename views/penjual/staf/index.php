@@ -46,6 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'kirim_laporan') {
         // Biarkan report.php handle sendiri — jangan intercept
+    } elseif ($action === 'update_status') {
+        require_once __DIR__ . '/../actions/proses_inbox.php';
+        exit;
     } else {
         require_once __DIR__ . '/../actions/proses_menu.php';
     }

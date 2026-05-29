@@ -4,10 +4,15 @@ global $conn;
 
 $penjualId = (int)($_SESSION['user_id'] ?? 0);
 
-// Ambil data id_toko milik owner
-$query_toko = mysqli_query($conn, "SELECT id_toko FROM toko_penjual WHERE id_penjual = $penjualId LIMIT 1");
-$r_toko = mysqli_fetch_assoc($query_toko);
-$id_toko_owner = (int)($r_toko['id_toko'] ?? 0);
+// Ambil data id_toko milik owner secara aman dan aktif
+$id_toko_owner = 0;
+if (isset($profilPenjual['id_toko']) && (int)$profilPenjual['id_toko'] > 0) {
+    $id_toko_owner = (int)$profilPenjual['id_toko'];
+} else {
+    $query_toko = mysqli_query($conn, "SELECT id_toko FROM toko_penjual WHERE id_penjual = $penjualId AND status = 'aktif' ORDER BY id DESC LIMIT 1");
+    $r_toko = mysqli_fetch_assoc($query_toko);
+    $id_toko_owner = (int)($r_toko['id_toko'] ?? 0);
+}
 
 // Load data tabel
 $total_staf = 0; $staf_aktif = 0; $tampil_staf = false;

@@ -38,6 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (strpos($action, 'kantin') !== false || strpos($action, 'banner') !== false) {
         require_once __DIR__ . '/../actions/proses_kantin.php';
         exit;
+    } elseif ($action === 'update_status') {
+        require_once __DIR__ . '/../actions/proses_inbox.php';
+        exit;
     }
 }
 

@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Update nama toko (Hanya jika login sebagai Owner dan data dikirim)
             if ($user_role !== 'staf' && $nama_toko !== null) {
-                mysqli_query($conn, "UPDATE toko SET nama_toko = '$nama_toko' WHERE id_toko = (SELECT id_toko FROM toko_penjual WHERE id_penjual = '$id_penjual' LIMIT 1)");
+                mysqli_query($conn, "UPDATE toko SET nama_toko = '$nama_toko' WHERE id_toko = (SELECT id_toko FROM toko_penjual WHERE id_penjual = '$id_penjual' AND status = 'aktif' ORDER BY id DESC LIMIT 1)");
             }
 
             // Sync session nama biar di navbar langsung berubah tanpa relog

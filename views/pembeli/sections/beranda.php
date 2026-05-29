@@ -24,7 +24,7 @@
                 <div class="promo-slider-wrapper" id="promoSliderWrapper">
                     <?php foreach ($promo_banners as $index => $banner): ?>
                         <div class="promo-slide <?= $index === 0 ? 'active' : ''; ?>">
-                            <img src="../../assets/img/<?= htmlspecialchars($banner['gambar']); ?>" alt="Banner Promo <?= htmlspecialchars($banner['nama_toko']); ?>">
+                            <img src="../../assets/img/banner/<?= htmlspecialchars($banner['gambar']); ?>" alt="Banner Promo <?= htmlspecialchars($banner['nama_toko']); ?>">
                             <!-- Overlay Info on slide -->
                             <div class="promo-slide-overlay">
                                 <div class="promo-slide-content">

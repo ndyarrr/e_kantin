@@ -14,6 +14,16 @@ require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../config/toko_foto.php';
 
 $idToko = (int) ($_SESSION['id_toko'] ?? 0);
+if ($idToko === 0) {
+    $penjualId = (int) ($_SESSION['user_id'] ?? 0);
+    $rToko = mysqli_fetch_assoc(mysqli_query(
+        $conn,
+        "SELECT id_toko FROM toko_penjual WHERE id_penjual=$penjualId AND status='aktif' ORDER BY id DESC LIMIT 1"
+    ));
+    $idToko = (int) ($rToko['id_toko'] ?? 0);
+    $_SESSION['id_toko'] = $idToko;
+}
+
 $action = $_POST['action'] ?? '';
 
 // Deteksi server dinamis untuk path redirect
@@ -21,7 +31,19 @@ $is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], 
 $base_url = $is_php_s ? '' : '/e_kantin';
 
 $uploadFileDir = tokoFotoImgRoot() . '/';
-$uploadBannerDir = $uploadFileDir;
+$uploadBannerDir = tokoFotoImgRoot() . '/banner/';
+if (!is_dir($uploadBannerDir)) {
+    mkdir($uploadBannerDir, 0755, true);
+}
+
+// Ambil nama toko untuk pencatatan log secara aman
+$nama_toko = '';
+if ($idToko > 0) {
+    $q_toko_name = mysqli_query($conn, "SELECT nama_toko FROM toko WHERE id_toko = $idToko LIMIT 1");
+    if ($q_toko_name && $r_toko_name = mysqli_fetch_assoc($q_toko_name)) {
+        $nama_toko = $r_toko_name['nama_toko'];
+    }
+}
 
 // ════════════════════════════════════════════════════════════
 // 1. UPDATE KANTIN (NAMA, STATUS, DESKRIPSI & FOTO KANTIN)
@@ -124,7 +146,7 @@ if ($action === 'add_banner') {
             $id_banner_baru = mysqli_insert_id($conn);
             $newFileName = 'banner_' . $idToko . '_' . $id_banner_baru . '.' . $fileExt;
 
-            $files = glob($uploadFileDir . 'banner_' . $idToko . '_' . $id_banner_baru . '.*');
+            $files = glob($uploadBannerDir . 'banner_' . $idToko . '_' . $id_banner_baru . '.*');
             if ($files) {
                 foreach ($files as $file) {
                     if (file_exists($file))
@@ -132,7 +154,7 @@ if ($action === 'add_banner') {
                 }
             }
 
-            if (move_uploaded_file($fileTmpPath, $uploadFileDir . $newFileName)) {
+            if (move_uploaded_file($fileTmpPath, $uploadBannerDir . $newFileName)) {
                 mysqli_query($conn, "UPDATE `banner_promo` SET `gambar` = '$newFileName' WHERE `id_banner` = $id_banner_baru");
                 catatLog($conn, 'Owner', 'Banner promo' . $nama_toko . 'telah ditambahkan');
                 $_SESSION['feedback'] = ['type' => 'success', 'msg' => 'Banner promosi baru berhasil ditambahkan!'];

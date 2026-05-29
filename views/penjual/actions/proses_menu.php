@@ -31,7 +31,7 @@ $idToko = (int) ($_SESSION['id_toko'] ?? 0);
 if ($idToko === 0) {
     $rToko = mysqli_fetch_assoc(mysqli_query(
         $conn,
-        "SELECT id_toko FROM toko_penjual WHERE id_penjual=$penjualId LIMIT 1"
+        "SELECT id_toko FROM toko_penjual WHERE id_penjual=$penjualId AND status='aktif' ORDER BY id DESC LIMIT 1"
     ));
     $idToko = (int) ($rToko['id_toko'] ?? 0);
 }
