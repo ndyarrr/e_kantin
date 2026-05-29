@@ -279,8 +279,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (str_starts_with($action, 'kantin_') || str_starts_with($action, 'menu_')) {
         if ($feedback)
             $_SESSION['feedback'] = $feedback;
+        $backSection = $_POST['_section'] ?? 'kantin';
+        if (!in_array($backSection, ['kantin', 'tambah_akun'], true)) {
+            $backSection = 'kantin';
+        }
         $selToko = (int) ($_POST['_selected_toko'] ?? 0);
-        header("Location: ?section=kantin" . ($selToko ? "&toko=$selToko" : ""));
+        if ($backSection === 'tambah_akun') {
+            header('Location: ?section=tambah_akun');
+        } else {
+            header('Location: ?section=kantin' . ($selToko ? "&toko=$selToko" : ''));
+        }
         exit;
     }
 

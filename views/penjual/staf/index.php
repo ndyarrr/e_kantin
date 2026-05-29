@@ -22,7 +22,7 @@ $penjualId = (int) ($_SESSION['user_id'] ?? 0);
 
 $profilPenjual = mysqli_fetch_assoc(mysqli_query(
     $conn,
-    "SELECT p.*, t.nama_toko, t.id_toko, tp.shift
+    "SELECT p.*, t.nama_toko, t.id_toko, t.foto_toko, tp.shift
      FROM penjual p
      LEFT JOIN toko_penjual tp ON tp.id_penjual = p.id_penjual AND tp.status = 'aktif'
      LEFT JOIN toko t ON t.id_toko = tp.id_toko AND t.deleted_at IS NULL

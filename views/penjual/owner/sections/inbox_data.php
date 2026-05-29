@@ -1,53 +1,78 @@
 <?php
-// views/penjual/owner/sections/inbox_data.php
+/** @var mysqli $conn */
+/** @var int $idToko */
 
-$dummyMails = [
-    [
-        'id' => 1,
-        'sender' => 'Sistem',
-        'email' => 'admin@gmail.com',
-        'subject' => 'Pembaruan Saldo Anda Berhasil',
-        'snippet' => 'Sistem: Pembaruan saldo anda berhasil.',
-        'time' => 'Yesterday',
-        'full_date' => '10:25 AM, 30 April 2026',
-        'status' => 'read',
-        'avatar' => '<i class="fa-solid fa-graduation-cap"></i>',
-        'message' => "Halo B.Sukamto,\n\nSaldo anda telah diperbarui. Tambahan Rp.150.000 dari penarikan sebelumnya.\n\nSaldo saat ini : Rp.1.900.000.\n\nTerima Kasih."
-    ],
-    [
-        'id' => 2,
-        'sender' => 'Staff Kantin',
-        'email' => 'staff_siti@gmail.com',
-        'subject' => 'Jadwal Shift',
-        'snippet' => 'Staf kantin: Jadwal shift - Jadwal shift membarang na......',
-        'time' => '10:15 AM',
-        'full_date' => '10:15 AM, 24 May 2026',
-        'status' => 'unread',
-        'avatar' => '<i class="fa-solid fa-user-tie"></i>',
-        'message' => "Halo Bos,\n\nUntuk jadwal shift besok pagi biar saya yang handle, lalu shift siang dilanjut oleh Fandi ya.\n\nMohon konfirmasinya."
-    ],
-    [
-        'id' => 3,
-        'sender' => 'Fandi (Murid)',
-        'email' => 'fandi_ganteng@student.sch.id',
-        'subject' => 'Feedback Menu',
-        'snippet' => 'Rasanya enak dan bumbunya pas, tapi porsinya sedikit.',
-        'time' => '2days ago',
-        'full_date' => '01:14 PM, 22 May 2026',
-        'status' => 'read',
-        'avatar' => '<i class="fa-solid fa-user"></i>',
-        'message' => "Halo Kantin,\n\nSaya mau kasi ulasan buat menu Ayam Gorengnya. Rasanya enak banget dan bumbunya pas, tapi porsinya sedikit bang kalo buat harga segitu hehe. Sukses terus!"
-    ],
-    [
-        'id' => 4,
-        'sender' => 'Sistem',
-        'email' => 'admin@gmail.com',
-        'subject' => 'Pengumuman sekolah',
-        'snippet' => 'Kantin tutup sementara pukul 12.00-13.00 untuk pembersihan.',
-        'time' => '3days ago',
-        'full_date' => '08:00 AM, 21 May 2026',
-        'status' => 'read',
-        'avatar' => '<i class="fa-solid fa-graduation-cap"></i>',
-        'message' => "Pemberitahuan kepada seluruh pemilik stan kantin,\n\nDiharapkan menutup stan sementara pada pukul 12.00-13.00 WIB sehubungan dengan diadakannya agenda inspeksi kebersihan berkala oleh tim sarpras sekolah.\n\nTerima kasih atas kerjasamanya."
-    ]
-];
+/* ── Filter status dari tab ── */
+$statusValid     = ['menunggu', 'dikonfirmasi', 'siap_diambil', 'selesai', 'dibatalkan'];
+$filterStatus    = $_GET['status_filter'] ?? 'semua';
+if (!in_array($filterStatus, $statusValid)) {
+    $filterStatus = 'semua';
+}
+
+/* ── Query pesanan ── */
+$sqlPesanan = "SELECT p.id_pesanan, p.waktu_pesan, p.status, p.total_harga, p.waktu_ambil,
+                      COALESCE(m2.nama, g.nama, 'Unknown') AS nama_pembeli,
+                      COALESCE(CONCAT(k.kelas, ' ', j.nama_jurusan, ' ', k.rombel), '-') AS kelas_pembeli
+               FROM pesanan p
+               LEFT JOIN murid m2 ON m2.nisn  = p.nisn_pembeli
+               LEFT JOIN kelas k ON k.id_kelas = m2.id_kelas
+               LEFT JOIN jurusan j ON j.id_jurusan = k.id_jurusan
+               LEFT JOIN guru  g  ON g.nuptk  = p.nuptk_pembeli
+               WHERE p.id_toko = $idToko";
+
+if ($filterStatus !== 'semua') {
+    /* pakai prepared statement agar aman */
+    $stmt = mysqli_prepare($conn,
+        $sqlPesanan . " AND p.status = ?
+        ORDER BY CASE p.status
+            WHEN 'menunggu'     THEN 1
+            WHEN 'dikonfirmasi' THEN 2
+            WHEN 'siap_diambil' THEN 3
+            WHEN 'selesai'      THEN 4
+            WHEN 'dibatalkan'   THEN 5
+        END, p.waktu_pesan DESC
+        LIMIT 50"
+    );
+    mysqli_stmt_bind_param($stmt, 's', $filterStatus);
+    mysqli_stmt_execute($stmt);
+    $daftarPesanan = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+    mysqli_stmt_close($stmt);
+} else {
+    $sqlPesanan .= " ORDER BY
+                        CASE p.status
+                            WHEN 'menunggu'     THEN 1
+                            WHEN 'dikonfirmasi' THEN 2
+                            WHEN 'siap_diambil' THEN 3
+                            WHEN 'selesai'      THEN 4
+                            WHEN 'dibatalkan'   THEN 5
+                        END,
+                        p.waktu_pesan DESC
+                     LIMIT 50";
+    $daftarPesanan = mysqli_fetch_all(mysqli_query($conn, $sqlPesanan), MYSQLI_ASSOC);
+}
+
+/* ── Ambil detail item untuk setiap pesanan ── */
+foreach ($daftarPesanan as &$pesanan) {
+    $idPesanan       = (int) $pesanan['id_pesanan'];
+    $pesanan['items'] = mysqli_fetch_all(mysqli_query($conn,
+        "SELECT dp.jumlah, dp.harga_satuan, dp.catatan, m.nama_menu
+         FROM detail_pesanan dp
+         JOIN menu m ON m.id_menu = dp.id_menu
+         WHERE dp.id_pesanan = $idPesanan"
+    ), MYSQLI_ASSOC);
+}
+unset($pesanan);
+
+/* ── Hitung jumlah per status (SEMUA tanggal, bukan hanya hari ini)
+       supaya sinkron dengan daftar yang ditampilkan ── */
+$hitungStatus = mysqli_fetch_all(mysqli_query($conn,
+    "SELECT status, COUNT(*) AS total
+     FROM pesanan
+     WHERE id_toko = $idToko
+     GROUP BY status"
+), MYSQLI_ASSOC);
+
+$jumlahPerStatus = [];
+foreach ($hitungStatus as $row) {
+    $jumlahPerStatus[$row['status']] = (int) $row['total'];
+}

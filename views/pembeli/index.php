@@ -80,8 +80,12 @@ function resolveTokoImg($foto, $nama)
         'kom' => 'kantin_bu_kom.jpeg'
     ];
     foreach ($map as $key => $file) {
-        if (str_contains($n, $key) && file_exists(__DIR__ . '/../../assets/img/' . $file))
-            return '../../assets/img/' . $file;
+        if (str_contains($n, $key)) {
+            if (file_exists(__DIR__ . '/../../assets/img/kantin/' . $file))
+                return '../../assets/img/kantin/' . $file;
+            if (file_exists(__DIR__ . '/../../assets/img/' . $file))
+                return '../../assets/img/' . $file;
+        }
     }
     return '';
 }

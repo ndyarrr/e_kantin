@@ -29,9 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'tambah_menu' || $action === 'edit_menu' || $action === 'hapus_menu') {
         require_once __DIR__ . '/../actions/proses_menu.php';
         exit;
-    } elseif ($action === 'selesaikan_pesanan' || strpos($action, 'pesanan') !== false) {
-        require_once __DIR__ . '/../actions/proses_pesanan.php';
-        exit;
     } elseif ($action === 'edit_profil' || $action === 'ganti_password' || $action === 'hapus_foto_profil') {
         require_once __DIR__ . '/../actions/proses_profil.php';
         exit;
@@ -52,7 +49,7 @@ $penjualId = (int) ($_SESSION['user_id'] ?? 0);
 
 $profilPenjual = mysqli_fetch_assoc(mysqli_query(
     $conn,
-    "SELECT p.*, t.nama_toko, t.id_toko, tp.shift
+    "SELECT p.*, t.nama_toko, t.id_toko, t.foto_toko, tp.shift
      FROM penjual p
      LEFT JOIN toko_penjual tp ON tp.id_penjual = p.id_penjual AND tp.status = 'aktif'
      LEFT JOIN toko t ON t.id_toko = tp.id_toko AND t.deleted_at IS NULL
@@ -90,6 +87,7 @@ $search = mysqli_real_escape_string($conn, $_GET['search'] ?? '');
 $kategori = mysqli_real_escape_string($conn, $_GET['kategori'] ?? 'semua');
 
 require __DIR__ . '/sections/menu_data.php';
+require __DIR__ . '/sections/inbox_data.php';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -134,17 +132,14 @@ require __DIR__ . '/sections/menu_data.php';
             <button class="nav-link" data-section="inbox" onclick="switchSection('inbox')">
                 <i class="fa-solid fa-inbox"></i> Inbox
             </button>
-            <button class="nav-link" data-section="pesanan" onclick="switchSection('pesanan')">
-                <i class="fa-solid fa-receipt"></i> Antrean Pesanan
-            </button>
             <button class="nav-link" data-section="profil" onclick="switchSection('profil')">
                 <i class="fa-solid fa-user"></i> Profil
             </button>
             <button class="nav-link" data-section="chat" onclick="switchSection('chat')">
                 <i class="fa-solid fa-comments"></i> Chat
             </button>
-            <button class="nav-link" data-section="kas" onclick="switchSection('kas')">
-                <i class="fa-solid fa-book"></i> Buku Kas
+            <button class="nav-link" data-section="keuangan" onclick="switchSection('keuangan')">
+                <i class="fa-solid fa-book"></i> Keuangan
             </button>
         </nav>
         <div class="sidebar-bottom">
@@ -224,14 +219,6 @@ require __DIR__ . '/sections/menu_data.php';
                 <?php require __DIR__ . '/sections/inbox.php'; ?>
             </div>
 
-            <div class="section" id="inbox">
-                <?php require __DIR__ . '/sections/inbox.php'; ?>
-            </div>
-
-            <div class="section" id="section-pesanan">
-                <?php require __DIR__ . '/sections/pesanan.php'; ?>
-            </div>
-
             <div class="section" id="section-profil">
                 <?php require __DIR__ . '/sections/profil.php'; ?>
             </div>
@@ -239,8 +226,8 @@ require __DIR__ . '/sections/menu_data.php';
                 <?php require __DIR__ . '/../../../views/chat.php'; ?>
             </div>
 
-            <div class="section" id="section-kas">
-                <?php require __DIR__ . '/sections/kas.php'; ?>
+            <div class="section" id="section-keuangan">
+                <?php require __DIR__ . '/sections/keuangan.php'; ?>
             </div>
 
             <div class="section" id="section-report">
@@ -295,10 +282,9 @@ require __DIR__ . '/sections/menu_data.php';
             staf: { title: 'Staf & Shift', sub: 'Kelola jadwal kerja dan petugas kasir' },
             kantin: { title: 'Pengaturan Kantin', sub: 'Kelola informasi toko, deskripsi, dan banner promo' },
             inbox: { title: 'Inbox', sub: 'Pesanan masuk dan riwayat transaksi' },
-            pesanan: { title: 'Antrean Pesanan', sub: 'Kelola pesanan pelanggan' },
             profil: { title: 'Profil', sub: 'Kelola data akun penjual' },
             chat: { title: 'Chat', sub: 'Balas pesan pembeli atas nama kantin kamu' },
-            kas: { title: 'Buku Kas', sub: 'Catatan pemasukan dan keuangan toko' },
+            keuangan: { title: 'Keuangan', sub: 'Catatan pemasukan dan keuangan toko' },
             report: { title: 'Laporan Kendala', sub: 'Laporkan kendala atau sampaikan masukan' },
         };
 

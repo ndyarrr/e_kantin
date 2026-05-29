@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role']) || $_SESSION[
 }
 
 require_once __DIR__ . '/../../../config/database.php';
+require_once __DIR__ . '/../../../config/toko_foto.php';
 
 $idToko = (int) ($_SESSION['id_toko'] ?? 0);
 $action = $_POST['action'] ?? '';
@@ -19,7 +20,8 @@ $action = $_POST['action'] ?? '';
 $is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
 $base_url = $is_php_s ? '' : '/e_kantin';
 
-$uploadFileDir = __DIR__ . '/../../../assets/img/';
+$uploadFileDir = tokoFotoImgRoot() . '/';
+$uploadBannerDir = $uploadFileDir;
 
 // ════════════════════════════════════════════════════════════
 // 1. UPDATE KANTIN (NAMA, STATUS, DESKRIPSI & FOTO KANTIN)
@@ -34,23 +36,15 @@ if ($action === 'update_kantin_full') {
     $dataLama = mysqli_fetch_assoc($qLama);
     $nama_foto_final = $dataLama['foto_toko'] ?? '';
 
-    if (isset($_FILES['foto_toko']) && $_FILES['foto_toko']['error'] === UPLOAD_ERR_OK) {
-        $fileTmpPath = $_FILES['foto_toko']['tmp_name'];
-        $fileName = $_FILES['foto_toko']['name'];
-        $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-        $newFileName = 'kantin_' . $idToko . '.' . $fileExt;
-
-        $files = glob($uploadFileDir . 'kantin_' . $idToko . '.*');
-        if ($files) {
-            foreach ($files as $file) {
-                if (file_exists($file))
-                    @unlink($file);
-            }
+    $upload = tokoFotoProsesUpload($idToko, $_FILES['foto_toko'] ?? []);
+    if ($upload['attempted']) {
+        if ($upload['error']) {
+            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $upload['error']];
+            header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin&t=" . time());
+            exit;
         }
-
-        if (move_uploaded_file($fileTmpPath, $uploadFileDir . $newFileName)) {
-            $nama_foto_final = $newFileName;
+        if ($upload['filename']) {
+            $nama_foto_final = $upload['filename'];
         }
     }
 

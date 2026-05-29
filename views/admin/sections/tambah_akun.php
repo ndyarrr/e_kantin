@@ -166,8 +166,9 @@
                     <input type="text" name="deskripsi" placeholder="cth. Nasi, lauk, dan minuman">
                 </div>
                 <div class="form-group">
-                    <label>Foto Kantin <span style="color:var(--text-light);font-weight:400">(opsional)</span></label>
-                    <input type="file" name="foto_toko" accept="image/*">
+                    <label>Foto Profil Kantin <span style="color:var(--text-light);font-weight:400">(opsional)</span></label>
+                    <input type="file" name="foto_toko" accept="image/jpeg, image/jpg, image/png, image/webp">
+                    <small style="color:var(--text-light);font-size:11px;display:block;margin-top:4px;">Format: JPG, JPEG, PNG, WEBP (Max 2MB)</small>
                 </div>
                 <button type="submit" class="btn-submit">
                     <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Daftarkan Stand

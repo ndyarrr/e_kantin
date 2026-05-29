@@ -176,7 +176,7 @@ $role_label = match (true) {
                         if (c.role === 'admin') {
                             pathFoto = `${BASE_URL_CHAT}assets/img/admin/${c.foto_profil}`;
                         } else if (c.role === 'kantin' || c.role === 'penjual') {
-                            pathFoto = `${BASE_URL_CHAT}assets/img/toko/${c.foto_profil}`;
+                            pathFoto = `${BASE_URL_CHAT}assets/img/kantin/${c.foto_profil}`;
                         } else {
                             pathFoto = `${BASE_URL_CHAT}assets/img/pembeli/${c.foto_profil}`;
                         }

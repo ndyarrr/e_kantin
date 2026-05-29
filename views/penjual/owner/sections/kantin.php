@@ -1,6 +1,8 @@
 <?php
 // views/penjual/owner/sections/kantin.php
 
+require_once __DIR__ . '/../../../../config/toko_foto.php';
+
 // =========================================================================
 // 1. QUERY AMBIL DATA KANTIN/TOKO
 // =========================================================================
@@ -46,7 +48,7 @@ $isLocked = ($jumlahBannerAktif >= 2);
                 <div class="profile-preview-wrapper">
                     <div class="profile-avatar-circle">
                         <?php if (!empty($tokoData['foto_toko'])): ?>
-                            <img src="../../../assets/img/<?= htmlspecialchars($tokoData['foto_toko']) ?>?v=<?= time() ?>">
+                            <img src="<?= htmlspecialchars(tokoFotoUrl($tokoData['foto_toko'], '../../../')) ?>?v=<?= time() ?>">
                         <?php else: ?>
                             <div class="profile-avatar-placeholder"><i class="fa-solid fa-image"></i></div>
                         <?php endif; ?>

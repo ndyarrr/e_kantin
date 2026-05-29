@@ -189,7 +189,7 @@
 
                 // Foto kantin
                 if (data.toko.foto_toko) {
-                    foto.src = './assets/img/toko/' + data.toko.foto_toko;
+                    foto.src = './assets/img/kantin/' + data.toko.foto_toko;
                     foto.style.display = 'block';
                     fotoPlaceholder.style.display = 'none';
                     foto.onerror = () => {
