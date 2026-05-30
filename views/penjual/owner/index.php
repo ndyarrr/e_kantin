@@ -149,7 +149,7 @@ require __DIR__ . '/sections/inbox_data.php';
             <button class="nav-link" data-section="report" onclick="switchSection('report')">
                 <i class="fa-solid fa-flag"></i> Laporan Kendala
             </button>
-            <a href="<?= $base_path ?>/auth/logout.php" class="nav-link logout">
+            <a href="<?= $base_path ?>/auth/logout.php" class="nav-link logout" onclick="confirmLogout(event, this.href)">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> Log out
             </a>
         </div>
@@ -362,6 +362,84 @@ require __DIR__ . '/sections/inbox_data.php';
                     }
                 })
                 .catch(err => console.error('Error fetching unread chat:', err));
+        }
+
+        function confirmLogout(event, logoutUrl) {
+            if (event) event.preventDefault();
+            
+            let existingModal = document.getElementById('logoutConfirmModal');
+            if (existingModal) existingModal.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'logoutConfirmModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 99999;
+                opacity: 0;
+                transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: #ffffff;
+                padding: 30px 24px;
+                border-radius: 24px;
+                width: 90%;
+                max-width: 360px;
+                text-align: center;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                transform: scale(0.9);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            card.innerHTML = `
+                <div style="width: 56px; height: 56px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <svg style="width: 28px; height: 28px; stroke: #ef4444;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </div>
+                <h3 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 750; color: #1e293b;">Konfirmasi Keluar</h3>
+                <p style="margin: 0 0 24px; font-family: 'Poppins', sans-serif; font-size: 13.5px; color: #64748b; line-height: 1.5;">Apakah Anda yakin ingin keluar dari akun E-Kantin?</p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="logoutCancelBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Batal</button>
+                    <button id="logoutConfirmBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: none; background: #ef4444; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">Keluar</button>
+                </div>
+            `;
+            
+            modal.appendChild(card);
+            document.body.appendChild(modal);
+            
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+            
+            function closeModal() {
+                modal.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => modal.remove(), 300);
+            }
+            
+            document.getElementById('logoutCancelBtn').addEventListener('click', closeModal);
+            document.getElementById('logoutConfirmBtn').addEventListener('click', () => {
+                window.location.href = logoutUrl;
+            });
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
         }
 
         document.addEventListener('DOMContentLoaded', () => {

@@ -113,17 +113,27 @@
                             <h4><?= htmlspecialchars($menu['nama_menu']); ?></h4>
                             <p class="seller-name"><?= htmlspecialchars($menu['nama_toko']); ?></p>
                             <span class="price-tag">Rp. <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
-                            <button class="btn-tambah-keranjang"
-                                style="width:100%;margin-top:8px;font-size:12px;padding:7px 10px" onclick="addToCart(
-                <?= (int) $menu['id_menu'] ?>,
-                '<?= addslashes(htmlspecialchars($menu['nama_menu'])) ?>',
-                <?= (int) $menu['harga'] ?>,
-                '<?= addslashes($menu['foto_menu'] ?? '') ?>',
-                '<?= addslashes(htmlspecialchars($menu['nama_toko'])) ?>',
-                <?= (int) $menu['id_toko'] ?>
-            )">
-                                <i class="fa-solid fa-cart-plus"></i> Tambah
-                            </button>
+                            <?php 
+                            $is_toko_buka = (strtolower($menu['status_toko'] ?? '') === 'buka');
+                            if ($is_toko_buka): 
+                            ?>
+                                <button class="btn-tambah-keranjang"
+                                    style="width:100%;margin-top:8px;font-size:12px;padding:7px 10px" onclick="addToCart(
+                    <?= (int) $menu['id_menu'] ?>,
+                    '<?= addslashes(htmlspecialchars($menu['nama_menu'])) ?>',
+                    <?= (int) $menu['harga'] ?>,
+                    '<?= addslashes($menu['foto_menu'] ?? '') ?>',
+                    '<?= addslashes(htmlspecialchars($menu['nama_toko'])) ?>',
+                    <?= (int) $menu['id_toko'] ?>
+                )">
+                                    <i class="fa-solid fa-cart-plus"></i> Tambah
+                                </button>
+                            <?php else: ?>
+                                <button class="btn-tambah-keranjang"
+                                    style="width:100%;margin-top:8px;font-size:12px;padding:7px 10px;background-color:#94a3b8;pointer-events:none;box-shadow:none" disabled>
+                                    Toko Tutup
+                                </button>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <?php
@@ -183,7 +193,9 @@
     <section class="section-block" id="kantinSection">
         <h2 class="section-title">Kantin</h2>
         <div class="kantin-grid" id="kantinGrid">
-            <?php foreach ($all_tokos as $toko):
+            <?php 
+            $home_tokos = array_slice($all_tokos, 0, 3);
+            foreach ($home_tokos as $toko):
                 $is_buka = (strtolower($toko['status'] ?? '') === 'buka');
                 $status_kelas = $is_buka ? 'online' : 'offline';
                 $status_teks = $is_buka ? 'Buka' : 'Tutup';

@@ -73,10 +73,18 @@ $roles = [
     <title>Login - E-Kantin</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="../../assets/css/login.css">
+    <link rel="stylesheet" href="../../assets/css/login.css?v=<?= time() ?>">
 </head>
 
 <body>
+
+    <a href="../../index.php" class="btn-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Kembali ke Beranda</span>
+    </a>
 
     <div class="bg-deco">
         <span>🍚</span><span>🍜</span><span>🥤</span><span>🍗</span><span>🥘</span>

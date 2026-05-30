@@ -51,6 +51,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try {
                     // Update status pesanan
                     mysqli_query($conn, "UPDATE pesanan SET status = '$status_baru' WHERE id_pesanan = $id_pesanan");
+
+                    // Kirim pesan otomatis ke chat pembeli mengenai perubahan status
+                    $q_pesanan_info = mysqli_query($conn, "SELECT nisn_pembeli, nuptk_pembeli, total_harga FROM pesanan WHERE id_pesanan = $id_pesanan LIMIT 1");
+                    if ($q_pesanan_info && mysqli_num_rows($q_pesanan_info) > 0) {
+                        $r_p = mysqli_fetch_assoc($q_pesanan_info);
+                        $penerima_chat = '';
+                        if (!empty($r_p['nisn_pembeli'])) {
+                            $penerima_chat = 'murid_' . $r_p['nisn_pembeli'];
+                        } elseif (!empty($r_p['nuptk_pembeli'])) {
+                            $penerima_chat = 'guru_' . $r_p['nuptk_pembeli'];
+                        }
+
+                        if (!empty($penerima_chat)) {
+                            $pengirim_chat = 'toko_' . $idToko;
+                            $status_teks_chat = '';
+                            $status_sub = '';
+                            $status_status = '';
+
+                            if ($status_baru === 'dikonfirmasi') {
+                                $status_teks_chat = 'Pesanan #' . $id_pesanan . ' Diterima!';
+                                $status_sub = 'Pesananmu sudah diterima dan sedang disiapkan pihak kantin. Mohon ditunggu 🙏';
+                                $status_status = 'Diproses ⏳';
+                            } elseif ($status_baru === 'siap_diambil') {
+                                $status_teks_chat = 'Pesanan #' . $id_pesanan . ' Siap Diambil!';
+                                $status_sub = 'Yey! Pesananmu sudah siap disajikan. Silakan ambil ke kantin.';
+                                $status_status = 'Siap Diambil 🟢';
+                            } elseif ($status_baru === 'selesai') {
+                                $status_teks_chat = 'Pesanan #' . $id_pesanan . ' Selesai!';
+                                $status_sub = 'Terima kasih telah mengambil pesananmu! Semoga harimu menyenangkan.';
+                                $status_status = 'Selesai & Lunas ✅';
+                            } elseif ($status_baru === 'dibatalkan') {
+                                $status_teks_chat = 'Pesanan #' . $id_pesanan . ' Dibatalkan!';
+                                $status_sub = 'Maaf, pesananmu dibatalkan/ditolak oleh pihak kantin.';
+                                $status_status = 'Dibatalkan ❌';
+                            }
+
+                            if (!empty($status_teks_chat)) {
+                                $auto_status_msg = '[AUTO_REPLY_STATUS]
+                                <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;padding:4px;">
+                                    <div style="font-weight:800;font-size:14px;color:#0f172a;margin-bottom:6px;">' . $status_teks_chat . '</div>
+                                    <div style="font-size:12px;color:#64748b;margin-bottom:12px;">' . $status_sub . '</div>
+                                    <div style="padding:10px 12px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+                                        <span style="font-size:12px;font-weight:600;color:#475569;">Status Terbaru</span>
+                                        <span style="font-size:12px;font-weight:800;color:#1e293b;">' . $status_status . '</span>
+                                    </div>
+                                </div>';
+
+                                $msg_escaped = mysqli_real_escape_string($conn, $auto_status_msg);
+                                mysqli_query($conn, "INSERT INTO pesan_chat (id_pengirim, id_penerima, isi_pesan, waktu_kirim, sudah_dibaca)
+                                                     VALUES ('$pengirim_chat', '$penerima_chat', '$msg_escaped', NOW(), 0)");
+                            }
+                        }
+                    }
                     
                     // KUNCI PERBAIKAN: Jika status berubah menjadi 'selesai' dan sebelumnya bukan selesai
                     if ($status_baru === 'selesai' && $status_lama !== 'selesai') {

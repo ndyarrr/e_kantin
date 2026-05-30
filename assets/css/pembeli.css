@@ -191,6 +191,10 @@ body {
     box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
 }
 
+.badge:empty {
+    display: none !important;
+}
+
 .blank-avatar, .avatar-initials {
     width: 38px;
     height: 38px;
@@ -230,6 +234,7 @@ body {
 }
 
 .nav-item {
+    position: relative;
     text-decoration: none;
     color: #64748b;
     font-size: 14px;
@@ -240,6 +245,13 @@ body {
     align-items: center;
     gap: 8px;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item .badge {
+    position: absolute;
+    top: -2px;
+    right: 4px;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
 }
 
 .nav-item i {
@@ -2343,6 +2355,81 @@ body {
     .toko-meta {
         margin-top: 4px;
     }
+
+    /* ── MOBILE CANTEEN GRID & CARDS ── */
+    .kantin-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .kantin-card {
+        padding: 12px !important;
+        border-radius: 18px !important;
+        min-width: 0 !important;
+    }
+
+    .kantin-card .blank-image-square {
+        border-radius: 12px !important;
+        padding: 2px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .kantin-card .toko-img-placeholder {
+        padding: 8px !important;
+        margin-bottom: 8px !important;
+        border-radius: 12px !important;
+    }
+
+    .kantin-card .toko-img-placeholder i {
+        font-size: 24px !important;
+    }
+
+    .kantin-card .toko-img-placeholder span {
+        font-size: 9px !important;
+        font-weight: 800 !important;
+    }
+
+    .kantin-info h3 {
+        font-size: 13px !important;
+        margin-bottom: 2px !important;
+    }
+
+    .kantin-info p {
+        font-size: 10px !important;
+        height: 28px !important;
+        margin-bottom: 8px !important;
+        line-height: 1.25 !important;
+    }
+
+    .status-indicator {
+        font-size: 10px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .btn-lihat-menu {
+        font-size: 11px !important;
+        padding: 8px 0 !important;
+        border-radius: 8px !important;
+    }
+
+    .category-item-all-box {
+        padding: 12px !important;
+        border-radius: 18px !important;
+        min-width: 0 !important;
+    }
+
+    .category-item-all-box .blank-square-icon {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 12px !important;
+        font-size: 16px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .category-item-all-box .all-text-label {
+        font-size: 10px !important;
+        font-weight: 800 !important;
+    }
 }
 
 /* ── TABLET RESPONSIVENESS OVERRIDES ── */
@@ -3320,6 +3407,12 @@ body {
         border-radius: 12px;
         background: transparent !important;
         color: #94a3b8;
+    }
+
+    .nav-item .badge {
+        top: 2px;
+        left: calc(50% + 4px);
+        right: auto;
     }
 
     .nav-item.active {

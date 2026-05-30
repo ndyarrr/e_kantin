@@ -40,7 +40,7 @@ if (!empty($user_id)) {
 
 // ── Ambil SEMUA menu tersedia (untuk section Beranda + Kantin) ──
 $all_menus = [];
-$q_all_menu = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko, toko.id_toko FROM menu 
+$q_all_menu = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko, toko.id_toko, toko.status AS status_toko FROM menu 
                                       JOIN toko ON menu.id_toko = toko.id_toko 
                                       WHERE menu.tersedia = 1 AND menu.stok > 0 
                                       ORDER BY menu.id_menu DESC");
@@ -51,7 +51,7 @@ if ($q_all_menu) {
 
 // ── Ambil 6 menu terlaris untuk section Beranda ──
 $terlaris_menus = [];
-$q_terlaris = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko, toko.id_toko FROM menu 
+$q_terlaris = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko, toko.id_toko, toko.status AS status_toko FROM menu 
                                       JOIN toko ON menu.id_toko = toko.id_toko 
                                       WHERE menu.tersedia = 1 AND menu.stok > 0 
                                       ORDER BY menu.terjual DESC, menu.id_menu DESC 
@@ -176,7 +176,7 @@ function resolveTokoImg($foto, $nama)
                         <?php if ($unread_notif_count > 0): ?>
                             <span class="badge" id="notifBadge"><?= $unread_notif_count ?></span>
                         <?php else: ?>
-                            <span class="badge" id="notifBadge" style="display: none;">0</span>
+                            <span class="badge" id="notifBadge" style="display: none;"></span>
                         <?php endif; ?>
                     </div>
                     <div class="dropdown-panel" id="notifDrop">
@@ -263,7 +263,7 @@ function resolveTokoImg($foto, $nama)
                 <div class="dropdown-wrapper">
                     <div class="icon-badge" onclick="toggleCartDrawer()">
                         <i class="fa-solid fa-cart-shopping"></i>
-                        <span class="badge" id="headerCartBadge">0</span>
+                        <span class="badge" id="headerCartBadge" style="display: none;"></span>
                     </div>
                 </div>
 
@@ -288,10 +288,11 @@ function resolveTokoImg($foto, $nama)
                                 <p><?= htmlspecialchars($user_role); ?></p>
                             </div>
                         </div>
-                        <a href="#" class="profile-menu-item" onclick="switchNav('beranda')"><i class="fa-solid fa-house"></i> Beranda</a>
-                        <a href="#" class="profile-menu-item" onclick="switchNav('pesanan')"><i class="fa-solid fa-receipt"></i> Pesanan Saya</a>
+                        <a href="#" class="profile-menu-item" onclick="event.preventDefault(); openChangeNameModal();"><i class="fa-solid fa-user-pen"></i> Ganti Nama</a>
+                        <a href="#" class="profile-menu-item" onclick="event.preventDefault(); openChangePasswordModal();"><i class="fa-solid fa-key"></i> Ganti Password</a>
+                        <a href="#" class="profile-menu-item" onclick="event.preventDefault(); openChangeAvatarModal();"><i class="fa-solid fa-camera"></i> Ganti Foto Profil</a>
                         <div style="border-top:1px solid #f1f5f9;margin:4px 0"></div>
-                        <a href="../../auth/logout.php" class="profile-menu-item danger"><i class="fa-solid fa-right-from-bracket"></i> Keluar</a>
+                        <a href="../../auth/logout.php" class="profile-menu-item danger" onclick="event.preventDefault(); closeAllDropdowns(); confirmLogout(event, this.href)"><i class="fa-solid fa-right-from-bracket"></i> Keluar</a>
                     </div>
                 </div>
                 
@@ -314,6 +315,7 @@ function resolveTokoImg($foto, $nama)
                 </a>
                 <a href="#" class="nav-item" data-nav="chat" onclick="switchNav('chat')">
                     <i class="fa-solid fa-comment-dots"></i> <span>Chat</span>
+                    <span class="badge" id="chatNotifBadge" style="display: none;"></span>
                 </a>
             </div>
         </nav>
@@ -343,7 +345,7 @@ function resolveTokoImg($foto, $nama)
     </main>
     <button class="fab-cart" title="Lihat Keranjang">
         <i class="fa-solid fa-cart-shopping"></i>
-        <span class="fab-cart-badge" id="fabCartBadge">0</span>
+        <span class="fab-cart-badge" id="fabCartBadge" style="display: none;"></span>
     </button>
 
     <div class="cart-drawer-overlay" id="cartOverlay" onclick="toggleCartDrawer()"></div>
@@ -383,7 +385,8 @@ function resolveTokoImg($foto, $nama)
                 'kategori' => strtolower($m['kategori'] ?? 'makanan'),
                 'nama_toko' => $m['nama_toko'],
                 'id_toko' => (int) $m['id_toko'],
-                'stok' => (int) $m['stok']
+                'stok' => (int) $m['stok'],
+                'status_toko' => strtolower($m['status_toko'] ?? 'tutup')
             ];
         }, $all_menus)); ?>;
 
@@ -430,6 +433,12 @@ function resolveTokoImg($foto, $nama)
             document.querySelectorAll('.page-section').forEach(s => {
                 s.classList.toggle('active', s.id === 'section-' + section);
             });
+
+            // Update unread chat badge
+            if (typeof checkUnreadChats === 'function') {
+                checkUnreadChats();
+            }
+
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -496,9 +505,28 @@ function resolveTokoImg($foto, $nama)
             }
         }
 
+        function renderAddToCartButton(m, styleExtra = '') {
+            const isBuka = (m.status_toko === 'buka');
+            const styleAttr = styleExtra ? `style="${styleExtra}"` : '';
+            if (isBuka) {
+                return `<button class="btn-tambah-keranjang" ${styleAttr} onclick="addToCart(${m.id_menu},'${m.nama_menu.replace(/'/g, "\\'")}',${m.harga},'${(m.foto_menu || '').replace(/'/g, "\\'")}','${m.nama_toko.replace(/'/g, "\\'")}',${m.id_toko})">
+                    <i class="fa-solid fa-cart-plus"></i> Tambah
+                </button>`;
+            } else {
+                const styleDisabled = styleExtra ? `style="${styleExtra};background-color:#94a3b8;pointer-events:none;box-shadow:none"` : 'style="background-color:#94a3b8;pointer-events:none;box-shadow:none"';
+                return `<button class="btn-tambah-keranjang" ${styleDisabled} disabled>
+                    Toko Tutup
+                </button>`;
+            }
+        }
+
         function addToCart(id, nama, harga, foto, toko, idToko) {
             const cart = getCart();
             const menuItem = ALL_MENUS.find(m => m.id_menu === id);
+            if (menuItem && menuItem.status_toko !== 'buka') {
+                showToast('Kantin sedang tutup!', 'error');
+                return;
+            }
             const stock = menuItem ? menuItem.stok : 999;
             const existing = cart.find(c => c.id_menu === id);
             if (existing) {
@@ -788,6 +816,7 @@ function resolveTokoImg($foto, $nama)
 
             grid.innerHTML = favMenus.map(m => {
                 const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu);
+                const btnHTML = renderAddToCartButton(m, 'flex:1');
                 return `
             <div class="menu-card-full">
                 ${imgWrapHTML}
@@ -796,9 +825,7 @@ function resolveTokoImg($foto, $nama)
                     <p class="mc-toko">${m.nama_toko}</p>
                     <p class="mc-price">Rp. ${Number(m.harga).toLocaleString('id-ID')}</p>
                     <div style="display:flex;gap:8px">
-                        <button class="btn-tambah-keranjang" style="flex:1" onclick="addToCart(${m.id_menu},'${m.nama_menu.replace(/'/g, "\\'")}',${m.harga},'${(m.foto_menu || '').replace(/'/g, "\\'")}','${m.nama_toko.replace(/'/g, "\\'")}',${m.id_toko})">
-                            <i class="fa-solid fa-cart-plus"></i> Tambah
-                        </button>
+                        ${btnHTML}
                         <button class="btn-tambah-keranjang" style="flex:0;padding:8px 12px;background:#ef4444;box-shadow:0 4px 12px rgba(239,68,68,.2)" onclick="toggleFavorite(${m.id_menu})">
                             <i class="fa-solid fa-heart-crack"></i>
                         </button>
@@ -855,6 +882,7 @@ function resolveTokoImg($foto, $nama)
                 } else {
                     grid.innerHTML = results.map(m => {
                         const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu);
+                        const btnHTML = renderAddToCartButton(m);
                         return `
                     <div class="menu-card-full">
                         ${imgWrapHTML}
@@ -862,9 +890,7 @@ function resolveTokoImg($foto, $nama)
                             <h4>${m.nama_menu}</h4>
                             <p class="mc-toko">${m.nama_toko}</p>
                             <p class="mc-price">Rp. ${Number(m.harga).toLocaleString('id-ID')}</p>
-                            <button class="btn-tambah-keranjang" onclick="addToCart(${m.id_menu},'${m.nama_menu.replace(/'/g, "\\'")}',${m.harga},'${(m.foto_menu || '').replace(/'/g, "\\'")}','${m.nama_toko.replace(/'/g, "\\'")}',${m.id_toko})">
-                                <i class="fa-solid fa-cart-plus"></i> Tambah
-                            </button>
+                            ${btnHTML}
                         </div>
                     </div>`;
                     }).join('');
@@ -938,6 +964,7 @@ function resolveTokoImg($foto, $nama)
             } else {
                 grid.innerHTML = results.map(m => {
                     const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu);
+                    const btnHTML = renderAddToCartButton(m);
                     return `
                     <div class="menu-card-full">
                         ${imgWrapHTML}
@@ -945,9 +972,7 @@ function resolveTokoImg($foto, $nama)
                             <h4>${m.nama_menu}</h4>
                             <p class="mc-toko">${m.nama_toko}</p>
                             <p class="mc-price">Rp. ${Number(m.harga).toLocaleString('id-ID')}</p>
-                            <button class="btn-tambah-keranjang" onclick="addToCart(${m.id_menu},'${m.nama_menu.replace(/'/g, "\\'")}',${m.harga},'${(m.foto_menu || '').replace(/'/g, "\\'")}','${m.nama_toko.replace(/'/g, "\\'")}',${m.id_toko})">
-                                <i class="fa-solid fa-cart-plus"></i> Tambah
-                            </button>
+                            ${btnHTML}
                         </div>
                     </div>`;
                 }).join('');
@@ -1202,6 +1227,442 @@ function resolveTokoImg($foto, $nama)
         }
 
         // ════════════════════════════════════════════
+        //  CHAT UNREAD BADGE & LOGOUT CONFIRMATION
+        // ════════════════════════════════════════════
+        function checkUnreadChats() {
+            fetch('../../backend/ambil_unread_chat.php')
+                .then(res => res.json())
+                .then(data => {
+                    const badge = document.getElementById('chatNotifBadge');
+                    if (badge) {
+                        const count = parseInt(data.unread_count) || 0;
+                        if (count > 0) {
+                            badge.textContent = count;
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.textContent = '';
+                            badge.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(() => {
+                    const badge = document.getElementById('chatNotifBadge');
+                    if (badge) {
+                        badge.textContent = '';
+                        badge.style.display = 'none';
+                    }
+                });
+        }
+
+        function confirmLogout(event, logoutUrl) {
+            if (event) event.preventDefault();
+            
+            let existingModal = document.getElementById('logoutConfirmModal');
+            if (existingModal) existingModal.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'logoutConfirmModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999999;
+                opacity: 0;
+                transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: #ffffff;
+                padding: 30px 24px;
+                border-radius: 24px;
+                width: 90%;
+                max-width: 360px;
+                text-align: center;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                transform: scale(0.9);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            card.innerHTML = `
+                <div style="width: 56px; height: 56px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <svg style="width: 28px; height: 28px; stroke: #ef4444;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </div>
+                <h3 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 750; color: #1e293b;">Konfirmasi Keluar</h3>
+                <p style="margin: 0 0 24px; font-family: 'Poppins', sans-serif; font-size: 13.5px; color: #64748b; line-height: 1.5;">Apakah Anda yakin ingin keluar dari akun E-Kantin?</p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="logoutCancelBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Batal</button>
+                    <button id="logoutConfirmBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: none; background: #ef4444; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">Keluar</button>
+                </div>
+            `;
+            
+            modal.appendChild(card);
+            document.body.appendChild(modal);
+            
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+            
+            function closeModal() {
+                modal.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => modal.remove(), 300);
+            }
+            
+            document.getElementById('logoutCancelBtn').addEventListener('click', closeModal);
+            document.getElementById('logoutConfirmBtn').addEventListener('click', () => {
+                window.location.href = logoutUrl;
+            });
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        // ── GANTI NAMA MODAL ──
+        function openChangeNameModal() {
+            closeAllDropdowns();
+            let existingModal = document.getElementById('changeNameModal');
+            if (existingModal) existingModal.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'changeNameModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999999;
+                opacity: 0;
+                transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: #ffffff;
+                padding: 30px 24px;
+                border-radius: 24px;
+                width: 90%;
+                max-width: 360px;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                transform: scale(0.9);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            const currentNama = document.querySelector('.profile-info h4') ? document.querySelector('.profile-info h4').textContent.trim() : '';
+            
+            card.innerHTML = `
+                <h3 style="margin: 0 0 16px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 750; color: #1e293b; text-align: center;">Ganti Nama</h3>
+                <form id="changeNameForm" onsubmit="submitChangeName(event)">
+                    <div style="margin-bottom: 20px; text-align: left;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">Nama Lengkap Baru</label>
+                        <input type="text" id="newNameInput" name="nama" value="${currentNama.replace(/"/g, '&quot;')}" required style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1.5px solid #cbd5e1; outline: none; font-size: 13.5px; box-sizing: border-box; font-family: 'Poppins', sans-serif;">
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button type="button" id="changeNameCancelBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Batal</button>
+                        <button type="submit" style="flex: 1; padding: 11px; border-radius: 12px; border: none; background: #5cb85c; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(92, 184, 92, 0.25);">Simpan</button>
+                    </div>
+                </form>
+            `;
+            
+            modal.appendChild(card);
+            document.body.appendChild(modal);
+            
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+            
+            function closeModal() {
+                modal.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => modal.remove(), 300);
+            }
+            
+            document.getElementById('changeNameCancelBtn').addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        function submitChangeName(e) {
+            e.preventDefault();
+            const input = document.getElementById('newNameInput');
+            const nama = input.value.trim();
+            if (!nama) return;
+
+            const formData = new FormData();
+            formData.append('action', 'ganti_nama');
+            formData.append('nama', nama);
+
+            fetch('actions/proses_profil.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast('🎉 Nama berhasil diperbarui!', 'success');
+                    
+                    // Update UI
+                    document.querySelectorAll('.profile-info h4').forEach(el => el.textContent = nama);
+                    
+                    // Remove modal
+                    document.getElementById('changeNameModal').style.opacity = '0';
+                    setTimeout(() => document.getElementById('changeNameModal').remove(), 300);
+                } else {
+                    showToast('Gagal: ' + data.message, 'error');
+                }
+            })
+            .catch(() => {
+                showToast('Koneksi gagal!', 'error');
+            });
+        }
+
+        // ── GANTI PASSWORD MODAL ──
+        function openChangePasswordModal() {
+            closeAllDropdowns();
+            let existingModal = document.getElementById('changePasswordModal');
+            if (existingModal) existingModal.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'changePasswordModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999999;
+                opacity: 0;
+                transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: #ffffff;
+                padding: 30px 24px;
+                border-radius: 24px;
+                width: 90%;
+                max-width: 360px;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                transform: scale(0.9);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            card.innerHTML = `
+                <h3 style="margin: 0 0 16px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 750; color: #1e293b; text-align: center;">Ganti Password</h3>
+                <form id="changePasswordForm" onsubmit="submitChangePassword(event)">
+                    <div style="margin-bottom: 12px; text-align: left;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px;">Password Lama</label>
+                        <input type="password" id="pwLamaInput" name="password_lama" required style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1.5px solid #cbd5e1; outline: none; font-size: 13.5px; box-sizing: border-box; font-family: 'Poppins', sans-serif;">
+                    </div>
+                    <div style="margin-bottom: 12px; text-align: left;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px;">Password Baru</label>
+                        <input type="password" id="pwBaruInput" name="password_baru" minlength="6" required style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1.5px solid #cbd5e1; outline: none; font-size: 13.5px; box-sizing: border-box; font-family: 'Poppins', sans-serif;">
+                        <small style="font-size: 10px; color: #64748b; display: block; margin-top: 4px;">Minimal 6 karakter</small>
+                    </div>
+                    <div style="margin-bottom: 20px; text-align: left;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px;">Konfirmasi Password Baru</label>
+                        <input type="password" id="pwKonfirmInput" name="password_konfirm" required style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1.5px solid #cbd5e1; outline: none; font-size: 13.5px; box-sizing: border-box; font-family: 'Poppins', sans-serif;">
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button type="button" id="changePasswordCancelBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Batal</button>
+                        <button type="submit" style="flex: 1; padding: 11px; border-radius: 12px; border: none; background: #5cb85c; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(92, 184, 92, 0.25);">Simpan</button>
+                    </div>
+                </form>
+            `;
+            
+            modal.appendChild(card);
+            document.body.appendChild(modal);
+            
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+            
+            function closeModal() {
+                modal.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => modal.remove(), 300);
+            }
+            
+            document.getElementById('changePasswordCancelBtn').addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        function submitChangePassword(e) {
+            e.preventDefault();
+            const pwLama = document.getElementById('pwLamaInput').value;
+            const pwBaru = document.getElementById('pwBaruInput').value;
+            const pwKonfirm = document.getElementById('pwKonfirmInput').value;
+
+            if (pwBaru !== pwKonfirm) {
+                showToast('Konfirmasi password tidak cocok!', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'ganti_password');
+            formData.append('password_lama', pwLama);
+            formData.append('password_baru', pwBaru);
+            formData.append('password_konfirm', pwKonfirm);
+
+            fetch('actions/proses_profil.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast('🎉 Password berhasil diperbarui!', 'success');
+                    
+                    // Remove modal
+                    document.getElementById('changePasswordModal').style.opacity = '0';
+                    setTimeout(() => document.getElementById('changePasswordModal').remove(), 300);
+                } else {
+                    showToast('Gagal: ' + data.message, 'error');
+                }
+            })
+            .catch(() => {
+                showToast('Koneksi gagal!', 'error');
+            });
+        }
+
+        // ── GANTI FOTO PROFIL MODAL ──
+        function openChangeAvatarModal() {
+            closeAllDropdowns();
+            let existingModal = document.getElementById('changeAvatarModal');
+            if (existingModal) existingModal.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'changeAvatarModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999999;
+                opacity: 0;
+                transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: #ffffff;
+                padding: 30px 24px;
+                border-radius: 24px;
+                width: 90%;
+                max-width: 360px;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                transform: scale(0.9);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            card.innerHTML = `
+                <h3 style="margin: 0 0 16px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 750; color: #1e293b; text-align: center;">Ganti Foto Profil</h3>
+                <form id="changeAvatarForm" onsubmit="submitChangeAvatar(event)">
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 12px; text-align: left;">Pilih File Foto</label>
+                        <input type="file" id="newAvatarInput" name="foto_profil" accept="image/*" required style="width: 100%; outline: none; font-size: 13px; font-family: 'Poppins', sans-serif;">
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button type="button" id="changeAvatarCancelBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Batal</button>
+                        <button type="submit" style="flex: 1; padding: 11px; border-radius: 12px; border: none; background: #5cb85c; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(92, 184, 92, 0.25);">Unggah</button>
+                    </div>
+                </form>
+            `;
+            
+            modal.appendChild(card);
+            document.body.appendChild(modal);
+            
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+            
+            function closeModal() {
+                modal.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => modal.remove(), 300);
+            }
+            
+            document.getElementById('changeAvatarCancelBtn').addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        function submitChangeAvatar(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('newAvatarInput');
+            if (fileInput.files.length === 0) return;
+
+            const formData = new FormData();
+            formData.append('action', 'ganti_foto');
+            formData.append('foto_profil', fileInput.files[0]);
+
+            fetch('actions/proses_profil.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast('🎉 Foto profil berhasil diperbarui!', 'success');
+                    
+                    // Update UI avatars on page
+                    const newPath = data.foto_path;
+                    document.querySelectorAll('.blank-avatar, .profile-dropdown img').forEach(el => {
+                        el.src = newPath;
+                    });
+                    
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast('Gagal: ' + data.message, 'error');
+                }
+            })
+            .catch(() => {
+                showToast('Koneksi gagal!', 'error');
+            });
+        }
+
+        // ════════════════════════════════════════════
         //  INIT
         // ════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', () => {
@@ -1212,6 +1673,10 @@ function resolveTokoImg($foto, $nama)
 
             // Start promo slideshow autoplay
             startPromoInterval();
+
+            // Check unread chats immediately and periodically
+            checkUnreadChats();
+            setInterval(checkUnreadChats, 5000);
 
             // Cek parameter tab di URL
             const urlParams = new URLSearchParams(window.location.search);

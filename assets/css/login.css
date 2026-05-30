@@ -483,3 +483,83 @@ body {
     padding: 24px 20px;
   }
 }
+
+/* ── Tombol Kembali ke Beranda ── */
+.btn-back {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1b4317;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 10px 20px;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+}
+
+.btn-back svg {
+  width: 16px;
+  height: 16px;
+  stroke: #1b4317;
+  stroke-width: 2.5;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: block;
+}
+
+.btn-back span {
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: 0.2px;
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.85);
+  color: #12300f;
+  border-color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px 0 rgba(27, 67, 23, 0.18), inset 0 1px 0 0 rgba(255, 255, 255, 0.4);
+}
+
+.btn-back:hover svg {
+  stroke: #12300f;
+  transform: translateX(-4px);
+}
+
+/* Responsive override untuk mobile */
+@media (max-width: 600px) {
+  .btn-back {
+    top: 16px;
+    left: 16px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.06), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .btn-back span {
+    display: none;
+  }
+
+  .btn-back svg {
+    margin: 0;
+  }
+
+  .btn-back:hover {
+    transform: translateY(-1px);
+  }
+
+  .btn-back:hover svg {
+    transform: translateX(-2px);
+  }
+}

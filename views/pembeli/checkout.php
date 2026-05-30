@@ -53,6 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $id_pesanan_dibuat = [];
 
         foreach ($pesanan_per_toko as $id_toko => $items) {
+            // Validasi status buka/tutup toko
+            $cek_toko = mysqli_query($conn, "SELECT nama_toko, status FROM toko WHERE id_toko = $id_toko LIMIT 1");
+            if ($cek_toko && mysqli_num_rows($cek_toko) > 0) {
+                $r_toko = mysqli_fetch_assoc($cek_toko);
+                if (strtolower($r_toko['status'] ?? '') !== 'buka') {
+                    throw new Exception("Kantin '" . $r_toko['nama_toko'] . "' sedang tutup. Tidak dapat melakukan pesanan saat ini.");
+                }
+            } else {
+                throw new Exception("Kantin tidak ditemukan.");
+            }
+
             // Hitung total harga
             $subtotal = 0;
             foreach ($items as $item) {
@@ -190,12 +201,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $auto_msg  = '[AUTO_REPLY_ORDER]
             <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                    <div style="background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <div style="background:linear-gradient(135deg,#ff9900,#ff5500);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                         <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'18\' height=\'18\' fill=\'white\'><path d=\'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z\'/></svg>
                     </div>
                     <div>
-                        <div style="font-weight:800;font-size:13px;color:#0f172a;">Pesanan #' . $id_pesanan . ' Diterima!</div>
-                        <div style="font-size:11px;color:#64748b;">Terima kasih telah memesan 🙏</div>
+                        <div style="font-weight:800;font-size:13px;color:#0f172a;">Pesanan #' . $id_pesanan . ' Berhasil Dikirim!</div>
+                        <div style="font-size:11px;color:#64748b;">Menunggu konfirmasi pihak kantin...</div>
                     </div>
                 </div>
                 <div>' . $items_html . '</div>
@@ -203,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <span style="font-size:12px;font-weight:600;color:#374151;">Total Pembayaran</span>
                     <span style="font-size:14px;font-weight:800;color:#16a34a;">Rp ' . $total_fmt . '</span>
                 </div>
-                <div style="margin-top:10px;font-size:11px;color:#94a3b8;text-align:center;">Pesanan sedang diproses oleh kantin ⏳</div>
+                <div style="margin-top:10px;font-size:11px;color:#94a3b8;text-align:center;">Menunggu persetujuan/konfirmasi pihak kantin ⏳</div>
             </div>';
 
             // Tentukan prefix ID pembeli
@@ -1054,6 +1065,83 @@ if ($q_reco) {
                 return;
             }
             
+            // Tampilkan modal konfirmasi mirip logout
+            let existingModal = document.getElementById('orderConfirmModal');
+            if (existingModal) existingModal.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'orderConfirmModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999999;
+                opacity: 0;
+                transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: #ffffff;
+                padding: 30px 24px;
+                border-radius: 24px;
+                width: 90%;
+                max-width: 360px;
+                text-align: center;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                transform: scale(0.9);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            card.innerHTML = `
+                <div style="width: 56px; height: 56px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <svg style="width: 28px; height: 28px; stroke: #5cb85c;" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <h3 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 750; color: #1e293b;">Konfirmasi Pesanan</h3>
+                <p style="margin: 0 0 24px; font-family: 'Poppins', sans-serif; font-size: 13.5px; color: #64748b; line-height: 1.5;">Apakah Anda yakin ingin melakukan pemesanan ini sekarang?</p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="orderCancelBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Batal</button>
+                    <button id="orderConfirmBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: none; background: #5cb85c; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(92, 184, 92, 0.25);">Ya, Pesan</button>
+                </div>
+            `;
+            
+            modal.appendChild(card);
+            document.body.appendChild(modal);
+            
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+            
+            function closeModal() {
+                modal.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => modal.remove(), 300);
+            }
+            
+            document.getElementById('orderCancelBtn').addEventListener('click', closeModal);
+            document.getElementById('orderConfirmBtn').addEventListener('click', () => {
+                closeModal();
+                processOrder(cart);
+            });
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        function processOrder(cart) {
             const shippingRadio = document.querySelector('input[name="delivery_type"]:checked');
             const tipe_pengiriman = shippingRadio ? shippingRadio.value : 'di_ambil';
             

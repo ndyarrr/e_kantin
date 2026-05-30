@@ -260,6 +260,9 @@ $role_label = match (true) {
         loadChat();
         intervalPollingChat = setInterval(loadChat, 2000);
         muatDaftarKontak('');
+        
+        if (typeof checkUnreadChats === 'function') checkUnreadChats();
+        if (typeof updateChatUnreadBadge === 'function') updateChatUnreadBadge();
     }
 
     /* ══════════════════════════════════════════════
@@ -304,9 +307,9 @@ $role_label = match (true) {
                         const bubble = document.createElement('div');
                         bubble.className = `chat-bubble ${msg.is_me ? 'me' : 'them'}`;
                         bubble.dataset.id = msg.id;
-                        const isAutoReply = msg.pesan.startsWith('[AUTO_REPLY_ORDER]');
+                        const isAutoReply = msg.pesan.startsWith('[AUTO_REPLY_ORDER]') || msg.pesan.startsWith('[AUTO_REPLY_STATUS]');
                         const isiPesan = isAutoReply
-                            ? msg.pesan.replace('[AUTO_REPLY_ORDER]', '').trim()
+                            ? msg.pesan.replace('[AUTO_REPLY_ORDER]', '').replace('[AUTO_REPLY_STATUS]', '').trim()
                             : `<div style="word-break:break-word;">${escapeHtml(msg.pesan)}</div>`;
 
                         bubble.innerHTML = `
@@ -320,7 +323,11 @@ $role_label = match (true) {
                     }
                 });
 
-                if (adaBaru) box.scrollTop = box.scrollHeight;
+                if (adaBaru) {
+                    box.scrollTop = box.scrollHeight;
+                    if (typeof checkUnreadChats === 'function') checkUnreadChats();
+                    if (typeof updateChatUnreadBadge === 'function') updateChatUnreadBadge();
+                }
             })
             .catch(err => console.error("Error load chat:", err));
     }
