@@ -59,6 +59,24 @@
 </div>
 
 <!-- CHARTS -->
+<div class="chart-grid-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <span style="font-size:13px;color:var(--text-muted);font-weight:500;">
+        <i class="fa-solid fa-chart-line" style="color:var(--green);margin-right:5px;"></i>
+        Ringkasan Visual Minggu Ini
+    </span>
+    <button id="btnCetakCSV" onclick="exportDashboardCSV()"
+        title="Unduh laporan CSV: tren penjualan & distribusi produk"
+        style="display:inline-flex;align-items:center;gap:8px;
+               padding:8px 18px;border-radius:10px;
+               background:linear-gradient(135deg,#6abf65,#4a9e45);
+               color:#fff;font-size:13px;font-weight:700;
+               border:none;cursor:pointer;box-shadow:0 2px 8px rgba(90,171,85,.3);
+               transition:all .2s ease;">
+        <i class="fa-solid fa-file-csv" style="font-size:15px;"></i>
+        Cetak
+    </button>
+</div>
+
 <div class="chart-grid">
     <div class="chart-card">
         <h3>Tren Penjualan Minggu Ini</h3>
@@ -225,4 +243,30 @@
         });
     }
 })();
+
+/* ── Fungsi ekspor CSV ─────────────────────────────── */
+function exportDashboardCSV() {
+    const btn = document.getElementById('btnCetakCSV');
+    const originalHTML = btn.innerHTML;
+
+    // Animasi loading pada tombol
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:15px;"></i> Menyiapkan...';
+    btn.style.opacity = '0.8';
+
+    // Buka URL download di tab sama (browser langsung unduh)
+    const link = document.createElement('a');
+    link.href = '<?= $base_path ?>/views/penjual/owner/sections/export_csv.php';
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Kembalikan tombol ke semula setelah 2 detik
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        btn.style.opacity = '1';
+    }, 2000);
+}
 </script>

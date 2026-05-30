@@ -743,6 +743,22 @@ tbody tr:hover {
     margin-bottom: 16px;
 }
 
+/* ── Tombol Cetak CSV ── */
+#btnCetakCSV:hover:not(:disabled) {
+    background: linear-gradient(135deg, #6abf65, #4a9e45) !important;
+    box-shadow: 0 4px 16px rgba(90, 171, 85, .45) !important;
+    transform: translateY(-1px);
+}
+
+#btnCetakCSV:active:not(:disabled) {
+    transform: translateY(0) scale(.97);
+    box-shadow: 0 1px 6px rgba(90, 171, 85, .25) !important;
+}
+
+#btnCetakCSV:disabled {
+    cursor: not-allowed;
+}
+
 .chart-wrap {
     position: relative;
     width: 100%;
