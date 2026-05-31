@@ -126,7 +126,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
         <div class="header-inner">
             <div class="top-bar">
                 <div class="logo-area">
-                    <img src="../../assets/img/logo-esemkita.png" class="school-logo"
+                    <img src="../../assets/img/logo_ekantin_hijau.png" class="school-logo"
                          style="width: 38px; height: 38px; object-fit: contain; flex-shrink: 0; border-radius: 50%; background-color: #ffffff; padding: 2px;"
                          alt="Logo Esemkita">
                     <span class="brand-name">E-Kantin</span>

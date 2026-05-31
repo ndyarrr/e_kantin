@@ -210,7 +210,7 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
 
     <div class="hero-header" style="overflow:visible;">
         <div class="hero-logo">
-            <img src="./assets/img/logo-esemkita.png" alt="Logo" />
+            <img src="./assets/img/logo_ekantin_hijau.png" alt="Logo" />
         </div>
         <h1 class="hero-title">Welcome To</h1>
         <p class="hero-subtitle">E-Kantin</p>

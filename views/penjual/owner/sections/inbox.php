@@ -67,7 +67,7 @@ $tabs = [
                 <span id="notaTotal"></span>
             </div>
             <div class="nota-garis"></div>
-            <div class="nota-footer">Terima kasih! 🙏</div>
+            <div class="nota-footer">Terima kasih!</div>
         </div>
 
         <!-- Tombol aksi (tidak ikut tercetak) -->

@@ -144,7 +144,7 @@ $ tree
 │       ├── kantin_pak_mardika.jpeg
 │       ├── kantin_pak_sahudi.jpeg
 │       ├── kantin_pak_sukamto.jpeg
-│       ├── logo-esemkita.png
+│       ├── logo_ekantin_hijau.png
 │       ├── menu
 │       │   ├── menu_1779421792.jpg
 │       │   ├── menu_1779422399.jpg

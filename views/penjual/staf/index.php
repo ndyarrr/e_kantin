@@ -79,7 +79,7 @@ require __DIR__ . '/sections/inbox_data.php';
     <aside id="sidebar">
         <div class="sidebar-logo">
             <div class="sidebar-logo-inner">
-                <img src="../../../assets/img/logo-esemkita.png" class="logo-badge" onerror="this.style.display='none'">
+                <img src="../../../assets/img/logo_ekantin_hijau.png" class="logo-badge" onerror="this.style.display='none'">
                 <div class="logo-text">E-Kantin</div>
             </div>
             <button class="btn-close-sidebar" onclick="closeSidebar()">

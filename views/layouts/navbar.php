@@ -17,7 +17,7 @@
         border: none;
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 0;
-        padding: 9px 32px;
+        padding: 9px 18px;
         box-shadow: 0 4px 24px rgba(91, 79, 207, 0.2);
         min-width: unset;
     }
@@ -194,7 +194,7 @@
 
 <nav class="site-navbar">
     <a class="navbar-logo" href="#">
-        <img src="./assets/img/logo-esemkita.png" alt="Logo" />
+        <img src="./assets/img/logo_ekantin_putih.png" alt="Logo" />
         <span class="navbar-logo-name">E-Kantin</span>
     </a>
 

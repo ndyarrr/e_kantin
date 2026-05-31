@@ -206,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     </div>
                     <div>
                         <div style="font-weight:800;font-size:13px;color:#0f172a;">Pesanan #' . $id_pesanan . ' Berhasil Dikirim!</div>
-                        <div style="font-size:11px;color:#64748b;">Menunggu konfirmasi pihak kantin...</div>
+                        <div style="font-size:11px;color:#64748b;">Terima kasih telah memesan</div>
                     </div>
                 </div>
                 <div>' . $items_html . '</div>
@@ -214,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <span style="font-size:12px;font-weight:600;color:#374151;">Total Pembayaran</span>
                     <span style="font-size:14px;font-weight:800;color:#16a34a;">Rp ' . $total_fmt . '</span>
                 </div>
-                <div style="margin-top:10px;font-size:11px;color:#94a3b8;text-align:center;">Menunggu persetujuan/konfirmasi pihak kantin ⏳</div>
+                <div style="margin-top:10px;font-size:11px;color:#94a3b8;text-align:center;">Mohon bersabar</div>
             </div>';
 
             // Tentukan prefix ID pembeli
@@ -701,7 +701,7 @@ if ($q_reco) {
         <div class="header-inner">
             <div class="top-bar">
                 <div class="logo-area">
-                    <img src="../../assets/img/logo-esemkita.png" class="school-logo" alt="Logo">
+                    <img src="../../assets/img/logo_ekantin_hijau.png" class="school-logo" alt="Logo">
                     <span class="brand-name">E-Kantin</span>
                 </div>
                 

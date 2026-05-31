@@ -202,7 +202,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
     <div class="header-inner">
         <div class="top-bar">
             <div class="logo-area">
-                <img src="../../assets/img/logo-esemkita.png" class="school-logo" alt="Logo">
+                <img src="../../assets/img/logo_ekantin_hijau.png" class="school-logo" alt="Logo">
                 <span class="brand-name">E-Kantin</span>
             </div>
             

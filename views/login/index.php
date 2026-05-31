@@ -94,7 +94,7 @@ $roles = [
     <div class="login-wrapper">
 
         <div class="login-brand">
-            <img src="../../assets/img/logo-esemkita.png" alt="Logo" onerror="this.style.display='none'">
+            <img src="../../assets/img/logo_ekantin_putih.png" alt="Logo" onerror="this.style.display='none'">
         </div>
 
         <div class="login-card">

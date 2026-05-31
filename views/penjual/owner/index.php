@@ -111,7 +111,7 @@ require __DIR__ . '/sections/inbox_data.php';
     <aside id="sidebar">
         <div class="sidebar-logo">
             <div class="sidebar-logo-inner">
-                <img src="<?= $base_path ?>/assets/img/logo-esemkita.png" class="logo-badge"
+                <img src="<?= $base_path ?>/assets/img/logo_ekantin_hijau.png" class="logo-badge"
                     onerror="this.style.display='none'">
                 <div class="logo-text">E-Kantin</div>
             </div>
