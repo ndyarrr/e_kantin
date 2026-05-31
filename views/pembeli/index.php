@@ -203,12 +203,10 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
         <div class="top-bar">
             <div class="logo-area">
                 <img src="../../assets/img/logo_ekantin_hijau.png" class="school-logo" alt="Logo">
-                <span class="brand-name">E-Kantin</span>
-            </div>
-            
-            <div class="search-container">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="searchInput" placeholder="Cari menu atau kantin..." oninput="handleSearch(this.value)">
+                <div class="greeting-area">
+                    <span class="greeting-name">Halo, <?= htmlspecialchars($user_nama); ?>! 👋</span>
+                    <span class="greeting-sub">Mau pesan apa hari ini?</span>
+                </div>
             </div>
             
             <div class="header-icons">
@@ -340,6 +338,11 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 </div>
                 
             </div>
+        </div>
+
+        <div class="search-container">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Cari menu atau kantin..." oninput="handleSearch(this.value)">
         </div>
 
         <nav class="nav-menu-wrapper">
@@ -814,7 +817,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
         }
 
         // Helper function to render a beautiful category-specific placeholder menu card
-        function renderMenuImageHTML(foto_menu, kategori, nama_menu) {
+        function renderMenuImageHTML(foto_menu, kategori, nama_menu, id_menu = null) {
             const kat = (kategori || 'makanan').toLowerCase();
             let img_src = '';
             if (foto_menu) {
@@ -830,6 +833,11 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" /></svg>`;
             }
 
+            let heartHTML = '';
+            if (id_menu !== null) {
+                heartHTML = `<button class="btn-favorite-toko" data-fav-id="${id_menu}" onclick="toggleFavorite(${id_menu}); event.stopPropagation();"><i class="fa-regular fa-heart"></i></button>`;
+            }
+
             if (img_src) {
                 return `
                 <div class="menu-card-full-img-wrap">
@@ -837,6 +845,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     <div class="menu-img-placeholder ${kat}" style="display:none;">
                         ${svgContent}
                     </div>
+                    ${heartHTML}
                 </div>`;
             } else {
                 return `
@@ -844,6 +853,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     <div class="menu-img-placeholder ${kat}">
                         ${svgContent}
                     </div>
+                    ${heartHTML}
                 </div>`;
             }
         }
@@ -1005,7 +1015,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-magnifying-glass"></i><h3>Tidak ditemukan</h3><p>Coba kata kunci lain</p></div>';
                 } else {
                     grid.innerHTML = results.map(m => {
-                        const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu);
+                        const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, m.id_menu);
                         const btnHTML = renderAddToCartButton(m);
                         return `
                     <div class="menu-card-full">
@@ -1018,6 +1028,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                         </div>
                     </div>`;
                     }).join('');
+                    updateAllHeartButtons();
                 }
 
                 resultSection.style.display = '';
@@ -1088,7 +1099,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     </div>`;
             } else {
                 grid.innerHTML = results.map(m => {
-                    const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu);
+                    const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, m.id_menu);
                     const btnHTML = renderAddToCartButton(m);
                     return `
                     <div class="menu-card-full">
@@ -1101,6 +1112,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                         </div>
                     </div>`;
                 }).join('');
+                updateAllHeartButtons();
             }
 
             // Sembunyikan navbar bawah dan tampilkan layar overlay

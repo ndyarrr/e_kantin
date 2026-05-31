@@ -168,6 +168,16 @@ $isLocked = ($jumlahBannerAktif >= 2);
                         </div>
 
                         <div class="kantin-form-group" style="margin-top: 15px;">
+                            <label>Kode Promo</label>
+                            <input type="text" name="kode_promo" placeholder="Contoh: DISKONHEBAT, KANTINJOSS25" required <?= $isLocked ? 'disabled' : '' ?> style="font-size: 13px; font-weight: bold; text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
+                        </div>
+
+                        <div class="kantin-form-group" style="margin-top: 15px;">
+                            <label>Diskon (%)</label>
+                            <input type="number" name="diskon_persen" placeholder="Contoh: 25" min="1" max="100" required <?= $isLocked ? 'disabled' : '' ?> style="font-size: 13px;">
+                        </div>
+
+                        <div class="kantin-form-group" style="margin-top: 15px;">
                             <label>Berlaku Hingga Tanggal</label>
                             <input type="date" name="berlaku_hingga" min="<?= date('Y-m-d') ?>" required <?= $isLocked ? 'disabled' : '' ?> style="font-size: 13px;">
                             <small style="color: #64748b;">Banner otomatis diturunkan dari pembeli jika melewati tanggal ini.</small>
@@ -193,6 +203,8 @@ $isLocked = ($jumlahBannerAktif >= 2);
                             <thead>
                                 <tr>
                                     <th>Pratinjau</th>
+                                    <th>Kode Promo</th>
+                                    <th>Diskon</th>
                                     <th>Berlaku Hingga</th>
                                     <th>Status</th>
                                     <th style="text-align: center;">Aksi</th>
@@ -201,7 +213,7 @@ $isLocked = ($jumlahBannerAktif >= 2);
                             <tbody>
                                 <?php if (!$queryBanner || mysqli_num_rows($queryBanner) == 0): ?>
                                     <tr>
-                                        <td colspan="4" style="padding: 60px 10px; text-align: center; color: #94a3b8; font-weight: 500;">Belum ada banner promo di database toko Anda.</td>
+                                        <td colspan="6" style="padding: 60px 10px; text-align: center; color: #94a3b8; font-weight: 500;">Belum ada banner promo di database toko Anda.</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php while ($row = mysqli_fetch_assoc($queryBanner)): 
@@ -238,6 +250,16 @@ $isLocked = ($jumlahBannerAktif >= 2);
                                                          style="<?= $inlineStyle ?>"
                                                          onerror="this.src='../../../assets/img/promo_banner.png'; this.style.objectPosition='50% 50%'; this.style.transform='none';">
                                                 </div>
+                                            </td>
+                                            <td>
+                                                <span style="font-weight: 800; font-family: 'Poppins', sans-serif; color: #0f172a; text-transform: uppercase; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 12px; border: 1px solid #e2e8f0; letter-spacing: 0.5px;">
+                                                    <?= htmlspecialchars($row['kode_promo'] ?? '-') ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span style="font-weight: 800; color: #10b981; font-family: 'Poppins', sans-serif; font-size: 14px;">
+                                                    <?= (int)($row['diskon_persen'] ?? 0) ?>%
+                                                </span>
                                             </td>
                                             <td>
                                                 <small style="display:block; font-weight:bold; color: #334155;">

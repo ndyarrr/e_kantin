@@ -3,8 +3,15 @@
 
     <!-- Search Results (hidden by default) -->
     <section class="section-block search-results-section" id="searchResultsSection" style="display:none">
-        <h2 class="section-title">Hasil Pencarian: "<span id="searchQuery"></span>" <span class="search-clear"
-                onclick="clearSearch()">✕ Hapus</span></h2>
+        <div class="search-header-row">
+            <h3 class="search-title-text">
+                <span>Hasil Pencarian untuk:</span>
+                <span class="search-query-highlight" id="searchQuery"></span>
+            </h3>
+            <button class="btn-clear-search" onclick="clearSearch()" type="button">
+                <i class="fa-solid fa-xmark"></i> Bersihkan
+            </button>
+        </div>
         <div class="all-menu-grid" id="searchResultsGrid"></div>
     </section>
 
