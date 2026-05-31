@@ -1198,6 +1198,14 @@ function resolveTokoImg($foto, $nama)
             dots.forEach((dot, idx) => {
                 dot.classList.toggle('active', idx === currentPromoSlide);
             });
+
+            // Update owner text dynamically based on active slide's data-toko-name
+            const activeSlide = slides[currentPromoSlide];
+            const ownerText = document.getElementById('promoBannerOwner');
+            if (ownerText && activeSlide) {
+                const tokoName = activeSlide.getAttribute('data-toko-name') || '';
+                ownerText.innerHTML = `<i class="fa-solid fa-store" style="color: #5cb85c; margin-right: 4px;"></i><strong>${tokoName}</strong>`;
+            }
         }
 
         function movePromoSlide(direction) {
@@ -1672,6 +1680,7 @@ function resolveTokoImg($foto, $nama)
             makeCartDraggable();
 
             // Start promo slideshow autoplay
+            showPromoSlide(0);
             startPromoInterval();
 
             // Check unread chats immediately and periodically

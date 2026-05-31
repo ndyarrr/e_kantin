@@ -4200,3 +4200,144 @@ select.form-staf-control {
         justify-content: center;
     }
 }
+
+/* ══════════════════════════════════════════════════════════
+   KUSTOMISASI CANVAS BANNER & WIDGET HITUNG MUNDUR (PREMIUM)
+   ══════════════════════════════════════════════════════════ */
+.banner-canvas-preview {
+    width: 100%;
+    aspect-ratio: 3 / 1;
+    height: auto;
+    border-radius: 10px;
+    border: 2px dashed #cbd5e1;
+    overflow: hidden;
+    position: relative;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.banner-canvas-preview:hover {
+    border-color: #3498db;
+    background-color: #f0f7ff;
+}
+
+.banner-canvas-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 50%;
+    display: block;
+    cursor: move;
+    user-select: none;
+    pointer-events: auto;
+    transition: object-position 0.05s linear, transform 0.05s linear;
+}
+
+.canvas-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    color: #94a3b8;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Custom styling for sliders */
+#canvasControls input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e2e8f0;
+    outline: none;
+    margin: 8px 0;
+    transition: background 0.2s;
+}
+
+#canvasControls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3498db;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    transition: transform 0.1s, background-color 0.2s;
+}
+
+#canvasControls input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    background-color: #2980b9;
+}
+
+/* List Thumbnail Canvas Wrap */
+.thumbnail-canvas-container {
+    width: 120px;
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    position: relative;
+    background: #f1f5f9;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.thumbnail-canvas-container img.banner-thumbnail {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    display: block !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform-origin: center !important;
+}
+
+/* Countdown Widget */
+.banner-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #d97706;
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    border-radius: 12px;
+    padding: 3px 8px;
+    margin-top: 5px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
+}
+
+.banner-countdown i {
+    font-size: 10px;
+}
+
+.animate-pulse-slow {
+    animation: pulse-slow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-slow {
+    0%, 100% {
+        opacity: 0.5;
+        transform: scale(0.9);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}

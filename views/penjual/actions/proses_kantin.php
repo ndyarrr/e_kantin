@@ -138,9 +138,29 @@ if ($action === 'add_banner') {
             exit;
         }
 
-        // Insert awal data banner (mengisi juga kolom berlaku_hingga)
-        $queryInsertBanner = "INSERT INTO `banner_promo` (`id_toko`, `gambar`, `berlaku_hingga`, `aktif`, `dibuat_pada`, `deleted_at`) 
-                              VALUES ($idToko, '', '$berlaku_hingga', 1, NOW(), NULL)";
+        // Ambil konfigurasi canvas kustom dari input hidden penjual (format baru: bgx/bgy = 0-100, 50=tengah)
+        $scale = floatval($_POST['banner_scale'] ?? 1.0);
+        $bgX = floatval($_POST['banner_bgx'] ?? 50.0);
+        $bgY = floatval($_POST['banner_bgy'] ?? 50.0);
+        
+        // Amankan nilai rentang
+        if ($scale < 1.0) $scale = 1.0;
+        if ($scale > 3.0) $scale = 3.0;
+        if ($bgX < 0) $bgX = 0;
+        if ($bgX > 100) $bgX = 100;
+        if ($bgY < 0) $bgY = 0;
+        if ($bgY > 100) $bgY = 100;
+
+        $canvas_config = json_encode([
+            'scale' => $scale,
+            'bgX' => $bgX,
+            'bgY' => $bgY
+        ]);
+        $canvas_config_db = mysqli_real_escape_string($conn, $canvas_config);
+
+        // Insert awal data banner (mengisi juga kolom berlaku_hingga dan canvas_config)
+        $queryInsertBanner = "INSERT INTO `banner_promo` (`id_toko`, `gambar`, `berlaku_hingga`, `aktif`, `dibuat_pada`, `deleted_at`, `canvas_config`) 
+                              VALUES ($idToko, '', '$berlaku_hingga', 1, NOW(), NULL, '$canvas_config_db')";
 
         if (mysqli_query($conn, $queryInsertBanner)) {
             $id_banner_baru = mysqli_insert_id($conn);

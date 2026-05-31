@@ -111,14 +111,60 @@ $isLocked = ($jumlahBannerAktif >= 2);
                         </div>
                     <?php endif; ?>
 
-                    <form action="index.php?section=kantin" method="POST" enctype="multipart/form-data" class="form-banner-lokal">
+                    <form action="index.php?section=kantin" method="POST" enctype="multipart/form-data" class="form-banner-lokal" id="addBannerForm">
                         <input type="hidden" name="_current_section" value="kantin">
                         <input type="hidden" name="action" value="add_banner">
                         
+                        <!-- Hidden inputs for canvas values -->
+                        <input type="hidden" name="banner_scale" id="bannerScale" value="1.0">
+                        <input type="hidden" name="banner_bgx" id="bannerBgX" value="50">
+                        <input type="hidden" name="banner_bgy" id="bannerBgY" value="50">
+
                         <div class="kantin-form-group">
                             <label>File Gambar Banner</label>
-                            <input type="file" name="gambar_banner" accept="image/jpeg, image/jpg, image/png, image/webp" required <?= $isLocked ? 'disabled' : '' ?> style="font-size: 13px;">
+                            <input type="file" name="gambar_banner" id="gambarBannerInput" accept="image/jpeg, image/jpg, image/png, image/webp" required <?= $isLocked ? 'disabled' : '' ?> style="font-size: 13px;">
                             <small style="color: #64748b; display:block; margin-top:4px;">Format: JPG, JPEG, PNG, WEBP (Max 2MB). Rekomendasi Rasio 3:1.</small>
+                        </div>
+
+                        <!-- Canvas Preview Box -->
+                        <div class="kantin-form-group" style="margin-top: 15px;">
+                            <label>Pratinjau Posisi Kanvas (3:1)</label>
+                            <div class="banner-canvas-preview" id="canvasPreview">
+                                <img id="canvasPreviewImg" src="" alt="Pratinjau Banner" style="display: none;">
+                                <div class="canvas-placeholder" id="canvasPlaceholder">
+                                    <i class="fa-solid fa-image" style="font-size: 32px; color: #cbd5e1; margin-bottom: 8px;"></i>
+                                    <span style="font-size: 12px; color: #94a3b8;">Pilih file gambar untuk mengatur kanvas</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Zoom and Position Controls -->
+                        <div id="canvasControls" style="display: none; margin-top: 15px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div class="kantin-form-group" style="margin-bottom: 10px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <label style="margin: 0; font-size:12px; font-weight:600; color:#475569;">Zoom Gambar (Skala):</label>
+                                    <span id="scaleValText" style="font-size:12px; font-weight:bold; color:#3498db;">1.0x</span>
+                                </div>
+                                <input type="range" id="sliderScale" min="1.0" max="3.0" step="0.05" value="1.0" style="margin-top: 4px; cursor: pointer;">
+                            </div>
+                            <div class="kantin-form-group" style="margin-bottom: 10px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <label style="margin: 0; font-size:12px; font-weight:600; color:#475569;">Geser Kiri/Kanan (X):</label>
+                                    <span id="xValText" style="font-size:12px; font-weight:bold; color:#3498db;">Tengah</span>
+                                </div>
+                                <input type="range" id="sliderX" min="0" max="100" step="1" value="50" style="margin-top: 4px; cursor: pointer;">
+                            </div>
+                            <div class="kantin-form-group" style="margin-bottom: 5px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <label style="margin: 0; font-size:12px; font-weight:600; color:#475569;">Geser Atas/Bawah (Y):</label>
+                                    <span id="yValText" style="font-size:12px; font-weight:bold; color:#3498db;">Tengah</span>
+                                </div>
+                                <input type="range" id="sliderY" min="0" max="100" step="1" value="50" style="margin-top: 4px; cursor: pointer;">
+                            </div>
+                            <div style="margin-top: 8px; font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 4px;">
+                                <i class="fa-solid fa-circle-info" style="color: #3498db;"></i>
+                                <span><strong>Tips:</strong> Klik & drag/geser langsung gambar di kanvas preview!</span>
+                            </div>
                         </div>
 
                         <div class="kantin-form-group" style="margin-top: 15px;">
@@ -128,7 +174,7 @@ $isLocked = ($jumlahBannerAktif >= 2);
                         </div>
                         
                         <button type="submit" class="pcard-btn" <?= $isLocked ? 'disabled' : '' ?>
-                                style="width: 100%; padding: 12px; font-size: 14px; font-weight: bold; background: <?= $isLocked ? '#94a3b8' : '#27ae60' ?>; color: #fff; border: none; border-radius: 6px; cursor: <?= $isLocked ? 'not-allowed' : 'pointer' ?>; margin-top: auto;">
+                                style="width: 100%; padding: 12px; font-size: 14px; font-weight: bold; background: <?= $isLocked ? '#94a3b8' : '#27ae60' ?>; color: #fff; border: none; border-radius: 6px; cursor: <?= $isLocked ? 'not-allowed' : 'pointer' ?>; margin-top: 15px;">
                             <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Banner
                         </button>
                     </form>
@@ -162,18 +208,49 @@ $isLocked = ($jumlahBannerAktif >= 2);
                                         $isExpired = (strtotime($row['berlaku_hingga']) < strtotime(date('Y-m-d')));
                                         $isMurniAktif = ($row['aktif'] == 1);
                                         $statusAsliActive = ($isMurniAktif && !$isExpired);
+
+                                        // Dekode koordinat canvas jika ada
+                                        $scale = 1.0;
+                                        $bgX = 50;
+                                        $bgY = 50;
+                                        if (!empty($row['canvas_config'])) {
+                                            $conf = json_decode($row['canvas_config'], true);
+                                            if (is_array($conf)) {
+                                                $scale = $conf['scale'] ?? 1.0;
+                                                // Format baru: bgX/bgY (0-100)
+                                                if (isset($conf['bgX'])) {
+                                                    $bgX = $conf['bgX'];
+                                                    $bgY = $conf['bgY'] ?? 50;
+                                                } else {
+                                                    // Kompatibilitas format lama (x/y = -100 sampai 100)
+                                                    $bgX = 50; // abaikan posisi lama, gunakan tengah
+                                                    $bgY = 50;
+                                                }
+                                            }
+                                        }
+                                        $inlineStyle = "object-fit: cover; object-position: {$bgX}% {$bgY}%;" . ($scale > 1.0 ? " transform: scale($scale); transform-origin: center;" : "");
                                     ?>
                                         <tr>
                                             <td>
-                                                <img src="../../../assets/img/banner/<?= htmlspecialchars($row['gambar']) ?>?v=<?= time() ?>" 
-                                                     class="banner-thumbnail"
-                                                     onerror="this.src='../../../assets/img/promo_banner.png';">
+                                                <div class="thumbnail-canvas-container">
+                                                    <img src="../../../assets/img/banner/<?= htmlspecialchars($row['gambar']) ?>?v=<?= time() ?>" 
+                                                         class="banner-thumbnail"
+                                                         style="<?= $inlineStyle ?>"
+                                                         onerror="this.src='../../../assets/img/promo_banner.png'; this.style.objectPosition='50% 50%'; this.style.transform='none';">
+                                                </div>
                                             </td>
                                             <td>
                                                 <small style="display:block; font-weight:bold; color: #334155;">
                                                     <?= date('d M Y', strtotime($row['berlaku_hingga'])) ?>
                                                 </small>
-                                                <span style="font-size:10px; color:#64748b;">Dibuat: <?= date('d/m/y', strtotime($row['dibuat_pada'])) ?></span>
+                                                <span style="font-size:10px; color:#64748b; display:block;">Dibuat: <?= date('d/m/y', strtotime($row['dibuat_pada'])) ?></span>
+                                                
+                                                <?php if ($statusAsliActive): ?>
+                                                    <div class="banner-countdown" data-expired-date="<?= $row['berlaku_hingga'] ?> 23:59:59">
+                                                        <i class="fa-solid fa-hourglass-start animate-pulse-slow"></i>
+                                                        <span class="countdown-text">Menghitung...</span>
+                                                    </div>
+                                                <?php endif; ?>
                                             </td>
                                             <td>
                                                 <?php if ($statusAsliActive): ?>
@@ -185,7 +262,7 @@ $isLocked = ($jumlahBannerAktif >= 2);
                                                 <?php endif; ?>
                                             </td>
                                             <td style="text-align: center;">
-                                                <form action="index.php?section=kantin" method="POST" onsubmit="return confirm('Yakin ingin menghapus banner ini? (Data akan di-soft delete)');" style="display: inline;">
+                                                <form action="index.php?section=kantin" method="POST" onsubmit="return confirm('Yakin ingin menghapus banner ini?');" style="display: inline;">
                                                     <input type="hidden" name="_current_section" value="kantin">
                                                     <input type="hidden" name="action" value="hapus_banner_direct">
                                                     <input type="hidden" name="id_banner" value="<?= $row['id_banner'] ?>">
@@ -203,7 +280,232 @@ $isLocked = ($jumlahBannerAktif >= 2);
                 </div>
             </div>
         </div>
-
     </div>
 
 </div>
+
+<!-- Interactive Banner Canvas Position & Countdown Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // -------------------------------------------------------------
+    // 1. DYNAMIC INTERACTIVE CANVAS PREVIEW LOGIC
+    // -------------------------------------------------------------
+    const gambarBannerInput = document.getElementById('gambarBannerInput');
+    const canvasPreview = document.getElementById('canvasPreview');
+    const canvasPreviewImg = document.getElementById('canvasPreviewImg');
+    const canvasPlaceholder = document.getElementById('canvasPlaceholder');
+    const canvasControls = document.getElementById('canvasControls');
+    
+    const sliderScale = document.getElementById('sliderScale');
+    const sliderX = document.getElementById('sliderX');
+    const sliderY = document.getElementById('sliderY');
+    
+    const scaleValText = document.getElementById('scaleValText');
+    const xValText = document.getElementById('xValText');
+    const yValText = document.getElementById('yValText');
+    
+    const bannerScale = document.getElementById('bannerScale');
+    const bannerBgX = document.getElementById('bannerBgX');
+    const bannerBgY = document.getElementById('bannerBgY');
+    
+    if (gambarBannerInput) {
+        gambarBannerInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    canvasPreviewImg.src = evt.target.result;
+                    canvasPreviewImg.style.display = 'block';
+                    canvasPlaceholder.style.display = 'none';
+                    canvasControls.style.display = 'block';
+                    resetCanvasParams();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // bgX & bgY = nilai object-position (0-100, 50 = tengah/center)
+    let scale = 1.0;
+    let bgX = 50;
+    let bgY = 50;
+    
+    function posLabel(val) {
+        if (val === 50) return 'Tengah';
+        if (val < 50) return Math.round((50 - val) * 2) + '% ke kiri/atas';
+        return Math.round((val - 50) * 2) + '% ke kanan/bawah';
+    }
+    
+    function resetCanvasParams() {
+        scale = 1.0;
+        bgX = 50;
+        bgY = 50;
+        sliderScale.value = 1.0;
+        sliderX.value = 50;
+        sliderY.value = 50;
+        updateCanvasTransforms();
+    }
+    
+    function updateCanvasTransforms() {
+        // object-position memindahkan "jendela crop" di dalam gambar
+        // Tidak pernah menampilkan celah karena gambar sudah di-cover terlebih dahulu
+        canvasPreviewImg.style.objectPosition = `${bgX}% ${bgY}%`;
+        // Scale hanya memperbesar gambar dari tengah, object-position tetap aktif
+        canvasPreviewImg.style.transform = scale > 1.0 ? `scale(${scale})` : '';
+        canvasPreviewImg.style.transformOrigin = 'center';
+        
+        scaleValText.textContent = scale.toFixed(2) + 'x';
+        xValText.textContent = posLabel(bgX);
+        yValText.textContent = posLabel(bgY);
+        
+        bannerScale.value = scale;
+        bannerBgX.value = bgX;
+        bannerBgY.value = bgY;
+    }
+    
+    if (sliderScale) {
+        sliderScale.addEventListener('input', function() {
+            scale = parseFloat(this.value);
+            updateCanvasTransforms();
+        });
+    }
+    
+    if (sliderX) {
+        sliderX.addEventListener('input', function() {
+            bgX = parseInt(this.value);
+            updateCanvasTransforms();
+        });
+    }
+    
+    if (sliderY) {
+        sliderY.addEventListener('input', function() {
+            bgY = parseInt(this.value);
+            updateCanvasTransforms();
+        });
+    }
+    
+    // Panning drag — drag ke kanan = geser konten ke kanan (bgX naik)
+    let isDragging = false;
+    let startMouseX = 0;
+    let startMouseY = 0;
+    let startBgX = 50;
+    let startBgY = 50;
+    
+    if (canvasPreview) {
+        canvasPreview.style.cursor = 'move';
+        
+        canvasPreview.addEventListener('mousedown', function(e) {
+            if (!canvasPreviewImg.src || canvasPreviewImg.style.display === 'none') return;
+            e.preventDefault();
+            isDragging = true;
+            startMouseX = e.clientX;
+            startMouseY = e.clientY;
+            startBgX = bgX;
+            startBgY = bgY;
+            canvasPreview.style.cursor = 'grabbing';
+        });
+        
+        window.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            const canvasW = canvasPreview.offsetWidth || 300;
+            const canvasH = canvasPreview.offsetHeight || 100;
+            
+            const dx = e.clientX - startMouseX;
+            const dy = e.clientY - startMouseY;
+            
+            // Sensitivitas: bergeser 1 piksel = berubah (100 / canvasW) %, disesuaikan skala
+            const sensitivityX = 100 / (canvasW * scale);
+            const sensitivityY = 100 / (canvasH * scale);
+            
+            // Drag ke kanan → gambar bergeser ke kanan (bgX berkurang karena kita geser jendela ke kiri)
+            bgX = Math.max(0, Math.min(100, Math.round(startBgX - dx * sensitivityX)));
+            bgY = Math.max(0, Math.min(100, Math.round(startBgY - dy * sensitivityY)));
+            
+            sliderX.value = bgX;
+            sliderY.value = bgY;
+            updateCanvasTransforms();
+        });
+        
+        window.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                canvasPreview.style.cursor = 'move';
+            }
+        });
+        
+        // Touch panning
+        canvasPreview.addEventListener('touchstart', function(e) {
+            if (!canvasPreviewImg.src || canvasPreviewImg.style.display === 'none') return;
+            isDragging = true;
+            startMouseX = e.touches[0].clientX;
+            startMouseY = e.touches[0].clientY;
+            startBgX = bgX;
+            startBgY = bgY;
+        }, { passive: true });
+        
+        window.addEventListener('touchmove', function(e) {
+            if (!isDragging) return;
+            const canvasW = canvasPreview.offsetWidth || 300;
+            const canvasH = canvasPreview.offsetHeight || 100;
+            
+            const dx = e.touches[0].clientX - startMouseX;
+            const dy = e.touches[0].clientY - startMouseY;
+            
+            const sensitivityX = 100 / (canvasW * scale);
+            const sensitivityY = 100 / (canvasH * scale);
+            
+            bgX = Math.max(0, Math.min(100, Math.round(startBgX - dx * sensitivityX)));
+            bgY = Math.max(0, Math.min(100, Math.round(startBgY - dy * sensitivityY)));
+            
+            sliderX.value = bgX;
+            sliderY.value = bgY;
+            updateCanvasTransforms();
+        }, { passive: true });
+        
+        window.addEventListener('touchend', function() {
+            isDragging = false;
+        });
+    }
+
+    // -------------------------------------------------------------
+    // 2. LIVE COUNTDOWN TIMERS LOGIC
+    // -------------------------------------------------------------
+    function updateCountdownTimers() {
+        const timers = document.querySelectorAll('.banner-countdown');
+        timers.forEach(function(timer) {
+            const expiredDateStr = timer.getAttribute('data-expired-date');
+            if (!expiredDateStr) return;
+            
+            const expiredTime = new Date(expiredDateStr.replace(/-/g, '/')).getTime();
+            const now = new Date().getTime();
+            const diff = expiredTime - now;
+            
+            const textEl = timer.querySelector('.countdown-text');
+            if (!textEl) return;
+            
+            if (diff <= 0) {
+                textEl.textContent = 'Expired';
+                textEl.style.color = '#ef4444';
+                textEl.style.fontWeight = 'bold';
+                return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            let formattedTime = '';
+            if (days > 0) {
+                formattedTime += days + 'd ';
+            }
+            formattedTime += hours + 'h ' + minutes + 'm ' + seconds + 's';
+            
+            textEl.textContent = ' ' + formattedTime;
+        });
+    }
+    
+    setInterval(updateCountdownTimers, 1000);
+    updateCountdownTimers();
+});
+</script>

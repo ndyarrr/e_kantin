@@ -70,7 +70,7 @@ if (!isset($profilPenjual['role']) || strtolower($profilPenjual['role']) !== 'ow
     <div class="profil-form-column">
 
         <div class="form-card">
-            <h2><i class="fa-solid fa-user-gear icon-header-section"></i>Pengaturan Akun & Toko</h2>
+            <h2><i class="fa-solid fa-user-gear icon-header-section"></i>Pengaturan Akun</h2>
             <form id="formDataDiriOwner" method="POST" enctype="multipart/form-data" onsubmit="console.log('submit fired')">
                 <input type="hidden" name="_section" value="profil">
                 <input type="hidden" name="action"   value="edit_profil">
@@ -84,13 +84,6 @@ if (!isset($profilPenjual['role']) || strtolower($profilPenjual['role']) !== 'ow
                     <input type="text" name="nama"
                            value="<?= htmlspecialchars($profilPenjual['nama']) ?>"
                            required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Nama Kantin / Toko</label>
-                    <input type="text" name="nama_toko"
-                           value="<?= htmlspecialchars($profilPenjual['nama_toko'] ?? '') ?>"
-                           placeholder="Contoh: Warung Barokah" required>
                 </div>
 
                 <div class="form-group">

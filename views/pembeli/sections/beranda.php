@@ -19,38 +19,55 @@
                 <p style="margin: 0; font-size: 13px; font-weight: 700;">Belum ada banner sama sekali di sini</p>
             </div>
         <?php else: ?>
-            <!-- Dynamic Slider -->
+            <!-- Dynamic Slider — hanya gambar di dalam container -->
             <div class="promo-slider-container">
                 <div class="promo-slider-wrapper" id="promoSliderWrapper">
                     <?php foreach ($promo_banners as $index => $banner): ?>
-                        <div class="promo-slide <?= $index === 0 ? 'active' : ''; ?>">
-                            <img src="../../assets/img/banner/<?= htmlspecialchars($banner['gambar']); ?>" alt="Banner Promo <?= htmlspecialchars($banner['nama_toko']); ?>">
-                            <!-- Overlay Info on slide -->
-                            <div class="promo-slide-overlay">
-                                <div class="promo-slide-content">
-                                    <span class="promo-slide-badge"><i class="fa-solid fa-tag"></i> Promo Kantin</span>
-                                    <h3>Kunjungi <?= htmlspecialchars($banner['nama_toko']); ?></h3>
-                                    <p>Penawaran menarik terbatas hingga <strong><?= date('d M Y', strtotime($banner['berlaku_hingga'])); ?></strong>!</p>
-                                    <a href="toko.php?id=<?= $banner['id_toko']; ?>" class="btn-promo-slide">Kunjungi Sekarang</a>
-                                </div>
-                            </div>
+                        <?php 
+                        $inlineStyle = '';
+                        if (!empty($banner['canvas_config'])) {
+                            $conf = json_decode($banner['canvas_config'], true);
+                            if (is_array($conf)) {
+                                $scale = $conf['scale'] ?? 1.0;
+                                $bgX = 50;
+                                $bgY = 50;
+                                if (isset($conf['bgX'])) {
+                                    $bgX = $conf['bgX'];
+                                    $bgY = $conf['bgY'] ?? 50;
+                                }
+                                $inlineStyle = "style=\"object-fit: cover; object-position: {$bgX}% {$bgY}%; transform-origin: center;" . ($scale > 1.0 ? " transform: scale($scale);" : "") . "\"";
+                            }
+                        }
+                        ?>
+                        <div class="promo-slide <?= $index === 0 ? 'active' : ''; ?>" data-toko-name="<?= htmlspecialchars($banner['nama_toko']); ?>">
+                            <a href="toko.php?id=<?= $banner['id_toko']; ?>" style="display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1;">
+                                <img src="../../assets/img/banner/<?= htmlspecialchars($banner['gambar']); ?>" alt="Banner <?= htmlspecialchars($banner['nama_toko']); ?>" <?= $inlineStyle ?>>
+                            </a>
                         </div>
                     <?php endforeach; ?>
                 </div>
-                
-                <!-- Navigation Arrows -->
-                <?php if (count($promo_banners) > 1): ?>
-                    <button class="promo-slider-prev" onclick="movePromoSlide(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-                    <button class="promo-slider-next" onclick="movePromoSlide(1)"><i class="fa-solid fa-chevron-right"></i></button>
-                    
-                    <!-- Navigation Dots -->
+            </div>
+            <!-- Semua kontrol di LUAR container banner -->
+
+            <!-- Nama pemilik kantin -->
+            <div class="promo-banner-owner" id="promoBannerOwner" style="text-align: center; margin-top: 10px; font-size: 11px; color: #64748b; font-weight: 500;"></div>
+
+            <!-- Indikator & Tombol Panah -->
+            <?php if (count($promo_banners) > 1): ?>
+                <div class="promo-slider-controls-bar" style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 10px;">
+                    <button class="promo-control-btn" onclick="movePromoSlide(-1)" aria-label="Previous">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
                     <div class="promo-slider-dots">
                         <?php foreach ($promo_banners as $index => $banner): ?>
                             <span class="promo-dot <?= $index === 0 ? 'active' : ''; ?>" onclick="setPromoSlide(<?= $index; ?>)"></span>
                         <?php endforeach; ?>
                     </div>
-                <?php endif; ?>
-            </div>
+                    <button class="promo-control-btn" onclick="movePromoSlide(1)" aria-label="Next">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
     </section>
 
