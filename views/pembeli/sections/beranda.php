@@ -197,7 +197,7 @@
     <!-- Kantin Grid -->
     <section class="section-block" id="kantinSection">
         <h2 class="section-title">Kantin</h2>
-        <div class="kantin-grid" id="kantinGridBeranda">
+        <div class="kantin-grid kantin-grid-beranda" id="kantinGridBeranda">
             <?php 
             $home_tokos = array_slice($all_tokos, 0, 3);
             foreach ($home_tokos as $toko):

@@ -634,6 +634,11 @@ body {
     gap: 16px;
 }
 
+/* Beranda: 3 kantin + kotak SEMUA */
+.kantin-grid-beranda {
+    grid-template-columns: repeat(2, 1fr);
+}
+
 .kantin-card {
     background: #ffffff;
     border: 1px solid #f1f5f9;
@@ -2439,6 +2444,10 @@ body {
         gap: 20px;
     }
 
+    .kantin-grid-beranda {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
     .all-menu-grid,
     .menu-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -2704,6 +2713,10 @@ body {
     .kantin-grid {
         grid-template-columns: repeat(4, 1fr);
         gap: 24px;
+    }
+
+    .kantin-grid-beranda {
+        grid-template-columns: repeat(4, 1fr);
     }
 
     .all-menu-grid,

@@ -925,18 +925,23 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             </div>`;
         }
 
-        let kantinGridBerandaOriginal = '';
-        function getKantinGridBerandaOriginal() {
-            if (!kantinGridBerandaOriginal) {
-                const grid = document.getElementById('kantinGridBeranda');
-                if (grid) kantinGridBerandaOriginal = grid.innerHTML;
-            }
-            return kantinGridBerandaOriginal;
+        function renderSemuaKantinBoxHTML() {
+            return `<div class="category-item-all-box" onclick="switchNav('kantin')">
+                <div class="blank-square-icon"><i class="fa-solid fa-table-cells-large"></i></div>
+                <span class="all-text-label">SEMUA</span>
+            </div>`;
+        }
+
+        function renderBerandaKantinDefault() {
+            const grid = document.getElementById('kantinGridBeranda');
+            if (!grid) return;
+
+            const homeTokos = ALL_TOKOS.slice(0, 3);
+            grid.innerHTML = homeTokos.map(renderKantinCardHTML).join('') + renderSemuaKantinBoxHTML();
         }
 
         function restoreKantinGridBeranda() {
-            const grid = document.getElementById('kantinGridBeranda');
-            if (grid) grid.innerHTML = getKantinGridBerandaOriginal();
+            renderBerandaKantinDefault();
         }
 
         function renderBerandaKantinSearch(q, matchingTokoIds) {
@@ -950,9 +955,9 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             );
 
             if (kantinResults.length === 0) {
-                grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-store-slash"></i><h3>Tidak ada kantin ditemukan</h3><p>Coba kata kunci lain</p></div>';
+                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-store-slash"></i><h3>Tidak ada kantin ditemukan</h3><p>Coba kata kunci lain</p></div>${renderSemuaKantinBoxHTML()}`;
             } else {
-                grid.innerHTML = kantinResults.map(renderKantinCardHTML).join('');
+                grid.innerHTML = kantinResults.map(renderKantinCardHTML).join('') + renderSemuaKantinBoxHTML();
             }
         }
 
