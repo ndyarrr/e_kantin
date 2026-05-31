@@ -3455,11 +3455,51 @@ body {
 }
 
 /* ── DYNAMIC PROMO SLIDER ── */
+.promo-slider-layout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    width: 100%;
+}
+
+.promo-slider-column {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.promo-slide-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.promo-banner-owner {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+    min-height: 16px;
+}
+
+.promo-slider-controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
 .promo-slider-container {
     width: 100%;
     aspect-ratio: 3 / 1;
     height: auto;
-    border-radius: 24px;
+    border-radius: 12px;
     position: relative;
     overflow: hidden;
     border: 1.5px solid #5cb85c;
@@ -3680,6 +3720,17 @@ body {
 
 .promo-control-btn:active {
     transform: scale(0.94);
+}
+
+@media (max-width: 768px) {
+    .promo-slider-layout {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .promo-slider-column-secondary {
+        display: none;
+    }
 }
 
 @media (max-width: 576px) {

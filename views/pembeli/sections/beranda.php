@@ -19,48 +19,36 @@
                 <p style="margin: 0; font-size: 13px; font-weight: 700;">Belum ada banner sama sekali di sini</p>
             </div>
         <?php else: ?>
-            <!-- Dynamic Slider — hanya gambar di dalam container -->
-            <div class="promo-slider-container">
-                <div class="promo-slider-wrapper" id="promoSliderWrapper">
-                    <?php foreach ($promo_banners as $index => $banner): ?>
-                        <?php 
-                        $inlineStyle = '';
-                        if (!empty($banner['canvas_config'])) {
-                            $conf = json_decode($banner['canvas_config'], true);
-                            if (is_array($conf)) {
-                                $scale = $conf['scale'] ?? 1.0;
-                                $bgX = 50;
-                                $bgY = 50;
-                                if (isset($conf['bgX'])) {
-                                    $bgX = $conf['bgX'];
-                                    $bgY = $conf['bgY'] ?? 50;
-                                }
-                                $inlineStyle = "style=\"object-fit: cover; object-position: {$bgX}% {$bgY}%; transform-origin: center;" . ($scale > 1.0 ? " transform: scale($scale);" : "") . "\"";
-                            }
-                        }
-                        ?>
-                        <div class="promo-slide <?= $index === 0 ? 'active' : ''; ?>" data-toko-name="<?= htmlspecialchars($banner['nama_toko']); ?>">
-                            <a href="toko.php?id=<?= $banner['id_toko']; ?>" style="display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1;">
-                                <img src="../../assets/img/banner/<?= htmlspecialchars($banner['gambar']); ?>" alt="Banner <?= htmlspecialchars($banner['nama_toko']); ?>" <?= $inlineStyle ?>>
-                            </a>
+            <div class="promo-slider-layout">
+                <div class="promo-slider-column">
+                    <div class="promo-slider-container promo-slider-primary">
+                        <div class="promo-slider-wrapper" id="promoSliderWrapper">
+                            <?php renderPromoSlides($promo_banners, 0); ?>
                         </div>
-                    <?php endforeach; ?>
+                    </div>
+                    <div class="promo-banner-owner" id="promoBannerOwner"></div>
                 </div>
+                <?php if (count($promo_banners) > 1): ?>
+                    <div class="promo-slider-column promo-slider-column-secondary">
+                        <div class="promo-slider-container promo-slider-secondary">
+                            <div class="promo-slider-wrapper" id="promoSliderWrapperSecondary">
+                                <?php renderPromoSlides($promo_banners, 1); ?>
+                            </div>
+                        </div>
+                        <div class="promo-banner-owner" id="promoBannerOwnerSecondary"></div>
+                    </div>
+                <?php endif; ?>
             </div>
-            <!-- Semua kontrol di LUAR container banner -->
 
-            <!-- Nama pemilik kantin -->
-            <div class="promo-banner-owner" id="promoBannerOwner" style="text-align: center; margin-top: 10px; font-size: 11px; color: #64748b; font-weight: 500;"></div>
-
-            <!-- Indikator & Tombol Panah -->
             <?php if (count($promo_banners) > 1): ?>
-                <div class="promo-slider-controls-bar" style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 10px;">
+                <div class="promo-slider-controls-bar">
                     <button class="promo-control-btn" onclick="movePromoSlide(-1)" aria-label="Previous">
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
                     <div class="promo-slider-dots">
                         <?php foreach ($promo_banners as $index => $banner): ?>
-                            <span class="promo-dot <?= $index === 0 ? 'active' : ''; ?>" onclick="setPromoSlide(<?= $index; ?>)"></span>
+                            <span class="promo-dot <?= $index === 0 ? 'active' : '' ?>"
+                                onclick="setPromoSlide(<?= $index ?>)"></span>
                         <?php endforeach; ?>
                     </div>
                     <button class="promo-control-btn" onclick="movePromoSlide(1)" aria-label="Next">
@@ -209,7 +197,7 @@
     <!-- Kantin Grid -->
     <section class="section-block" id="kantinSection">
         <h2 class="section-title">Kantin</h2>
-        <div class="kantin-grid" id="kantinGrid">
+        <div class="kantin-grid" id="kantinGridBeranda">
             <?php 
             $home_tokos = array_slice($all_tokos, 0, 3);
             foreach ($home_tokos as $toko):

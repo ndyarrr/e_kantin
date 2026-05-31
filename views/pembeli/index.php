@@ -139,6 +139,49 @@ function resolveTokoImg($foto, $nama)
     }
     return '';
 }
+
+function promoBannerImgStyle(array $banner): string
+{
+    if (empty($banner['canvas_config'])) {
+        return '';
+    }
+
+    $conf = json_decode($banner['canvas_config'], true);
+    if (!is_array($conf)) {
+        return '';
+    }
+
+    $scale = $conf['scale'] ?? 1.0;
+    $bgX = 50;
+    $bgY = 50;
+    if (isset($conf['bgX'])) {
+        $bgX = $conf['bgX'];
+        $bgY = $conf['bgY'] ?? 50;
+    }
+
+    $style = "object-fit: cover; object-position: {$bgX}% {$bgY}%; transform-origin: center;";
+    if ($scale > 1.0) {
+        $style .= " transform: scale($scale);";
+    }
+
+    return 'style="' . $style . '"';
+}
+
+function renderPromoSlides(array $banners, int $activeIndex = 0): void
+{
+    foreach ($banners as $index => $banner) {
+        ?>
+        <div class="promo-slide <?= $index === $activeIndex ? 'active' : '' ?>"
+            data-toko-name="<?= htmlspecialchars($banner['nama_toko']) ?>">
+            <a href="toko.php?id=<?= (int) $banner['id_toko'] ?>" class="promo-slide-link">
+                <img src="../../assets/img/banner/<?= htmlspecialchars($banner['gambar']) ?>"
+                    alt="Banner <?= htmlspecialchars($banner['nama_toko']) ?>"
+                    <?= promoBannerImgStyle($banner) ?>>
+            </a>
+        </div>
+        <?php
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -389,6 +432,16 @@ function resolveTokoImg($foto, $nama)
                 'status_toko' => strtolower($m['status_toko'] ?? 'tutup')
             ];
         }, $all_menus)); ?>;
+
+        const ALL_TOKOS = <?= json_encode(array_map(function ($t) {
+            return [
+                'id_toko' => (int) $t['id_toko'],
+                'nama_toko' => $t['nama_toko'],
+                'deskripsi' => $t['deskripsi'] ?? '',
+                'status' => strtolower($t['status'] ?? 'tutup'),
+                'foto_toko' => resolveTokoImg($t['foto_toko'] ?? '', $t['nama_toko']),
+            ];
+        }, $all_tokos)); ?>;
 
         // Favorit awal dari DB (sync lintas device)
         let USER_FAVS = <?= json_encode($user_favs) ?>;
@@ -835,6 +888,74 @@ function resolveTokoImg($foto, $nama)
             }).join('');
         }
 
+        function renderKantinCardHTML(t) {
+            const isBuka = t.status === 'buka';
+            const statusClass = isBuka ? 'online' : 'offline';
+            const statusText = isBuka ? 'Buka' : 'Tutup';
+            const btnDisabled = !isBuka ? 'style="background-color:#94a3b8;pointer-events:none;box-shadow:none"' : '';
+            const btnText = isBuka ? 'Lihat Menu' : 'Sedang Tutup';
+            const desk = t.deskripsi || 'Makanan, Snack, & Minuman';
+
+            let imgHTML;
+            if (t.foto_toko) {
+                imgHTML = `<img src="${t.foto_toko}" class="blank-image-square"
+                    alt="${t.nama_toko}"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="toko-img-placeholder" style="display:none;">
+                    <i class="fa-solid fa-store"></i>
+                    <span>${t.nama_toko}</span>
+                </div>`;
+            } else {
+                imgHTML = `<div class="toko-img-placeholder">
+                    <i class="fa-solid fa-store"></i>
+                    <span>${t.nama_toko}</span>
+                </div>`;
+            }
+
+            return `<div class="kantin-card" data-nama="${t.nama_toko.toLowerCase()}">
+                ${imgHTML}
+                <div class="kantin-info">
+                    <h3>${t.nama_toko}</h3>
+                    <p>${desk}</p>
+                    <span class="status-indicator ${statusClass}">${statusText}</span>
+                    <a href="toko.php?id=${t.id_toko}" class="btn-lihat-menu" ${btnDisabled}>
+                        ${btnText}
+                    </a>
+                </div>
+            </div>`;
+        }
+
+        let kantinGridBerandaOriginal = '';
+        function getKantinGridBerandaOriginal() {
+            if (!kantinGridBerandaOriginal) {
+                const grid = document.getElementById('kantinGridBeranda');
+                if (grid) kantinGridBerandaOriginal = grid.innerHTML;
+            }
+            return kantinGridBerandaOriginal;
+        }
+
+        function restoreKantinGridBeranda() {
+            const grid = document.getElementById('kantinGridBeranda');
+            if (grid) grid.innerHTML = getKantinGridBerandaOriginal();
+        }
+
+        function renderBerandaKantinSearch(q, matchingTokoIds) {
+            const grid = document.getElementById('kantinGridBeranda');
+            if (!grid) return;
+
+            const kantinResults = ALL_TOKOS.filter(t =>
+                t.nama_toko.toLowerCase().includes(q) ||
+                (t.deskripsi && t.deskripsi.toLowerCase().includes(q)) ||
+                matchingTokoIds.has(t.id_toko)
+            );
+
+            if (kantinResults.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-store-slash"></i><h3>Tidak ada kantin ditemukan</h3><p>Coba kata kunci lain</p></div>';
+            } else {
+                grid.innerHTML = kantinResults.map(renderKantinCardHTML).join('');
+            }
+        }
+
         // ════════════════════════════════════════════
         //  SEARCH
         // ════════════════════════════════════════════
@@ -856,6 +977,7 @@ function resolveTokoImg($foto, $nama)
                     menuSection.style.display = '';
                     kategoriSection.style.display = '';
                     kantinSection.style.display = '';
+                    restoreKantinGridBeranda();
                     return;
                 }
 
@@ -871,11 +993,8 @@ function resolveTokoImg($foto, $nama)
 
                 document.getElementById('searchQuery').textContent = val.trim();
 
-                // Also filter kantin cards
-                document.querySelectorAll('#kantinGrid .kantin-card').forEach(card => {
-                    const nama = card.dataset.nama || '';
-                    card.style.display = nama.includes(q) ? '' : 'none';
-                });
+                const matchingTokoIds = new Set(results.map(m => m.id_toko));
+                renderBerandaKantinSearch(q, matchingTokoIds);
 
                 if (results.length === 0) {
                     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-magnifying-glass"></i><h3>Tidak ditemukan</h3><p>Coba kata kunci lain</p></div>';
@@ -900,6 +1019,7 @@ function resolveTokoImg($foto, $nama)
                 promoSection.style.display = 'none';
                 menuSection.style.display = 'none';
                 kategoriSection.style.display = 'none';
+                kantinSection.style.display = '';
             }, 300);
         }
 
@@ -1182,8 +1302,39 @@ function resolveTokoImg($foto, $nama)
         let currentPromoSlide = 0;
         let promoSlideInterval = null;
 
+        function getPromoSlides() {
+            return document.querySelectorAll('#promoSliderWrapper .promo-slide');
+        }
+
+        function getPromoSecondarySlides() {
+            return document.querySelectorAll('#promoSliderWrapperSecondary .promo-slide');
+        }
+
+        function renderPromoOwner(el, slide) {
+            if (!el || !slide) return;
+            const tokoName = slide.getAttribute('data-toko-name') || '';
+            el.innerHTML = tokoName
+                ? `<i class="fa-solid fa-store" style="color: #5cb85c; margin-right: 4px;"></i><strong>${tokoName}</strong>`
+                : '';
+        }
+
+        function syncPromoSecondaryPane(primaryIndex, totalSlides) {
+            const secondarySlides = getPromoSecondarySlides();
+            if (secondarySlides.length === 0 || totalSlides <= 1) return;
+
+            const secondaryIndex = (primaryIndex + 1) % totalSlides;
+            secondarySlides.forEach((slide, idx) => {
+                slide.classList.toggle('active', idx === secondaryIndex);
+            });
+
+            renderPromoOwner(
+                document.getElementById('promoBannerOwnerSecondary'),
+                secondarySlides[secondaryIndex]
+            );
+        }
+
         function showPromoSlide(index) {
-            const slides = document.querySelectorAll('.promo-slide');
+            const slides = getPromoSlides();
             const dots = document.querySelectorAll('.promo-dot');
             if (slides.length === 0) return;
 
@@ -1199,13 +1350,9 @@ function resolveTokoImg($foto, $nama)
                 dot.classList.toggle('active', idx === currentPromoSlide);
             });
 
-            // Update owner text dynamically based on active slide's data-toko-name
-            const activeSlide = slides[currentPromoSlide];
-            const ownerText = document.getElementById('promoBannerOwner');
-            if (ownerText && activeSlide) {
-                const tokoName = activeSlide.getAttribute('data-toko-name') || '';
-                ownerText.innerHTML = `<i class="fa-solid fa-store" style="color: #5cb85c; margin-right: 4px;"></i><strong>${tokoName}</strong>`;
-            }
+            syncPromoSecondaryPane(currentPromoSlide, slides.length);
+
+            renderPromoOwner(document.getElementById('promoBannerOwner'), slides[currentPromoSlide]);
         }
 
         function movePromoSlide(direction) {
@@ -1219,7 +1366,7 @@ function resolveTokoImg($foto, $nama)
         }
 
         function startPromoInterval() {
-            const slides = document.querySelectorAll('.promo-slide');
+            const slides = getPromoSlides();
             if (slides.length > 1) {
                 promoSlideInterval = setInterval(() => {
                     showPromoSlide(currentPromoSlide + 1);
@@ -1551,7 +1698,7 @@ function resolveTokoImg($foto, $nama)
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    showToast('🎉 Password berhasil diperbarui!', 'success');
+                    showToast('Password berhasil diperbarui!', 'success');
                     
                     // Remove modal
                     document.getElementById('changePasswordModal').style.opacity = '0';
@@ -1652,7 +1799,7 @@ function resolveTokoImg($foto, $nama)
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    showToast('🎉 Foto profil berhasil diperbarui!', 'success');
+                    showToast('Foto profil berhasil diperbarui!', 'success');
                     
                     // Update UI avatars on page
                     const newPath = data.foto_path;

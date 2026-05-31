@@ -2,7 +2,7 @@
     <div class="section-block">
         <h2 class="section-title">Daftar Kantin Esemkita</h2>
         
-        <div class="kantin-grid" id="kantinGrid">
+        <div class="kantin-grid" id="kantinGridAll">
             <?php if (empty($all_tokos)): ?>
                 <!-- Tampilan jika belum ada kantin yang terdaftar -->
                 <div class="empty-state" style="grid-column: 1 / -1;">
