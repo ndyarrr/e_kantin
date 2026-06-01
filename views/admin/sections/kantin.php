@@ -34,6 +34,7 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
             <table>
                 <thead>
                     <tr>
+                        <th class="center">No</th>
                         <th>Nama Kantin / Stand</th>
                         <th class="col-hide">Deskripsi</th>
                         <th class="center">Penjual</th>
@@ -45,18 +46,21 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                 <tbody>
                     <?php if (empty($tokos)): ?>
                         <tr class="empty-row">
-                            <td colspan="6">
+                            <td colspan="7">
                                 <i class="fa-solid fa-store"
                                     style="color:var(--green-muted);font-size:22px;display:block;margin-bottom:8px"></i>
                                 Belum ada kantin
                             </td>
                         </tr>
                     <?php else:
-                        foreach ($tokos as $t):
+                        foreach ($tokos as $idx => $t):
                             $ownerNama = $t['nama_owner'] ?? 'Belum ada owner';
                             ?>
                             <tr class="toko-row <?= $selectedToko == $t['id_toko'] ? 'toko-row-active' : '' ?>"
                                 onclick="selectToko(<?= $t['id_toko'] ?>)">
+                                <td class="center" style="font-weight:700;">
+                                    <?= $idx + 1 ?>
+                                </td>
                                 <td>
                                     <div class="toko-name-cell">
                                         <?php if (!empty($t['foto_toko'])): ?>
