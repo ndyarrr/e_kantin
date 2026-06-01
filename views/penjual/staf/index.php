@@ -171,7 +171,7 @@ require __DIR__ . '/sections/inbox_data.php';
             </div>
 
             <div class="section" id="section-inbox">
-                <?php require __DIR__ . '/sections/inbox.php'; ?>
+                <?php require __DIR__ . '/../sections/inbox.php'; ?>
             </div>
 
             <div class="section" id="section-chat">
@@ -358,6 +358,7 @@ require __DIR__ . '/sections/inbox_data.php';
             setInterval(updateChatUnreadBadge, 4000);
         });
     </script>
+    <script src="<?= $base_path ?>/assets/js/inbox-realtime.js?v=<?= time() ?>"></script>
 </body>
 
 </html>

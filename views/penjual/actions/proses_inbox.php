@@ -30,6 +30,11 @@ $rolePath = (isset($_SESSION['user_sub_role']) && $_SESSION['user_sub_role'] ===
     ? '/views/penjual/staf/index.php' 
     : '/views/penjual/owner/index.php';
 
+$isAjax = !empty($_POST['ajax'])
+    || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+
+$ajaxResponse = ['success' => false, 'message' => 'Aksi tidak dikenali.'];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
@@ -146,30 +151,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         catatLog($conn, 'Update Status Pesanan', "$roleLabel mengubah status pesanan #$id_pesanan menjadi $status_baru");
                     }
                     
-                    $_SESSION['feedback'] = [
-                        'type' => 'success',
-                        'msg' => 'Status pesanan #' . $id_pesanan . ' berhasil diubah menjadi: ' . ucfirst($status_baru)
+                    $ajaxResponse = [
+                        'success' => true,
+                        'message' => 'Status pesanan #' . $id_pesanan . ' berhasil diubah menjadi: ' . ucfirst($status_baru)
                     ];
+                    if (!$isAjax) {
+                        $_SESSION['feedback'] = [
+                            'type' => 'success',
+                            'msg' => $ajaxResponse['message']
+                        ];
+                    }
                 } catch (Exception $e) {
                     mysqli_rollback($conn);
-                    $_SESSION['feedback'] = [
-                        'type' => 'danger',
-                        'msg' => 'Gagal mengubah status pesanan: ' . $e->getMessage()
+                    $ajaxResponse = [
+                        'success' => false,
+                        'message' => 'Gagal mengubah status pesanan: ' . $e->getMessage()
                     ];
+                    if (!$isAjax) {
+                        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+                    }
                 }
             } else {
-                $_SESSION['feedback'] = [
-                    'type' => 'danger',
-                    'msg' => 'Akses ditolak atau pesanan tidak ditemukan.'
-                ];
+                $ajaxResponse = ['success' => false, 'message' => 'Akses ditolak atau pesanan tidak ditemukan.'];
+                if (!$isAjax) {
+                    $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+                }
             }
         } else {
-            $_SESSION['feedback'] = [
-                'type' => 'danger',
-                'msg' => 'Status pesanan tidak valid.'
-            ];
+            $ajaxResponse = ['success' => false, 'message' => 'Status pesanan tidak valid.'];
+            if (!$isAjax) {
+                $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+            }
         }
     }
+}
+
+if ($isAjax) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($ajaxResponse);
+    exit;
 }
 
 header('Location: ' . $base_url . $rolePath . '?section=inbox&t=' . time());
