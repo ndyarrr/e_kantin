@@ -1538,10 +1538,12 @@ tbody tr:hover {
     background: linear-gradient(135deg, #fffcf9 0%, #ffe8d6 100%);
     border-bottom: 2.5px solid #ff7a45;
 }
+
 .menu-img-placeholder.makanan svg {
     fill: #ff7a45;
     filter: drop-shadow(0 4px 8px rgba(255, 122, 69, 0.2));
 }
+
 .menu-img-placeholder.makanan::after {
     content: 'Delicious Food';
     font-size: 10px;
@@ -1557,10 +1559,12 @@ tbody tr:hover {
     background: linear-gradient(135deg, #f4faff 0%, #d2ebff 100%);
     border-bottom: 2.5px solid #1890ff;
 }
+
 .menu-img-placeholder.minuman svg {
     fill: #1890ff;
     filter: drop-shadow(0 4px 8px rgba(24, 144, 255, 0.2));
 }
+
 .menu-img-placeholder.minuman::after {
     content: 'Fresh Drink';
     font-size: 10px;
@@ -1576,10 +1580,12 @@ tbody tr:hover {
     background: linear-gradient(135deg, #faf5ff 0%, #ebd3ff 100%);
     border-bottom: 2.5px solid #9254de;
 }
+
 .menu-img-placeholder.snack svg {
     fill: #9254de;
     filter: drop-shadow(0 4px 8px rgba(146, 84, 222, 0.2));
 }
+
 .menu-img-placeholder.snack::after {
     content: 'Tasty Snack';
     font-size: 10px;
@@ -1737,7 +1743,8 @@ tbody tr:hover {
 /* 🌟 Tambahkan ini tepat di bawahnya biar di HP dia insaf */
 @media screen and (max-width: 480px) {
     .form-grid-layout {
-        grid-template-columns: 1fr !important; /* Paksa jadi 1 kolom lurus ke bawah */
+        grid-template-columns: 1fr !important;
+        /* Paksa jadi 1 kolom lurus ke bawah */
     }
 }
 
@@ -1768,6 +1775,7 @@ tbody tr:hover {
     transition: 0.2s;
     box-sizing: border-box;
 }
+
 .static-form input[type="file"] {
     padding: 7px 10px;
     font-size: 12px;
@@ -1806,19 +1814,24 @@ tbody tr:hover {
     margin-top: 25px;
     border-top: 1px solid #e5e7eb;
     padding-top: 16px;
-    box-sizing: border-box; /* 🌟 Amankan ukuran border box */
+    box-sizing: border-box;
+    /* 🌟 Amankan ukuran border box */
 }
 
 /* 🌟 Tambahkan ini biar tombolnya rapi di HP dan tidak memotong */
 @media screen and (max-width: 480px) {
     .form-tambah-footer {
-        flex-direction: column-reverse; /* Tombol simpan di atas, batal di bawah */
+        flex-direction: column-reverse;
+        /* Tombol simpan di atas, batal di bawah */
         align-items: stretch;
     }
-    .btn-reset, .btn-save {
+
+    .btn-reset,
+    .btn-save {
         justify-content: center;
         text-align: center;
-        width: 100%; /* Tombol jadi full lebar di HP */
+        width: 100%;
+        /* Tombol jadi full lebar di HP */
     }
 }
 
@@ -1870,7 +1883,8 @@ tbody tr:hover {
 
 /* Saat class .show aktif dipicu JavaScript */
 .form-tambah-container.toggle-form.show {
-    max-height: 1000px; /* Diubah dari 600px menjadi 1000px */
+    max-height: 1000px;
+    /* Diubah dari 600px menjadi 1000px */
     opacity: 1;
     padding: 24px;
     margin-top: 40px;
@@ -1925,6 +1939,7 @@ tbody tr:hover {
     background: #eff6ff;
     color: #3b82f6;
 }
+
 /* ================= CSS RESPONSIF FINAL PENYELAMAT MENU ================= */
 @media (max-width: 768px) {
 
@@ -2500,11 +2515,11 @@ aside img {
 
 /* Banner Akses Ditolak */
 .akses-ditolak-banner {
-    padding: 20px; 
-    background: #fee2e2; 
-    color: #991b1b; 
-    border-radius: 8px; 
-    margin: 20px; 
+    padding: 20px;
+    background: #fee2e2;
+    color: #991b1b;
+    border-radius: 8px;
+    margin: 20px;
     font-weight: bold;
 }
 
@@ -2523,71 +2538,76 @@ aside img {
 
 /* Identitas Toko & Icons */
 .profil-toko {
-    font-weight: bold; 
+    font-weight: bold;
     color: var(--green);
 }
+
 .profil-toko i {
     font-size: 12px;
 }
+
 .icon-header-section {
     color: var(--green);
     margin-right: 8px;
 }
+
 .icon-gold {
     color: #eab308;
 }
 
 /* Layout Tombol Foto Profil */
 .profil-action-foto-group {
-    margin-top: 18px; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 8px; 
-    align-items: center; 
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
     width: 100%;
 }
 
 .profil-btn-foto {
-    margin: 0; 
-    cursor: pointer; 
-    text-align: center; 
+    margin: 0;
+    cursor: pointer;
+    text-align: center;
     width: 80%;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px; /* Jarak antara icon kamera dan teks */
+    gap: 8px;
+    /* Jarak antara icon kamera dan teks */
 }
 
 .form-hapus-foto-wrap {
-    margin: 0; 
+    margin: 0;
     width: 80%;
 }
 
 /* Tombol Hapus Foto Profil (Merah) */
 .btn-hapus-foto {
-    width: 100%; 
-    padding: 8px 12px; 
-    background-color: #ef4444; 
-    color: white; 
-    border: none; 
-    border-radius: 6px; 
-    font-size: 13px; 
-    font-weight: 500; 
-    cursor: pointer; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    gap: 6px; 
+    width: 100%;
+    padding: 8px 12px;
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     transition: background 0.2s;
 }
+
 .btn-hapus-foto:hover {
     background-color: #dc2626;
 }
 
 /* Badge Owner Utama (Emas) */
 .badge-gold {
-    background-color: #eab308; 
-    color: #fff; 
+    background-color: #eab308;
+    color: #fff;
     font-weight: bold;
 }
 
@@ -2595,6 +2615,7 @@ aside img {
 .profil-info-kecil {
     margin-top: 14px;
 }
+
 .profil-form-column {
     display: flex;
     flex-direction: column;
@@ -2605,9 +2626,11 @@ aside img {
 .btn-password-blue {
     background-color: #3b82f6 !important;
 }
+
 .btn-password-blue:hover {
     background-color: #2563eb !important;
 }
+
 /* ==========================================================================
    1. STATISTIK CARDS (TEMA ORIGINAL E-KANTIN)
    ========================================================================== */
@@ -2628,7 +2651,7 @@ aside img {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .staf-stat-info {
@@ -2683,7 +2706,7 @@ aside img {
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 25px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .staf-table-header {
@@ -2910,7 +2933,7 @@ aside img {
    5. CONTAINER FORM DINAMIS (EDIT & SIMPAN PERUBAHAN FULL GREEN)
    ========================================================================== */
 .form-staf-container {
-    display: none; 
+    display: none;
     margin-top: 25px;
     background: #ffffff;
     padding: 24px;
@@ -2924,7 +2947,7 @@ aside img {
     margin-top: 0;
     margin-bottom: 20px;
     font-size: 16px;
-    color: #489344; 
+    color: #489344;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -3005,6 +3028,7 @@ select.form-staf-control {
 .btn-staf-submit:hover {
     background: #489344;
 }
+
 /* ==========================================================================
    SOLUSI FINAL: LOCKING VERTICAL POSITION (HARGA & STOK DIAM DI TEMPAT)
    ========================================================================= */
@@ -3013,7 +3037,8 @@ select.form-staf-control {
 .menu-desc-wrapper {
     position: relative;
     width: 100%;
-    height: 20px; /* Mengunci ruang deskripsi awal agar konstan */
+    height: 20px;
+    /* Mengunci ruang deskripsi awal agar konstan */
     margin: 6px 0 12px 0;
 }
 
@@ -3037,9 +3062,9 @@ select.form-staf-control {
     line-height: 1.4;
     white-space: normal !important;
     word-break: break-word;
-    
+
     display: -webkit-box !important;
-    -webkit-line-clamp: 1; 
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -3047,10 +3072,14 @@ select.form-staf-control {
 
 /* 🌟 KONDISI DIKLIK (BUKA): Melar ke bawah menutupi harga & stok tanpa mengubah layout dasar */
 .menu-overlay-desc-container.buka {
-    background-color: #ffffff; /* Warna putih solid menutupi harga/stok di belakangnya */
-    max-height: 85px;          /* Batas maksimal melar ke bawah */
-    overflow-y: auto;          /* Nyalakan scroll jika teks sangat panjang */
-    overflow-x: hidden;        /* Matikan horizontal scroll */
+    background-color: #ffffff;
+    /* Warna putih solid menutupi harga/stok di belakangnya */
+    max-height: 85px;
+    /* Batas maksimal melar ke bawah */
+    overflow-y: auto;
+    /* Nyalakan scroll jika teks sangat panjang */
+    overflow-x: hidden;
+    /* Matikan horizontal scroll */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     border: 1px solid #e2e8f0;
     padding: 4px 6px;
@@ -3068,6 +3097,7 @@ select.form-staf-control {
 .menu-overlay-desc-container::-webkit-scrollbar {
     width: 4px;
 }
+
 .menu-overlay-desc-container::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 4px;
@@ -3082,7 +3112,8 @@ select.form-staf-control {
     display: flex;
     flex-direction: column;
     gap: 24px;
-    margin: 5px 0 20px 0; /* Mengurangi margin-top dari 20px menjadi 5px agar naik ke atas */
+    margin: 5px 0 20px 0;
+    /* Mengurangi margin-top dari 20px menjadi 5px agar naik ke atas */
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
 }
 
@@ -3190,17 +3221,24 @@ select.form-staf-control {
     gap: 20px;
 }
 
-.form-col-2 { flex: 2; }
-.form-col-1 { flex: 1; }
+.form-col-2 {
+    flex: 2;
+}
+
+.form-col-1 {
+    flex: 1;
+}
 
 /* =========================================================================
    STYLE PENAKLUK BENTURAN GRID BANNER (ANTI-PINCANG)
    ========================================================================= */
 .banner-super-grid {
     display: grid !important;
-    grid-template-columns: 1fr 2fr !important; /* Kiri 1 porsi, kanan 2 porsi murni */
+    grid-template-columns: 1fr 2fr !important;
+    /* Kiri 1 porsi, kanan 2 porsi murni */
     gap: 24px !important;
-    align-items: stretch !important; /* KUNCI UTAMA: Memaksa tinggi lurus sejajar */
+    align-items: stretch !important;
+    /* KUNCI UTAMA: Memaksa tinggi lurus sejajar */
     width: 100% !important;
     margin-top: 5px;
 }
@@ -3242,7 +3280,7 @@ select.form-staf-control {
 
 /* Menendang tombol "Simpan Banner" ke paling dasar lantai card */
 .form-banner-lokal button[type="submit"] {
-    margin-top: auto !important; 
+    margin-top: auto !important;
 }
 
 /* =========================================================================
@@ -3270,12 +3308,12 @@ select.form-staf-control {
 }
 
 .alert-limit-banner {
-    background: #fee2e2; 
-    color: #b91c1c; 
-    padding: 14px; 
-    border-radius: 6px; 
-    margin-bottom: 20px; 
-    font-size: 13px; 
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 14px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 13px;
     line-height: 1.4;
 }
 
@@ -3311,7 +3349,7 @@ select.form-staf-control {
     object-fit: cover;
     border-radius: 6px;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     transition: transform 0.2s ease-in-out;
 }
 
@@ -3368,6 +3406,7 @@ select.form-staf-control {
         flex-direction: column;
         gap: 15px;
     }
+
     .banner-super-grid {
         grid-template-columns: 1fr !important;
     }
@@ -3812,6 +3851,7 @@ select.form-staf-control {
 }
 
 @media (max-width: 480px) {
+
     #section-inbox .pcard-btn,
     .nota-actions .pcard-btn {
         padding: 7px 12px;
@@ -4066,7 +4106,8 @@ select.form-staf-control {
     color: #475569;
 }
 
-.kas-select, .kas-input-date {
+.kas-select,
+.kas-input-date {
     padding: 8px 12px;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
@@ -4077,7 +4118,8 @@ select.form-staf-control {
     transition: all 0.2s;
 }
 
-.kas-select:focus, .kas-input-date:focus {
+.kas-select:focus,
+.kas-input-date:focus {
     border-color: #3498db;
     background: #fff;
 }
@@ -4192,9 +4234,11 @@ select.form-staf-control {
         flex-direction: column;
         align-items: flex-start;
     }
+
     .kas-btn-group {
         width: 100%;
     }
+
     .kas-btn-group button {
         flex: 1;
         justify-content: center;
@@ -4288,7 +4332,7 @@ select.form-staf-control {
     overflow: hidden;
     position: relative;
     background: #f1f5f9;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
     display: inline-block;
     vertical-align: middle;
 }
@@ -4332,10 +4376,13 @@ select.form-staf-control {
 }
 
 @keyframes pulse-slow {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 0.5;
         transform: scale(0.9);
     }
+
     50% {
         opacity: 1;
         transform: scale(1.1);

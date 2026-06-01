@@ -222,5 +222,95 @@ if ($action === 'hapus_banner_direct') {
     exit;
 }
 
+// ════════════════════════════════════════════════════════════
+// 4. UPDATE QRIS KANTIN
+// ════════════════════════════════════════════════════════════
+if ($action === 'update_qris_kantin') {
+    if (isset($_FILES['qris_image']) && $_FILES['qris_image']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['qris_image']['tmp_name'];
+        $fileName = $_FILES['qris_image']['name'];
+        $fileSize = $_FILES['qris_image']['size'];
+        $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        $allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+        $maxFileSize = 2097152; // 2MB
+
+        if (!in_array($fileExt, $allowedExts)) {
+            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal! Format gambar QRIS wajib JPG, JPEG, PNG, atau WEBP.'];
+            header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin");
+            exit;
+        }
+
+        if ($fileSize > $maxFileSize) {
+            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal! Ukuran gambar QRIS maksimal adalah 2MB.'];
+            header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin");
+            exit;
+        }
+
+        $uploadQrisDir = tokoFotoImgRoot() . '/qris/';
+        if (!is_dir($uploadQrisDir)) {
+            @mkdir($uploadQrisDir, 0755, true);
+        }
+
+        // Hapus file QRIS lama agar tidak menumpuk
+        $files = glob($uploadQrisDir . 'qris_' . $idToko . '.*');
+        if ($files) {
+            foreach ($files as $file) {
+                if (file_exists($file)) {
+                    @unlink($file);
+                }
+            }
+        }
+
+        $newFileName = 'qris_' . $idToko . '.' . $fileExt;
+
+        if (move_uploaded_file($fileTmpPath, $uploadQrisDir . $newFileName)) {
+            $queryUpdate = "UPDATE `toko` SET `qris_image` = '$newFileName' WHERE `id_toko` = $idToko";
+            if (mysqli_query($conn, $queryUpdate)) {
+                catatLog($conn, 'Owner', 'QRIS kantin ' . $nama_toko . ' telah diperbarui');
+                $_SESSION['feedback'] = ['type' => 'success', 'msg' => 'Gambar QRIS kantin berhasil diperbarui!'];
+            } else {
+                $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal memperbarui database: ' . mysqli_error($conn)];
+            }
+        } else {
+            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal mengunggah file gambar QRIS ke folder server.'];
+        }
+    } else {
+        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal! File gambar QRIS tidak terdeteksi atau bermasalah.'];
+    }
+
+    header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin&t=" . time());
+    exit;
+}
+
+// ════════════════════════════════════════════════════════════
+// 5. HAPUS QRIS KANTIN
+// ════════════════════════════════════════════════════════════
+if ($action === 'hapus_qris_kantin') {
+    // Ambil info qris saat ini
+    $q_toko = mysqli_query($conn, "SELECT qris_image FROM toko WHERE id_toko = $idToko LIMIT 1");
+    if ($q_toko && $r_toko = mysqli_fetch_assoc($q_toko)) {
+        $qris_image = $r_toko['qris_image'];
+        if (!empty($qris_image)) {
+            $uploadQrisDir = tokoFotoImgRoot() . '/qris/';
+            $filePath = $uploadQrisDir . $qris_image;
+            if (file_exists($filePath)) {
+                @unlink($filePath);
+            }
+        }
+    }
+
+    $queryUpdate = "UPDATE `toko` SET `qris_image` = NULL WHERE `id_toko` = $idToko";
+    if (mysqli_query($conn, $queryUpdate)) {
+        catatLog($conn, 'Owner', 'QRIS kantin ' . $nama_toko . ' telah dihapus');
+        $_SESSION['feedback'] = ['type' => 'success', 'msg' => 'Gambar QRIS kantin berhasil dihapus!'];
+    } else {
+        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal menghapus QRIS dari database: ' . mysqli_error($conn)];
+    }
+
+    header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin&t=" . time());
+    exit;
+}
+
 header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin");
 exit;
