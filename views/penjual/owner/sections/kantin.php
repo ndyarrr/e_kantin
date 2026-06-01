@@ -114,6 +114,64 @@ $isLocked = ($jumlahBannerAktif >= 2);
         </div>
     </div>
 
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- NEW CARD: PENGATURAN QRIS KANTIN -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <div class="pcard">
+        <div class="pcard-inner" style="padding: 25px;">
+            <h3 style="margin: 0 0 15px 0; font-size: 18px;"><i class="fa-solid fa-qrcode"></i> Metode Pembayaran QRIS Kantin</h3>
+            <div class="pcard-divider" style="margin-bottom: 20px;"></div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-start;">
+                <!-- QRIS Preview Area -->
+                <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; align-items: center; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px dashed #cbd5e1;">
+                    <span style="font-weight: bold; font-size: 13.5px; color: #4a5568; margin-bottom: 15px; display: block; text-align: center;">Tampilan QRIS Aktif</span>
+                    <div style="width: 200px; height: 200px; background: #ffffff; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0;">
+                        <?php if (!empty($tokoData['qris_image'])): ?>
+                            <img src="../../../assets/img/qris/<?= htmlspecialchars($tokoData['qris_image']) ?>?v=<?= time() ?>" style="width: 100%; height: 100%; object-fit: contain;">
+                        <?php else: ?>
+                            <div style="text-align: center; color: #94a3b8; padding: 10px;">
+                                <i class="fa-solid fa-qrcode" style="font-size: 50px; margin-bottom: 10px; display: block; color: #cbd5e1; margin-left: auto; margin-right: auto;"></i>
+                                <span style="font-size: 12px;">QRIS belum di-upload</span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <?php if (!empty($tokoData['qris_image'])): ?>
+                        <form action="index.php?section=kantin" method="POST" onsubmit="return confirm('Yakin ingin menghapus QRIS kantin ini?');" style="margin-top: 15px; width: 100%;">
+                            <input type="hidden" name="_current_section" value="kantin">
+                            <input type="hidden" name="action" value="hapus_qris_kantin">
+                            <button type="submit" class="btn-delete-banner" style="width: 100%; padding: 10px; font-size: 13px;">
+                                <i class="fa-solid fa-trash-can"></i> Hapus QRIS
+                            </button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+
+                <!-- QRIS Upload Area -->
+                <div style="flex: 2; min-width: 280px;">
+                    <form action="index.php?section=kantin" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 18px;">
+                        <input type="hidden" name="_current_section" value="kantin">
+                        <input type="hidden" name="action" value="update_qris_kantin">
+
+                        <div class="kantin-form-group">
+                            <label style="font-weight: bold;">Pilih Foto Kode QRIS</label>
+                            <input type="file" name="qris_image" accept="image/jpeg, image/jpg, image/png, image/webp" required style="font-size: 13px;">
+                            <small style="color: #64748b; display: block; margin-top: 4px; line-height: 1.4;">
+                                Upload gambar/foto kode QRIS toko Anda agar pembeli dapat melakukan pembayaran non-tunai.<br>
+                                Format yang didukung: <strong>JPG, JPEG, PNG, WEBP</strong> (Maksimal 2MB).
+                            </small>
+                        </div>
+
+                        <button type="submit" class="pcard-btn"
+                                style="width: 100%; padding: 12px; font-size: 14px; font-weight: bold; background: #27ae60; color: #fff; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; transition: background 0.2s;">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Gambar QRIS
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="banner-super-grid">
         
         <div class="banner-box-item">
