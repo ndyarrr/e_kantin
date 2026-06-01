@@ -1,4 +1,6 @@
 <?php
+// views/penjual/owner/index.php
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -22,7 +24,17 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
     exit;
 }
 
-// Penanganan request POST
+// =========================================================================
+// INISIALISASI DATABASE & IDENTITAS TOKO (harus sebelum POST handler)
+// =========================================================================
+require_once __DIR__ . '/../../../config/database.php';
+
+$penjualNama = $_SESSION['user_nama'] ?? 'Penjual';
+$penjualId = (int) ($_SESSION['user_id'] ?? 0);
+
+// =========================================================================
+// PENANGANAN REQUEST POST (SINKRONISASI MODUL KEUANGAN & KAS)
+// =========================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
@@ -42,13 +54,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_once __DIR__ . '/../actions/proses_inbox.php';
         exit;
     }
+    // Cegat request POST transaksi kas manual & hapus data keuangan
+    elseif ($action === 'tambah_keuangan' || $action === 'soft_delete_keuangan') {
+        // Pastikan $idToko tersedia sebelum masuk keuangan_data.php
+        $r_toko_post = mysqli_fetch_assoc(mysqli_query(
+            $conn,
+            "SELECT t.id_toko FROM toko_penjual tp
+             LEFT JOIN toko t ON t.id_toko = tp.id_toko AND t.deleted_at IS NULL
+             WHERE tp.id_penjual = $penjualId AND tp.status = 'aktif'
+             ORDER BY tp.id DESC LIMIT 1"
+        ));
+        $idToko = (int)($r_toko_post['id_toko'] ?? 0);
+        require_once __DIR__ . '/sections/keuangan_data.php';
+        exit;
+    }
 }
-
-// Lanjut ke query database...
-require_once __DIR__ . '/../../../config/database.php';
-
-$penjualNama = $_SESSION['user_nama'] ?? 'Penjual';
-$penjualId = (int) ($_SESSION['user_id'] ?? 0);
 
 $profilPenjual = mysqli_fetch_assoc(mysqli_query(
     $conn,

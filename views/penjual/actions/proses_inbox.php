@@ -117,6 +117,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $jumlah = (int)$item['jumlah'];
                             mysqli_query($conn, "UPDATE menu SET terjual = terjual + $jumlah WHERE id_menu = $id_menu");
                         }
+
+                        // 3. Otomatis catat pemasukan ke keuangan berdasarkan total_harga pesanan
+                        $q_total = mysqli_query($conn, "SELECT total_harga FROM pesanan WHERE id_pesanan = $id_pesanan LIMIT 1");
+                        if ($q_total && $r_total = mysqli_fetch_assoc($q_total)) {
+                            $total_pesanan = (float)$r_total['total_harga'];
+                            $ket_auto      = mysqli_real_escape_string($conn, "Pemasukan otomatis dari Pesanan #$id_pesanan yang telah selesai");
+                            $tgl_selesai   = date('Y-m-d');
+                            mysqli_query($conn, "INSERT INTO keuangan (id_toko, tipe, jumlah, keterangan, tanggal)
+                                                 VALUES ($idToko, 'masuk', $total_pesanan, '$ket_auto', '$tgl_selesai')");
+                        }
                     }
                     
                     // Jika status_baru dibatalkan dan status sebelumnya bukan dibatalkan, kembalikan stok menu

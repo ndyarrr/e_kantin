@@ -1,57 +1,33 @@
 <?php
 // views/penjual/owner/sections/keuangan.php
 
-// Pastikan session id_toko tersedia
-if (!isset($idToko)) {
-    die("Akses ditolak: ID Toko tidak ditemukan.");
-}
-
-// =========================================================================
-// FILTER TANGGAL REAL-TIME
-// =========================================================================
-$filter_tanggal = isset($_GET['filter_date']) ? $_GET['filter_date'] : date('Y-m-d');
-
-// =========================================================================
-// LOGIC BACKEND HITUNG KARTU RINGKASAN (REAL-TIME DATABASE)
-// =========================================================================
-
-// 1. Hitung Saldo Saat Ini (Total Semua Masuk dikurangi Total Semua Keluar dari data aktif)
-$query_saldo = mysqli_query($conn, "SELECT 
-    SUM(CASE WHEN `tipe` = 'masuk' THEN `jumlah` ELSE 0 END) - 
-    SUM(CASE WHEN `tipe` = 'keluar' THEN `jumlah` ELSE 0 END) AS `saldo_sekarang`
-    FROM `keuangan` WHERE `id_toko` = $idToko AND `deleted_at` IS NULL");
-$data_saldo = mysqli_fetch_assoc($query_saldo);
-$saldo_sekarang = (float)($data_saldo['saldo_sekarang'] ?? 0);
-
-// 2. Total Pemasukan Hari Ini / Tanggal Terpilih
-$query_masuk_hari_ini = mysqli_query($conn, "SELECT SUM(`jumlah`) AS `total` FROM `keuangan` 
-    WHERE `id_toko` = $idToko AND `tipe` = 'masuk' AND `tanggal` = '$filter_tanggal' AND `deleted_at` IS NULL");
-$data_masuk = mysqli_fetch_assoc($query_masuk_hari_ini);
-$pemasukan_hari_ini = (float)($data_masuk['total'] ?? 0);
-
-// 3. Total Pengeluaran Hari Ini / Tanggal Terpilih
-$query_keluar_hari_ini = mysqli_query($conn, "SELECT SUM(`jumlah`) AS `total` FROM `keuangan` 
-    WHERE `id_toko` = $idToko AND `tipe` = 'keluar' AND `tanggal` = '$filter_tanggal' AND `deleted_at` IS NULL");
-$data_keluar = mysqli_fetch_assoc($query_keluar_hari_ini);
-$pengeluaran_hari_ini = (float)($data_keluar['total'] ?? 0);
-
-// 4. Hitung Total Transaksi Hari Ini / Tanggal Terpilih
-$query_transaksi = mysqli_query($conn, "SELECT COUNT(*) AS `total_trx` FROM `keuangan` 
-    WHERE `id_toko` = $idToko AND `tanggal` = '$filter_tanggal' AND `deleted_at` IS NULL");
-$data_trx = mysqli_fetch_assoc($query_transaksi);
-$total_transaksi = (int)($data_trx['total_trx'] ?? 0);
-
-
-// =========================================================================
-// QUERY AMBIL DATA RIWAYAT TABEL KEUANGAN (MENYARING SOFT DELETE)
-// =========================================================================
-$query_riwayat = mysqli_query($conn, "SELECT * FROM `keuangan` 
-    WHERE `id_toko` = $idToko 
-    AND `deleted_at` IS NULL 
-    ORDER BY `tanggal` DESC, `id_keuangan` DESC");
+// Hubungkan otomatis dengan file data logic keuangan
+include __DIR__ . '/keuangan_data.php';
 ?>
 
 <div class="kantin-container">
+
+    <?php if (isset($_SESSION['feedback_kas'])): ?>
+        <div id="feedbackKas" style="background: <?= $_SESSION['feedback_kas']['type'] === 'success' ? '#e6f4ea' : '#fce8e6' ?>; 
+                    color: <?= $_SESSION['feedback_kas']['type'] === 'success' ? '#137333' : '#c5221f' ?>; 
+                    padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 13.5px; margin-bottom: 15px;
+                    border: 1px solid <?= $_SESSION['feedback_kas']['type'] === 'success' ? '#c2e7cd' : '#fad2cf' ?>;
+                    transition: opacity 0.5s ease;">
+            <?= $_SESSION['feedback_kas']['type'] === 'success' ? '✅' : '⚠️' ?>
+            <?= $_SESSION['feedback_kas']['msg']; unset($_SESSION['feedback_kas']); ?>
+        </div>
+        <script>
+            (function() {
+                var el = document.getElementById('feedbackKas');
+                if (el) {
+                    setTimeout(function() {
+                        el.style.opacity = '0';
+                        setTimeout(function() { el.remove(); }, 500);
+                    }, 4000);
+                }
+            })();
+        </script>
+    <?php endif; ?>
 
     <div class="kas-grid-cards">
         <div class="kas-card">
@@ -78,7 +54,7 @@ $query_riwayat = mysqli_query($conn, "SELECT * FROM `keuangan`
 
     <div class="kas-filter-bar">
         <div class="kas-filter-left">
-            <i class="fa-solid fa-filter"></i>
+            <i class="fa-solid fa-filter" style="color:#3498db;"></i>
             <span>Pilih Tanggal Data:</span>
             <input type="date" class="kas-input-date" id="filterKasTanggal" value="<?= $filter_tanggal ?>" onchange="pindahTanggal(this.value)">
         </div>
@@ -86,8 +62,8 @@ $query_riwayat = mysqli_query($conn, "SELECT * FROM `keuangan`
             <button class="kas-btn-print" onclick="window.print()">
                 <i class="fa-solid fa-print"></i> Cetak Laporan
             </button>
-            <button class="kas-btn-add" style="background-color: #3498db;" onclick="alert('Buka modal tambah pemasukan/pengeluaran manual!')">
-                <i class="fa-solid fa-circle-plus"></i> Tambah Log Keuangan
+            <button class="kas-btn-add" style="background-color: #dc2626;" onclick="bukaModalKas()">
+                <i class="fa-solid fa-circle-minus"></i> Catat Pengeluaran
             </button>
         </div>
     </div>
@@ -124,18 +100,19 @@ $query_riwayat = mysqli_query($conn, "SELECT * FROM `keuangan`
                                 <br><small style="color:#94a3b8; font-size:11px;">Input: <?= date('d/m/y H:i', strtotime($row['dibuat_pada'])) ?></small>
                             </td>
                             <td>
-                                <span class="<?= $classWarna ?>" style="text-transform: uppercase; font-size: 12px; background: <?= $isPemasukan ? '#e6f4ea':'#fce8e6' ?>; padding: 4px 8px; border-radius:4px;">
+                                <span class="<?= $classWarna ?>" style="text-transform: uppercase; font-size: 11px; background: <?= $isPemasukan ? '#e6f4ea':'#fce8e6' ?>; padding: 4px 8px; border-radius:4px; display:inline-block;">
                                     <?= $isPemasukan ? '🟢 Pemasukan' : '🔴 Pengeluaran' ?>
                                 </span>
                             </td>
                             <td><?= htmlspecialchars($row['keterangan']) ?></td>
                             <td class="<?= $classWarna ?>" style="font-size: 15px;">
-                                <?= $prefixTanda . number_format($row['jumlah'], 0, ',', '.') ?>
+                                <strong><?= $prefixTanda . number_format($row['jumlah'], 0, ',', '.') ?></strong>
                             </td>
                             <td style="text-align: center;">
                                 <form action="index.php?section=keuangan" method="POST" onsubmit="return confirm('Yakin ingin membuang data keuangan ini ke sampah?');" style="display:inline;">
                                     <input type="hidden" name="_current_section" value="keuangan">
                                     <input type="hidden" name="action" value="soft_delete_keuangan">
+                                    <input type="hidden" name="current_filter" value="<?= $filter_tanggal ?>">
                                     <input type="hidden" name="id_keuangan" value="<?= $row['id_keuangan'] ?>">
                                     <button type="submit" class="btn-delete-kas">
                                         <i class="fa-solid fa-trash-can"></i> Hapus
@@ -151,8 +128,77 @@ $query_riwayat = mysqli_query($conn, "SELECT * FROM `keuangan`
 
 </div>
 
+<div id="modalKasManual" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div style="background: #fff; padding: 24px; border-radius: 12px; width: 100%; max-width: 420px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="margin: 0; font-size: 16px; color: #1e293b;"><i class="fa-solid fa-arrow-trend-down" style="color:#dc2626;"></i> Catat Pengeluaran</h3>
+            <button onclick="tutupModalKas()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #94a3b8; line-height: 1;">&times;</button>
+        </div>
+        <div style="height: 1px; background: #e2e8f0; margin-bottom: 15px;"></div>
+
+        <!-- Info otomatis: tanggal & dibuat_pada -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12.5px; color: #475569;">
+                <span><i class="fa-solid fa-calendar-day" style="color:#dc2626;"></i> <strong>Tanggal</strong></span>
+                <span id="tanggalOtomatis" style="font-weight: 700; color: #1e293b;"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8;">
+                <span><i class="fa-solid fa-clock"></i> Dibuat pada</span>
+                <span id="dibuatPadaOtomatis"></span>
+            </div>
+        </div>
+        
+        <form action="index.php?section=keuangan" method="POST" style="display: flex; flex-direction: column; gap: 12px;">
+            <input type="hidden" name="_current_section" value="keuangan">
+            <input type="hidden" name="action" value="tambah_keuangan">
+            <input type="hidden" name="tipe" value="keluar">
+            <input type="hidden" name="tanggal" value="<?= date('Y-m-d') ?>">
+            
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 12.5px; font-weight: 600; color: #475569;">Nominal Pengeluaran (Rp)</label>
+                <input type="number" name="jumlah" id="inputJumlahKas" placeholder="Contoh: 35000" min="1" required
+                       style="padding: 8px 10px; border: 1.5px solid #fca5a5; border-radius: 6px; font-size: 13px; outline: none;"
+                       onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#fca5a5'">
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 12.5px; font-weight: 600; color: #475569;">Keterangan Pengeluaran</label>
+                <textarea name="keterangan" rows="3" placeholder="Contoh: Kulakan kertas bungkus soto & minyak goreng" required
+                          style="padding: 8px 10px; border: 1.5px solid #fca5a5; border-radius: 6px; font-size: 13px; font-family: inherit; resize: vertical; outline: none;"
+                          onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#fca5a5'"></textarea>
+            </div>
+            
+            <button type="submit" style="background: #dc2626; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13.5px; margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Pengeluaran
+            </button>
+        </form>
+    </div>
+</div>
+
 <script>
 function pindahTanggal(val) {
     window.location.href = "index.php?section=keuangan&filter_date=" + val;
+}
+function bukaModalKas() {
+    // Isi tanggal & waktu otomatis saat modal dibuka
+    const now = new Date();
+    const opsi = { day: '2-digit', month: 'long', year: 'numeric' };
+    document.getElementById('tanggalOtomatis').textContent = now.toLocaleDateString('id-ID', opsi);
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('dibuatPadaOtomatis').textContent =
+        `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    document.getElementById('modalKasManual').style.display = 'flex';
+    // Fokus ke input nominal
+    setTimeout(() => document.getElementById('inputJumlahKas').focus(), 100);
+}
+function tutupModalKas() {
+    document.getElementById('modalKasManual').style.display = 'none';
+}
+// Menutup modal otomatis jika area luar diklik
+window.onclick = function(event) {
+    let modal = document.getElementById('modalKasManual');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
 }
 </script>
