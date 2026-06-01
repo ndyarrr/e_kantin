@@ -31,6 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $cart_data = json_decode($_POST['cart_data'], true);
         $tipe_pengiriman = $_POST['tipe_pengiriman'] ?? 'di_ambil'; // 'di_antar' atau 'di_ambil'
         $kode_promo = $_POST['kode_promo'] ?? '';
+        $metode_pembayaran = $_POST['metode_pembayaran'] ?? 'tunai';
+        if (!in_array($metode_pembayaran, ['tunai', 'transfer', 'dompet_digital'])) {
+            $metode_pembayaran = 'tunai';
+        }
         
         if (empty($cart_data)) {
             throw new Exception("Keranjang kosong.");
@@ -135,9 +139,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 mysqli_query($conn, "UPDATE menu SET stok = GREATEST(stok - $jumlah, 0) WHERE id_menu = $id_menu");
             }
 
-            // Catat pembayaran (default belum_bayar tunai)
-            $stmt_pay = mysqli_prepare($conn, "INSERT INTO pembayaran (id_pesanan, jumlah_bayar, metode, status) VALUES (?, ?, 'tunai', 'belum_bayar')");
-            mysqli_stmt_bind_param($stmt_pay, 'ii', $id_pesanan, $total_pembayaran);
+            // Catat pembayaran dengan metode yang dipilih (tunai atau qris/transfer)
+            $stmt_pay = mysqli_prepare($conn, "INSERT INTO pembayaran (id_pesanan, jumlah_bayar, metode, status) VALUES (?, ?, ?, 'belum_bayar')");
+            mysqli_stmt_bind_param($stmt_pay, 'iis', $id_pesanan, $total_pembayaran, $metode_pembayaran);
             mysqli_stmt_execute($stmt_pay);
             mysqli_stmt_close($stmt_pay);
 
@@ -275,6 +279,18 @@ $q_checkout_promos = mysqli_query($conn, "SELECT bp.*, t.nama_toko FROM banner_p
 if ($q_checkout_promos) {
     while ($r = mysqli_fetch_assoc($q_checkout_promos)) {
         $checkout_promos[] = $r;
+    }
+}
+
+// Ambil semua toko untuk cek QRIS
+$tokos_qris = [];
+$q_toko_qris = mysqli_query($conn, "SELECT id_toko, nama_toko, qris FROM toko");
+if ($q_toko_qris) {
+    while ($t_qris = mysqli_fetch_assoc($q_toko_qris)) {
+        $tokos_qris[$t_qris['id_toko']] = [
+            'nama_toko' => $t_qris['nama_toko'],
+            'qris' => $t_qris['qris']
+        ];
     }
 }
 ?>
@@ -685,11 +701,6 @@ if ($q_checkout_promos) {
                     <span class="brand-name">E-Kantin</span>
                 </div>
                 
-                <div class="search-container">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" placeholder="Cari..." readonly style="background: #f1f5f9; cursor: not-allowed;">
-                </div>
-                
                 <div class="header-icons">
                     <div class="dropdown-wrapper">
                         <div class="icon-badge" onclick="window.location.href='index.php'">
@@ -777,6 +788,12 @@ if ($q_checkout_promos) {
             </div>
 
 
+
+            <!-- Section 3: Payment Method Selection -->
+            <h2 class="checkout-section-title">Metode Pembayaran</h2>
+            <div class="checkout-card" id="paymentMethodCard" style="padding: 16px; margin-bottom: 24px;">
+                <!-- Dynamically loaded -->
+            </div>
 
             <!-- Section 4: Payment Summary -->
             <h2 class="checkout-section-title">Ringkasan Pembayaran</h2>
@@ -1237,6 +1254,7 @@ if ($q_checkout_promos) {
             formData.append('action', 'buat_pesanan');
             formData.append('cart_data', JSON.stringify(cart));
             formData.append('kode_promo', appliedPromo ? appliedPromo.kode_promo : '');
+            formData.append('metode_pembayaran', selectedPaymentMethod);
             
             fetch('checkout.php', {
                 method: 'POST',
@@ -1436,10 +1454,171 @@ if ($q_checkout_promos) {
             }, 3000);
         }
 
+        // Canteen QRIS database data
+        const canteenQrisData = <?= json_encode($tokos_qris); ?>;
+        let selectedPaymentMethod = 'tunai';
+
+        function getAvailablePaymentMethods() {
+            const cart = getCart();
+            const selectedItems = cart.filter(item => item.selected !== false);
+            if (selectedItems.length === 0) return ['tunai'];
+
+            // Cek apakah semua kantin yang terlibat di pesanan ini punya QRIS
+            let allHaveQris = true;
+            selectedItems.forEach(item => {
+                const canteen = canteenQrisData[item.id_toko];
+                if (!canteen || !canteen.qris) {
+                    allHaveQris = false;
+                }
+            });
+
+            return allHaveQris ? ['tunai', 'qris'] : ['tunai'];
+        }
+
+        function initPaymentMethodSelection() {
+            const container = document.getElementById('paymentMethodCard');
+            if (!container) return;
+
+            const methods = getAvailablePaymentMethods();
+            
+            if (methods.includes('qris')) {
+                container.innerHTML = `
+                    <div class="payment-method-options" style="display: flex; flex-direction: column; gap: 12px;">
+                        <label class="payment-option-card active" id="pay-tunai-label" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 16px; border: 2.5px solid #16a34a; background: #f0fdf4; cursor: pointer; transition: all 0.2s; text-align: left;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 40px; height: 40px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 18px; flex-shrink: 0;">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                </div>
+                                <div>
+                                    <span style="font-weight: 700; color: #1e293b; display: block; font-size: 14px;">Tunai (Cash)</span>
+                                    <span style="font-size: 12px; color: #64748b;">Bayar langsung di kasir kantin</span>
+                                </div>
+                            </div>
+                            <input type="radio" name="payment_method_input" value="tunai" checked onclick="selectPaymentMethod('tunai')" style="accent-color: #16a34a; transform: scale(1.15); flex-shrink: 0;">
+                        </label>
+
+                        <label class="payment-option-card" id="pay-qris-label" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #e2e8f0; background: #ffffff; cursor: pointer; transition: all 0.2s; text-align: left;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 18px; flex-shrink: 0;">
+                                    <i class="fa-solid fa-qrcode"></i>
+                                </div>
+                                <div>
+                                    <span style="font-weight: 700; color: #1e293b; display: block; font-size: 14px;">QRIS</span>
+                                    <span style="font-size: 12px; color: #64748b;">Scan barcode QRIS kantin</span>
+                                </div>
+                            </div>
+                            <input type="radio" name="payment_method_input" value="transfer" onclick="selectPaymentMethod('transfer')" style="accent-color: #16a34a; transform: scale(1.15); flex-shrink: 0;">
+                        </label>
+                    </div>
+                    
+                    <div id="qrisContainer" style="display: none; margin-top: 14px; padding: 20px 16px; text-align: center; border: 1.5px dashed #16a34a; background: #f8fafc; border-radius: 20px; box-sizing: border-box;">
+                        <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 800; color: #1e293b; font-family: 'Poppins', sans-serif;">Scan QRIS Untuk Pembayaran</h4>
+                        <p style="margin: 0 0 16px 0; font-size: 12px; color: #64748b; font-family: 'Poppins', sans-serif;">Silakan scan barcode QRIS di bawah ini:</p>
+                        <div id="qrisImagesList" style="display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%;">
+                            <!-- Rendered dynamically -->
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="payment-method-options" style="display: flex; flex-direction: column; gap: 12px;">
+                        <label class="payment-option-card active" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 16px; border: 2.5px solid #16a34a; background: #f0fdf4; cursor: pointer; text-align: left;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 40px; height: 40px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 18px; flex-shrink: 0;">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                </div>
+                                <div>
+                                    <span style="font-weight: 700; color: #1e293b; display: block; font-size: 14px;">Tunai (Cash)</span>
+                                    <span style="font-size: 12px; color: #64748b;">Bayar langsung di kasir kantin</span>
+                                </div>
+                            </div>
+                            <input type="radio" name="payment_method_input" value="tunai" checked disabled style="accent-color: #16a34a; transform: scale(1.15); flex-shrink: 0;">
+                        </label>
+                        <div style="font-size: 12px; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 10px 14px; border-radius: 12px; text-align: left; display: flex; align-items: flex-start; gap: 8px;">
+                            <i class="fa-solid fa-triangle-exclamation" style="margin-top: 3px; font-size: 14px; flex-shrink: 0;"></i>
+                            <span>Kantin ini tidak menyediakan pembayaran QRIS. Pembayaran hanya dapat dilakukan secara Tunai.</span>
+                        </div>
+                    </div>
+                `;
+                selectPaymentMethod('tunai');
+            }
+        }
+
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            
+            const tunaiLabel = document.getElementById('pay-tunai-label');
+            const qrisLabel = document.getElementById('pay-qris-label');
+            const qrisContainer = document.getElementById('qrisContainer');
+            
+            if (method === 'tunai') {
+                if (tunaiLabel) {
+                    tunaiLabel.style.borderColor = '#16a34a';
+                    tunaiLabel.style.background = '#f0fdf4';
+                    tunaiLabel.querySelector('div > div').style.backgroundColor = '#dcfce7';
+                    tunaiLabel.querySelector('div > div').style.color = '#16a34a';
+                }
+                if (qrisLabel) {
+                    qrisLabel.style.borderColor = '#e2e8f0';
+                    qrisLabel.style.background = '#ffffff';
+                    qrisLabel.querySelector('div > div').style.backgroundColor = '#f1f5f9';
+                    qrisLabel.querySelector('div > div').style.color = '#64748b';
+                }
+                if (qrisContainer) qrisContainer.style.display = 'none';
+                
+                const methodTextEl = document.querySelector('.checkout-payment-method');
+                if (methodTextEl) methodTextEl.textContent = 'Cash';
+            } else {
+                if (tunaiLabel) {
+                    tunaiLabel.style.borderColor = '#e2e8f0';
+                    tunaiLabel.style.background = '#ffffff';
+                    tunaiLabel.querySelector('div > div').style.backgroundColor = '#f1f5f9';
+                    tunaiLabel.querySelector('div > div').style.color = '#64748b';
+                }
+                if (qrisLabel) {
+                    qrisLabel.style.borderColor = '#16a34a';
+                    qrisLabel.style.background = '#f0fdf4';
+                    qrisLabel.querySelector('div > div').style.backgroundColor = '#dcfce7';
+                    qrisLabel.querySelector('div > div').style.color = '#16a34a';
+                }
+                if (qrisContainer) {
+                    qrisContainer.style.display = 'block';
+                    renderQrisImages();
+                }
+                
+                const methodTextEl = document.querySelector('.checkout-payment-method');
+                if (methodTextEl) methodTextEl.textContent = 'QRIS';
+            }
+        }
+
+        function renderQrisImages() {
+            const listContainer = document.getElementById('qrisImagesList');
+            if (!listContainer) return;
+
+            const cart = getCart();
+            const selectedItems = cart.filter(item => item.selected !== false);
+            const canteenIds = [...new Set(selectedItems.map(item => item.id_toko))];
+
+            let html = '';
+            canteenIds.forEach(id => {
+                const canteen = canteenQrisData[id];
+                if (canteen && canteen.qris) {
+                    html += `
+                        <div style="background: #ffffff; padding: 16px; border-radius: 16px; border: 1px solid #e2e8f0; width: 100%; box-sizing: border-box; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01);">
+                            <div style="font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">QRIS ${canteen.nama_toko}</div>
+                            <img src="../../assets/img/qris/${canteen.qris}" alt="QRIS ${canteen.nama_toko}" style="max-width: 220px; width: 100%; height: auto; border-radius: 8px; border: 1px solid #f1f5f9; padding: 4px; background:#fff;">
+                        </div>
+                    `;
+                }
+            });
+            listContainer.innerHTML = html;
+        }
+
         // ── Init on page load ──
         document.addEventListener('DOMContentLoaded', () => {
             updateBadges();
             renderCheckoutPage();
+            initPaymentMethodSelection();
         });
     </script>
 </body>

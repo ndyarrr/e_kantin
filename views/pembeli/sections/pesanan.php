@@ -319,9 +319,15 @@ if ($q_pesanan) {
                             </div>
                             <div class="pesanan-footer-right">
                                 <?php if ($is_lunas): ?>
-                                    <span class="pesanan-payment-status pay-lunas"><i class="fa-solid fa-circle-check"></i> Lunas</span>
+                                    <span class="pesanan-payment-status pay-lunas">
+                                        <i class="fa-solid fa-circle-check"></i> Lunas
+                                        <small style="color: #64748b; font-weight: 500; margin-left: 2px;">(<?= $pesanan['pembayaran']['metode'] === 'transfer' ? 'QRIS' : 'Tunai' ?>)</small>
+                                    </span>
                                 <?php else: ?>
-                                    <span class="pesanan-payment-status pay-belum_bayar"><i class="fa-solid fa-circle-xmark"></i> Belum Bayar</span>
+                                    <span class="pesanan-payment-status pay-belum_bayar">
+                                        <i class="fa-solid fa-circle-xmark"></i> Belum Bayar
+                                        <small style="color: #64748b; font-weight: 500; margin-left: 2px;">(<?= $pesanan['pembayaran']['metode'] === 'transfer' ? 'QRIS' : 'Tunai' ?>)</small>
+                                    </span>
                                 <?php endif; ?>
                                 
                                 <button class="btn-chat-kantin" onclick="switchNav('chat'); setTimeout(() => { bukaRoomChat('toko_<?= $pesanan['id_toko'] ?>', '<?= htmlspecialchars(addslashes($pesanan['nama_toko']), ENT_QUOTES) ?>'); }, 200);">
