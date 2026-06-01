@@ -70,11 +70,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $subtotal += $item['harga'] * $item['jumlah'];
             }
             
-            // Terapkan diskon jika ada kode promo KANTINJOSS25
+            // Terapkan diskon berdasarkan kode promo yang dipilih/diinput
             $biaya_admin = 500;
             $diskon = 0;
-            if ($kode_promo === 'KANTINJOSS25') {
-                $diskon = round($subtotal * 0.25); // Diskon 25%
+            if (!empty($kode_promo)) {
+                $q_promo = mysqli_query($conn, "SELECT diskon_persen FROM banner_promo 
+                                                WHERE kode_promo = '" . mysqli_real_escape_string($conn, $kode_promo) . "' 
+                                                AND aktif = 1 
+                                                AND deleted_at IS NULL 
+                                                AND berlaku_hingga >= CURDATE() 
+                                                LIMIT 1");
+                if ($q_promo && mysqli_num_rows($q_promo) > 0) {
+                    $r_promo = mysqli_fetch_assoc($q_promo);
+                    $persen = (int)$r_promo['diskon_persen'];
+                    $diskon = round($subtotal * ($persen / 100));
+                } elseif ($kode_promo === 'KANTINJOSS25') {
+                    $diskon = round($subtotal * 0.25); // Fallback default
+                }
             }
             
             $total_pembayaran = $subtotal + $biaya_admin - $diskon;
@@ -247,6 +259,22 @@ $q_reco = mysqli_query($conn, "SELECT m.*, t.nama_toko FROM menu m
 if ($q_reco) {
     while ($r = mysqli_fetch_assoc($q_reco)) {
         $recommended_items[] = $r;
+    }
+}
+
+// Ambil semua banner promo aktif untuk ditampilkan di modal "Cek Promo Lainnya"
+$checkout_promos = [];
+$q_checkout_promos = mysqli_query($conn, "SELECT bp.*, t.nama_toko FROM banner_promo bp 
+                                          JOIN toko t ON bp.id_toko = t.id_toko 
+                                          WHERE bp.aktif = 1 
+                                          AND bp.deleted_at IS NULL 
+                                          AND bp.berlaku_hingga >= CURDATE() 
+                                          AND bp.kode_promo IS NOT NULL 
+                                          AND bp.kode_promo != ''
+                                          ORDER BY bp.id_banner DESC");
+if ($q_checkout_promos) {
+    while ($r = mysqli_fetch_assoc($q_checkout_promos)) {
+        $checkout_promos[] = $r;
     }
 }
 ?>
@@ -497,55 +525,7 @@ if ($q_reco) {
             color: #64748b;
         }
 
-        /* Delivery Options - Clean style without cell borders */
-        .delivery-options-card {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding: 0;
-        }
-        .delivery-option-label {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            padding: 4px 0;
-            transition: opacity 0.2s ease;
-        }
-        .delivery-option-label:hover {
-            opacity: 0.8;
-        }
-        .delivery-option-radio {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 1.5px solid #cbd5e1;
-            outline: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            margin: 0;
-        }
-        .delivery-option-radio:checked {
-            border-color: #5cb85c;
-            background: #5cb85c;
-        }
-        .delivery-option-radio:checked::after {
-            content: "";
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #ffffff;
-        }
-        .delivery-option-text {
-            font-size: 14px;
-            font-weight: 700;
-            color: #1e293b;
-        }
+
 
         /* Payment Summary */
         .summary-table {
@@ -796,19 +776,7 @@ if ($q_reco) {
                 <?php endforeach; ?>
             </div>
 
-            <!-- Section 3: Delivery Options -->
-            <div class="checkout-card">
-                <div class="delivery-options-card">
-                    <label class="delivery-option-label">
-                        <input type="radio" name="delivery_type" value="di_antar" class="delivery-option-radio" checked>
-                        <span class="delivery-option-text">di antar</span>
-                    </label>
-                    <label class="delivery-option-label">
-                        <input type="radio" name="delivery_type" value="di_ambil" class="delivery-option-radio">
-                        <span class="delivery-option-text">di ambil</span>
-                    </label>
-                </div>
-            </div>
+
 
             <!-- Section 4: Payment Summary -->
             <h2 class="checkout-section-title">Ringkasan Pembayaran</h2>
@@ -834,11 +802,11 @@ if ($q_reco) {
             </div>
 
             <!-- Section 5: Promo Code apply box -->
-            <div class="promo-apply-box">
-                <span>Kode Promo : KANTINJOSS25</span>
+            <div class="promo-apply-box" id="promoApplyBox" style="display: none;">
+                <span id="promoApplyText">Kode Promo : -</span>
                 <i class="fa-solid fa-circle-check"></i>
             </div>
-            <div class="promo-link-row">
+            <div class="promo-link-row" id="promoLinkRow" onclick="openPromoModal()" style="cursor: pointer;">
                 <span>Cek Promo Lainnya</span>
                 <i class="fa-solid fa-arrow-right"></i>
             </div>
@@ -865,6 +833,13 @@ if ($q_reco) {
 
     <script>
         const CART_KEY = 'ekantin_cart';
+
+        // Promo database data
+        const activePromos = <?= json_encode($checkout_promos); ?>;
+        let appliedPromo = activePromos.length > 0 ? {
+            kode_promo: activePromos[0].kode_promo,
+            diskon_persen: parseInt(activePromos[0].diskon_persen)
+        } : null; // No promo pre-selected if none in database
 
         // ── Get cart from localStorage ──
         function getCart() {
@@ -976,6 +951,95 @@ if ($q_reco) {
             }
         }
 
+        // ── Custom Modern Confirmation Modal ──
+        function confirmRemoveItem(itemName, onConfirm, onCancel) {
+            let existingModal = document.getElementById('removeItemConfirmModal');
+            if (existingModal) existingModal.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'removeItemConfirmModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999999;
+                opacity: 0;
+                transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: #ffffff;
+                padding: 30px 24px;
+                border-radius: 24px;
+                width: 90%;
+                max-width: 360px;
+                text-align: center;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                transform: scale(0.9);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-sizing: border-box;
+            `;
+            
+            card.innerHTML = `
+                <div style="width: 56px; height: 56px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <svg style="width: 28px; height: 28px; stroke: #ef4444;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                </div>
+                <h3 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 750; color: #1e293b;">Hapus Item</h3>
+                <p style="margin: 0 0 24px; font-family: 'Poppins', sans-serif; font-size: 13.5px; color: #64748b; line-height: 1.5; text-align: center;">
+                    Apakah Anda yakin ingin menghapus <strong>${itemName}</strong> dari pesanan Anda?
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="cancelRemoveBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Batal</button>
+                    <button id="confirmRemoveBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: none; background: #ef4444; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">Hapus</button>
+                </div>
+            `;
+            
+            modal.appendChild(card);
+            document.body.appendChild(modal);
+            
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+            
+            function closeModal() {
+                modal.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => modal.remove(), 300);
+            }
+            
+            document.getElementById('cancelRemoveBtn').addEventListener('click', () => {
+                closeModal();
+                if (onCancel) onCancel();
+            });
+            
+            document.getElementById('confirmRemoveBtn').addEventListener('click', () => {
+                closeModal();
+                if (onConfirm) onConfirm();
+            });
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                    if (onCancel) onCancel();
+                }
+            });
+        }
+
         // ── Edit Quantity in Checkout Page ──
         function updateCheckoutQty(id, delta) {
             const cart = getCart();
@@ -990,11 +1054,20 @@ if ($q_reco) {
                 }
                 item.jumlah += delta;
                 if (item.jumlah <= 0) {
-                    if (confirm("Hapus " + item.nama_menu + " dari pesanan?")) {
-                        cart.splice(cart.indexOf(item), 1);
-                    } else {
-                        item.jumlah = 1;
-                    }
+                    // Revert temporarily to prevent invalid state while showing modal
+                    item.jumlah = 1;
+                    confirmRemoveItem(item.nama_menu, () => {
+                        const freshCart = getCart();
+                        const freshItemIndex = freshCart.findIndex(c => c.id_menu === id);
+                        if (freshItemIndex !== -1) {
+                            freshCart.splice(freshItemIndex, 1);
+                            saveCart(freshCart);
+                            renderCheckoutPage();
+                        }
+                    }, () => {
+                        renderCheckoutPage();
+                    });
+                    return;
                 }
             }
             saveCart(cart);
@@ -1009,9 +1082,23 @@ if ($q_reco) {
             const subtotal = selectedItems.reduce((sum, item) => sum + (item.harga * item.jumlah), 0);
             const biaya_admin = 500;
             
-            // Kode Promo KANTINJOSS25 diskon 25%
-            const diskon = Math.round(subtotal * 0.25);
-            const total = subtotal + biaya_admin - diskon;
+            let diskon = 0;
+            const promoBox = document.getElementById('promoApplyBox');
+            const promoText = document.getElementById('promoApplyText');
+
+            if (appliedPromo) {
+                diskon = Math.round(subtotal * (appliedPromo.diskon_persen / 100));
+                if (promoBox && promoText) {
+                    promoText.textContent = `Kode Promo : ${appliedPromo.kode_promo} (${appliedPromo.diskon_persen}%)`;
+                    promoBox.style.display = 'flex';
+                }
+            } else {
+                if (promoBox) {
+                    promoBox.style.display = 'none';
+                }
+            }
+
+            const total = Math.max(0, subtotal + biaya_admin - diskon);
             
             document.getElementById('summarySubtotal').textContent = 'Rp. ' + subtotal.toLocaleString('id-ID');
             document.getElementById('summaryAdmin').textContent = 'Rp. ' + biaya_admin.toLocaleString('id-ID');
@@ -1142,9 +1229,6 @@ if ($q_reco) {
         }
 
         function processOrder(cart) {
-            const shippingRadio = document.querySelector('input[name="delivery_type"]:checked');
-            const tipe_pengiriman = shippingRadio ? shippingRadio.value : 'di_ambil';
-            
             const btn = document.getElementById('btnSubmitOrder');
             btn.disabled = true;
             btn.textContent = "Sedang Memproses...";
@@ -1152,8 +1236,7 @@ if ($q_reco) {
             const formData = new FormData();
             formData.append('action', 'buat_pesanan');
             formData.append('cart_data', JSON.stringify(cart));
-            formData.append('tipe_pengiriman', tipe_pengiriman);
-            formData.append('kode_promo', 'KANTINJOSS25'); // Otomatis terpasang
+            formData.append('kode_promo', appliedPromo ? appliedPromo.kode_promo : '');
             
             fetch('checkout.php', {
                 method: 'POST',
@@ -1182,6 +1265,145 @@ if ($q_reco) {
                 btn.disabled = false;
                 btn.textContent = "Pesan Sekarang";
             });
+        }
+
+        // ── Promo Modal Helpers ──
+        function openPromoModal() {
+            let existingModal = document.getElementById('promoListModal');
+            if (existingModal) existingModal.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'promoListModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999999;
+                opacity: 0;
+                transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: #ffffff;
+                padding: 24px;
+                border-radius: 24px;
+                width: 90%;
+                max-width: 400px;
+                max-height: 85vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                transform: scale(0.9);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-sizing: border-box;
+            `;
+            
+            let promosHTML = '';
+            if (activePromos.length === 0) {
+                promosHTML = `
+                    <div style="text-align: center; padding: 30px 10px; color: #64748b;">
+                        <i class="fa-solid fa-ticket-simple" style="font-size: 36px; color: #cbd5e1; margin-bottom: 12px; display: block; margin: 0 auto 12px auto;"></i>
+                        <span style="font-size: 13.5px; font-weight: 500; font-family: 'Poppins', sans-serif;">Tidak ada promo aktif saat ini.</span>
+                    </div>
+                `;
+            } else {
+                activePromos.forEach(p => {
+                    const isApplied = appliedPromo && appliedPromo.kode_promo === p.kode_promo;
+                    promosHTML += renderPromoCardHTML(p, isApplied);
+                });
+            }
+            
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 750; color: #1e293b;">Pilih Promo</h3>
+                    <button id="closePromoModalBtn" style="background: none; border: none; font-size: 20px; color: #64748b; cursor: pointer; padding: 0 4px;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px;">
+                    ${promosHTML}
+                </div>
+                <button id="promoModalCloseBtn" style="width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Tutup</button>
+            `;
+            
+            modal.appendChild(card);
+            document.body.appendChild(modal);
+            
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+            
+            function closeModal() {
+                modal.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => modal.remove(), 300);
+            }
+            
+            document.getElementById('closePromoModalBtn').addEventListener('click', closeModal);
+            document.getElementById('promoModalCloseBtn').addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+        
+        function renderPromoCardHTML(p, isApplied) {
+            let scale = 1.0;
+            let bgX = 50;
+            let bgY = 50;
+            if (p.canvas_config) {
+                try {
+                    const conf = JSON.parse(p.canvas_config);
+                    scale = conf.scale ?? 1.0;
+                    bgX = conf.bgX ?? 50;
+                    bgY = conf.bgY ?? 50;
+                } catch(e){}
+            }
+            const imgPath = p.gambar === 'promo_banner.png' ? '../../assets/img/promo_banner.png' : `../../assets/img/banner/${p.gambar}`;
+            const inlineStyle = `width: 100%; height: 110px; object-fit: cover; object-position: ${bgX}% ${bgY}%; border-radius: 12px; ${scale > 1.0 ? `transform: scale(${scale}); transform-origin: center;` : ''}`;
+            
+            return `
+                <div style="border: 1.5px solid ${isApplied ? '#5cb85c' : '#e2e8f0'}; border-radius: 16px; padding: 12px; background: ${isApplied ? '#f0fdf4' : '#ffffff'}; transition: all 0.2s;">
+                    <div style="width: 100%; height: 110px; overflow: hidden; border-radius: 12px; margin-bottom: 12px; position: relative;">
+                        <img src="${imgPath}" style="${inlineStyle}" onerror="this.src='../../assets/img/promo_banner.png'; this.style.transform='none'; this.style.objectPosition='50% 50%';">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div style="text-align: left;">
+                            <span style="font-size: 11px; font-weight: 700; color: #8c8c8c; display: block; text-transform: uppercase; margin-bottom: 2px;">${p.nama_toko}</span>
+                            <span style="font-size: 13.5px; font-weight: 800; color: #1e293b; text-transform: uppercase; font-family: 'Poppins', sans-serif; letter-spacing: 0.5px;">${p.kode_promo}</span>
+                        </div>
+                        <span style="font-size: 15px; font-weight: 850; color: #5cb85c; font-family: 'Poppins', sans-serif;">Diskon ${p.diskon_persen}%</span>
+                    </div>
+                    <button onclick="applyPromoCode('${p.kode_promo}', ${p.diskon_persen})" ${isApplied ? 'disabled' : ''} style="width: 100%; padding: 10px; border-radius: 10px; border: none; background: ${isApplied ? '#cbd5e1' : '#5cb85c'}; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 12.5px; font-weight: 700; cursor: ${isApplied ? 'default' : 'pointer'}; transition: all 0.2s; box-shadow: ${isApplied ? 'none' : '0 4px 10px rgba(92, 184, 92, 0.2)'};">
+                        ${isApplied ? 'Sedang Digunakan' : 'Gunakan Promo'}
+                    </button>
+                </div>
+            `;
+        }
+        
+        function applyPromoCode(code, diskonPersen) {
+            appliedPromo = {
+                kode_promo: code,
+                diskon_persen: parseInt(diskonPersen)
+            };
+            updateCheckoutSummary();
+            
+            // Close modal
+            const modal = document.getElementById('promoListModal');
+            if (modal) {
+                modal.style.opacity = '0';
+                const card = modal.querySelector('div');
+                if (card) card.style.transform = 'scale(0.9)';
+                setTimeout(() => modal.remove(), 300);
+            }
+            
+            showToast('🎉 Promo berhasil dipasang!', 'success');
         }
 
         function showToast(message, type) {
