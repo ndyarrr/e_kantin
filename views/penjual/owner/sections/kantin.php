@@ -228,13 +228,13 @@ $isLocked = ($jumlahBannerAktif >= 2);
                         </div>
 
                         <div class="kantin-form-group" style="margin-top: 15px;">
-                            <label>Kode Promo</label>
-                            <input type="text" name="kode_promo" placeholder="Contoh: DISKONHEBAT, KANTINJOSS25" required <?= $isLocked ? 'disabled' : '' ?> style="font-size: 13px; font-weight: bold; text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
+                            <label>Kode Promo (Opsional)</label>
+                            <input type="text" name="kode_promo" placeholder="Contoh: DISKONHEBAT, KANTINJOSS25" <?= $isLocked ? 'disabled' : '' ?> style="font-size: 13px; font-weight: bold; text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
                         </div>
 
                         <div class="kantin-form-group" style="margin-top: 15px;">
-                            <label>Diskon (%)</label>
-                            <input type="number" name="diskon_persen" placeholder="Contoh: 25" min="1" max="100" required <?= $isLocked ? 'disabled' : '' ?> style="font-size: 13px;">
+                            <label>Diskon % (Opsional)</label>
+                            <input type="number" name="diskon_persen" placeholder="Contoh: 25" min="1" max="100" <?= $isLocked ? 'disabled' : '' ?> style="font-size: 13px;">
                         </div>
 
                         <div class="kantin-form-group" style="margin-top: 15px;">
