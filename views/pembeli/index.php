@@ -597,7 +597,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     showToast('Stok habis!', 'error');
                     return;
                 }
-                cart.push({ id_menu: id, nama_menu: nama, harga: harga, jumlah: 1, foto_menu: foto, nama_toko: toko, id_toko: idToko, selected: true, stok: stock });
+                cart.push({ id_menu: id, nama_menu: nama, harga: harga, jumlah: 1, foto_menu: foto, nama_toko: toko, id_toko: idToko, selected: true, catatan: '', stok: stock });
             }
             saveCart(cart);
             showToast(nama, 'success', { foto: foto, toko: toko });
@@ -731,31 +731,46 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 const isSelected = item.selected !== false;
 
                 html += `
-                    <div class="dropdown-item cart-item-row" style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                            <div class="cart-item-checkbox-wrap">
-                                <input type="checkbox" class="cart-item-checkbox" onchange="toggleCartItemSelection(${item.id_menu})" ${isSelected ? 'checked' : ''}>
+                    <div class="dropdown-item cart-item-row" style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                <div class="cart-item-checkbox-wrap">
+                                    <input type="checkbox" class="cart-item-checkbox" onchange="toggleCartItemSelection(${item.id_menu})" ${isSelected ? 'checked' : ''}>
+                                </div>
+                                <div style="width: 50px; height: 50px; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
+                                    ${imgHTML}
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nama_menu}</h4>
+                                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nama_toko}</p>
+                                    <div style="font-size: 13px; font-weight: 800; color: #5cb85c; margin-top: 4px;">Rp ${item.harga.toLocaleString('id-ID')}</div>
+                                </div>
                             </div>
-                            <div style="width: 50px; height: 50px; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
-                                ${imgHTML}
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nama_menu}</h4>
-                                <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nama_toko}</p>
-                                <div style="font-size: 13px; font-weight: 800; color: #5cb85c; margin-top: 4px;">Rp ${item.harga.toLocaleString('id-ID')}</div>
+                            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
+                                <div style="font-size: 14px; font-weight: 800; color: #1e293b;">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
+                                <div class="item-qty" style="display: inline-flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc;">
+                                    <button onclick="updateCartQty(${item.id_menu}, -1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">−</button>
+                                    <span style="font-size: 13px; font-weight: 700; color: #1e293b; min-width: 20px; text-align: center;">${item.jumlah}</span>
+                                    <button onclick="updateCartQty(${item.id_menu}, 1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">+</button>
+                                </div>
                             </div>
                         </div>
-                        <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
-                            <div style="font-size: 14px; font-weight: 800; color: #1e293b;">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
-                            <div class="item-qty" style="display: inline-flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc;">
-                                <button onclick="updateCartQty(${item.id_menu}, -1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">−</button>
-                                <span style="font-size: 13px; font-weight: 700; color: #1e293b; min-width: 20px; text-align: center;">${item.jumlah}</span>
-                                <button onclick="updateCartQty(${item.id_menu}, 1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">+</button>
-                            </div>
+                        <div style="display: flex; align-items: center; gap: 6px; padding-left: 28px; width: 100%; box-sizing: border-box;">
+                            <i class="fa-regular fa-comment-dots" style="color: #94a3b8; font-size: 12px;"></i>
+                            <input type="text" class="cart-item-note-input" value="${item.catatan || ''}" placeholder="Tambah catatan..." onchange="updateCartItemNote(${item.id_menu}, this.value)" style="flex: 1; border: 1px solid #f1f5f9; border-radius: 6px; padding: 4px 8px; font-size: 11px; color: #64748b; outline: none; background: #f8fafc; transition: all 0.2s;" onfocus="this.style.borderColor='#5cb85c'; this.style.background='#ffffff'" onblur="this.style.borderColor='#f1f5f9'; this.style.background='#f8fafc'">
                         </div>
                     </div>`;
             });
             body.innerHTML = html;
+        }
+
+        function updateCartItemNote(id, val) {
+            const cart = getCart();
+            const item = cart.find(c => c.id_menu === id);
+            if (item) {
+                item.catatan = val.trim();
+                saveCart(cart);
+            }
         }
 
         // ════════════════════════════════════════════

@@ -82,6 +82,25 @@ $tabs = [
     </div>
 </div>
 
+<!-- ══ SEARCH BAR ══ -->
+<form method="GET" action="" class="inbox-search-bar-form" id="formFilterInbox" style="margin-bottom: 20px;">
+    <input type="hidden" name="section" value="inbox">
+    <input type="hidden" name="status_filter" value="<?= htmlspecialchars($filterStatus) ?>">
+    
+    <div class="search-box" style="max-width: 100%; width: 100%; display: flex; align-items: center; background: #fff; padding: 12px 15px; border-radius: 10px; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.02); box-sizing: border-box;">
+        <i class="fa-solid fa-magnifying-glass" style="color: #9ca3af; margin-right: 10px; font-size: 14px;"></i>
+        <input type="text" name="inbox_search" placeholder="Cari nama pemesan..."
+            value="<?= htmlspecialchars($_GET['inbox_search'] ?? '') ?>"
+            style="border: none; outline: none; width: 100%; font-size: 14px; background: transparent;"
+            onchange="document.getElementById('formFilterInbox').submit()">
+        <?php if (!empty($_GET['inbox_search'])): ?>
+            <a href="?section=inbox&status_filter=<?= htmlspecialchars($filterStatus) ?>" style="color: #9ca3af; margin-left: 10px; text-decoration: none; display: flex; align-items: center;">
+                <i class="fa-solid fa-circle-xmark" style="font-size: 16px;"></i>
+            </a>
+        <?php endif; ?>
+    </div>
+</form>
+
 <!-- ══ TAB FILTER ══ -->
 <div class="inbox-tabs" id="inboxTabs">
     <?php foreach ($tabs as $key => $tab):
@@ -104,7 +123,13 @@ $tabs = [
         <div class="inbox-empty">
             <div class="inbox-empty-icon"><i class="fa-solid fa-inbox"></i></div>
             <p class="inbox-empty-title">Tidak ada pesanan</p>
-            <p class="inbox-empty-sub"><?= $filterStatus !== 'semua' ? 'Tidak ada pesanan dengan status ini' : 'Pesanan yang masuk akan muncul di sini' ?></p>
+            <p class="inbox-empty-sub">
+                <?php if (!empty($_GET['inbox_search'])): ?>
+                    Tidak ada pesanan dengan nama pemesan "<strong><?= htmlspecialchars($_GET['inbox_search']) ?></strong>"
+                <?php else: ?>
+                    <?= $filterStatus !== 'semua' ? 'Tidak ada pesanan dengan status ini' : 'Pesanan yang masuk akan muncul di sini' ?>
+                <?php endif; ?>
+            </p>
         </div>
     <?php else: ?>
         <?php foreach ($daftarPesanan as $ps):

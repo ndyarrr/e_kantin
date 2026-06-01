@@ -919,20 +919,18 @@ if ($q_toko_qris) {
                     imgHTML = `<div class="toast-img-fallback"><i class="fa-solid fa-utensils" style="color: #5cb85c; font-size:24px;"></i></div>`;
                 }
                 
-                const catatan = item.catatan || 'Tidak ada catatan';
-                
                 html += `
                     <div class="checkout-item-row" style="align-items: flex-start;">
                         <div class="checkout-item-info" style="justify-content: flex-start; gap: 4px;">
                             <div>
                                 <h4 class="checkout-item-title">${item.nama_menu}</h4>
                                 <div class="checkout-item-meta">Kantin : ${item.nama_toko} <span style="color:#eab308; font-weight:800; margin-left:8px;">(Stok: ${item.stok !== undefined ? item.stok : '?'})</span></div>
-                                <div class="checkout-item-meta">Catatan : <i>${catatan}</i></div>
                             </div>
                             <div class="checkout-item-price">Rp. ${(item.harga).toLocaleString('id-ID')}</div>
                             
-                            <div style="margin-top: 8px;">
-                                <button class="btn-edit-note" onclick="editItemNote(${item.id_menu})"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
+                            <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
+                                <i class="fa-regular fa-comment-dots" style="color: #64748b; font-size: 13px;"></i>
+                                <input type="text" class="checkout-note-input" value="${item.catatan || ''}" placeholder="Tambah catatan (cth: pedas, es sedikit)..." onchange="updateItemNote(${item.id_menu}, this.value)" style="flex: 1; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 6px 12px; font-size: 12.5px; color: #334155; outline: none; background: #f8fafc; transition: all 0.2s;" onfocus="this.style.borderColor='#5cb85c'; this.style.background='#ffffff'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'">
                             </div>
                         </div>
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0;">
@@ -954,15 +952,12 @@ if ($q_toko_qris) {
             updateCheckoutSummary();
         }
 
-        // ── Edit Notes ──
-        function editItemNote(id) {
+        // ── Update Notes ──
+        function updateItemNote(id, val) {
             const cart = getCart();
             const item = cart.find(c => c.id_menu === id);
-            if (!item) return;
-            
-            const newNote = prompt("Masukkan catatan untuk " + item.nama_menu + ":", item.catatan || "");
-            if (newNote !== null) {
-                item.catatan = newNote.trim();
+            if (item) {
+                item.catatan = val.trim();
                 saveCart(cart);
                 renderCheckoutPage();
             }
