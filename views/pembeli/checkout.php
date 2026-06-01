@@ -284,12 +284,12 @@ if ($q_checkout_promos) {
 
 // Ambil semua toko untuk cek QRIS
 $tokos_qris = [];
-$q_toko_qris = mysqli_query($conn, "SELECT id_toko, nama_toko, qris FROM toko");
+$q_toko_qris = mysqli_query($conn, "SELECT id_toko, nama_toko, qris_image FROM toko");
 if ($q_toko_qris) {
     while ($t_qris = mysqli_fetch_assoc($q_toko_qris)) {
         $tokos_qris[$t_qris['id_toko']] = [
             'nama_toko' => $t_qris['nama_toko'],
-            'qris' => $t_qris['qris']
+            'qris' => $t_qris['qris_image']
         ];
     }
 }

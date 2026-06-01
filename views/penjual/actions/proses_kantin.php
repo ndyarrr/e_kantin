@@ -54,10 +54,9 @@ if ($action === 'update_kantin_full') {
     $deskripsi_singkat = mysqli_real_escape_string($conn, $_POST['deskripsi_singkat'] ?? '');
     $deskripsi_panjang = mysqli_real_escape_string($conn, $_POST['deskripsi_panjang'] ?? '');
 
-    $qLama = mysqli_query($conn, "SELECT `foto_toko`, `qris` FROM `toko` WHERE `id_toko` = $idToko LIMIT 1");
+    $qLama = mysqli_query($conn, "SELECT `foto_toko` FROM `toko` WHERE `id_toko` = $idToko LIMIT 1");
     $dataLama = mysqli_fetch_assoc($qLama);
     $nama_foto_final = $dataLama['foto_toko'] ?? '';
-    $nama_qris_final = $dataLama['qris'] ?? '';
 
     $upload = tokoFotoProsesUpload($idToko, $_FILES['foto_toko'] ?? []);
     if ($upload['attempted']) {
@@ -71,54 +70,12 @@ if ($action === 'update_kantin_full') {
         }
     }
 
-    // QRIS Hapus Check
-    if (isset($_POST['hapus_qris']) && $_POST['hapus_qris'] == '1') {
-        if (!empty($nama_qris_final)) {
-            $path_qris_lama = __DIR__ . '/../../../assets/img/qris/' . $nama_qris_final;
-            if (file_exists($path_qris_lama)) {
-                @unlink($path_qris_lama);
-            }
-        }
-        $nama_qris_final = '';
-    }
-
-    // QRIS Upload Check
-    if (isset($_FILES['qris_toko']) && $_FILES['qris_toko']['error'] === UPLOAD_ERR_OK) {
-        $qrisTmpPath = $_FILES['qris_toko']['tmp_name'];
-        $qrisName = $_FILES['qris_toko']['name'];
-        $qrisExt = strtolower(pathinfo($qrisName, PATHINFO_EXTENSION));
-        $allowedQrisExts = ['jpg', 'jpeg', 'png', 'webp'];
-        $maxQrisSize = 2097152; // 2MB
-
-        if (in_array($qrisExt, $allowedQrisExts) && $_FILES['qris_toko']['size'] <= $maxQrisSize) {
-            if (!empty($nama_qris_final)) {
-                $path_qris_lama = __DIR__ . '/../../../assets/img/qris/' . $nama_qris_final;
-                if (file_exists($path_qris_lama)) {
-                    @unlink($path_qris_lama);
-                }
-            }
-
-            $uploadQrisDir = __DIR__ . '/../../../assets/img/qris/';
-            if (!is_dir($uploadQrisDir)) {
-                mkdir($uploadQrisDir, 0755, true);
-            }
-
-            $newQrisName = 'qris_' . $idToko . '_' . time() . '.' . $qrisExt; // add timestamp to avoid browser caching
-            if (move_uploaded_file($qrisTmpPath, $uploadQrisDir . $newQrisName)) {
-                $nama_qris_final = $newQrisName;
-            }
-        }
-    }
-
-    $qris_db_val = ($nama_qris_final === '') ? "NULL" : "'$nama_qris_final'";
-
     $queryUpdate = "UPDATE `toko` SET 
                     `nama_toko` = '$nama_toko', 
                     `status` = '$status_toko', 
                     `deskripsi` = '$deskripsi_singkat', 
                     `deskripsi_panjang` = '$deskripsi_panjang', 
-                    `foto_toko` = '$nama_foto_final',
-                    `qris` = $qris_db_val
+                    `foto_toko` = '$nama_foto_final'
                     WHERE `id_toko` = $idToko";
 
     if (mysqli_query($conn, $queryUpdate)) {

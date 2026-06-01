@@ -84,27 +84,7 @@ $isLocked = ($jumlahBannerAktif >= 2);
                     <textarea name="deskripsi_panjang" rows="4" placeholder="Tuliskan detail kantin Anda..."><?= htmlspecialchars($tokoData['deskripsi_panjang'] ?? '') ?></textarea>
                 </div>
 
-                <div class="profile-preview-wrapper" style="margin-top: 10px; border-top: 1px dashed #eaedf1; padding-top: 18px; display: flex; align-items: center; gap: 15px;">
-                    <div style="width: 64px; height: 64px; border-radius: 8px; background: #f8fafc; border: 1.5px solid #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
-                        <?php if (!empty($tokoData['qris'])): ?>
-                            <img src="../../../assets/img/qris/<?= htmlspecialchars($tokoData['qris']) ?>?v=<?= time() ?>" style="width: 100%; height: 100%; object-fit: contain;">
-                        <?php else: ?>
-                            <div style="font-size: 24px; color: #94a3b8;"><i class="fa-solid fa-qrcode"></i></div>
-                        <?php endif; ?>
-                    </div>
-                    <div>
-                        <label style="font-weight: bold; font-size: 13.5px; display: block; margin-bottom: 4px; color: #2c3e50;">QRIS Merchant (Opsional)</label>
-                        <input type="file" name="qris_toko" accept="image/jpeg, image/jpg, image/png, image/webp" style="font-size: 13px; display: block;">
-                        <small style="color: #64748b; display: block; margin-top: 4px; font-size: 11.5px;">Format: JPG, JPEG, PNG, WEBP (Max 2MB). Kosongkan jika tidak menggunakan QRIS.</small>
-                        <?php if (!empty($tokoData['qris'])): ?>
-                            <div style="margin-top: 6px;">
-                                <label style="font-size: 12px; color: #ef4444; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-                                    <input type="checkbox" name="hapus_qris" value="1" style="margin: 0; transform: scale(1.05);"> Hapus QRIS yang aktif
-                                </label>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
+
 
                 <button type="submit" class="pcard-btn"
                         style="width: 100%; padding: 12px; font-size: 15px; font-weight: bold; background: #3498db; color: #fff; border: none; border-radius: 6px; cursor: pointer;">
