@@ -43,6 +43,7 @@ $all_menus = [];
 $q_all_menu = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko, toko.id_toko, toko.status AS status_toko FROM menu 
                                       JOIN toko ON menu.id_toko = toko.id_toko 
                                       WHERE menu.tersedia = 1 AND menu.stok > 0 
+                                      AND menu.deleted_at IS NULL AND toko.deleted_at IS NULL
                                       ORDER BY menu.id_menu DESC");
 if ($q_all_menu) {
     while ($r = mysqli_fetch_assoc($q_all_menu))
@@ -54,6 +55,7 @@ $terlaris_menus = [];
 $q_terlaris = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko, toko.id_toko, toko.status AS status_toko FROM menu 
                                       JOIN toko ON menu.id_toko = toko.id_toko 
                                       WHERE menu.tersedia = 1 AND menu.stok > 0 
+                                      AND menu.deleted_at IS NULL AND toko.deleted_at IS NULL
                                       ORDER BY menu.terjual DESC, menu.id_menu DESC 
                                       LIMIT 6");
 if ($q_terlaris) {
