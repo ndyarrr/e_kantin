@@ -122,6 +122,7 @@ require __DIR__ . '/sections/inbox_data.php';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="<?= $base_path ?>/assets/css/penjual.css?v=<?= time() ?>">
+    <script src="<?= $base_path ?>/assets/js/banner-canvas.js?v=<?= time() ?>"></script>
 </head>
 
 <body>

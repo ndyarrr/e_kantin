@@ -1367,24 +1367,24 @@ if ($q_toko_qris) {
         }
         
         function renderPromoCardHTML(p, isApplied) {
-            let scale = 1.0;
-            let bgX = 50;
-            let bgY = 50;
+            let canvasData = '';
             if (p.canvas_config) {
                 try {
                     const conf = JSON.parse(p.canvas_config);
-                    scale = conf.scale ?? 1.0;
-                    bgX = conf.bgX ?? 50;
-                    bgY = conf.bgY ?? 50;
-                } catch(e){}
+                    canvasData = JSON.stringify({
+                        scale: conf.scale ?? 1.0,
+                        panNormX: conf.panNormX ?? ((conf.bgX ?? 50) - 50) / 50,
+                        panNormY: conf.panNormY ?? ((conf.bgY ?? 50) - 50) / 50,
+                        version: 2
+                    }).replace(/"/g, '&quot;');
+                } catch (e) {}
             }
             const imgPath = p.gambar === 'promo_banner.png' ? '../../assets/img/promo_banner.png' : `../../assets/img/banner/${p.gambar}`;
-            const inlineStyle = `width: 100%; height: 110px; object-fit: cover; object-position: ${bgX}% ${bgY}%; border-radius: 12px; ${scale > 1.0 ? `transform: scale(${scale}); transform-origin: center;` : ''}`;
             
             return `
                 <div style="border: 1.5px solid ${isApplied ? '#5cb85c' : '#e2e8f0'}; border-radius: 16px; padding: 12px; background: ${isApplied ? '#f0fdf4' : '#ffffff'}; transition: all 0.2s;">
-                    <div style="width: 100%; height: 110px; overflow: hidden; border-radius: 12px; margin-bottom: 12px; position: relative;">
-                        <img src="${imgPath}" style="${inlineStyle}" onerror="this.src='../../assets/img/promo_banner.png'; this.style.transform='none'; this.style.objectPosition='50% 50%';">
+                    <div class="banner-canvas-viewport" data-banner-canvas="${canvasData}" style="width: 100%; height: 110px; overflow: hidden; border-radius: 12px; margin-bottom: 12px; position: relative;">
+                        <img src="${imgPath}" alt="Banner promo" onerror="this.src='../../assets/img/promo_banner.png';">
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                         <div style="text-align: left;">

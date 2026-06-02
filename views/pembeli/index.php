@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/banner_canvas.php';
 $koneksi = $conn;
 
 // Ambil foto profil pembeli dari session
@@ -142,31 +143,11 @@ function resolveTokoImg($foto, $nama)
     return '';
 }
 
+require_once __DIR__ . '/../../config/banner_canvas.php';
+
 function promoBannerImgStyle(array $banner): string
 {
-    if (empty($banner['canvas_config'])) {
-        return '';
-    }
-
-    $conf = json_decode($banner['canvas_config'], true);
-    if (!is_array($conf)) {
-        return '';
-    }
-
-    $scale = $conf['scale'] ?? 1.0;
-    $bgX = 50;
-    $bgY = 50;
-    if (isset($conf['bgX'])) {
-        $bgX = $conf['bgX'];
-        $bgY = $conf['bgY'] ?? 50;
-    }
-
-    $style = "object-fit: cover; object-position: {$bgX}% {$bgY}%; transform-origin: center;";
-    if ($scale > 1.0) {
-        $style .= " transform: scale($scale);";
-    }
-
-    return 'style="' . $style . '"';
+    return '';
 }
 
 function renderPromoSlides(array $banners, int $activeIndex = 0): void
@@ -175,10 +156,9 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
         ?>
         <div class="promo-slide <?= $index === $activeIndex ? 'active' : '' ?>"
             data-toko-name="<?= htmlspecialchars($banner['nama_toko']) ?>">
-            <a href="toko.php?id=<?= (int) $banner['id_toko'] ?>" class="promo-slide-link">
+            <a href="toko.php?id=<?= (int) $banner['id_toko'] ?>" class="promo-slide-link banner-canvas-viewport" <?= bannerCanvasDataAttrs($banner['canvas_config'] ?? '') ?>>
                 <img src="../../assets/img/banner/<?= htmlspecialchars($banner['gambar']) ?>"
-                    alt="Banner <?= htmlspecialchars($banner['nama_toko']) ?>"
-                    <?= promoBannerImgStyle($banner) ?>>
+                    alt="Banner <?= htmlspecialchars($banner['nama_toko']) ?>">
             </a>
         </div>
         <?php
@@ -1887,6 +1867,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             }
         });
     </script>
+    <script src="../../assets/js/banner-canvas.js?v=<?= time(); ?>"></script>
 </body>
 
 </html>

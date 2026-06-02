@@ -2,6 +2,7 @@
 // views/penjual/owner/sections/kantin.php
 
 require_once __DIR__ . '/../../../../config/toko_foto.php';
+require_once __DIR__ . '/../../../../config/banner_canvas.php';
 
 // =========================================================================
 // 1. QUERY AMBIL DATA KANTIN/TOKO
@@ -177,8 +178,8 @@ $isLocked = ($jumlahBannerAktif >= 2);
                         
                         <!-- Hidden inputs for canvas values -->
                         <input type="hidden" name="banner_scale" id="bannerScale" value="1.0">
-                        <input type="hidden" name="banner_bgx" id="bannerBgX" value="50">
-                        <input type="hidden" name="banner_bgy" id="bannerBgY" value="50">
+                        <input type="hidden" name="banner_pan_norm_x" id="bannerPanNormX" value="0">
+                        <input type="hidden" name="banner_pan_norm_y" id="bannerPanNormY" value="0">
 
                         <div class="kantin-form-group">
                             <label>File Gambar Banner</label>
@@ -223,7 +224,7 @@ $isLocked = ($jumlahBannerAktif >= 2);
                             </div>
                             <div style="margin-top: 8px; font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 4px;">
                                 <i class="fa-solid fa-circle-info" style="color: #3498db;"></i>
-                                <span><strong>Tips:</strong> Klik & drag/geser langsung gambar di kanvas preview!</span>
+                                <span><strong>Tips:</strong> Drag untuk geser, scroll mouse / pinch untuk zoom — seperti Instagram.</span>
                             </div>
                         </div>
 
@@ -282,33 +283,15 @@ $isLocked = ($jumlahBannerAktif >= 2);
                                         $statusAsliActive = ($isMurniAktif && !$isExpired);
 
                                         // Dekode koordinat canvas jika ada
-                                        $scale = 1.0;
-                                        $bgX = 50;
-                                        $bgY = 50;
-                                        if (!empty($row['canvas_config'])) {
-                                            $conf = json_decode($row['canvas_config'], true);
-                                            if (is_array($conf)) {
-                                                $scale = $conf['scale'] ?? 1.0;
-                                                // Format baru: bgX/bgY (0-100)
-                                                if (isset($conf['bgX'])) {
-                                                    $bgX = $conf['bgX'];
-                                                    $bgY = $conf['bgY'] ?? 50;
-                                                } else {
-                                                    // Kompatibilitas format lama (x/y = -100 sampai 100)
-                                                    $bgX = 50; // abaikan posisi lama, gunakan tengah
-                                                    $bgY = 50;
-                                                }
-                                            }
-                                        }
-                                        $inlineStyle = "object-fit: cover; object-position: {$bgX}% {$bgY}%;" . ($scale > 1.0 ? " transform: scale($scale); transform-origin: center;" : "");
+                                        $bannerCanvasData = bannerCanvasDataAttrs($row['canvas_config'] ?? '');
                                     ?>
                                         <tr>
                                             <td>
-                                                <div class="thumbnail-canvas-container">
+                                                <div class="thumbnail-canvas-container banner-canvas-viewport" <?= $bannerCanvasData ?>>
                                                     <img src="../../../assets/img/banner/<?= htmlspecialchars($row['gambar']) ?>?v=<?= time() ?>" 
                                                          class="banner-thumbnail"
-                                                         style="<?= $inlineStyle ?>"
-                                                         onerror="this.src='../../../assets/img/promo_banner.png'; this.style.objectPosition='50% 50%'; this.style.transform='none';">
+                                                         alt="Banner"
+                                                         onerror="this.src='../../../assets/img/promo_banner.png';">
                                                 </div>
                                             </td>
                                             <td>
@@ -387,167 +370,230 @@ document.addEventListener('DOMContentLoaded', function() {
     const yValText = document.getElementById('yValText');
     
     const bannerScale = document.getElementById('bannerScale');
-    const bannerBgX = document.getElementById('bannerBgX');
-    const bannerBgY = document.getElementById('bannerBgY');
-    
+    const bannerPanNormX = document.getElementById('bannerPanNormX');
+    const bannerPanNormY = document.getElementById('bannerPanNormY');
+
+    let scale = 1.0;
+    let panNormX = 0;
+    let panNormY = 0;
+    let imgReady = false;
+    let isDragging = false;
+    let startMouseX = 0;
+    let startMouseY = 0;
+    let startPanX = 0;
+    let startPanY = 0;
+
+    function panLabel(norm, axis) {
+        if (Math.abs(norm) < 0.03) return 'Tengah';
+        const pct = Math.round(Math.abs(norm) * 100);
+        if (axis === 'X') return norm < 0 ? pct + '% ke kiri' : pct + '% ke kanan';
+        return norm < 0 ? pct + '% ke atas' : pct + '% ke bawah';
+    }
+
+    function getMetrics() {
+        if (!imgReady || typeof BannerCanvas === 'undefined') return null;
+        return BannerCanvas.getMetrics(canvasPreview, canvasPreviewImg, scale);
+    }
+
+    function syncHiddenFields() {
+        const cfg = BannerCanvas.buildSaveConfig(scale, panNormX, panNormY);
+        bannerScale.value = cfg.scale;
+        bannerPanNormX.value = cfg.panNormX;
+        bannerPanNormY.value = cfg.panNormY;
+    }
+
+    function updateControlsUI() {
+        const m = getMetrics();
+        scaleValText.textContent = scale.toFixed(2) + 'x';
+
+        if (!m) return;
+
+        const canPanX = m.maxPanX > 0.5;
+        const canPanY = m.maxPanY > 0.5;
+
+        sliderX.disabled = !canPanX;
+        sliderY.disabled = !canPanY;
+        xValText.textContent = canPanX ? panLabel(panNormX, 'X') : 'Tidak tersedia';
+        yValText.textContent = canPanY ? panLabel(panNormY, 'Y') : 'Tidak tersedia';
+        sliderX.value = Math.round(panNormX * 50 + 50);
+        sliderY.value = Math.round(panNormY * 50 + 50);
+        syncHiddenFields();
+    }
+
+    function refreshCanvas() {
+        if (!imgReady || typeof BannerCanvas === 'undefined') return;
+        BannerCanvas.apply(canvasPreview, canvasPreviewImg, BannerCanvas.buildSaveConfig(scale, panNormX, panNormY));
+        updateControlsUI();
+    }
+
+    function setScale(newScale) {
+        const m = getMetrics();
+        if (!m) {
+            scale = newScale;
+            refreshCanvas();
+            return;
+        }
+
+        const { panX, panY } = BannerCanvas.normToPan(m, panNormX, panNormY);
+        scale = BannerCanvas.clamp(newScale, 1, parseFloat(sliderScale.max));
+
+        const m2 = BannerCanvas.getMetrics(canvasPreview, canvasPreviewImg, scale);
+        if (m2) {
+            const clampedPanX = BannerCanvas.clamp(panX, -m2.maxPanX, m2.maxPanX);
+            const clampedPanY = BannerCanvas.clamp(panY, -m2.maxPanY, m2.maxPanY);
+            const norm = BannerCanvas.panToNorm(m2, clampedPanX, clampedPanY);
+            panNormX = norm.panNormX;
+            panNormY = norm.panNormY;
+        }
+
+        sliderScale.value = scale;
+        refreshCanvas();
+    }
+
+    function resetCanvasParams() {
+        scale = 1.0;
+        panNormX = 0;
+        panNormY = 0;
+
+        if (typeof BannerCanvas !== 'undefined' && imgReady) {
+            const maxZoom = BannerCanvas.getMaxZoom(canvasPreview, canvasPreviewImg);
+            sliderScale.min = 1;
+            sliderScale.max = maxZoom.toFixed(2);
+            sliderScale.step = 0.05;
+        } else {
+            sliderScale.min = 1;
+            sliderScale.max = 3;
+        }
+
+        sliderScale.value = 1;
+        sliderX.value = 50;
+        sliderY.value = 50;
+        refreshCanvas();
+    }
+
     if (gambarBannerInput) {
         gambarBannerInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    canvasPreviewImg.src = evt.target.result;
+            if (!file) return;
+
+            imgReady = false;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                canvasPreviewImg.onload = function() {
+                    imgReady = true;
                     canvasPreviewImg.style.display = 'block';
                     canvasPlaceholder.style.display = 'none';
                     canvasControls.style.display = 'block';
                     resetCanvasParams();
                 };
-                reader.readAsDataURL(file);
-            }
+                canvasPreviewImg.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
         });
     }
-    
-    // bgX & bgY = nilai object-position (0-100, 50 = tengah/center)
-    let scale = 1.0;
-    let bgX = 50;
-    let bgY = 50;
-    
-    function posLabel(val) {
-        if (val === 50) return 'Tengah';
-        if (val < 50) return Math.round((50 - val) * 2) + '% ke kiri/atas';
-        return Math.round((val - 50) * 2) + '% ke kanan/bawah';
-    }
-    
-    function resetCanvasParams() {
-        scale = 1.0;
-        bgX = 50;
-        bgY = 50;
-        sliderScale.value = 1.0;
-        sliderX.value = 50;
-        sliderY.value = 50;
-        updateCanvasTransforms();
-    }
-    
-    function updateCanvasTransforms() {
-        // object-position memindahkan "jendela crop" di dalam gambar
-        // Tidak pernah menampilkan celah karena gambar sudah di-cover terlebih dahulu
-        canvasPreviewImg.style.objectPosition = `${bgX}% ${bgY}%`;
-        // Scale hanya memperbesar gambar dari tengah, object-position tetap aktif
-        canvasPreviewImg.style.transform = scale > 1.0 ? `scale(${scale})` : '';
-        canvasPreviewImg.style.transformOrigin = 'center';
-        
-        scaleValText.textContent = scale.toFixed(2) + 'x';
-        xValText.textContent = posLabel(bgX);
-        yValText.textContent = posLabel(bgY);
-        
-        bannerScale.value = scale;
-        bannerBgX.value = bgX;
-        bannerBgY.value = bgY;
-    }
-    
+
     if (sliderScale) {
         sliderScale.addEventListener('input', function() {
-            scale = parseFloat(this.value);
-            updateCanvasTransforms();
+            setScale(parseFloat(this.value));
         });
     }
-    
+
     if (sliderX) {
         sliderX.addEventListener('input', function() {
-            bgX = parseInt(this.value);
-            updateCanvasTransforms();
+            panNormX = BannerCanvas.clamp((parseInt(this.value, 10) - 50) / 50, -1, 1);
+            refreshCanvas();
         });
     }
-    
+
     if (sliderY) {
         sliderY.addEventListener('input', function() {
-            bgY = parseInt(this.value);
-            updateCanvasTransforms();
+            panNormY = BannerCanvas.clamp((parseInt(this.value, 10) - 50) / 50, -1, 1);
+            refreshCanvas();
         });
     }
-    
-    // Panning drag — drag ke kanan = geser konten ke kanan (bgX naik)
-    let isDragging = false;
-    let startMouseX = 0;
-    let startMouseY = 0;
-    let startBgX = 50;
-    let startBgY = 50;
-    
+
     if (canvasPreview) {
-        canvasPreview.style.cursor = 'move';
-        
+        canvasPreview.style.cursor = 'grab';
+        canvasPreview.style.touchAction = 'none';
+
         canvasPreview.addEventListener('mousedown', function(e) {
-            if (!canvasPreviewImg.src || canvasPreviewImg.style.display === 'none') return;
+            if (!imgReady) return;
+            const m = getMetrics();
+            if (!m) return;
             e.preventDefault();
             isDragging = true;
             startMouseX = e.clientX;
             startMouseY = e.clientY;
-            startBgX = bgX;
-            startBgY = bgY;
+            const pan = BannerCanvas.normToPan(m, panNormX, panNormY);
+            startPanX = pan.panX;
+            startPanY = pan.panY;
             canvasPreview.style.cursor = 'grabbing';
         });
-        
+
+        canvasPreview.addEventListener('wheel', function(e) {
+            if (!imgReady) return;
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.08 : 0.08;
+            setScale(scale + delta);
+        }, { passive: false });
+
         window.addEventListener('mousemove', function(e) {
             if (!isDragging) return;
-            const canvasW = canvasPreview.offsetWidth || 300;
-            const canvasH = canvasPreview.offsetHeight || 100;
-            
+            const m = getMetrics();
+            if (!m) return;
+
             const dx = e.clientX - startMouseX;
             const dy = e.clientY - startMouseY;
-            
-            // Sensitivitas: bergeser 1 piksel = berubah (100 / canvasW) %, disesuaikan skala
-            const sensitivityX = 100 / (canvasW * scale);
-            const sensitivityY = 100 / (canvasH * scale);
-            
-            // Drag ke kanan → gambar bergeser ke kanan (bgX berkurang karena kita geser jendela ke kiri)
-            bgX = Math.max(0, Math.min(100, Math.round(startBgX - dx * sensitivityX)));
-            bgY = Math.max(0, Math.min(100, Math.round(startBgY - dy * sensitivityY)));
-            
-            sliderX.value = bgX;
-            sliderY.value = bgY;
-            updateCanvasTransforms();
+            const newPanX = BannerCanvas.clamp(startPanX + dx, -m.maxPanX, m.maxPanX);
+            const newPanY = BannerCanvas.clamp(startPanY + dy, -m.maxPanY, m.maxPanY);
+            const norm = BannerCanvas.panToNorm(m, newPanX, newPanY);
+            panNormX = norm.panNormX;
+            panNormY = norm.panNormY;
+            refreshCanvas();
         });
-        
+
         window.addEventListener('mouseup', function() {
-            if (isDragging) {
-                isDragging = false;
-                canvasPreview.style.cursor = 'move';
-            }
+            if (!isDragging) return;
+            isDragging = false;
+            canvasPreview.style.cursor = 'grab';
         });
-        
-        // Touch panning
+
         canvasPreview.addEventListener('touchstart', function(e) {
-            if (!canvasPreviewImg.src || canvasPreviewImg.style.display === 'none') return;
+            if (!imgReady) return;
+            const m = getMetrics();
+            if (!m) return;
             isDragging = true;
             startMouseX = e.touches[0].clientX;
             startMouseY = e.touches[0].clientY;
-            startBgX = bgX;
-            startBgY = bgY;
+            const pan = BannerCanvas.normToPan(m, panNormX, panNormY);
+            startPanX = pan.panX;
+            startPanY = pan.panY;
         }, { passive: true });
-        
+
         window.addEventListener('touchmove', function(e) {
             if (!isDragging) return;
-            const canvasW = canvasPreview.offsetWidth || 300;
-            const canvasH = canvasPreview.offsetHeight || 100;
-            
+            const m = getMetrics();
+            if (!m) return;
+
             const dx = e.touches[0].clientX - startMouseX;
             const dy = e.touches[0].clientY - startMouseY;
-            
-            const sensitivityX = 100 / (canvasW * scale);
-            const sensitivityY = 100 / (canvasH * scale);
-            
-            bgX = Math.max(0, Math.min(100, Math.round(startBgX - dx * sensitivityX)));
-            bgY = Math.max(0, Math.min(100, Math.round(startBgY - dy * sensitivityY)));
-            
-            sliderX.value = bgX;
-            sliderY.value = bgY;
-            updateCanvasTransforms();
+            const newPanX = BannerCanvas.clamp(startPanX + dx, -m.maxPanX, m.maxPanX);
+            const newPanY = BannerCanvas.clamp(startPanY + dy, -m.maxPanY, m.maxPanY);
+            const norm = BannerCanvas.panToNorm(m, newPanX, newPanY);
+            panNormX = norm.panNormX;
+            panNormY = norm.panNormY;
+            refreshCanvas();
         }, { passive: true });
-        
+
         window.addEventListener('touchend', function() {
             isDragging = false;
         });
     }
+
+    window.addEventListener('resize', function() {
+        refreshCanvas();
+        BannerCanvas.initAll(canvasPreview ? canvasPreview.closest('#panelDaftarKantin') : document);
+    });
 
     // -------------------------------------------------------------
     // 2. LIVE COUNTDOWN TIMERS LOGIC
