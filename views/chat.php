@@ -101,35 +101,38 @@ $role_label = match (true) {
 
 
 <!-- Fullscreen Image Viewer (Chat) -->
-<div id="chatFullscreenViewer" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99999999;flex-direction:column;align-items:center;justify-content:center;padding:0;box-sizing:border-box;">
-    <button onclick="tutupChatFullscreen()" style="position:absolute;top:16px;left:16px;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);color:#ffffff;font-size:13px;font-weight:700;padding:8px 16px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:'Poppins',sans-serif;z-index:10;">
+<div id="chatFullscreenViewer"
+    style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99999999;flex-direction:column;align-items:center;justify-content:center;padding:0;box-sizing:border-box;">
+    <button onclick="tutupChatFullscreen()"
+        style="position:absolute;top:16px;left:16px;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);color:#ffffff;font-size:13px;font-weight:700;padding:8px 16px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:'Poppins',sans-serif;z-index:10;">
         <i class="fa-solid fa-arrow-left" style="font-size:12px;"></i> Kembali
     </button>
-    <img id="chatFullscreenImg" src="" alt="Gambar Fullscreen" style="max-width:95%;max-height:90vh;object-fit:contain;border-radius:8px;">
+    <img id="chatFullscreenImg" src="" alt="Gambar Fullscreen"
+        style="max-width:95%;max-height:90vh;object-fit:contain;border-radius:8px;">
 </div>
 
 <script>
-function bukaChatFullscreen(src) {
-    document.getElementById('chatFullscreenImg').src = src;
-    document.getElementById('chatFullscreenViewer').style.display = 'flex';
-}
-function tutupChatFullscreen() {
-    document.getElementById('chatFullscreenViewer').style.display = 'none';
-}
-document.getElementById('chatFullscreenViewer').addEventListener('click', function(e) {
-    if (e.target === this) tutupChatFullscreen();
-});
-
-// Intercept clicks on bukti images inside chat bubbles
-document.addEventListener('click', function(e) {
-    const link = e.target.closest('a[href*="bukti_bayar"]');
-    if (link) {
-        e.preventDefault();
-        const img = link.querySelector('img') || link;
-        const src = img.src || link.href;
-        bukaChatFullscreen(src);
+    function bukaChatFullscreen(src) {
+        document.getElementById('chatFullscreenImg').src = src;
+        document.getElementById('chatFullscreenViewer').style.display = 'flex';
     }
-});
+    function tutupChatFullscreen() {
+        document.getElementById('chatFullscreenViewer').style.display = 'none';
+    }
+    document.getElementById('chatFullscreenViewer').addEventListener('click', function (e) {
+        if (e.target === this) tutupChatFullscreen();
+    });
+
+    // Intercept clicks on bukti images inside chat bubbles
+    document.addEventListener('click', function (e) {
+        const link = e.target.closest('a[href*="bukti_bayar"]');
+        if (link) {
+            e.preventDefault();
+            const img = link.querySelector('img') || link;
+            const src = img.src || link.href;
+            bukaChatFullscreen(src);
+        }
+    });
 </script>
 
 <script>
@@ -292,7 +295,7 @@ document.addEventListener('click', function(e) {
         loadChat();
         intervalPollingChat = setInterval(loadChat, 2000);
         muatDaftarKontak('');
-        
+
         if (typeof checkUnreadChats === 'function') checkUnreadChats();
         if (typeof updateChatUnreadBadge === 'function') updateChatUnreadBadge();
     }
@@ -300,6 +303,34 @@ document.addEventListener('click', function(e) {
     /* ══════════════════════════════════════════════
        LOAD PESAN (POLLING)
     ══════════════════════════════════════════════ */
+
+    function formatWaktuChat(waktuStr) {
+        if (!waktuStr) return '';
+        const tgl = new Date(waktuStr.replace(' ', 'T'));
+        if (isNaN(tgl)) return waktuStr;
+
+        const sekarang = new Date();
+        const hariIni = new Date(sekarang.getFullYear(), sekarang.getMonth(), sekarang.getDate());
+        const kemarin = new Date(hariIni);
+        kemarin.setDate(kemarin.getDate() - 1);
+
+        const tglOnly = new Date(tgl.getFullYear(), tgl.getMonth(), tgl.getDate());
+
+        const jam = tgl.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+        if (tglOnly.getTime() === hariIni.getTime()) {
+            return `Hari ini ${jam}`;
+        } else if (tglOnly.getTime() === kemarin.getTime()) {
+            return `Kemarin ${jam}`;
+        } else {
+            const opsi = { day: '2-digit', month: 'short' };
+            // Tambah tahun kalau beda tahun
+            if (tgl.getFullYear() !== sekarang.getFullYear()) opsi.year = 'numeric';
+            const tglFormat = tgl.toLocaleDateString('id-ID', opsi);
+            return `${tglFormat} ${jam}`;
+        }
+    }
+
     function loadChat() {
         if (!ID_LAWAN_AKTIF) return;
 
@@ -356,7 +387,7 @@ document.addEventListener('click', function(e) {
 
                         bubble.innerHTML = `
                         ${isiPesan}
-                        <div class="chat-time">${msg.jam}</div>
+                        <div class="chat-time">${formatWaktuChat(msg.jam)}</div>
                         ${infoStaf}`;
 
                         wrapper.appendChild(bubble);
@@ -389,7 +420,7 @@ document.addEventListener('click', function(e) {
         formData.append('isi_pesan', teks);
         input.value = '';
 
-        fetch(`${ BASE_URL_CHAT }backend/kirim_chat.php`, { method: 'POST', body: formData })
+        fetch(`${BASE_URL_CHAT}backend/kirim_chat.php`, { method: 'POST', body: formData })
             .then(res => res.json())
             .then(res => { if (res.status === 'success') loadChat(); })
             .catch(err => console.error("Error kirim:", err));
@@ -444,7 +475,7 @@ document.addEventListener('click', function(e) {
         const formData = new FormData();
         formData.append('id_pesan', idYangDihapus);
 
-        fetch(`${ BASE_URL_CHAT }backend/hapus_chat.php`, { method: 'POST', body: formData })
+        fetch(`${BASE_URL_CHAT}backend/hapus_chat.php`, { method: 'POST', body: formData })
             .then(res => res.json())
             .then(res => {
                 tutupModalHapus(); // aman di-null-kan sekarang
