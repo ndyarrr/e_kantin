@@ -317,5 +317,30 @@ if ($action === 'hapus_qris_kantin') {
     exit;
 }
 
+// ════════════════════════════════════════════════════════════
+// 6. HAPUS FOTO KANTIN
+// ════════════════════════════════════════════════════════════
+if ($action === 'hapus_foto_kantin') {
+    // Ambil info foto saat ini
+    $q_toko = mysqli_query($conn, "SELECT foto_toko FROM toko WHERE id_toko = $idToko LIMIT 1");
+    if ($q_toko && $r_toko = mysqli_fetch_assoc($q_toko)) {
+        $foto_toko = $r_toko['foto_toko'];
+        if (!empty($foto_toko)) {
+            tokoFotoHapusLama($idToko, $foto_toko);
+        }
+    }
+
+    $queryUpdate = "UPDATE `toko` SET `foto_toko` = NULL WHERE `id_toko` = $idToko";
+    if (mysqli_query($conn, $queryUpdate)) {
+        catatLog($conn, 'Owner', 'Foto profil kantin ' . $nama_toko . ' telah dihapus');
+        $_SESSION['feedback'] = ['type' => 'success', 'msg' => 'Foto profil kantin berhasil dihapus!'];
+    } else {
+        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => 'Gagal menghapus foto profil dari database: ' . mysqli_error($conn)];
+    }
+
+    header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin&t=" . time());
+    exit;
+}
+
 header("Location: " . $base_url . "/views/penjual/owner/index.php?section=kantin");
 exit;

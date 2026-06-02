@@ -398,7 +398,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 'nama_toko' => $t['nama_toko'],
                 'deskripsi' => $t['deskripsi'] ?? '',
                 'status' => strtolower($t['status'] ?? 'tutup'),
-                'foto_toko' => resolveTokoImg($t['foto_toko'] ?? '', $t['nama_toko']),
+                'foto_toko' => resolveTokoImg($t['foto_toko'] ?? ''),
             ];
         }, $all_tokos)); ?>;
 

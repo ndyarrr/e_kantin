@@ -212,7 +212,7 @@
                 $status_kelas = $is_buka ? 'online' : 'offline';
                 $status_teks = $is_buka ? 'Buka' : 'Tutup';
                 $btn_disabled = !$is_buka ? 'style="background-color:#94a3b8;pointer-events:none;box-shadow:none"' : '';
-                $toko_img = resolveTokoImg($toko['foto_toko'] ?? '', $toko['nama_toko']);
+                $toko_img = resolveTokoImg($toko['foto_toko'] ?? '');
                 ?>
                 <div class="kantin-card" data-nama="<?= strtolower($toko['nama_toko']); ?>">
                     <?php if (!empty($toko_img)): ?>

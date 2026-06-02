@@ -42,6 +42,12 @@ $isLocked = ($jumlahBannerAktif >= 2);
             <h3 style="margin: 0 0 15px 0; font-size: 18px;"><i class="fa-solid fa-store"></i> Edit Profil & Informasi Kantin</h3>
             <div class="pcard-divider" style="margin-bottom: 20px;"></div>
 
+            <!-- Form tersembunyi untuk hapus foto kantin -->
+            <form id="form-hapus-foto" action="index.php?section=kantin" method="POST" style="display: none;">
+                <input type="hidden" name="_current_section" value="kantin">
+                <input type="hidden" name="action" value="hapus_foto_kantin">
+            </form>
+
             <form action="index.php?section=kantin" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 18px;">
                 <input type="hidden" name="_current_section" value="kantin">
                 <input type="hidden" name="action" value="update_kantin_full">
@@ -58,6 +64,11 @@ $isLocked = ($jumlahBannerAktif >= 2);
                         <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px;">Foto Profil Kantin</label>
                         <input type="file" name="foto_toko" accept="image/jpeg, image/jpg, image/png, image/webp" style="font-size: 13px;">
                         <small style="color: #666; display: block; margin-top: 3px;">Format: JPG, JPEG, PNG, WEBP (Max 2MB)</small>
+                        <?php if (!empty($tokoData['foto_toko'])): ?>
+                            <button type="button" onclick="if(confirm('Yakin ingin menghapus foto profil kantin ini?')) document.getElementById('form-hapus-foto').submit();" class="btn-delete-banner" style="margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;">
+                                <i class="fa-solid fa-trash-can"></i> Hapus Foto
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
 

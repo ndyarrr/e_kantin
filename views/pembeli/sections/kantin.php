@@ -14,7 +14,7 @@
                 <!-- Looping daftar kantin -->
                 <?php foreach ($all_tokos as $t): ?>
                     <?php
-                        $toko_img = resolveTokoImg($t['foto_toko'] ?? '', $t['nama_toko']);
+                        $toko_img = resolveTokoImg($t['foto_toko'] ?? '');
                         $is_buka = ($t['status'] === 'buka');
                     ?>
                     <div class="kantin-card" data-nama="<?= strtolower($t['nama_toko']) ?>">
