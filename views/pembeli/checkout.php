@@ -848,6 +848,7 @@ if ($q_toko_qris) {
     <!-- Toast container -->
     <div class="toast-container" id="toastContainer"></div>
 
+    <script src="../../assets/js/banner-canvas.js?v=<?= time(); ?>"></script>
     <script>
         const CART_KEY = 'ekantin_cart';
 
@@ -1347,6 +1348,10 @@ if ($q_toko_qris) {
             
             modal.appendChild(card);
             document.body.appendChild(modal);
+            
+            if (typeof BannerCanvas !== 'undefined') {
+                BannerCanvas.initAll(modal);
+            }
             
             setTimeout(() => {
                 modal.style.opacity = '1';

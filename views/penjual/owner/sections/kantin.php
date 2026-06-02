@@ -291,7 +291,7 @@ $isLocked = ($jumlahBannerAktif >= 2);
                                                     <img src="../../../assets/img/banner/<?= htmlspecialchars($row['gambar']) ?>?v=<?= time() ?>" 
                                                          class="banner-thumbnail"
                                                          alt="Banner"
-                                                         onerror="this.src='../../../assets/img/promo_banner.png';">
+                                                         onerror="this.onerror=null; this.src='../../../assets/img/promo_banner.png';">
                                                 </div>
                                             </td>
                                             <td>
