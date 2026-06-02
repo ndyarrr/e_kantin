@@ -512,7 +512,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
         });
 
         // ════════════════════════════════════════════
-        //  CART (localStorage) - VERSI DRAWER FULLSCREEN
+        //  CART (Database Sync + localStorage Cache) - VERSI DRAWER FULLSCREEN
         // ════════════════════════════════════════════
         function getCart() {
             try { return JSON.parse(localStorage.getItem('ekantin_cart') || '[]'); }
@@ -525,6 +525,33 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             if (document.getElementById('cartDrawer').classList.contains('show')) {
                 renderCartDrawer();
             }
+            
+            // Sinkronisasi asinkron ke database
+            fetch('actions/keranjang.php?action=sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cart)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) console.error('Gagal sinkronisasi keranjang ke database:', data.error);
+            })
+            .catch(err => console.error('Koneksi sinkronisasi gagal:', err));
+        }
+
+        function fetchDBCart() {
+            fetch('actions/keranjang.php?action=list')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && data.cart) {
+                    localStorage.setItem('ekantin_cart', JSON.stringify(data.cart));
+                    updateBadges();
+                    if (document.getElementById('cartDrawer') && document.getElementById('cartDrawer').classList.contains('show')) {
+                        renderCartDrawer();
+                    }
+                }
+            })
+            .catch(err => console.error('Gagal mengambil keranjang dari database:', err));
         }
 
         function updateBadges() {
@@ -814,7 +841,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
         }
 
         // Helper function to render a beautiful category-specific placeholder menu card
-        function renderMenuImageHTML(foto_menu, kategori, nama_menu, id_menu = null) {
+        function renderMenuImageHTML(foto_menu, kategori, nama_menu, id_menu = null, stok = null) {
             const kat = (kategori || 'makanan').toLowerCase();
             let img_src = '';
             if (foto_menu) {
@@ -835,6 +862,18 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 heartHTML = `<button class="btn-favorite-toko" data-fav-id="${id_menu}" onclick="toggleFavorite(${id_menu}); event.stopPropagation();"><i class="fa-regular fa-heart"></i></button>`;
             }
 
+            let stockHTML = '';
+            if (stok !== null) {
+                const stockVal = Number(stok);
+                if (stockVal <= 0) {
+                    stockHTML = `<span class="menu-item-stock out">Habis</span>`;
+                } else if (stockVal <= 5) {
+                    stockHTML = `<span class="menu-item-stock low">Sisa ${stockVal}</span>`;
+                } else {
+                    stockHTML = `<span class="menu-item-stock">Stok ${stockVal}</span>`;
+                }
+            }
+
             if (img_src) {
                 return `
                 <div class="menu-card-full-img-wrap">
@@ -843,6 +882,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                         ${svgContent}
                     </div>
                     ${heartHTML}
+                    ${stockHTML}
                 </div>`;
             } else {
                 return `
@@ -851,34 +891,61 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                         ${svgContent}
                     </div>
                     ${heartHTML}
+                    ${stockHTML}
                 </div>`;
             }
+        }
+
+        let activeFavoritKategori = 'semua';
+
+        function filterFavoritKategori(kategori, btnEl) {
+            activeFavoritKategori = kategori;
+            
+            // Perbarui kelas active pada tab tombol filter favorit
+            const tabs = document.querySelectorAll('#favoritFilterTabs .filter-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            
+            renderFavorites();
         }
 
         function renderFavorites() {
             const favs = getFavorites();
             const grid = document.getElementById('favoritGrid');
             const empty = document.getElementById('favoritEmpty');
+            const filterTabs = document.getElementById('favoritFilterTabs');
+            const katEmpty = document.getElementById('favoritKategoriEmpty');
 
             if (favs.length === 0) {
                 grid.innerHTML = '';
+                if (filterTabs) filterTabs.style.display = 'none';
+                if (katEmpty) katEmpty.style.display = 'none';
                 empty.style.display = 'block';
                 return;
             }
             empty.style.display = 'none';
+            if (filterTabs) filterTabs.style.display = 'flex';
 
-            const favMenus = ALL_MENUS.filter(m => favs.includes(Number(m.id_menu)));
-            if (favMenus.length === 0) {
-                grid.innerHTML = '';
-                empty.style.display = 'block';
-                return;
+            let favMenus = ALL_MENUS.filter(m => favs.includes(Number(m.id_menu)));
+            
+            // Filter berdasarkan kategori yang dipilih
+            if (activeFavoritKategori !== 'semua') {
+                favMenus = favMenus.filter(m => m.kategori && m.kategori.toLowerCase() === activeFavoritKategori);
             }
 
+            if (favMenus.length === 0) {
+                grid.innerHTML = '';
+                if (katEmpty) katEmpty.style.display = 'block';
+                return;
+            }
+            if (katEmpty) katEmpty.style.display = 'none';
+
             grid.innerHTML = favMenus.map(m => {
-                const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu);
+                // Tampilkan stok pada kartu menu favorit (dengan mengirimkan parameter m.stok)
+                const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, null, m.stok);
                 const btnHTML = renderAddToCartButton(m, 'flex:1');
                 return `
-            <div class="menu-card-full">
+            <div class="menu-card-full" data-kategori="${(m.kategori || '').toLowerCase()}">
                 ${imgWrapHTML}
                 <div class="mc-info">
                     <h4>${m.nama_menu}</h4>
@@ -1012,7 +1079,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-magnifying-glass"></i><h3>Tidak ditemukan</h3><p>Coba kata kunci lain</p></div>';
                 } else {
                     grid.innerHTML = results.map(m => {
-                        const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, m.id_menu);
+                        const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, m.id_menu, m.stok);
                         const btnHTML = renderAddToCartButton(m);
                         return `
                     <div class="menu-card-full">
@@ -1096,7 +1163,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     </div>`;
             } else {
                 grid.innerHTML = results.map(m => {
-                    const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, m.id_menu);
+                    const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, m.id_menu, m.stok);
                     const btnHTML = renderAddToCartButton(m);
                     return `
                     <div class="menu-card-full">
@@ -1835,6 +1902,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
         //  INIT
         // ════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', () => {
+            fetchDBCart(); // Sinkronkan keranjang dari DB
             updateBadges(); // Ganti ini agar sesuai dengan format drawer
             renderFavorites();
             initMenuTerlarisSlider();

@@ -943,6 +943,34 @@ if ($q_toko_qris) {
         function saveCart(cart) {
             localStorage.setItem(CART_KEY, JSON.stringify(cart));
             updateBadges();
+            
+            // Sinkronisasi asinkron ke database
+            fetch('actions/keranjang.php?action=sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cart)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) console.error('Gagal sinkronisasi keranjang ke database:', data.error);
+            })
+            .catch(err => console.error('Koneksi sinkronisasi gagal:', err));
+        }
+
+        function fetchDBCart(callback) {
+            fetch('actions/keranjang.php?action=list')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && data.cart) {
+                    localStorage.setItem(CART_KEY, JSON.stringify(data.cart));
+                    updateBadges();
+                }
+                if (callback) callback();
+            })
+            .catch(err => {
+                console.error('Gagal mengambil keranjang dari database:', err);
+                if (callback) callback();
+            });
         }
 
         // ── Update all header badge counts ──
@@ -1786,9 +1814,10 @@ if ($q_toko_qris) {
 
         // ── Init on page load ──
         document.addEventListener('DOMContentLoaded', () => {
-            updateBadges();
-            renderCheckoutPage();
-            initPaymentMethodSelection();
+            fetchDBCart(() => {
+                renderCheckoutPage();
+                initPaymentMethodSelection();
+            });
         });
     </script>
 </body>

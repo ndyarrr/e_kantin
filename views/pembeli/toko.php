@@ -396,6 +396,33 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                 if (document.getElementById('cartDrawer').classList.contains('show')) {
                     renderCartDrawer();
                 }
+                
+                // Sinkronisasi asinkron ke database
+                fetch('actions/keranjang.php?action=sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cart)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) console.error('Gagal sinkronisasi keranjang ke database:', data.error);
+                })
+                .catch(err => console.error('Koneksi sinkronisasi gagal:', err));
+            }
+
+            function fetchDBCart() {
+                fetch('actions/keranjang.php?action=list')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && data.cart) {
+                        localStorage.setItem(CART_KEY, JSON.stringify(data.cart));
+                        updateBadges();
+                        if (document.getElementById('cartDrawer') && document.getElementById('cartDrawer').classList.contains('show')) {
+                            renderCartDrawer();
+                        }
+                    }
+                })
+                .catch(err => console.error('Gagal mengambil keranjang dari database:', err));
             }
 
             // ── Update all badge counts ──
@@ -962,6 +989,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 
             // ── Initialize on page load ──
             document.addEventListener('DOMContentLoaded', function () {
+                fetchDBCart();
                 updateBadges();
                 initFavorites();
                 makeCartDraggable();
