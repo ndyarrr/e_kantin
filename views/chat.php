@@ -100,6 +100,38 @@ $role_label = match (true) {
 </div>
 
 
+<!-- Fullscreen Image Viewer (Chat) -->
+<div id="chatFullscreenViewer" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99999999;flex-direction:column;align-items:center;justify-content:center;padding:0;box-sizing:border-box;">
+    <button onclick="tutupChatFullscreen()" style="position:absolute;top:16px;left:16px;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);color:#ffffff;font-size:13px;font-weight:700;padding:8px 16px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:'Poppins',sans-serif;z-index:10;">
+        <i class="fa-solid fa-arrow-left" style="font-size:12px;"></i> Kembali
+    </button>
+    <img id="chatFullscreenImg" src="" alt="Gambar Fullscreen" style="max-width:95%;max-height:90vh;object-fit:contain;border-radius:8px;">
+</div>
+
+<script>
+function bukaChatFullscreen(src) {
+    document.getElementById('chatFullscreenImg').src = src;
+    document.getElementById('chatFullscreenViewer').style.display = 'flex';
+}
+function tutupChatFullscreen() {
+    document.getElementById('chatFullscreenViewer').style.display = 'none';
+}
+document.getElementById('chatFullscreenViewer').addEventListener('click', function(e) {
+    if (e.target === this) tutupChatFullscreen();
+});
+
+// Intercept clicks on bukti images inside chat bubbles
+document.addEventListener('click', function(e) {
+    const link = e.target.closest('a[href*="bukti_bayar"]');
+    if (link) {
+        e.preventDefault();
+        const img = link.querySelector('img') || link;
+        const src = img.src || link.href;
+        bukaChatFullscreen(src);
+    }
+});
+</script>
+
 <script>
     const BASE_URL_CHAT = '<?= $base_path ?>';
     let ID_LAWAN_AKTIF = '';
@@ -308,8 +340,18 @@ $role_label = match (true) {
                         bubble.className = `chat-bubble ${msg.is_me ? 'me' : 'them'}`;
                         bubble.dataset.id = msg.id;
                         const isAutoReply = msg.pesan.startsWith('[AUTO_REPLY_ORDER]') || msg.pesan.startsWith('[AUTO_REPLY_STATUS]');
+                        let rawIsi = msg.pesan
+                            .replace('[AUTO_REPLY_ORDER]', '')
+                            .replace('[AUTO_REPLY_STATUS]', '')
+                            .trim();
+
+                        // Ganti placeholder {BASE_PATH} dengan URL nyata
+                        if (isAutoReply) {
+                            rawIsi = rawIsi.replace(/\{BASE_PATH\}/g, BASE_URL_CHAT);
+                        }
+
                         const isiPesan = isAutoReply
-                            ? msg.pesan.replace('[AUTO_REPLY_ORDER]', '').replace('[AUTO_REPLY_STATUS]', '').trim()
+                            ? rawIsi
                             : `<div style="word-break:break-word;">${escapeHtml(msg.pesan)}</div>`;
 
                         bubble.innerHTML = `

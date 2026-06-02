@@ -45,8 +45,8 @@ if ($q_pesanan) {
         $r['items'] = $details;
 
         // Ambil status pembayaran
-        $q_pay = mysqli_query($db, "SELECT status, metode FROM pembayaran WHERE id_pesanan = $id_pesanan LIMIT 1");
-        $pay = mysqli_fetch_assoc($q_pay) ?? ['status' => 'belum_bayar', 'metode' => 'tunai'];
+        $q_pay = mysqli_query($db, "SELECT status, metode, bukti_foto FROM pembayaran WHERE id_pesanan = $id_pesanan LIMIT 1");
+        $pay = mysqli_fetch_assoc($q_pay) ?? ['status' => 'belum_bayar', 'metode' => 'tunai', 'bukti_foto' => ''];
         $r['pembayaran'] = $pay;
 
         $pesanan_list[] = $r;
@@ -341,9 +341,14 @@ if ($q_pesanan) {
                                     </span>
                                 <?php endif; ?>
                                 
-                                <?php if ($is_transfer && !$is_lunas && !empty($pesanan['qris_image'])): ?>
-                                    <button class="btn-bayar-qris" id="btn-qris-pay-<?= $pesanan['id_pesanan'] ?>" onclick="openPesananQrisModal('<?= htmlspecialchars(addslashes($pesanan['nama_toko']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($pesanan['qris_image']), ENT_QUOTES) ?>', <?= $pesanan['id_pesanan'] ?>)" style="background: #16a34a; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
-                                        <i class="fa-solid fa-qrcode"></i> Bayar QRIS
+                                <?php if ($is_transfer && !$is_lunas && !empty($pesanan['qris_image'])): 
+                                    $has_uploaded_proof = !empty($pesanan['pembayaran']['bukti_foto']);
+                                    $btn_text = $has_uploaded_proof ? 'Lihat/Kirim Ulang Bukti' : 'Bayar QRIS';
+                                    $btn_icon = $has_uploaded_proof ? 'fa-file-invoice' : 'fa-qrcode';
+                                    $btn_bg = $has_uploaded_proof ? '#0284c7' : '#16a34a'; // Sky blue for uploaded, green for not uploaded
+                                ?>
+                                    <button class="btn-bayar-qris" id="btn-qris-pay-<?= $pesanan['id_pesanan'] ?>" onclick="openPesananQrisModal('<?= htmlspecialchars(addslashes($pesanan['nama_toko']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($pesanan['qris_image']), ENT_QUOTES) ?>', <?= $pesanan['id_pesanan'] ?>, '<?= htmlspecialchars(addslashes($pesanan['pembayaran']['bukti_foto'] ?? ''), ENT_QUOTES) ?>')" style="background: <?= $btn_bg ?>; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                        <i class="fa-solid <?= $btn_icon ?>"></i> <?= $btn_text ?>
                                     </button>
                                 <?php endif; ?>
 
@@ -360,67 +365,114 @@ if ($q_pesanan) {
 </div>
 
 <script>
-function openPesananQrisModal(namaToko, qrisImage, idPesanan) {
+function openPesananQrisModal(namaToko, qrisImage, idPesanan, existingBukti) {
     let oldModal = document.getElementById('qrisPaymentModal');
     if (oldModal) oldModal.remove();
+
+    const hasExisting = existingBukti && existingBukti.trim() !== '';
 
     const modal = document.createElement('div');
     modal.id = 'qrisPaymentModal';
     modal.style.cssText = `
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.45);
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex; align-items: center; justify-content: center;
         z-index: 9999999;
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        opacity: 0; transition: opacity 0.3s ease;
+        padding: 12px; box-sizing: border-box;
     `;
 
     const card = document.createElement('div');
     card.style.cssText = `
         background: #ffffff;
-        width: 90%;
-        max-width: 400px;
-        border-radius: 24px;
-        padding: 24px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        width: 100%; max-width: 400px;
+        border-radius: 24px; padding: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         text-align: center;
-        transform: scale(0.9);
-        transition: transform 0.3s ease;
+        transform: scale(0.9); transition: transform 0.3s ease;
+        max-height: 90vh; display: flex; flex-direction: column;
+        box-sizing: border-box;
     `;
 
+    // Uploader area HTML
+    let uploaderHtml = '';
+    if (hasExisting) {
+        uploaderHtml = `
+        <div style="margin-bottom:16px; text-align:left;">
+            <div style="font-size:12px;font-weight:700;color:#0f172a;font-family:'Poppins',sans-serif;margin-bottom:8px;">
+                <i class="fa-solid fa-file-image" style="color:#0284c7;margin-right:4px;"></i> Bukti Yang Sudah Diunggah
+            </div>
+            <div style="border-radius:12px;overflow:hidden;border:2px solid #0284c7;position:relative;background:#f8fafc;">
+                <a href="../../assets/img/bukti_bayar/${existingBukti}" target="_blank">
+                    <img src="../../assets/img/bukti_bayar/${existingBukti}" style="width:100%;max-height:140px;object-fit:cover;display:block;" alt="Bukti Bayar">
+                </a>
+                <div style="position:absolute;top:6px;right:6px;background:rgba(2,132,199,0.9);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;">
+                    <i class="fa-solid fa-circle-check" style="margin-right:3px;"></i>Terkirim
+                </div>
+            </div>
+            <p style="font-size:11px;color:#64748b;margin:6px 0 0;font-family:'Poppins',sans-serif;">Anda sudah mengirim bukti. Bisa kirim ulang jika ada perubahan.</p>
+        </div>`;
+    }
+
     card.innerHTML = `
-        <div style="font-size: 28px; color: #16a34a; margin-bottom: 12px;">
-            <i class="fa-solid fa-qrcode"></i>
-        </div>
-        <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 800; color: #0f172a; font-family: 'Poppins', sans-serif;">Metode QRIS - ${namaToko}</h3>
-        <p style="margin: 0 0 16px 0; font-size: 12px; color: #64748b; font-family: 'Poppins', sans-serif;">Silakan scan barcode QRIS di bawah ini untuk membayar:</p>
-        
-        <div id="modalQrisImgContainer" style="background: #ffffff; padding: 12px; border-radius: 16px; border: 1.5px solid #e2e8f0; display: inline-block; margin-bottom: 16px; transition: filter 0.3s ease;">
-            <img src="../../assets/img/qris/${qrisImage}" alt="QRIS" style="max-width: 220px; width: 100%; height: auto; display: block; border-radius: 8px;">
+        <div style="overflow-y:auto; flex:1; padding-right:2px;">
+            <div style="font-size:26px;color:#16a34a;margin-bottom:10px;">
+                <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <h3 style="margin:0 0 4px;font-size:16px;font-weight:800;color:#0f172a;font-family:'Poppins',sans-serif;">QRIS - ${namaToko}</h3>
+            <p style="margin:0 0 14px;font-size:12px;color:#64748b;font-family:'Poppins',sans-serif;">Scan QR lalu unggah bukti pembayaran Anda.</p>
+
+            <div style="background:#fff;padding:10px;border-radius:14px;border:1.5px solid #e2e8f0;display:inline-block;margin-bottom:14px;">
+                <img src="../../assets/img/qris/${qrisImage}" alt="QRIS" style="max-width:200px;width:100%;height:auto;display:block;border-radius:6px;">
+            </div>
+
+            ${uploaderHtml}
+
+            <!-- Upload Area -->
+            <div style="background:#f8fafc;border:1.5px dashed #cbd5e1;padding:16px;border-radius:14px;margin-bottom:16px;cursor:pointer;transition:all 0.2s;text-align:center;position:relative;" id="pesananUploaderArea" onclick="document.getElementById('pesananFileInput').click()">
+                <input type="file" id="pesananFileInput" accept="image/*" style="display:none;">
+                <div id="pesananUploadPrompt">
+                    <i class="fa-solid fa-cloud-arrow-up" style="font-size:26px;color:#64748b;margin-bottom:6px;display:block;"></i>
+                    <span style="font-size:13px;font-weight:700;color:#475569;display:block;">${hasExisting ? 'Kirim Ulang Bukti' : 'Unggah Bukti Transfer'}</span>
+                    <span style="font-size:11px;color:#94a3b8;display:block;margin-top:2px;">Ketuk untuk memilih foto struk/bukti bayar</span>
+                </div>
+                <div id="pesananUploadPreviewWrap" style="display:none;flex-direction:column;align-items:center;gap:8px;">
+                    <div style="width:72px;height:72px;border-radius:10px;overflow:hidden;border:1.5px solid #16a34a;background:#fff;padding:2px;">
+                        <img id="pesananUploadPreview" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">
+                    </div>
+                    <span id="pesananFileName" style="font-size:11px;font-weight:600;color:#475569;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                    <button type="button" onclick="clearPesananFile(event)" style="border:none;cursor:pointer;font-size:11px;padding:4px 10px;color:#ef4444;border:1px solid #fee2e2;background:#fef2f2;border-radius:8px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">
+                        <i class="fa-solid fa-trash-can"></i> Hapus Foto
+                    </button>
+                </div>
+            </div>
+
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;padding:12px;border-radius:14px;margin-bottom:16px;text-align:left;display:flex;align-items:flex-start;gap:10px;">
+                <i class="fa-solid fa-circle-info" style="color:#3b82f6;font-size:15px;margin-top:2px;flex-shrink:0;"></i>
+                <span style="font-size:11.5px;color:#1e3a8a;line-height:1.4;font-family:'Poppins',sans-serif;">
+                    Unggah struk pembayaran Anda. Bukti akan otomatis dikirim ke chat kantin dan penjual akan memverifikasi.
+                </span>
+            </div>
         </div>
 
-        <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 14px; border-radius: 16px; margin-bottom: 20px; text-align: left; display: flex; align-items: flex-start; gap: 10px;">
-            <i class="fa-solid fa-circle-info" style="color: #3b82f6; font-size: 16px; margin-top: 2px; flex-shrink: 0;"></i>
-            <span style="font-size: 12px; color: #1e3a8a; line-height: 1.4; font-family: 'Poppins', sans-serif;">
-                Silakan scan barcode QRIS di atas. Setelah melakukan transfer, silakan tunggu penjual memverifikasi pembayaran Anda.
-            </span>
+        <div style="display:flex;gap:8px;flex-shrink:0;margin-top:4px;">
+            <button id="btnPesananQrisClose" style="flex:1;padding:11px;font-weight:700;font-size:13px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.2s;">
+                Tutup
+            </button>
+            <button id="btnPesananQrisKirim" disabled style="flex:2;padding:11px;font-weight:800;font-size:13px;color:#fff;background:#94a3b8;border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.2s;pointer-events:none;opacity:0.7;">
+                <i class="fa-solid fa-paper-plane"></i> Kirim Bukti
+            </button>
         </div>
-
-        <button id="btnModalCloseQris" style="width: 100%; padding: 12px; font-weight: bold; font-size: 14px; color: #ffffff; background: #16a34a; border: none; border-radius: 14px; cursor: pointer; transition: all 0.2s; font-family: 'Poppins', sans-serif; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);">
-            Tutup
-        </button>
     `;
 
     modal.appendChild(card);
     document.body.appendChild(modal);
+
+    let selectedFile = null;
 
     setTimeout(() => {
         modal.style.opacity = '1';
@@ -430,14 +482,111 @@ function openPesananQrisModal(namaToko, qrisImage, idPesanan) {
     function closeModal() {
         modal.style.opacity = '0';
         card.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-            modal.remove();
-        }, 300);
+        setTimeout(() => modal.remove(), 300);
     }
 
-    card.querySelector('#btnModalCloseQris').addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
+    // File input change listener
+    const fileInput = card.querySelector('#pesananFileInput');
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+            selectedFile = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                card.querySelector('#pesananUploadPreview').src = ev.target.result;
+                card.querySelector('#pesananUploadPrompt').style.display = 'none';
+                card.querySelector('#pesananUploadPreviewWrap').style.display = 'flex';
+
+                const kirimBtn = card.querySelector('#btnPesananQrisKirim');
+                kirimBtn.disabled = false;
+                kirimBtn.style.background = '#16a34a';
+                kirimBtn.style.pointerEvents = 'auto';
+                kirimBtn.style.opacity = '1';
+                kirimBtn.style.boxShadow = '0 4px 12px rgba(22,163,74,0.25)';
+            };
+            reader.readAsDataURL(selectedFile);
+            card.querySelector('#pesananFileName').textContent = selectedFile.name;
+        }
     });
+
+    window.clearPesananFile = function(event) {
+        if (event) event.stopPropagation();
+        fileInput.value = '';
+        selectedFile = null;
+        card.querySelector('#pesananUploadPrompt').style.display = 'block';
+        card.querySelector('#pesananUploadPreviewWrap').style.display = 'none';
+        const kirimBtn = card.querySelector('#btnPesananQrisKirim');
+        kirimBtn.disabled = true;
+        kirimBtn.style.background = '#94a3b8';
+        kirimBtn.style.pointerEvents = 'none';
+        kirimBtn.style.opacity = '0.7';
+        kirimBtn.style.boxShadow = 'none';
+    };
+
+    // Kirim button listener
+    const kirimBtn = card.querySelector('#btnPesananQrisKirim');
+    kirimBtn.addEventListener('click', function() {
+        if (!selectedFile) return;
+
+        kirimBtn.disabled = true;
+        kirimBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
+        kirimBtn.style.background = '#15803d';
+        kirimBtn.style.pointerEvents = 'none';
+
+        const fd = new FormData();
+        fd.append('ids', JSON.stringify([idPesanan]));
+        fd.append('bukti_foto', selectedFile);
+
+        fetch('actions/upload_bukti.php', { method: 'POST', body: fd })
+            .then(res => res.json())
+            .then(res => {
+                if (res.status === 'success') {
+                    // Success state
+                    kirimBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Terkirim!';
+                    kirimBtn.style.background = '#16a34a';
+                    kirimBtn.style.pointerEvents = 'none';
+
+                    // Lock uploader
+                    const uploaderArea = card.querySelector('#pesananUploaderArea');
+                    uploaderArea.style.pointerEvents = 'none';
+                    uploaderArea.style.borderColor = '#16a34a';
+                    uploaderArea.style.background = '#f0fdf4';
+                    const removeBtn = card.querySelector('#pesananUploadPreviewWrap button');
+                    if (removeBtn) removeBtn.remove();
+
+                    // Show toast if function exists
+                    if (typeof showToast === 'function') showToast('🎉 Bukti pembayaran berhasil terkirim ke kantin!', 'success');
+                    else alert('Bukti pembayaran berhasil terkirim!');
+
+                    // Update button in pesanan list
+                    const btnQris = document.getElementById('btn-qris-pay-' + idPesanan);
+                    if (btnQris) {
+                        btnQris.style.background = '#0284c7';
+                        btnQris.innerHTML = '<i class="fa-solid fa-file-invoice"></i> Lihat/Kirim Ulang Bukti';
+                    }
+
+                    // Auto close after 2s
+                    setTimeout(closeModal, 2000);
+                } else {
+                    kirimBtn.disabled = false;
+                    kirimBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Bukti';
+                    kirimBtn.style.background = '#16a34a';
+                    kirimBtn.style.pointerEvents = 'auto';
+                    if (typeof showToast === 'function') showToast('Gagal: ' + res.message, 'error');
+                    else alert('Gagal: ' + res.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                kirimBtn.disabled = false;
+                kirimBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Bukti';
+                kirimBtn.style.background = '#16a34a';
+                kirimBtn.style.pointerEvents = 'auto';
+                if (typeof showToast === 'function') showToast('Koneksi gagal! Coba lagi.', 'error');
+                else alert('Koneksi gagal!');
+            });
+    });
+
+    card.querySelector('#btnPesananQrisClose').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 }
 </script>

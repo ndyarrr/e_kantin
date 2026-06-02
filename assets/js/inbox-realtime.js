@@ -215,4 +215,7 @@
     if (isInboxActive()) {
         fetchInbox();
     }
+
+    // Expose fetchInbox globally so external modals (e.g. bukti QRIS) can refresh inbox
+    window.muatInbox = fetchInbox;
 })();
