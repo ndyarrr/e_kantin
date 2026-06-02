@@ -298,6 +298,14 @@ if ($q_toko_qris) {
 <html lang="id">
 
 <head>
+    <script>
+        (function() {
+            const isDark = localStorage.getItem('darkMode') === 'enabled';
+            if (isDark) {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout Pesanan - E-Kantin</title>
@@ -497,6 +505,24 @@ if ($q_toko_qris) {
             color: #0f172a;
             min-width: 14px;
             text-align: center;
+        }
+        input.checkout-qty-val {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0f172a;
+            width: 28px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            outline: none;
+            padding: 0;
+            margin: 0;
+            -moz-appearance: textfield;
+        }
+        input.checkout-qty-val::-webkit-outer-spin-button,
+        input.checkout-qty-val::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         /* Rekomendasi "Ada lagi yang mau dibeli?" */
@@ -1029,7 +1055,7 @@ if ($q_toko_qris) {
                             
                             <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
                                 <i class="fa-regular fa-comment-dots" style="color: #64748b; font-size: 13px;"></i>
-                                <input type="text" class="checkout-note-input" value="${item.catatan || ''}" placeholder="Tambah catatan (cth: pedas, es sedikit)..." onchange="updateItemNote(${item.id_menu}, this.value)" style="flex: 1; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 6px 12px; font-size: 12.5px; color: #334155; outline: none; background: #f8fafc; transition: all 0.2s;" onfocus="this.style.borderColor='#5cb85c'; this.style.background='#ffffff'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'">
+                                <input type="text" class="checkout-note-input" value="${item.catatan || ''}" placeholder="Tambah catatan (cth: pedas, es sedikit)..." onchange="updateItemNote(${item.id_menu}, ${item.harga}, this.value)" style="flex: 1; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 6px 12px; font-size: 12.5px; color: #334155; outline: none; background: #f8fafc; transition: all 0.2s;" onfocus="this.style.borderColor='#5cb85c'; this.style.background='#ffffff'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'">
                             </div>
                         </div>
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0;">
@@ -1037,9 +1063,9 @@ if ($q_toko_qris) {
                                 ${imgHTML}
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <button class="qty-btn-circle" onclick="updateCheckoutQty(${item.id_menu}, -1)"><i class="fa-solid fa-minus"></i></button>
-                                <span class="checkout-qty-val">${item.jumlah}</span>
-                                <button class="qty-btn-circle" onclick="updateCheckoutQty(${item.id_menu}, 1)"><i class="fa-solid fa-plus"></i></button>
+                                <button class="qty-btn-circle" onclick="updateCheckoutQty(${item.id_menu}, ${item.harga}, -1)"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" class="checkout-qty-val" value="${item.jumlah}" min="1" max="${item.stok !== undefined ? item.stok : 999}" onchange="manualUpdateCheckoutQty(${item.id_menu}, ${item.harga}, this.value, ${item.stok !== undefined ? item.stok : 999})" onkeydown="if(event.key === 'Enter') this.blur();" onclick="event.stopPropagation()">
+                                <button class="qty-btn-circle" onclick="updateCheckoutQty(${item.id_menu}, ${item.harga}, 1)"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                     </div>
@@ -1052,9 +1078,9 @@ if ($q_toko_qris) {
         }
 
         // ── Update Notes ──
-        function updateItemNote(id, val) {
+        function updateItemNote(id, harga, val) {
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id);
+            const item = cart.find(c => c.id_menu === id && c.harga === harga);
             if (item) {
                 item.catatan = val.trim();
                 saveCart(cart);
@@ -1152,9 +1178,9 @@ if ($q_toko_qris) {
         }
 
         // ── Edit Quantity in Checkout Page ──
-        function updateCheckoutQty(id, delta) {
+        function updateCheckoutQty(id, harga, delta) {
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id);
+            const item = cart.find(c => c.id_menu === id && c.harga === harga);
             if (item) {
                 if (delta > 0) {
                     const stock = item.stok !== undefined ? item.stok : 999;
@@ -1169,7 +1195,7 @@ if ($q_toko_qris) {
                     item.jumlah = 1;
                     confirmRemoveItem(item.nama_menu, () => {
                         const freshCart = getCart();
-                        const freshItemIndex = freshCart.findIndex(c => c.id_menu === id);
+                        const freshItemIndex = freshCart.findIndex(c => c.id_menu === id && c.harga === harga);
                         if (freshItemIndex !== -1) {
                             freshCart.splice(freshItemIndex, 1);
                             saveCart(freshCart);
@@ -1180,6 +1206,40 @@ if ($q_toko_qris) {
                     });
                     return;
                 }
+            }
+            saveCart(cart);
+            renderCheckoutPage();
+        }
+
+        function manualUpdateCheckoutQty(id, harga, value, maxStock) {
+            let qty = parseInt(value);
+            const cart = getCart();
+            const item = cart.find(c => c.id_menu === id && c.harga === harga);
+            if (!item) return;
+
+            if (isNaN(qty) || qty < 0) {
+                qty = 1; // Default fallback for invalid/empty inputs
+            }
+
+            if (qty === 0) {
+                confirmRemoveItem(item.nama_menu, () => {
+                    const freshCart = getCart();
+                    const freshItemIndex = freshCart.findIndex(c => c.id_menu === id && c.harga === harga);
+                    if (freshItemIndex !== -1) {
+                        freshCart.splice(freshItemIndex, 1);
+                        saveCart(freshCart);
+                        renderCheckoutPage();
+                    }
+                }, () => {
+                    renderCheckoutPage();
+                });
+                return;
+            } else {
+                if (qty > maxStock) {
+                    showToast('Stok tidak mencukupi! Maksimum stok: ' + maxStock, 'error');
+                    qty = maxStock;
+                }
+                item.jumlah = qty;
             }
             saveCart(cart);
             renderCheckoutPage();

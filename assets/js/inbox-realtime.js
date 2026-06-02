@@ -184,6 +184,19 @@
 
         if (action === 'update_status') {
             const statusBaru = btn.dataset.status;
+            if (statusBaru === 'dibatalkan') {
+                if (btn.disabled) return;
+                const card = btn.closest('.pcard');
+                const namaPembeli = card ? card.querySelector('.pcard-nama')?.textContent : 'Pembeli';
+                if (typeof window.bukaModalBatal === 'function') {
+                    window.bukaModalBatal(idPesanan, namaPembeli);
+                } else {
+                    const confirmMsg = btn.dataset.confirm;
+                    if (confirmMsg && !confirm(confirmMsg)) return;
+                    updateStatus(idPesanan, statusBaru);
+                }
+                return;
+            }
             const confirmMsg = btn.dataset.confirm;
             if (confirmMsg && !confirm(confirmMsg)) return;
             if (btn.disabled) return;

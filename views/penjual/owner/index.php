@@ -15,9 +15,12 @@ if (isset($_SESSION['feedback'])) {
     unset($_SESSION['feedback']);
 }
 
-// Deteksi server dinamis
-$is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
-$base_path = $is_php_s ? '' : '/e_kantin';
+$base_path = '';
+if (preg_match('#^(.*)/(views|auth|backend|controllers|config|assets|scratch)/#', $_SERVER['SCRIPT_NAME'] ?? '', $m)) {
+    $base_path = $m[1];
+} elseif (preg_match('#^(.*)/index\.php#', $_SERVER['SCRIPT_NAME'] ?? '', $m)) {
+    $base_path = $m[1];
+}
 
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
     header('Location: ' . $base_path . '/auth/login.php');

@@ -107,3 +107,8 @@ $totalPesananBaru = (int) (mysqli_fetch_assoc(mysqli_query(
     "SELECT COUNT(*) AS c FROM pesanan
      WHERE id_toko = $idToko AND status = 'menunggu'"
 ))['c'] ?? 0);
+
+/* ── Status Toko/Kantin ── */
+$tokoStatusQuery = mysqli_query($conn, "SELECT status FROM toko WHERE id_toko = $idToko LIMIT 1");
+$tokoStatusRow = mysqli_fetch_assoc($tokoStatusQuery);
+$statusTokoAktif = $tokoStatusRow['status'] ?? 'buka';

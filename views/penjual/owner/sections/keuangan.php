@@ -71,7 +71,7 @@ include __DIR__ . '/keuangan_data.php';
             <?php endif; ?>
         </div>
         <div class="kas-btn-group">
-            <button class="kas-btn-print" onclick="window.print()">
+            <button class="kas-btn-print" onclick="cetakLaporanKeuangan()">
                 <i class="fa-solid fa-print"></i> Cetak Laporan
             </button>
             <button class="kas-btn-add" style="background-color: #dc2626;" onclick="bukaModalKas()">
@@ -188,6 +188,10 @@ include __DIR__ . '/keuangan_data.php';
 </div>
 
 <script>
+function cetakLaporanKeuangan() {
+    const filterVal = document.getElementById('filterKasTanggal').value || 'semua';
+    window.open('<?= $base_path ?>/views/penjual/owner/sections/print_keuangan.php?filter_date=' + filterVal, '_blank');
+}
 function pindahTanggal(val) {
     window.location.href = "index.php?section=keuangan&filter_date=" + val;
 }

@@ -5,8 +5,12 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
-$base_url = $is_php_s ? '' : '/e_kantin';
+$base_url = '';
+if (preg_match('#^(.*)/(views|auth|backend|controllers|config|assets|scratch)/#', $_SERVER['SCRIPT_NAME'] ?? '', $m)) {
+    $base_url = $m[1];
+} elseif (preg_match('#^(.*)/index\.php#', $_SERVER['SCRIPT_NAME'] ?? '', $m)) {
+    $base_url = $m[1];
+}
 
 // ✅ PERBAIKAN 1: Pastikan user terautentikasi sebagai penjual (Owner/Staf)
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
@@ -101,10 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
+        $is_fleksibel = (int) ($_POST['is_fleksibel'] ?? 0);
         $ok = mysqli_query(
             $conn,
-            "INSERT INTO menu (id_toko, nama_menu, kategori, deskripsi, harga, foto_menu, stok, tersedia)
-             VALUES ($idToko, '$nama_menu', '$kategori', '$deskripsi', $harga, NULL, $stok, $tersedia)"
+            "INSERT INTO menu (id_toko, nama_menu, kategori, deskripsi, harga, foto_menu, stok, tersedia, is_fleksibel)
+             VALUES ($idToko, '$nama_menu', '$kategori', '$deskripsi', $harga, NULL, $stok, $tersedia, $is_fleksibel)"
         );
 
         if (!$ok) {
@@ -172,6 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $fotoSql = $nama_foto ? ", foto_menu = '$nama_foto'" : '';
         
+        $is_fleksibel = (int) ($_POST['is_fleksibel'] ?? 0);
         $ok = mysqli_query(
             $conn,
             "UPDATE menu SET
@@ -180,7 +186,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 deskripsi = '$deskripsi',
                 harga     = $harga,
                 stok      = $stok,
-                tersedia  = $tersedia
+                tersedia  = $tersedia,
+                is_fleksibel = $is_fleksibel
                 $fotoSql
              WHERE id_menu = $id_menu AND id_toko = $idToko"
         );

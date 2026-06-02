@@ -5,8 +5,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Proteksi agar yang mengeksekusi file ini murni user ber-role owner
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
+// Proteksi agar yang mengeksekusi file ini murni user ber-role owner (penjual) atau staf
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['penjual', 'staf'])) {
     exit('Unauthorized access!');
 }
 
@@ -26,9 +26,12 @@ if ($idToko === 0) {
 
 $action = $_POST['action'] ?? '';
 
-// Deteksi server dinamis untuk path redirect
-$is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
-$base_url = $is_php_s ? '' : '/e_kantin';
+$base_url = '';
+if (preg_match('#^(.*)/(views|auth|backend|controllers|config|assets|scratch)/#', $_SERVER['SCRIPT_NAME'] ?? '', $m)) {
+    $base_url = $m[1];
+} elseif (preg_match('#^(.*)/index\.php#', $_SERVER['SCRIPT_NAME'] ?? '', $m)) {
+    $base_url = $m[1];
+}
 
 $uploadFileDir = tokoFotoImgRoot() . '/';
 $uploadBannerDir = tokoFotoImgRoot() . '/banner/';
@@ -43,6 +46,27 @@ if ($idToko > 0) {
     if ($q_toko_name && $r_toko_name = mysqli_fetch_assoc($q_toko_name)) {
         $nama_toko = $r_toko_name['nama_toko'];
     }
+}
+
+// ════════════════════════════════════════════════════════════
+// 0. TOGGLE STATUS AJAX (DIJALANKAN DARI DASHBOARD STAF / OWNER)
+// ════════════════════════════════════════════════════════════
+if ($action === 'toggle_status_ajax') {
+    header('Content-Type: application/json');
+    $status_baru = $_POST['status'] ?? 'buka';
+    if (!in_array($status_baru, ['buka', 'tutup'])) {
+        echo json_encode(['success' => false, 'message' => 'Status tidak valid']);
+        exit;
+    }
+
+    $queryUpdate = "UPDATE `toko` SET `status` = '$status_baru' WHERE `id_toko` = $idToko";
+    if (mysqli_query($conn, $queryUpdate)) {
+        catatLog($conn, $_SESSION['user_nama'] ?? 'Penjual', 'Mengubah status kantin menjadi ' . $status_baru);
+        echo json_encode(['success' => true, 'status' => $status_baru]);
+    } else {
+        echo json_encode(['success' => false, 'message' => mysqli_error($conn)]);
+    }
+    exit;
 }
 
 // ════════════════════════════════════════════════════════════

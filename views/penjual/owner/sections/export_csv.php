@@ -10,8 +10,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Guard: hanya owner yang boleh akses
-if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'penjual') {
+// Guard: owner atau staf yang boleh akses
+if (!isset($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['penjual', 'staf'])) {
     http_response_code(403);
     exit('Akses ditolak.');
 }
@@ -21,6 +21,15 @@ date_default_timezone_set('Asia/Jakarta'); // WIB UTC+7
 require_once __DIR__ . '/../../../../config/database.php';
 
 $idToko = (int) ($_SESSION['id_toko'] ?? 0);
+if ($idToko === 0) {
+    $penjualId = (int) ($_SESSION['user_id'] ?? 0);
+    $rToko = mysqli_fetch_assoc(mysqli_query(
+        $conn,
+        "SELECT id_toko FROM toko_penjual WHERE id_penjual=$penjualId AND status='aktif' ORDER BY id DESC LIMIT 1"
+    ));
+    $idToko = (int) ($rToko['id_toko'] ?? 0);
+    $_SESSION['id_toko'] = $idToko;
+}
 $namaToko = 'E-Kantin';
 
 // Ambil nama toko untuk header

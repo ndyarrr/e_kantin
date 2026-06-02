@@ -2,11 +2,82 @@
 
 <style>
     .stats-grid.col3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 kolom sama lebar, memenuhi 100% space */
-    gap: 20px;
-}
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    
+    .status-kantin-banner {
+        background: #ffffff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        transition: all 0.3s ease;
+        gap: 16px;
+    }
+    
+    .status-kantin-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 800;
+        font-size: 13px;
+        cursor: pointer;
+        color: #ffffff;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+    
+    @media (max-width: 768px) {
+        .status-kantin-banner {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            padding: 16px;
+        }
+        .status-kantin-banner > div:first-child {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 10px !important;
+        }
+        .status-kantin-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 12px;
+        }
+    }
 </style>
+
+<!-- STATUS BANNER TOKO/KANTIN -->
+<div class="status-kantin-banner" id="bannerStatusKantin">
+    <div style="display: flex; align-items: center; gap: 12px;" id="statusBannerFlexWrapper">
+        <div id="statusIndikatorDot" style="width: 12px; height: 12px; border-radius: 50%; background: <?= $statusTokoAktif === 'buka' ? '#22c55e' : '#dc2626' ?>; box-shadow: 0 0 8px <?= $statusTokoAktif === 'buka' ? 'rgba(34,197,94,0.4)' : 'rgba(220,38,38,0.4)' ?>; flex-shrink: 0;"></div>
+        <div>
+            <div style="font-size: 13.5px; font-weight: 800; color: #1e293b; line-height: 1.2;">
+                Status Kantin Saat Ini: <span id="statusTeksLabel" style="text-transform: uppercase; color: <?= $statusTokoAktif === 'buka' ? '#16a34a' : '#dc2626' ?>;"><?= $statusTokoAktif === 'buka' ? 'Buka' : 'Tutup' ?></span>
+            </div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+                Jika status tutup, pembeli tidak dapat memesan makanan dari kantin ini.
+            </div>
+        </div>
+    </div>
+    <div>
+        <button id="btnToggleStatusKantin" class="status-kantin-btn" onclick="toggleStatusKantin()"
+                data-status="<?= htmlspecialchars($statusTokoAktif) ?>"
+                style="background: <?= $statusTokoAktif === 'buka' ? '#dc2626' : '#22c55e' ?>; box-shadow: 0 2px 6px <?= $statusTokoAktif === 'buka' ? 'rgba(220,38,38,0.2)' : 'rgba(34,197,94,0.2)' ?>;">
+            <i class="fa-solid fa-power-off"></i> <span><?= $statusTokoAktif === 'buka' ? 'Tutup Kantin' : 'Buka Kantin' ?></span>
+        </button>
+    </div>
+</div>
 
 <!-- STATS -->
 <div class="stats-grid col3">
@@ -54,6 +125,24 @@
     </div>
 </div>
 <!-- CHARTS -->
+<div class="chart-grid-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <span style="font-size:13px;color:var(--text-muted);font-weight:500;">
+        <i class="fa-solid fa-chart-line" style="color:var(--green);margin-right:5px;"></i>
+        Ringkasan Visual Minggu Ini
+    </span>
+    <button id="btnCetakCSV" onclick="exportDashboardCSV()"
+        title="Unduh laporan CSV: tren penjualan & distribusi produk"
+        style="display:inline-flex;align-items:center;gap:8px;
+               padding:8px 18px;border-radius:10px;
+               background:linear-gradient(135deg,#6abf65,#4a9e45);
+               color:#fff;font-size:13px;font-weight:700;
+               border:none;cursor:pointer;box-shadow:0 2px 8px rgba(90,171,85,.3);
+               transition:all .2s ease;">
+        <i class="fa-solid fa-file-csv" style="font-size:15px;"></i>
+        Cetak
+    </button>
+</div>
+
 <div class="chart-grid">
     <div class="chart-card">
         <h3>Tren Penjualan Minggu Ini</h3>
@@ -214,4 +303,85 @@
         });
     }
 })();
+
+// Dynamic routing paths resolved directly from the backend's base path
+const prosesKantinUrl = '<?= $base_path ?>/views/penjual/actions/proses_kantin.php';
+const exportCsvUrl = '<?= $base_path ?>/views/penjual/owner/sections/export_csv.php';
+
+/* ── Fungsi ekspor CSV ─────────────────────────────── */
+function exportDashboardCSV() {
+    const btn = document.getElementById('btnCetakCSV');
+    const originalHTML = btn.innerHTML;
+
+    // Animasi loading pada tombol
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:15px;"></i> Menyiapkan...';
+    btn.style.opacity = '0.8';
+
+    // Buka URL download di tab sama (browser langsung unduh)
+    const link = document.createElement('a');
+    link.href = exportCsvUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Kembalikan tombol ke semula setelah 2 detik
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        btn.style.opacity = '1';
+    }, 2000);
+}
+
+/* ── Fungsi ganti status kantin via AJAX ─────────────────────────────── */
+function toggleStatusKantin() {
+    const btn = document.getElementById('btnToggleStatusKantin');
+    const currentStatus = btn.getAttribute('data-status');
+    const nextStatus = currentStatus === 'buka' ? 'tutup' : 'buka';
+    
+    // Disable button during AJAX request
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengubah...';
+    
+    const formData = new FormData();
+    formData.append('action', 'toggle_status_ajax');
+    formData.append('status', nextStatus);
+    
+    fetch(prosesKantinUrl, {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        if (data.success) {
+            // Update button data-status and text
+            btn.setAttribute('data-status', data.status);
+            btn.style.background = data.status === 'buka' ? '#dc2626' : '#22c55e';
+            btn.style.boxShadow = `0 2px 6px ${data.status === 'buka' ? 'rgba(220,38,38,0.2)' : 'rgba(34,197,94,0.2)'}`;
+            btn.innerHTML = `<i class="fa-solid fa-power-off"></i> <span>${data.status === 'buka' ? 'Tutup Kantin' : 'Buka Kantin'}</span>`;
+            
+            // Update label and dot indicator
+            const dot = document.getElementById('statusIndikatorDot');
+            const label = document.getElementById('statusTeksLabel');
+            
+            dot.style.background = data.status === 'buka' ? '#22c55e' : '#dc2626';
+            dot.style.boxShadow = `0 0 8px ${data.status === 'buka' ? 'rgba(34,197,94,0.4)' : 'rgba(220,38,38,0.4)'}`;
+            
+            label.textContent = data.status === 'buka' ? 'Buka' : 'Tutup';
+            label.style.color = data.status === 'buka' ? '#16a34a' : '#dc2626';
+        } else {
+            alert('Gagal mengubah status kantin: ' + (data.message || 'Error tidak diketahui'));
+            btn.innerHTML = originalText;
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        console.error(err);
+        alert('Koneksi gagal atau sesi habis!');
+    });
+}
 </script>

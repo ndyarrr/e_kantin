@@ -22,9 +22,12 @@ if ($idToko === 0) {
     $idToko = (int) ($rToko['id_toko'] ?? 0);
     $_SESSION['id_toko'] = $idToko;
 }
-
-$is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
-$base_url = $is_php_s ? '' : '/e_kantin';
+$base_url = '';
+if (preg_match('#^(.*)/(views|auth|backend|controllers|config|assets|scratch)/#', $_SERVER['SCRIPT_NAME'] ?? '', $m)) {
+    $base_url = $m[1];
+} elseif (preg_match('#^(.*)/index\.php#', $_SERVER['SCRIPT_NAME'] ?? '', $m)) {
+    $base_url = $m[1];
+}
 
 $rolePath = (isset($_SESSION['user_sub_role']) && $_SESSION['user_sub_role'] === 'staf') 
     ? '/views/penjual/staf/index.php' 
@@ -132,7 +135,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-    
+
+    if ($action === 'konfirmasi_pembayaran_tunai') {
+        $id_pesanan = (int)($_POST['id_pesanan'] ?? 0);
+        if ($id_pesanan > 0) {
+            // Validasi kepemilikan pesanan: pastikan pesanan ini milik toko penjual ini
+            $cekPesanan = mysqli_query($conn, "SELECT status FROM pesanan WHERE id_pesanan = $id_pesanan AND id_toko = $idToko LIMIT 1");
+            if (mysqli_num_rows($cekPesanan) > 0) {
+                mysqli_begin_transaction($conn);
+                try {
+                    // Update status pembayaran menjadi lunas
+                    mysqli_query($conn, "UPDATE pembayaran SET status = 'lunas' WHERE id_pesanan = $id_pesanan");
+
+                    // Kirim pesan otomatis ke chat pembeli mengenai pembayaran tunai dikonfirmasi
+                    $q_pesanan_info = mysqli_query($conn, "SELECT nisn_pembeli, nuptk_pembeli FROM pesanan WHERE id_pesanan = $id_pesanan LIMIT 1");
+                    if ($q_pesanan_info && mysqli_num_rows($q_pesanan_info) > 0) {
+                        $r_p = mysqli_fetch_assoc($q_pesanan_info);
+                        $penerima_chat = '';
+                        if (!empty($r_p['nisn_pembeli'])) {
+                            $penerima_chat = 'murid_' . $r_p['nisn_pembeli'];
+                        } elseif (!empty($r_p['nuptk_pembeli'])) {
+                            $penerima_chat = 'guru_' . $r_p['nuptk_pembeli'];
+                        }
+
+                        if (!empty($penerima_chat)) {
+                            $pengirim_chat = 'toko_' . $idToko;
+                            $auto_status_msg = '[AUTO_REPLY_STATUS]
+                            <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;padding:4px;">
+                                <div style="font-weight:800;font-size:14px;color:#16a34a;margin-bottom:6px;">Pembayaran Tunai Diterima!</div>
+                                <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Pembayaran tunai Anda untuk Pesanan #' . $id_pesanan . ' telah diterima oleh penjual. Terima kasih! 🙏</div>
+                                <div style="padding:10px 12px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0;display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-size:12px;font-weight:600;color:#16a34a;">Status Pembayaran</span>
+                                    <span style="font-size:12px;font-weight:800;color:#15803d;">LUNAS ✅</span>
+                                </div>
+                            </div>';
+
+                            $msg_escaped = mysqli_real_escape_string($conn, $auto_status_msg);
+                            mysqli_query($conn, "INSERT INTO pesan_chat (id_pengirim, id_penerima, isi_pesan, waktu_kirim, sudah_dibaca)
+                                                 VALUES ('$pengirim_chat', '$penerima_chat', '$msg_escaped', NOW(), 0)");
+                        }
+                    }
+                    
+                    mysqli_commit($conn);
+
+                    $roleLabel = (isset($_SESSION['user_sub_role']) && $_SESSION['user_sub_role'] === 'staf') ? 'Staf' : 'Owner';
+                    if (function_exists('catatLog')) {
+                        catatLog($conn, 'Konfirmasi Pembayaran Tunai', "$roleLabel mengonfirmasi pembayaran tunai untuk pesanan #$id_pesanan menjadi lunas");
+                    }
+
+                    $ajaxResponse = [
+                        'success' => true,
+                        'message' => 'Pembayaran tunai untuk pesanan #' . $id_pesanan . ' berhasil dikonfirmasi!'
+                    ];
+                    if (!$isAjax) {
+                        $_SESSION['feedback'] = [
+                            'type' => 'success',
+                            'msg' => $ajaxResponse['message']
+                        ];
+                    }
+                } catch (Exception $e) {
+                    mysqli_rollback($conn);
+                    $ajaxResponse = [
+                        'success' => false,
+                        'message' => 'Gagal mengonfirmasi pembayaran tunai: ' . $e->getMessage()
+                    ];
+                    if (!$isAjax) {
+                        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+                    }
+                }
+            } else {
+                $ajaxResponse = ['success' => false, 'message' => 'Akses ditolak atau pesanan tidak ditemukan.'];
+                if (!$isAjax) {
+                    $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+                }
+            }
+        } else {
+            $ajaxResponse = ['success' => false, 'message' => 'ID pesanan tidak valid.'];
+            if (!$isAjax) {
+                $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+            }
+        }
+    }
+
     if ($action === 'update_status') {
         $id_pesanan = (int)($_POST['id_pesanan'] ?? 0);
         $status_baru = mysqli_real_escape_string($conn, $_POST['status_baru'] ?? '');

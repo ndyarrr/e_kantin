@@ -55,7 +55,7 @@ if ($q_all_menu) {
 $terlaris_menus = [];
 $q_terlaris = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko, toko.id_toko, toko.status AS status_toko FROM menu 
                                       JOIN toko ON menu.id_toko = toko.id_toko 
-                                      WHERE menu.tersedia = 1 AND menu.stok > 0 
+                                      WHERE menu.tersedia = 1 
                                       AND menu.deleted_at IS NULL AND toko.deleted_at IS NULL
                                       ORDER BY menu.terjual DESC, menu.id_menu DESC 
                                       LIMIT 6");
@@ -143,6 +143,14 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
 <html lang="id">
 
 <head>
+    <script>
+        (function() {
+            const isDark = localStorage.getItem('darkMode') === 'enabled';
+            if (isDark) {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Kantin - Beranda Pembeli</title>
@@ -266,31 +274,12 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
 
                 <div class="dropdown-wrapper">
                     <?php if ($has_avatar): ?>
-                        <img src="<?= $avatar_path; ?>" class="blank-avatar" alt="Profil" onclick="toggleDropdown('profileDrop')">
+                        <img src="<?= $avatar_path; ?>" class="blank-avatar" id="topbarAvatarImg" alt="Profil" onclick="switchNav('profil')" style="cursor: pointer;">
                     <?php else: ?>
-                        <div class="avatar-initials size-sm" onclick="toggleDropdown('profileDrop')">
+                        <div class="avatar-initials size-sm" id="topbarAvatarInit" onclick="switchNav('profil')" style="cursor: pointer;">
                             <?= strtoupper(substr($user_nama, 0, 1)); ?>
                         </div>
                     <?php endif; ?>
-                    
-                    <div class="dropdown-panel profile-dropdown" id="profileDrop">
-                        <div class="profile-header">
-                            <?php if ($has_avatar): ?>
-                                <img src="<?= $avatar_path; ?>" alt="Avatar">
-                            <?php else: ?>
-                                <div class="avatar-initials size-md"><?= strtoupper(substr($user_nama, 0, 1)); ?></div>
-                            <?php endif; ?>
-                            <div class="profile-info">
-                                <h4><?= htmlspecialchars($user_nama); ?></h4>
-                                <p><?= htmlspecialchars($user_role); ?></p>
-                            </div>
-                        </div>
-                        <a href="#" class="profile-menu-item" onclick="event.preventDefault(); openChangeNameModal();"><i class="fa-solid fa-user-pen"></i> Ganti Nama</a>
-                        <a href="#" class="profile-menu-item" onclick="event.preventDefault(); openChangePasswordModal();"><i class="fa-solid fa-key"></i> Ganti Password</a>
-                        <a href="#" class="profile-menu-item" onclick="event.preventDefault(); openChangeAvatarModal();"><i class="fa-solid fa-camera"></i> Ganti Foto Profil</a>
-                        <div style="border-top:1px solid #f1f5f9;margin:4px 0"></div>
-                        <a href="../../auth/logout.php" class="profile-menu-item danger" onclick="event.preventDefault(); closeAllDropdowns(); confirmLogout(event, this.href)"><i class="fa-solid fa-right-from-bracket"></i> Keluar</a>
-                    </div>
                 </div>
                 
             </div>
@@ -343,6 +332,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             <?php require __DIR__ . '/sections/favorit.php'; ?>
             <?php require __DIR__ . '/sections/kantin.php'; ?>
             <?php require __DIR__ . '/sections/chat.php'; ?>
+            <?php require __DIR__ . '/sections/profil.php'; ?>
         </div>
     </main>
     <button class="fab-cart" title="Lihat Keranjang">
@@ -388,7 +378,8 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 'nama_toko' => $m['nama_toko'],
                 'id_toko' => (int) $m['id_toko'],
                 'stok' => (int) $m['stok'],
-                'status_toko' => strtolower($m['status_toko'] ?? 'tutup')
+                'status_toko' => strtolower($m['status_toko'] ?? 'tutup'),
+                'is_fleksibel' => (int) ($m['is_fleksibel'] ?? 0)
             ];
         }, $all_menus)); ?>;
 
@@ -559,15 +550,212 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             }
         }
 
-        function addToCart(id, nama, harga, foto, toko, idToko) {
+        function openPriceInputModal(item, onConfirm) {
+            const existing = document.getElementById('priceInputModal');
+            if (existing) existing.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'priceInputModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.45);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 999999;
+                opacity: 0;
+                transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: #ffffff;
+                padding: 28px 24px;
+                border-radius: 24px;
+                width: 90%;
+                max-width: 380px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+                transform: scale(0.9);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-sizing: border-box;
+            `;
+            
+            const suggestions = [2000, 5000, 10000, 15000, 20000, 25000];
+            let chipsHtml = suggestions.map(price => `
+                <button type="button" class="price-chip-btn" data-val="${price}" style="
+                    padding: 8px 14px;
+                    background: #f1f5f9;
+                    border: 1.5px solid #e2e8f0;
+                    border-radius: 12px;
+                    font-family: 'Poppins', sans-serif;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #475569;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">Rp ${price.toLocaleString('id-ID')}</button>
+            `).join('');
+            
+            card.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 56px; height: 56px; background: rgba(92, 184, 92, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                        <i class="fa-solid fa-arrows-left-right-to-line" style="color: #5cb85c; font-size: 24px;"></i>
+                    </div>
+                    <h3 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 800; color: #1e293b;">Tentukan Harga</h3>
+                    <p style="margin: 4px 0 0; font-family: 'Poppins', sans-serif; font-size: 13px; color: #64748b;">
+                        Tentukan harga pembelian untuk <strong>${item.nama_menu}</strong>
+                    </p>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <span style="position: absolute; left: 16px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 700; color: #64748b;">Rp</span>
+                        <input type="number" id="customPriceInput" placeholder="0" min="1000" style="
+                            width: 100%;
+                            padding: 14px 16px 14px 44px;
+                            border: 2px solid #cbd5e1;
+                            border-radius: 16px;
+                            font-family: 'Poppins', sans-serif;
+                            font-size: 18px;
+                            font-weight: 700;
+                            color: #1e293b;
+                            outline: none;
+                            box-sizing: border-box;
+                            transition: border-color 0.2s;
+                        ">
+                    </div>
+                    <div id="priceValidationError" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 6px; display: none;">Minimal harga pembelian Rp 1.000</div>
+                </div>
+                
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Rekomendasi</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        ${chipsHtml}
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 12px;">
+                    <button id="cancelPriceBtn" style="
+                        flex: 1;
+                        padding: 12px;
+                        border: 2px solid #cbd5e1;
+                        border-radius: 14px;
+                        background: #ffffff;
+                        color: #475569;
+                        font-family: 'Poppins', sans-serif;
+                        font-size: 14px;
+                        font-weight: 700;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    ">Batal</button>
+                    <button id="confirmPriceBtn" style="
+                        flex: 1;
+                        padding: 12px;
+                        border: none;
+                        border-radius: 14px;
+                        background: linear-gradient(135deg, #5cb85c, #4cae4c);
+                        color: #ffffff;
+                        font-family: 'Poppins', sans-serif;
+                        font-size: 14px;
+                        font-weight: 700;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        box-shadow: 0 4px 12px rgba(92, 184, 92, 0.2);
+                    ">Konfirmasi</button>
+                </div>
+            `;
+            
+            modal.appendChild(card);
+            document.body.appendChild(modal);
+            
+            const input = card.querySelector('#customPriceInput');
+            const confirmBtn = card.querySelector('#confirmPriceBtn');
+            const cancelBtn = card.querySelector('#cancelPriceBtn');
+            const errDiv = card.querySelector('#priceValidationError');
+            
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+                input.focus();
+            }, 10);
+            
+            function closeModal() {
+                modal.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => modal.remove(), 300);
+            }
+            
+            card.querySelectorAll('.price-chip-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    input.value = btn.getAttribute('data-val');
+                    errDiv.style.display = 'none';
+                    input.style.borderColor = '#cbd5e1';
+                    
+                    card.querySelectorAll('.price-chip-btn').forEach(b => {
+                        b.style.background = '#f1f5f9';
+                        b.style.borderColor = '#e2e8f0';
+                        b.style.color = '#475569';
+                    });
+                    btn.style.background = 'rgba(92, 184, 92, 0.1)';
+                    btn.style.borderColor = '#5cb85c';
+                    btn.style.color = '#5cb85c';
+                });
+            });
+            
+            input.addEventListener('input', () => {
+                errDiv.style.display = 'none';
+                input.style.borderColor = '#5cb85c';
+                
+                card.querySelectorAll('.price-chip-btn').forEach(b => {
+                    b.style.background = '#f1f5f9';
+                    b.style.borderColor = '#e2e8f0';
+                    b.style.color = '#475569';
+                });
+            });
+            
+            confirmBtn.addEventListener('click', () => {
+                const val = parseInt(input.value);
+                if (isNaN(val) || val < 1000) {
+                    errDiv.style.display = 'block';
+                    input.style.borderColor = '#ef4444';
+                    input.focus();
+                    return;
+                }
+                closeModal();
+                if (onConfirm) onConfirm(val);
+            });
+            
+            cancelBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') confirmBtn.click();
+            });
+        }
+
+        function addToCart(id, nama, harga, foto, toko, idToko, customHarga = null) {
             const cart = getCart();
             const menuItem = ALL_MENUS.find(m => m.id_menu === id);
             if (menuItem && menuItem.status_toko !== 'buka') {
                 showToast('Kantin sedang tutup!', 'error');
                 return;
             }
+            if (menuItem && menuItem.is_fleksibel === 1 && customHarga === null) {
+                openPriceInputModal(menuItem, (price) => {
+                    addToCart(id, nama, price, foto, toko, idToko, price);
+                });
+                return;
+            }
+            const activeHarga = customHarga !== null ? customHarga : harga;
             const stock = menuItem ? menuItem.stok : 999;
-            const existing = cart.find(c => c.id_menu === id);
+            const existing = cart.find(c => c.id_menu === id && c.harga === activeHarga);
             if (existing) {
                 if (existing.jumlah >= stock) {
                     showToast('Stok tidak mencukupi! Maksimum stok: ' + stock, 'error');
@@ -580,16 +768,16 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     showToast('Stok habis!', 'error');
                     return;
                 }
-                cart.push({ id_menu: id, nama_menu: nama, harga: harga, jumlah: 1, foto_menu: foto, nama_toko: toko, id_toko: idToko, selected: true, catatan: '', stok: stock });
+                cart.push({ id_menu: id, nama_menu: nama, harga: activeHarga, jumlah: 1, foto_menu: foto, nama_toko: toko, id_toko: idToko, selected: true, catatan: '', stok: stock });
             }
             saveCart(cart);
-            showToast(nama, 'success', { foto: foto, toko: toko });
+            showToast(nama + ' (Rp ' + activeHarga.toLocaleString('id-ID') + ')', 'success', { foto: foto, toko: toko });
         }
 
-        function updateCartQty(id, delta, event) {
+        function updateCartQty(id, harga, delta, event) {
             if(event) event.stopPropagation();
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id);
+            const item = cart.find(c => c.id_menu === id && c.harga === harga);
             if (item) {
                 if (delta > 0) {
                     const menuItem = ALL_MENUS.find(m => m.id_menu === id);
@@ -603,6 +791,28 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 if (item.jumlah <= 0) {
                     cart.splice(cart.indexOf(item), 1);
                 }
+            }
+            saveCart(cart);
+        }
+
+        function manualUpdateCartQty(id, harga, value, maxStock) {
+            let qty = parseInt(value);
+            const cart = getCart();
+            const item = cart.find(c => c.id_menu === id && c.harga === harga);
+            if (!item) return;
+
+            if (isNaN(qty) || qty < 0) {
+                qty = 1; // Default fallback for invalid or empty inputs
+            }
+
+            if (qty === 0) {
+                cart.splice(cart.indexOf(item), 1);
+            } else {
+                if (qty > maxStock) {
+                    showToast('Stok tidak mencukupi! Maksimum stok: ' + maxStock, 'error');
+                    qty = maxStock;
+                }
+                item.jumlah = qty;
             }
             saveCart(cart);
         }
@@ -625,9 +835,9 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             }
         }
 
-        function toggleCartItemSelection(id) {
+        function toggleCartItemSelection(id, harga) {
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id);
+            const item = cart.find(c => c.id_menu === id && c.harga === harga);
             if (item) {
                 item.selected = item.selected === false ? true : false;
             }
@@ -718,7 +928,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                                 <div class="cart-item-checkbox-wrap">
-                                    <input type="checkbox" class="cart-item-checkbox" onchange="toggleCartItemSelection(${item.id_menu})" ${isSelected ? 'checked' : ''}>
+                                    <input type="checkbox" class="cart-item-checkbox" onchange="toggleCartItemSelection(${item.id_menu}, ${item.harga})" ${isSelected ? 'checked' : ''}>
                                 </div>
                                 <div style="width: 50px; height: 50px; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
                                     ${imgHTML}
@@ -732,24 +942,24 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                             <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
                                 <div style="font-size: 14px; font-weight: 800; color: #1e293b;">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
                                 <div class="item-qty" style="display: inline-flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc;">
-                                    <button onclick="updateCartQty(${item.id_menu}, -1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">−</button>
-                                    <span style="font-size: 13px; font-weight: 700; color: #1e293b; min-width: 20px; text-align: center;">${item.jumlah}</span>
-                                    <button onclick="updateCartQty(${item.id_menu}, 1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">+</button>
+                                    <button onclick="updateCartQty(${item.id_menu}, ${item.harga}, -1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">−</button>
+                                    <input type="number" value="${item.jumlah}" min="0" max="${item.stok || 999}" onchange="manualUpdateCartQty(${item.id_menu}, ${item.harga}, this.value, ${item.stok || 999})" onkeydown="if(event.key === 'Enter') this.blur();" onclick="event.stopPropagation()">
+                                    <button onclick="updateCartQty(${item.id_menu}, ${item.harga}, 1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">+</button>
                                 </div>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px; padding-left: 28px; width: 100%; box-sizing: border-box;">
                             <i class="fa-regular fa-comment-dots" style="color: #94a3b8; font-size: 12px;"></i>
-                            <input type="text" class="cart-item-note-input" value="${item.catatan || ''}" placeholder="Tambah catatan..." onchange="updateCartItemNote(${item.id_menu}, this.value)" style="flex: 1; border: 1px solid #f1f5f9; border-radius: 6px; padding: 4px 8px; font-size: 11px; color: #64748b; outline: none; background: #f8fafc; transition: all 0.2s;" onfocus="this.style.borderColor='#5cb85c'; this.style.background='#ffffff'" onblur="this.style.borderColor='#f1f5f9'; this.style.background='#f8fafc'">
+                            <input type="text" class="cart-item-note-input" value="${item.catatan || ''}" placeholder="Tambah catatan..." onchange="updateCartItemNote(${item.id_menu}, ${item.harga}, this.value)" style="flex: 1; border: 1px solid #f1f5f9; border-radius: 6px; padding: 4px 8px; font-size: 11px; color: #64748b; outline: none; background: #f8fafc; transition: all 0.2s;" onfocus="this.style.borderColor='#5cb85c'; this.style.background='#ffffff'" onblur="this.style.borderColor='#f1f5f9'; this.style.background='#f8fafc'">
                         </div>
                     </div>`;
             });
             body.innerHTML = html;
         }
 
-        function updateCartItemNote(id, val) {
+        function updateCartItemNote(id, harga, val) {
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id);
+            const item = cart.find(c => c.id_menu === id && c.harga === harga);
             if (item) {
                 item.catatan = val.trim();
                 saveCart(cart);
@@ -924,7 +1134,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 <div class="mc-info">
                     <h4>${m.nama_menu}</h4>
                     <p class="mc-toko">${m.nama_toko}</p>
-                    <p class="mc-price">Rp. ${Number(m.harga).toLocaleString('id-ID')}</p>
+                    <p class="mc-price">${m.is_fleksibel === 1 ? '<span style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 2px 8px; border-radius: 8px; font-weight: 750; font-size: 11.5px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Harga Fleksibel</span>' : 'Rp. ' + Number(m.harga).toLocaleString('id-ID')}</p>
                     <div style="display:flex;gap:8px">
                         ${btnHTML}
                         <button class="btn-tambah-keranjang" style="flex:0;padding:8px 12px;background:#ef4444;box-shadow:0 4px 12px rgba(239,68,68,.2)" onclick="toggleFavorite(${m.id_menu})">
@@ -1061,7 +1271,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                         <div class="mc-info">
                             <h4>${m.nama_menu}</h4>
                             <p class="mc-toko">${m.nama_toko}</p>
-                            <p class="mc-price">Rp. ${Number(m.harga).toLocaleString('id-ID')}</p>
+                            <p class="mc-price">${m.is_fleksibel === 1 ? '<span style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 2px 8px; border-radius: 8px; font-weight: 750; font-size: 11.5px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Harga Fleksibel</span>' : 'Rp. ' + Number(m.harga).toLocaleString('id-ID')}</p>
                             ${btnHTML}
                         </div>
                     </div>`;
@@ -1145,7 +1355,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                         <div class="mc-info">
                             <h4>${m.nama_menu}</h4>
                             <p class="mc-toko">${m.nama_toko}</p>
-                            <p class="mc-price">Rp. ${Number(m.harga).toLocaleString('id-ID')}</p>
+                            <p class="mc-price">${m.is_fleksibel === 1 ? '<span style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 2px 8px; border-radius: 8px; font-weight: 750; font-size: 11.5px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Harga Fleksibel</span>' : 'Rp. ' + Number(m.harga).toLocaleString('id-ID')}</p>
                             ${btnHTML}
                         </div>
                     </div>`;

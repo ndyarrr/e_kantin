@@ -81,8 +81,12 @@
             // Prepare absolute path for photo
             $fotoAbsolute = '';
             if (!empty($profilPenjual['foto_toko'])) {
-                $is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
-                $base_url = $is_php_s ? '' : '/e_kantin';
+                $base_url = '';
+                if (preg_match('#^(.*)/(views|auth|backend|controllers|config|assets|scratch)/#', $_SERVER['SCRIPT_NAME'] ?? '', $m)) {
+                    $base_url = $m[1];
+                } elseif (preg_match('#^(.*)/index\.php#', $_SERVER['SCRIPT_NAME'] ?? '', $m)) {
+                    $base_url = $m[1];
+                }
                 $fotoAbsolute = $base_url . '/assets/img/kantin/' . $profilPenjual['foto_toko'];
             }
 
@@ -203,6 +207,14 @@
                                     </button>
                                 <?php endif; ?>
                             <?php endif; ?>
+
+                            <?php if ($ps['metode_pembayaran'] === 'tunai' && $ps['status_pembayaran'] === 'belum_bayar' && $ps['status'] !== 'dibatalkan' && $ps['status'] !== 'selesai'): ?>
+                                 <button type="button" class="pcard-btn" 
+                                     style="background: #16a34a; color: #ffffff; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);"
+                                     onclick="konfirmasiPembayaranTunai(<?= (int)$ps['id_pesanan'] ?>)">
+                                     <i class="fa-solid fa-money-bill-wave"></i> Konfirmasi Tunai
+                                 </button>
+                             <?php endif; ?>
 
                             <?php if ($ps['status'] === 'menunggu'): ?>
                                 <button type="button" class="pcard-btn pcard-btn-proses"

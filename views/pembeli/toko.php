@@ -79,6 +79,14 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 <html lang="id">
 
 <head>
+    <script>
+        (function() {
+            const isDark = localStorage.getItem('darkMode') === 'enabled';
+            if (isDark) {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $error_page ? 'Toko Tidak Ditemukan' : htmlspecialchars($toko['nama_toko']) . ' - E-Kantin'; ?></title>
@@ -298,9 +306,13 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                                         <?php endif; ?>
                                     </div>
                                     <div class="menu-item-footer">
-                                        <span class="menu-item-price">Rp <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
+                                        <?php if (isset($menu['is_fleksibel']) && $menu['is_fleksibel'] == 1): ?>
+                                            <span class="menu-item-price flex-price-tag" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 4px 8px; border-radius: 6px; font-weight: 750; font-size: 11.5px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Harga Fleksibel</span>
+                                        <?php else: ?>
+                                            <span class="menu-item-price">Rp <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
+                                        <?php endif; ?>
                                         <button class="btn-tambah" <?= !$is_available ? 'disabled' : ''; ?>
-                                            onclick="tambahKeKeranjang(<?= $menu['id_menu']; ?>, '<?= htmlspecialchars(addslashes($menu['nama_menu']), ENT_QUOTES); ?>', <?= $menu['harga']; ?>, '<?= htmlspecialchars(addslashes($foto_menu), ENT_QUOTES); ?>', '<?= htmlspecialchars(addslashes($toko['nama_toko']), ENT_QUOTES); ?>', <?= $toko['id_toko']; ?>, <?= $stok; ?>)">
+                                            onclick="tambahKeKeranjang(<?= $menu['id_menu']; ?>, '<?= htmlspecialchars(addslashes($menu['nama_menu']), ENT_QUOTES); ?>', <?= $menu['harga']; ?>, '<?= htmlspecialchars(addslashes($foto_menu), ENT_QUOTES); ?>', '<?= htmlspecialchars(addslashes($toko['nama_toko']), ENT_QUOTES); ?>', <?= $toko['id_toko']; ?>, <?= $stok; ?>, <?= (int)($menu['is_fleksibel'] ?? 0); ?>)">
                                             <i class="fa-solid fa-plus"></i>
                                             <?= $is_available ? 'Tambah' : ($stok <= 0 ? 'Habis' : 'Tutup'); ?>
                                         </button>
@@ -427,10 +439,208 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
             }
 
             // ── Add to cart ──
-            function tambahKeKeranjang(id_menu, nama_menu, harga, foto_menu, nama_toko, id_toko, stok) {
+            function openPriceInputModal(item, onConfirm) {
+                const existing = document.getElementById('priceInputModal');
+                if (existing) existing.remove();
+                
+                const modal = document.createElement('div');
+                modal.id = 'priceInputModal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.45);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 999999;
+                    opacity: 0;
+                    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                `;
+                
+                const card = document.createElement('div');
+                card.style.cssText = `
+                    background: #ffffff;
+                    padding: 28px 24px;
+                    border-radius: 24px;
+                    width: 90%;
+                    max-width: 380px;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+                    transform: scale(0.9);
+                    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-sizing: border-box;
+                `;
+                
+                const suggestions = [2000, 5000, 10000, 15000, 20000, 25000];
+                let chipsHtml = suggestions.map(price => `
+                    <button type="button" class="price-chip-btn" data-val="${price}" style="
+                        padding: 8px 14px;
+                        background: #f1f5f9;
+                        border: 1.5px solid #e2e8f0;
+                        border-radius: 12px;
+                        font-family: 'Poppins', sans-serif;
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: #475569;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    ">Rp ${price.toLocaleString('id-ID')}</button>
+                `).join('');
+                
+                card.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="width: 56px; height: 56px; background: rgba(92, 184, 92, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                            <i class="fa-solid fa-arrows-left-right-to-line" style="color: #5cb85c; font-size: 24px;"></i>
+                        </div>
+                        <h3 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 800; color: #1e293b;">Tentukan Harga</h3>
+                        <p style="margin: 4px 0 0; font-family: 'Poppins', sans-serif; font-size: 13px; color: #64748b;">
+                            Tentukan harga pembelian untuk <strong>${item.nama_menu}</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <span style="position: absolute; left: 16px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 700; color: #64748b;">Rp</span>
+                            <input type="number" id="customPriceInput" placeholder="0" min="1000" style="
+                                width: 100%;
+                                padding: 14px 16px 14px 44px;
+                                border: 2px solid #cbd5e1;
+                                border-radius: 16px;
+                                font-family: 'Poppins', sans-serif;
+                                font-size: 18px;
+                                font-weight: 700;
+                                color: #1e293b;
+                                outline: none;
+                                box-sizing: border-box;
+                                transition: border-color 0.2s;
+                            ">
+                        </div>
+                        <div id="priceValidationError" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 6px; display: none;">Minimal harga pembelian Rp 1.000</div>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <div style="font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Rekomendasi</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            ${chipsHtml}
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px;">
+                        <button id="cancelPriceBtn" style="
+                            flex: 1;
+                            padding: 12px;
+                            border: 2px solid #cbd5e1;
+                            border-radius: 14px;
+                            background: #ffffff;
+                            color: #475569;
+                            font-family: 'Poppins', sans-serif;
+                            font-size: 14px;
+                            font-weight: 700;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        ">Batal</button>
+                        <button id="confirmPriceBtn" style="
+                            flex: 1;
+                            padding: 12px;
+                            border: none;
+                            border-radius: 14px;
+                            background: linear-gradient(135deg, #5cb85c, #4cae4c);
+                            color: #ffffff;
+                            font-family: 'Poppins', sans-serif;
+                            font-size: 14px;
+                            font-weight: 700;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                            box-shadow: 0 4px 12px rgba(92, 184, 92, 0.2);
+                        ">Konfirmasi</button>
+                    </div>
+                `;
+                
+                modal.appendChild(card);
+                document.body.appendChild(modal);
+                
+                const input = card.querySelector('#customPriceInput');
+                const confirmBtn = card.querySelector('#confirmPriceBtn');
+                const cancelBtn = card.querySelector('#cancelPriceBtn');
+                const errDiv = card.querySelector('#priceValidationError');
+                
+                setTimeout(() => {
+                    modal.style.opacity = '1';
+                    card.style.transform = 'scale(1)';
+                    input.focus();
+                }, 10);
+                
+                function closeModal() {
+                    modal.style.opacity = '0';
+                    card.style.transform = 'scale(0.9)';
+                    setTimeout(() => modal.remove(), 300);
+                }
+                
+                card.querySelectorAll('.price-chip-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        input.value = btn.getAttribute('data-val');
+                        errDiv.style.display = 'none';
+                        input.style.borderColor = '#cbd5e1';
+                        
+                        card.querySelectorAll('.price-chip-btn').forEach(b => {
+                            b.style.background = '#f1f5f9';
+                            b.style.borderColor = '#e2e8f0';
+                            b.style.color = '#475569';
+                        });
+                        btn.style.background = 'rgba(92, 184, 92, 0.1)';
+                        btn.style.borderColor = '#5cb85c';
+                        btn.style.color = '#5cb85c';
+                    });
+                });
+                
+                input.addEventListener('input', () => {
+                    errDiv.style.display = 'none';
+                    input.style.borderColor = '#5cb85c';
+                    
+                    card.querySelectorAll('.price-chip-btn').forEach(b => {
+                        b.style.background = '#f1f5f9';
+                        b.style.borderColor = '#e2e8f0';
+                        b.style.color = '#475569';
+                    });
+                });
+                
+                confirmBtn.addEventListener('click', () => {
+                    const val = parseInt(input.value);
+                    if (isNaN(val) || val < 1000) {
+                        errDiv.style.display = 'block';
+                        input.style.borderColor = '#ef4444';
+                        input.focus();
+                        return;
+                    }
+                    closeModal();
+                    if (onConfirm) onConfirm(val);
+                });
+                
+                cancelBtn.addEventListener('click', closeModal);
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) closeModal();
+                });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') confirmBtn.click();
+                });
+            }
+
+            function tambahKeKeranjang(id_menu, nama_menu, harga, foto_menu, nama_toko, id_toko, stok, is_fleksibel = 0, customHarga = null) {
                 let cart = getCart();
 
-                const existingIndex = cart.findIndex(item => item.id_menu === id_menu);
+                if (is_fleksibel === 1 && customHarga === null) {
+                    openPriceInputModal({nama_menu: nama_menu, id_menu: id_menu}, (price) => {
+                        tambahKeKeranjang(id_menu, nama_menu, price, foto_menu, nama_toko, id_toko, stok, is_fleksibel, price);
+                    });
+                    return;
+                }
+
+                const activeHarga = customHarga !== null ? customHarga : harga;
+                const existingIndex = cart.findIndex(item => item.id_menu === id_menu && item.harga === activeHarga);
 
                 if (existingIndex !== -1) {
                     if (cart[existingIndex].jumlah >= stok) {
@@ -447,7 +657,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                     cart.push({
                         id_menu: id_menu,
                         nama_menu: nama_menu,
-                        harga: harga,
+                        harga: activeHarga,
                         jumlah: 1,
                         foto_menu: foto_menu,
                         nama_toko: nama_toko,
@@ -459,7 +669,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                 }
 
                 saveCart(cart);
-                showToast(nama_menu, 'success', { foto: foto_menu, toko: nama_toko });
+                showToast(nama_menu + ' (Rp ' + activeHarga.toLocaleString('id-ID') + ')', 'success', { foto: foto_menu, toko: nama_toko });
             }
 
             // ── Show toast notification ──
@@ -598,7 +808,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
                                 <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                                     <div class="cart-item-checkbox-wrap">
-                                        <input type="checkbox" class="cart-item-checkbox" onchange="toggleCartItemSelection(${item.id_menu})" ${isSelected ? 'checked' : ''}>
+                                        <input type="checkbox" class="cart-item-checkbox" onchange="toggleCartItemSelection(${item.id_menu}, ${item.harga})" ${isSelected ? 'checked' : ''}>
                                     </div>
                                     <div style="width: 50px; height: 50px; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
                                         ${imgHTML}
@@ -612,15 +822,15 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                                 <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
                                     <div style="font-size: 14px; font-weight: 800; color: #1e293b;">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
                                     <div class="item-qty" style="display: inline-flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc;">
-                                        <button onclick="updateCartQtyToko(${item.id_menu}, -1)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">−</button>
-                                        <span style="font-size: 13px; font-weight: 700; color: #1e293b; min-width: 20px; text-align: center;">${item.jumlah}</span>
-                                        <button onclick="updateCartQtyToko(${item.id_menu}, 1)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">+</button>
+                                        <button onclick="updateCartQtyToko(${item.id_menu}, ${item.harga}, -1)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">−</button>
+                                        <input type="number" value="${item.jumlah}" min="0" max="${item.stok || 999}" onchange="manualUpdateCartQtyToko(${item.id_menu}, ${item.harga}, this.value, ${item.stok || 999})" onkeydown="if(event.key === 'Enter') this.blur();" onclick="event.stopPropagation()">
+                                        <button onclick="updateCartQtyToko(${item.id_menu}, ${item.harga}, 1)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">+</button>
                                     </div>
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px; padding-left: 28px; width: 100%; box-sizing: border-box;">
                                 <i class="fa-regular fa-comment-dots" style="color: #94a3b8; font-size: 12px;"></i>
-                                <input type="text" class="cart-item-note-input" value="${item.catatan || ''}" placeholder="Tambah catatan..." onchange="updateCartItemNote(${item.id_menu}, this.value)" style="flex: 1; border: 1px solid #f1f5f9; border-radius: 6px; padding: 4px 8px; font-size: 11px; color: #64748b; outline: none; background: #f8fafc; transition: all 0.2s;" onfocus="this.style.borderColor='#5cb85c'; this.style.background='#ffffff'" onblur="this.style.borderColor='#f1f5f9'; this.style.background='#f8fafc'">
+                                <input type="text" class="cart-item-note-input" value="${item.catatan || ''}" placeholder="Tambah catatan..." onchange="updateCartItemNote(${item.id_menu}, ${item.harga}, this.value)" style="flex: 1; border: 1px solid #f1f5f9; border-radius: 6px; padding: 4px 8px; font-size: 11px; color: #64748b; outline: none; background: #f8fafc; transition: all 0.2s;" onfocus="this.style.borderColor='#5cb85c'; this.style.background='#ffffff'" onblur="this.style.borderColor='#f1f5f9'; this.style.background='#f8fafc'">
                             </div>
                         </div>
                     `;
@@ -628,9 +838,9 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                 body.innerHTML = html;
             }
 
-            function updateCartItemNote(id, val) {
+            function updateCartItemNote(id, harga, val) {
                 const cart = getCart();
-                const item = cart.find(c => c.id_menu === id);
+                const item = cart.find(c => c.id_menu === id && c.harga === harga);
                 if (item) {
                     item.catatan = val.trim();
                     saveCart(cart);
@@ -638,9 +848,9 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
             }
 
             // ── Update Cart Item Quantity in Canteen page ──
-            function updateCartQtyToko(id_menu, delta) {
+            function updateCartQtyToko(id_menu, harga, delta) {
                 let cart = getCart();
-                const existingIndex = cart.findIndex(item => item.id_menu === id_menu);
+                const existingIndex = cart.findIndex(item => item.id_menu === id_menu && item.harga === harga);
                 if (existingIndex !== -1) {
                     if (delta > 0) {
                         const item = cart[existingIndex];
@@ -658,10 +868,32 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                 }
             }
 
+            function manualUpdateCartQtyToko(id_menu, harga, value, maxStock) {
+                let qty = parseInt(value);
+                let cart = getCart();
+                const existingIndex = cart.findIndex(item => item.id_menu === id_menu && item.harga === harga);
+                if (existingIndex !== -1) {
+                    if (isNaN(qty) || qty < 0) {
+                        qty = 1; // Default fallback for invalid/empty inputs
+                    }
+
+                    if (qty === 0) {
+                        cart.splice(existingIndex, 1);
+                    } else {
+                        if (qty > maxStock) {
+                            showToast('Stok tidak mencukupi! Maksimum stok: ' + maxStock, 'error');
+                            qty = maxStock;
+                        }
+                        cart[existingIndex].jumlah = qty;
+                    }
+                    saveCart(cart);
+                }
+            }
+
             // ── Toggle Item Selection in Cart ──
-            function toggleCartItemSelection(id) {
+            function toggleCartItemSelection(id, harga) {
                 const cart = getCart();
-                const item = cart.find(c => c.id_menu === id);
+                const item = cart.find(c => c.id_menu === id && c.harga === harga);
                 if (item) {
                     item.selected = item.selected === false ? true : false;
                 }

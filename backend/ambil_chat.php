@@ -12,6 +12,36 @@ if (!$db) {
     exit;
 }
 
+function formatTanggalIndo($datetime) {
+    if (empty($datetime)) return '';
+    $timestamp = strtotime($datetime);
+    if (!$timestamp) return $datetime;
+
+    $hari = date('d', $timestamp);
+    $bulan_en = date('M', $timestamp);
+    $tahun = date('Y', $timestamp);
+    $waktu = date('H:i', $timestamp);
+
+    $bulan_id = [
+        'Jan' => 'Jan',
+        'Feb' => 'Feb',
+        'Mar' => 'Mar',
+        'Apr' => 'Apr',
+        'May' => 'Mei',
+        'Jun' => 'Jun',
+        'Jul' => 'Jul',
+        'Aug' => 'Ags',
+        'Sep' => 'Sep',
+        'Oct' => 'Okt',
+        'Nov' => 'Nov',
+        'Dec' => 'Des'
+    ];
+
+    $bulan = isset($bulan_id[$bulan_en]) ? $bulan_id[$bulan_en] : $bulan_en;
+
+    return "$hari $bulan $tahun, $waktu";
+}
+
 $user_id_raw = $_SESSION['user_id'] ?? '';
 $role_sekarang = $_SESSION['user_role'] ?? $_SESSION['role'] ?? '';
 $id_toko_sesi = (int) ($_SESSION['id_toko'] ?? 0);
@@ -39,7 +69,7 @@ $chats = [];
 
 if ($terakhir_id > 0) {
     $query = "SELECT pc.id_pesan, pc.id_pengirim, pc.isi_pesan,
-                     DATE_FORMAT(pc.waktu_kirim, '%H:%i') as jam,
+                     pc.waktu_kirim,
                      pc.id_staf_balasan,
                      p.nama as nama_staf
               FROM pesan_chat pc
@@ -53,7 +83,7 @@ if ($terakhir_id > 0) {
 } else {
     $query = "SELECT * FROM (
                 SELECT pc.id_pesan, pc.id_pengirim, pc.isi_pesan,
-                       DATE_FORMAT(pc.waktu_kirim, '%H:%i') as jam,
+                       pc.waktu_kirim,
                        pc.id_staf_balasan,
                        p.nama as nama_staf
                 FROM pesan_chat pc
@@ -75,7 +105,7 @@ while ($row = $result->fetch_assoc()) {
         'id' => (int) $row['id_pesan'],
         'is_me' => ($row['id_pengirim'] === $user_sekarang),
         'pesan' => $row['isi_pesan'],
-        'jam' => $row['jam'],
+        'jam' => formatTanggalIndo($row['waktu_kirim']),
         'nama_staf' => $row['nama_staf'] ?? null // Info "dibalas oleh siapa"
     ];
 }

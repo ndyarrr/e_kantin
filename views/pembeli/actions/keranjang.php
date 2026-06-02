@@ -30,13 +30,15 @@ if ($action === 'list') {
             k.catatan, 
             k.selected, 
             m.nama_menu, 
-            m.harga, 
+            m.harga AS menu_harga, 
             m.foto_menu, 
             m.stok,
             m.tersedia,
             t.nama_toko, 
             t.id_toko,
-            t.status AS status_toko
+            t.status AS status_toko,
+            k.harga AS keranjang_harga,
+            m.is_fleksibel
         FROM keranjang k
         JOIN menu m ON k.id_menu = m.id_menu
         JOIN toko t ON k.id_toko = t.id_toko
@@ -54,10 +56,11 @@ if ($action === 'list') {
     
     $cart = [];
     while ($row = mysqli_fetch_assoc($res)) {
+        $real_harga = ((int)$row['is_fleksibel'] === 1 && (int)$row['keranjang_harga'] > 0) ? (int)$row['keranjang_harga'] : (int)$row['menu_harga'];
         $cart[] = [
             'id_menu'     => (int)$row['id_menu'],
             'nama_menu'   => $row['nama_menu'],
-            'harga'       => (int)$row['harga'],
+            'harga'       => $real_harga,
             'jumlah'      => (int)$row['jumlah'],
             'foto_menu'   => $row['foto_menu'] ?? '',
             'nama_toko'   => $row['nama_toko'],
@@ -66,7 +69,8 @@ if ($action === 'list') {
             'catatan'     => $row['catatan'] ?? '',
             'stok'        => (int)$row['stok'],
             'tersedia'    => (int)$row['tersedia'],
-            'status_toko' => strtolower($row['status_toko'] ?? 'tutup')
+            'status_toko' => strtolower($row['status_toko'] ?? 'tutup'),
+            'is_fleksibel'=> (int)$row['is_fleksibel']
         ];
     }
     mysqli_stmt_close($stmt);
@@ -93,7 +97,7 @@ if ($action === 'sync' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     // Jalankan transaksi database agar sinkronisasi bersifat atomik
     mysqli_begin_transaction($conn);
     try {
-        $sent_menu_ids = [];
+        $tuples = [];
         
         foreach ($data as $item) {
             $id_menu  = isset($item['id_menu']) ? (int)$item['id_menu'] : 0;
@@ -101,17 +105,18 @@ if ($action === 'sync' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $jumlah   = isset($item['jumlah']) ? (int)$item['jumlah'] : 1;
             $catatan  = isset($item['catatan']) ? trim($item['catatan']) : '';
             $selected = (isset($item['selected']) && $item['selected'] !== false) ? 1 : 0;
+            $harga    = isset($item['harga']) ? (int)$item['harga'] : 0;
             
             if ($id_menu <= 0 || $id_toko <= 0 || $jumlah <= 0) {
                 continue;
             }
             
-            $sent_menu_ids[] = $id_menu;
+            $tuples[] = "($id_menu, $harga)";
             
             // Masukkan atau perbarui data keranjang
             $stmt = mysqli_prepare($conn, "
-                INSERT INTO keranjang (user_id, user_role, id_menu, id_toko, jumlah, catatan, selected) 
-                VALUES (?, ?, ?, ?, ?, ?, ?) 
+                INSERT INTO keranjang (user_id, user_role, id_menu, id_toko, jumlah, catatan, selected, harga) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
                 ON DUPLICATE KEY UPDATE 
                     jumlah = VALUES(jumlah), 
                     catatan = VALUES(catatan), 
@@ -119,20 +124,20 @@ if ($action === 'sync' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             
             if ($stmt) {
-                mysqli_stmt_bind_param($stmt, 'ssiiisi', $user_id, $user_role, $id_menu, $id_toko, $jumlah, $catatan, $selected);
+                mysqli_stmt_bind_param($stmt, 'ssiiiisi', $user_id, $user_role, $id_menu, $id_toko, $jumlah, $catatan, $selected, $harga);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
             }
         }
         
         // Hapus item di database yang tidak ada di data kiriman frontend
-        if (!empty($sent_menu_ids)) {
-            $id_list = implode(',', array_map('intval', $sent_menu_ids));
+        if (!empty($tuples)) {
+            $tuple_str = implode(',', $tuples);
             mysqli_query($conn, "
                 DELETE FROM keranjang 
                 WHERE user_id = '" . mysqli_real_escape_string($conn, $user_id) . "' 
                   AND user_role = '" . mysqli_real_escape_string($conn, $user_role) . "' 
-                  AND id_menu NOT IN ($id_list)
+                  AND (id_menu, harga) NOT IN ($tuple_str)
             ");
         } else {
             // Jika kosong, kosongkan keranjang milik user ini di DB

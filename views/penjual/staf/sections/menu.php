@@ -108,7 +108,13 @@
                         </div>
                     </div>
 
-                    <div class="menu-price">Rp <?= number_format($m['harga'], 0, ',', '.') ?></div>
+                    <?php if (isset($m['is_fleksibel']) && $m['is_fleksibel'] == 1): ?>
+                        <div class="menu-price" style="color: #0ea5e9; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; font-weight: 750; background: #e0f2fe; padding: 4px 10px; border-radius: 8px;">
+                            <i class="fa-solid fa-arrows-left-right-to-line"></i> Harga Fleksibel
+                        </div>
+                    <?php else: ?>
+                        <div class="menu-price">Rp <?= number_format($m['harga'], 0, ',', '.') ?></div>
+                    <?php endif; ?>
 
                     <div class="menu-stock">
                         <i class="fa-solid fa-boxes-stacked"></i> Stok: <strong><?= $stok ?></strong> unit
@@ -165,7 +171,13 @@
 
             <div class="form-group">
                 <label for="harga_menu">Harga (Rp)</label>
-                <input type="number" id="harga_menu" name="harga" placeholder="Contoh: 12000" min="0" required>
+                <div style="display: flex; gap: 16px; align-items: center; width: 100%;">
+                    <input type="number" id="harga_menu" name="harga" placeholder="Contoh: 12000" min="0" required style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; flex-shrink: 0;">
+                        <input type="checkbox" id="is_fleksibel_tambah" name="is_fleksibel" value="1" style="width: 18px; height: 18px; cursor: pointer; margin: 0;">
+                        <label for="is_fleksibel_tambah" style="margin-bottom: 0; font-size: 12.5px; font-weight: 600; color: #475569; cursor: pointer;">Harga Fleksibel</label>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -226,7 +238,13 @@
 
             <div class="form-group">
                 <label for="edit_harga_menu">Harga (Rp)</label>
-                <input type="number" id="edit_harga_menu" name="harga" min="0" required>
+                <div style="display: flex; gap: 16px; align-items: center; width: 100%;">
+                    <input type="number" id="edit_harga_menu" name="harga" min="0" required style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; flex-shrink: 0;">
+                        <input type="checkbox" id="edit_is_fleksibel" name="is_fleksibel" value="1" style="width: 18px; height: 18px; cursor: pointer; margin: 0;">
+                        <label for="edit_is_fleksibel" style="margin-bottom: 0; font-size: 12.5px; font-weight: 600; color: #475569; cursor: pointer;">Harga Fleksibel</label>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -284,8 +302,40 @@
             document.getElementById('nama_menu').focus();
         } else {
             formBox.querySelector('form').reset();
+            document.getElementById('is_fleksibel_tambah').checked = false;
+            handlePriceFleksibel('is_fleksibel_tambah', 'harga_menu');
         }
     }
+
+    function handlePriceFleksibel(checkboxId, priceInputId) {
+        const checkbox = document.getElementById(checkboxId);
+        const priceInput = document.getElementById(priceInputId);
+        if (!checkbox || !priceInput) return;
+        
+        if (checkbox.checked) {
+            priceInput.value = 0;
+            priceInput.readOnly = true;
+            priceInput.style.backgroundColor = '#f1f5f9';
+            priceInput.style.color = '#94a3b8';
+            priceInput.style.cursor = 'not-allowed';
+        } else {
+            priceInput.readOnly = false;
+            priceInput.style.backgroundColor = '';
+            priceInput.style.color = '';
+            priceInput.style.cursor = '';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkAdd = document.getElementById('is_fleksibel_tambah');
+        const checkEdit = document.getElementById('edit_is_fleksibel');
+        if (checkAdd) {
+            checkAdd.addEventListener('change', () => handlePriceFleksibel('is_fleksibel_tambah', 'harga_menu'));
+        }
+        if (checkEdit) {
+            checkEdit.addEventListener('change', () => handlePriceFleksibel('edit_is_fleksibel', 'edit_harga_menu'));
+        }
+    });
 
     function bukaFormEdit(menu) {
         document.getElementById('containerTambahMenu').classList.remove('show');
@@ -300,6 +350,8 @@
         document.getElementById('edit_nama_menu').value = menu.nama_menu;
         document.getElementById('edit_kategori_menu').value = menu.kategori ? menu.kategori.toLowerCase() : 'makanan';
         document.getElementById('edit_harga_menu').value = menu.harga;
+        document.getElementById('edit_is_fleksibel').checked = (parseInt(menu.is_fleksibel) === 1);
+        handlePriceFleksibel('edit_is_fleksibel', 'edit_harga_menu');
         document.getElementById('edit_stok_menu').value = menu.stok;
         document.getElementById('edit_deskripsi_menu').value = menu.deskripsi ?? '';
 

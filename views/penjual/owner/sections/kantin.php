@@ -79,10 +79,17 @@ $isLocked = ($jumlahBannerAktif >= 2);
                     </div>
                     <div class="kantin-form-group form-col-1">
                         <label>Status Kantin</label>
-                        <select name="status_toko">
-                            <option value="buka" <?= ($tokoData['status'] ?? 'buka') === 'buka' ? 'selected' : '' ?>>Buka</option>
-                            <option value="tutup" <?= ($tokoData['status'] ?? 'buka') === 'tutup' ? 'selected' : '' ?>>Tutup</option>
-                        </select>
+                        <input type="hidden" name="status_toko" id="inputStatusToko" value="<?= htmlspecialchars($tokoData['status'] ?? 'buka') ?>">
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="btnStatusBuka" onclick="setStatusToko('buka')"
+                                    style="flex: 1; padding: 10px; border-radius: 6px; font-weight: 700; border: 2.5px solid #22c55e; cursor: pointer; transition: all 0.2s; font-family: inherit; font-size: 13px;">
+                                <i class="fa-solid fa-circle-check"></i> Buka
+                            </button>
+                            <button type="button" id="btnStatusTutup" onclick="setStatusToko('tutup')"
+                                    style="flex: 1; padding: 10px; border-radius: 6px; font-weight: 700; border: 2.5px solid #dc2626; cursor: pointer; transition: all 0.2s; font-family: inherit; font-size: 13px;">
+                                <i class="fa-solid fa-circle-xmark"></i> Tutup
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -103,6 +110,37 @@ $isLocked = ($jumlahBannerAktif >= 2);
                     <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Profil
                 </button>
             </form>
+            <script>
+            function setStatusToko(status) {
+                document.getElementById('inputStatusToko').value = status;
+                
+                const btnBuka = document.getElementById('btnStatusBuka');
+                const btnTutup = document.getElementById('btnStatusTutup');
+                
+                if (status === 'buka') {
+                    btnBuka.style.background = '#22c55e';
+                    btnBuka.style.color = '#ffffff';
+                    btnBuka.style.borderColor = '#22c55e';
+                    btnBuka.style.boxShadow = '0 2px 6px rgba(34,197,94,0.3)';
+                    
+                    btnTutup.style.background = '#ffffff';
+                    btnTutup.style.color = '#dc2626';
+                    btnTutup.style.borderColor = '#dc2626';
+                    btnTutup.style.boxShadow = 'none';
+                } else {
+                    btnBuka.style.background = '#ffffff';
+                    btnBuka.style.color = '#22c55e';
+                    btnBuka.style.borderColor = '#22c55e';
+                    btnBuka.style.boxShadow = 'none';
+                    
+                    btnTutup.style.background = '#dc2626';
+                    btnTutup.style.color = '#ffffff';
+                    btnTutup.style.borderColor = '#dc2626';
+                    btnTutup.style.boxShadow = '0 2px 6px rgba(220,38,38,0.3)';
+                }
+            }
+            setStatusToko('<?= $tokoData['status'] ?? 'buka' ?>');
+            </script>
         </div>
     </div>
 

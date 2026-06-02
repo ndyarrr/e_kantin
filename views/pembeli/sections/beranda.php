@@ -76,9 +76,13 @@
                 foreach ($top_menus as $menu) {
                     $img = resolveMenuImg($menu['foto_menu'] ?? '');
                     $kat = strtolower($menu['kategori'] ?? 'makanan');
+                    $has_stock = ((int)($menu['stok'] ?? 0) > 0);
                     ?>
                     <div class="menu-card" style="cursor:default">
-                        <div class="menu-img-wrap-beranda">
+                        <div class="menu-img-wrap-beranda" style="<?= !$has_stock ? 'position: relative; opacity: 0.65;' : '' ?>">
+                            <?php if (!$has_stock): ?>
+                                <div style="position: absolute; top: 8px; right: 8px; background: #dc2626; color: #ffffff; font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 9999px; text-transform: uppercase; z-index: 2; box-shadow: 0 2px 4px rgba(220,38,38,0.2);">Habis</div>
+                            <?php endif; ?>
                             <?php if (!empty($img)): ?>
                                 <img src="<?= $img; ?>" alt="<?= htmlspecialchars($menu['nama_menu']); ?>"
                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -124,10 +128,14 @@
                         <div class="menu-info">
                             <h4><?= htmlspecialchars($menu['nama_menu']); ?></h4>
                             <p class="seller-name"><?= htmlspecialchars($menu['nama_toko']); ?></p>
-                            <span class="price-tag">Rp. <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
+                            <?php if (isset($menu['is_fleksibel']) && $menu['is_fleksibel'] == 1): ?>
+                                <span class="price-tag flex-price-tag" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 4px 8px; border-radius: 6px; font-weight: 750; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Harga Fleksibel</span>
+                            <?php else: ?>
+                                <span class="price-tag">Rp. <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
+                            <?php endif; ?>
                             <?php 
                             $is_toko_buka = (strtolower($menu['status_toko'] ?? '') === 'buka');
-                            if ($is_toko_buka): 
+                            if ($is_toko_buka && $has_stock): 
                             ?>
                                 <button class="btn-tambah-keranjang"
                                     style="width:100%;margin-top:8px;font-size:12px;padding:7px 10px" onclick="addToCart(
@@ -139,6 +147,11 @@
                     <?= (int) $menu['id_toko'] ?>
                 )">
                                     <i class="fa-solid fa-cart-plus"></i> Tambah
+                                </button>
+                            <?php elseif (!$has_stock): ?>
+                                <button class="btn-tambah-keranjang"
+                                    style="width:100%;margin-top:8px;font-size:12px;padding:7px 10px;background-color:#ef4444;pointer-events:none;box-shadow:none" disabled>
+                                    Stok Habis
                                 </button>
                             <?php else: ?>
                                 <button class="btn-tambah-keranjang"
