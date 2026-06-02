@@ -99,6 +99,30 @@
         }
     }
 
+    async function konfirmasiPembayaranQris(idPesanan) {
+        const body = new FormData();
+        body.append('action', 'konfirmasi_pembayaran_qris');
+        body.append('id_pesanan', idPesanan);
+        body.append('ajax', '1');
+
+        try {
+            const res = await fetch(cfg.prosesUrl, {
+                method: 'POST',
+                body,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            });
+            const data = await res.json();
+            if (data.success) {
+                await fetchInbox();
+            } else if (data.message) {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert('Gagal mengonfirmasi pembayaran QRIS.');
+        }
+    }
+
     searchInput.addEventListener('input', scheduleSearch);
 
     if (searchClear) {
@@ -132,6 +156,14 @@
             } catch (err) {
                 console.error(err);
             }
+            return;
+        }
+
+        if (action === 'konfirmasi_pembayaran_qris') {
+            const confirmMsg = btn.dataset.confirm;
+            if (confirmMsg && !confirm(confirmMsg)) return;
+            if (btn.disabled) return;
+            konfirmasiPembayaranQris(idPesanan);
             return;
         }
 

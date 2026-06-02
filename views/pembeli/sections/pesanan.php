@@ -10,17 +10,21 @@ if (!$db) {
     return;
 }
 
-$col_pembeli = ($user_role === 'siswa') ? 'nisn_pembeli' : 'nuptk_pembeli';
+$s_role = $user_role ?? $_SESSION['user_role'] ?? 'siswa';
+$s_id = $user_id ?? $_SESSION['user_id'] ?? '';
+$col_pembeli = ($s_role === 'siswa') ? 'nisn_pembeli' : 'nuptk_pembeli';
 
 // Query pesanan pembeli
 $pesanan_list = [];
 $q_pesanan = mysqli_query($db, "
-    SELECT p.*, t.nama_toko, t.id_toko
+    SELECT p.*, t.nama_toko, t.id_toko, t.qris_image
     FROM pesanan p
     JOIN toko t ON p.id_toko = t.id_toko
-    WHERE p.$col_pembeli = '$user_id'
+    WHERE p.$col_pembeli = '$s_id'
     ORDER BY p.waktu_pesan DESC
 ");
+
+echo "<!-- DEBUG PESANAN: role=$s_role, id=$s_id, col=$col_pembeli, rows=" . ($q_pesanan ? mysqli_num_rows($q_pesanan) : 'query failed') . " -->\n";
 
 if ($q_pesanan) {
     while ($r = mysqli_fetch_assoc($q_pesanan)) {
@@ -312,24 +316,37 @@ if ($q_pesanan) {
                             <?php endforeach; ?>
                         </div>
                         
+                        <?php 
+                            $is_transfer = ($pesanan['pembayaran']['metode'] === 'transfer');
+                        ?>
                         <div class="pesanan-card-footer">
                             <div class="pesanan-total-info">
                                 <span class="pesanan-total-label">Total Pembayaran</span>
                                 <span class="pesanan-total-val">Rp. <?= number_format($pesanan['total_harga'], 0, ',', '.') ?></span>
                             </div>
-                            <div class="pesanan-footer-right">
+                            <div class="pesanan-footer-right" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
                                 <?php if ($is_lunas): ?>
                                     <span class="pesanan-payment-status pay-lunas">
                                         <i class="fa-solid fa-circle-check"></i> Lunas
-                                        <small style="color: #64748b; font-weight: 500; margin-left: 2px;">(<?= $pesanan['pembayaran']['metode'] === 'transfer' ? 'QRIS' : 'Tunai' ?>)</small>
+                                        <small style="color: #64748b; font-weight: 500; margin-left: 2px;">(<?= $is_transfer ? 'QRIS' : 'Tunai' ?>)</small>
                                     </span>
                                 <?php else: ?>
-                                    <span class="pesanan-payment-status pay-belum_bayar">
-                                        <i class="fa-solid fa-circle-xmark"></i> Belum Bayar
-                                        <small style="color: #64748b; font-weight: 500; margin-left: 2px;">(<?= $pesanan['pembayaran']['metode'] === 'transfer' ? 'QRIS' : 'Tunai' ?>)</small>
+                                    <span class="pesanan-payment-status pay-belum_bayar" style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                                        <span>
+                                            <i class="fa-solid fa-circle-xmark"></i> Belum Bayar <small style="color: #64748b; font-weight: 500; margin-left: 2px;">(<?= $is_transfer ? 'QRIS' : 'Tunai' ?>)</small>
+                                        </span>
+                                        <?php if ($is_transfer): ?>
+                                            <span style="font-size: 10.5px; color: #0284c7; font-weight: 600;">Menunggu konfirmasi penjual</span>
+                                        <?php endif; ?>
                                     </span>
                                 <?php endif; ?>
                                 
+                                <?php if ($is_transfer && !$is_lunas && !empty($pesanan['qris_image'])): ?>
+                                    <button class="btn-bayar-qris" id="btn-qris-pay-<?= $pesanan['id_pesanan'] ?>" onclick="openPesananQrisModal('<?= htmlspecialchars(addslashes($pesanan['nama_toko']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($pesanan['qris_image']), ENT_QUOTES) ?>', <?= $pesanan['id_pesanan'] ?>)" style="background: #16a34a; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                        <i class="fa-solid fa-qrcode"></i> Bayar QRIS
+                                    </button>
+                                <?php endif; ?>
+
                                 <button class="btn-chat-kantin" onclick="switchNav('chat'); setTimeout(() => { bukaRoomChat('toko_<?= $pesanan['id_toko'] ?>', '<?= htmlspecialchars(addslashes($pesanan['nama_toko']), ENT_QUOTES) ?>'); }, 200);">
                                     <i class="fa-solid fa-comment-dots"></i> Hubungi Kantin
                                 </button>
@@ -341,3 +358,86 @@ if ($q_pesanan) {
         <?php endif; ?>
     </section>
 </div>
+
+<script>
+function openPesananQrisModal(namaToko, qrisImage, idPesanan) {
+    let oldModal = document.getElementById('qrisPaymentModal');
+    if (oldModal) oldModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'qrisPaymentModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999999;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+
+    const card = document.createElement('div');
+    card.style.cssText = `
+        background: #ffffff;
+        width: 90%;
+        max-width: 400px;
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        text-align: center;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    `;
+
+    card.innerHTML = `
+        <div style="font-size: 28px; color: #16a34a; margin-bottom: 12px;">
+            <i class="fa-solid fa-qrcode"></i>
+        </div>
+        <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 800; color: #0f172a; font-family: 'Poppins', sans-serif;">Metode QRIS - ${namaToko}</h3>
+        <p style="margin: 0 0 16px 0; font-size: 12px; color: #64748b; font-family: 'Poppins', sans-serif;">Silakan scan barcode QRIS di bawah ini untuk membayar:</p>
+        
+        <div id="modalQrisImgContainer" style="background: #ffffff; padding: 12px; border-radius: 16px; border: 1.5px solid #e2e8f0; display: inline-block; margin-bottom: 16px; transition: filter 0.3s ease;">
+            <img src="../../assets/img/qris/${qrisImage}" alt="QRIS" style="max-width: 220px; width: 100%; height: auto; display: block; border-radius: 8px;">
+        </div>
+
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 14px; border-radius: 16px; margin-bottom: 20px; text-align: left; display: flex; align-items: flex-start; gap: 10px;">
+            <i class="fa-solid fa-circle-info" style="color: #3b82f6; font-size: 16px; margin-top: 2px; flex-shrink: 0;"></i>
+            <span style="font-size: 12px; color: #1e3a8a; line-height: 1.4; font-family: 'Poppins', sans-serif;">
+                Silakan scan barcode QRIS di atas. Setelah melakukan transfer, silakan tunggu penjual memverifikasi pembayaran Anda.
+            </span>
+        </div>
+
+        <button id="btnModalCloseQris" style="width: 100%; padding: 12px; font-weight: bold; font-size: 14px; color: #ffffff; background: #16a34a; border: none; border-radius: 14px; cursor: pointer; transition: all 0.2s; font-family: 'Poppins', sans-serif; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);">
+            Tutup
+        </button>
+    `;
+
+    modal.appendChild(card);
+    document.body.appendChild(modal);
+
+    setTimeout(() => {
+        modal.style.opacity = '1';
+        card.style.transform = 'scale(1)';
+    }, 10);
+
+    function closeModal() {
+        modal.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            modal.remove();
+        }, 300);
+    }
+
+    card.querySelector('#btnModalCloseQris').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+}
+</script>

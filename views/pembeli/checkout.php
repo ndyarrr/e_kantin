@@ -333,11 +333,47 @@ if ($q_toko_qris) {
             box-shadow: none !important;
         }
 
+        /* Make header compact on desktop to save vertical space */
+        @media (min-width: 769px) {
+            .main-header {
+                border-radius: 0 0 16px 16px !important;
+            }
+            .main-header .top-bar {
+                padding: 4px 0 2px 0 !important;
+            }
+            .main-header .nav-menu-wrapper {
+                padding: 0 0 4px 0 !important;
+            }
+            .content-container {
+                padding-top: 10px !important;
+            }
+        }
+
+        /* Mobile specific layout optimizations for a cool, aesthetic, modern header */
+        @media (max-width: 768px) {
+            .main-header {
+                border-radius: 0 0 32px 32px !important; /* Smooth large bottom curve */
+                box-shadow: 0 8px 30px rgba(26, 122, 58, 0.18) !important; /* Soft green shadow glow */
+            }
+            .main-header::before {
+                border-radius: 0 0 32px 32px !important;
+            }
+            .main-header .top-bar {
+                padding: 16px 16px 14px 16px !important; /* Thicker vertical padding to push elements down */
+            }
+            /* Hide empty/unneeded nav wrapper on mobile in checkout */
+            .main-header .nav-menu-wrapper {
+                display: none !important;
+            }
+            .content-container {
+                padding-top: 16px !important;
+            }
+        }
+
         .checkout-container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 16px;
-            padding-bottom: 160px; /* Jarak agar tidak ketutup sticky bottom bar yang sekarang bertumpuk */
+            padding: 10px 16px 110px 16px; /* Reduced top padding and bottom padding to give more space */
         }
         .checkout-section-title {
             font-size: 17px;
@@ -632,12 +668,12 @@ if ($q_toko_qris) {
             width: 100%;
             background: #eaeaea; /* Light gray background to match mockup */
             box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.05);
-            padding: 16px 20px;
+            padding: 10px 16px; /* Reduced padding to save height */
             box-sizing: border-box;
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 10px; /* Reduced gap */
         }
         .checkout-payment-row {
             display: flex;
@@ -668,11 +704,11 @@ if ($q_toko_qris) {
         }
         .btn-submit-order {
             width: 100%;
-            padding: 14px;
+            padding: 11px; /* Thinner button */
             background: #5cb85c; /* Green button */
             color: #ffffff;
             border: none;
-            border-radius: 14px;
+            border-radius: 12px;
             font-weight: 800;
             font-size: 16px;
             cursor: pointer;
@@ -686,6 +722,40 @@ if ($q_toko_qris) {
         }
         .btn-submit-order:active {
             transform: translateY(0);
+        }
+
+        /* Desktop optimizations to make middle space roomy */
+        @media (min-width: 769px) {
+            /* Compact Header spacing to pull content up */
+            .main-header .top-bar {
+                padding: 4px 0 !important;
+            }
+            .main-header .nav-menu-wrapper {
+                padding: 0 0 4px 0 !important;
+            }
+            .content-container {
+                padding-top: 6px !important;
+            }
+
+            /* Compact Bottom Bar spacing to push buttons down */
+            .checkout-container {
+                padding-bottom: 80px; /* Thinner offset for thinner bottom bar */
+            }
+            .checkout-bottom-bar {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px calc((100% - 600px) / 2 + 16px);
+                gap: 24px;
+            }
+            .checkout-payment-row {
+                flex: 1;
+            }
+            .btn-submit-order {
+                width: auto;
+                min-width: 240px;
+                padding: 11px 36px;
+            }
         }
     </style>
 </head>
@@ -1265,9 +1335,13 @@ if ($q_toko_qris) {
                     const remainingCart = cart.filter(item => item.selected === false);
                     saveCart(remainingCart);
                     
-                    setTimeout(() => {
-                        window.location.href = 'index.php?tab=pesanan';
-                    }, 1500);
+                    if (selectedPaymentMethod === 'transfer') {
+                        openCheckoutQrisModal(cart);
+                    } else {
+                        setTimeout(() => {
+                            window.location.href = 'index.php?tab=pesanan&t=' + new Date().getTime();
+                        }, 1500);
+                    }
                 } else {
                     showToast('Gagal membuat pesanan: ' + data.message, 'error');
                     btn.disabled = false;
@@ -1511,12 +1585,9 @@ if ($q_toko_qris) {
                         </label>
                     </div>
                     
-                    <div id="qrisContainer" style="display: none; margin-top: 14px; padding: 20px 16px; text-align: center; border: 1.5px dashed #16a34a; background: #f8fafc; border-radius: 20px; box-sizing: border-box;">
-                        <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 800; color: #1e293b; font-family: 'Poppins', sans-serif;">Scan QRIS Untuk Pembayaran</h4>
-                        <p style="margin: 0 0 16px 0; font-size: 12px; color: #64748b; font-family: 'Poppins', sans-serif;">Silakan scan barcode QRIS di bawah ini:</p>
-                        <div id="qrisImagesList" style="display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%;">
-                            <!-- Rendered dynamically -->
-                        </div>
+                    <div id="qrisContainer" style="display: none; margin-top: 14px; padding: 14px 16px; text-align: left; border: 1.5px solid #3b82f6; background: #eff6ff; border-radius: 16px; box-sizing: border-box; align-items: flex-start; gap: 8px;">
+                        <i class="fa-solid fa-circle-info" style="color: #3b82f6; font-size: 16px; margin-top: 2px; flex-shrink: 0;"></i>
+                        <span style="font-size: 12px; color: #1e3a8a; line-height: 1.4;">Metode QRIS dipilih. Barcode pembayaran QRIS akan ditampilkan setelah Anda memproses pesanan ini.</span>
                     </div>
                 `;
             } else {
@@ -1582,13 +1653,112 @@ if ($q_toko_qris) {
                     qrisLabel.querySelector('div > div').style.color = '#16a34a';
                 }
                 if (qrisContainer) {
-                    qrisContainer.style.display = 'block';
-                    renderQrisImages();
+                    qrisContainer.style.display = 'flex';
                 }
                 
                 const methodTextEl = document.querySelector('.checkout-payment-method');
                 if (methodTextEl) methodTextEl.textContent = 'QRIS';
             }
+        }
+
+        function openCheckoutQrisModal(cart) {
+            const selectedItems = cart.filter(item => item.selected !== false);
+            const canteenIds = [...new Set(selectedItems.map(item => item.id_toko))];
+
+            let html = '';
+            canteenIds.forEach(id => {
+                const canteen = canteenQrisData[id];
+                if (canteen && canteen.qris) {
+                    html += `
+                        <div style="background: #ffffff; padding: 14px; border-radius: 16px; border: 1.5px solid #e2e8f0; width: 100%; box-sizing: border-box; text-align: center; margin-bottom: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01);">
+                            <div style="font-size: 11.5px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">QRIS ${canteen.nama_toko}</div>
+                            <img src="../../assets/img/qris/${canteen.qris}" alt="QRIS" style="max-width: 180px; width: 100%; height: auto; border-radius: 8px; border: 1px solid #f1f5f9; padding: 4px; background:#fff;">
+                        </div>
+                    `;
+                }
+            });
+
+            let oldModal = document.getElementById('qrisCheckoutModal');
+            if (oldModal) oldModal.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'qrisCheckoutModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.45);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999999;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: #ffffff;
+                width: 90%;
+                max-width: 400px;
+                border-radius: 24px;
+                padding: 24px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                text-align: center;
+                transform: scale(0.9);
+                transition: transform 0.3s ease;
+                max-height: 90vh;
+                display: flex;
+                flex-direction: column;
+            `;
+
+            card.innerHTML = `
+                <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+                    <div style="font-size: 24px; color: #16a34a; margin-bottom: 10px;">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 800; color: #0f172a; font-family: 'Poppins', sans-serif;">Pesanan Berhasil Dibuat!</h3>
+                    <p style="margin: 0 0 16px 0; font-size: 12px; color: #64748b; font-family: 'Poppins', sans-serif;">Silakan scan QRIS di bawah ini untuk menyelesaikan pembayaran:</p>
+                    
+                    <div id="modalQrisImgContainer" style="width: 100%; transition: filter 0.3s ease;">
+                        ${html}
+                    </div>
+
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 14px; border-radius: 16px; margin-bottom: 20px; margin-top: 10px; display: flex; align-items: flex-start; gap: 10px; text-align: left;">
+                        <i class="fa-solid fa-circle-info" style="color: #3b82f6; font-size: 16px; margin-top: 2px; flex-shrink: 0;"></i>
+                        <span style="font-size: 12px; color: #1e3a8a; line-height: 1.4; font-family: 'Poppins', sans-serif;">
+                            Silakan lakukan transfer/scan QRIS. Pembayaran Anda akan divalidasi secara manual oleh penjual. Pesanan Anda baru akan diproses setelah pembayaran terkonfirmasi.
+                        </span>
+                    </div>
+                </div>
+
+                <button id="btnModalCloseCheckout" style="width: 100%; padding: 12px; font-weight: bold; font-size: 14px; color: #ffffff; background: #16a34a; border: none; border-radius: 14px; cursor: pointer; transition: all 0.2s; font-family: 'Poppins', sans-serif; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2); margin-top: 12px; flex-shrink: 0;">
+                    Ke Halaman Pesanan
+                </button>
+            `;
+
+            modal.appendChild(card);
+            document.body.appendChild(modal);
+
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+
+            function redirectToOrders() {
+                modal.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    modal.remove();
+                    window.location.href = 'index.php?tab=pesanan&t=' + new Date().getTime();
+                }, 300);
+            }
+
+            card.querySelector('#btnModalCloseCheckout').addEventListener('click', redirectToOrders);
         }
 
         function renderQrisImages() {
