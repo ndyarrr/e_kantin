@@ -76,7 +76,7 @@
                             <div class="pcard-nama"><?= htmlspecialchars($ps['nama_pembeli']) ?></div>
                             <div class="pcard-meta">
                                 <i class="fa-solid fa-clock"></i>
-                                <?= date('H:i', strtotime($ps['waktu_pesan'])) ?>
+                                <?= date('d M Y, H:i', strtotime($ps['waktu_pesan'])) ?>
                                 <?php if ($ps['kelas_pembeli'] !== '-'): ?>
                                     <span class="pcard-dot">·</span>
                                     <i class="fa-solid fa-school"></i>

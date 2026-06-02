@@ -65,14 +65,13 @@ $itemTerlaris = mysqli_fetch_assoc(mysqli_query(
 ));
 
 /* ── Saldo buku kas ── */
-// Diubah dari 'jumlah' menjadi 'jumlah_bayar' disesuaikan dengan tabel pembayaran Anda
-$saldoKas = (float) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-                    "SELECT COALESCE(SUM(jumlah_bayar), 0) AS saldo
-     FROM pembayaran pm
-     JOIN pesanan p ON p.id_pesanan = pm.id_pesanan
-     WHERE p.id_toko = $idToko AND pm.status = 'lunas'"
-))['saldo'] ?? 0);
+// Diambil dari tabel keuangan agar sinkron dengan modul Keuangan (Pemasukan - Pengeluaran)
+$query_saldo = mysqli_query($conn, "SELECT 
+    SUM(CASE WHEN `tipe` = 'masuk' THEN `jumlah` ELSE 0 END) - 
+    SUM(CASE WHEN `tipe` = 'keluar' THEN `jumlah` ELSE 0 END) AS `saldo`
+    FROM `keuangan` WHERE `id_toko` = $idToko AND `deleted_at` IS NULL");
+$data_saldo = mysqli_fetch_assoc($query_saldo);
+$saldoKas = (float)($data_saldo['saldo'] ?? 0);
 
 /* ── Grafik tren 7 hari ── */
 $grafikLabels = [];

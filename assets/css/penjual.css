@@ -3149,6 +3149,7 @@ select.form-staf-control {
 
 /* Penyeragaman Input Controls & Dropdown */
 .kantin-form-group input[type="text"],
+.kantin-form-group input[type="number"],
 .kantin-form-group select,
 .kantin-form-group textarea,
 .kantin-form-group input[type="date"] {
@@ -3234,7 +3235,7 @@ select.form-staf-control {
    ========================================================================= */
 .banner-super-grid {
     display: grid !important;
-    grid-template-columns: 1fr 2fr !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) !important;
     /* Kiri 1 porsi, kanan 2 porsi murni */
     gap: 24px !important;
     align-items: stretch !important;
@@ -3247,6 +3248,8 @@ select.form-staf-control {
     display: flex !important;
     flex-direction: column !important;
     height: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
 }
 
 /* Pengganti .pcard khusus area banner agar kebal dari aturan global index.php */
@@ -3401,14 +3404,23 @@ select.form-staf-control {
 }
 
 /* Responsive Breakpoints */
-@media (max-width: 850px) {
+@media (max-width: 1080px) {
     .form-row {
         flex-direction: column;
         gap: 15px;
     }
 
     .banner-super-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 16px !important;
+    }
+
+    .pcard-inner-lokal {
+        padding: 16px !important;
+    }
+
+    .banner-table-custom {
+        min-width: 600px;
     }
 }
 

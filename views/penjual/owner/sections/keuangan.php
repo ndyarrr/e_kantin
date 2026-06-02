@@ -37,26 +37,38 @@ include __DIR__ . '/keuangan_data.php';
         </div>
         <div class="kas-card">
             <i class="fa-solid fa-arrow-trend-up" style="color: #16a34a;"></i>
-            <div class="kas-label">Pemasukan Tanggal Terpilih</div>
+            <div class="kas-label"><?= $filter_tanggal === 'semua' ? 'Total Pemasukan' : 'Pemasukan Tanggal Terpilih' ?></div>
             <div class="kas-value">Rp <?= number_format($pemasukan_hari_ini, 0, ',', '.') ?></div>
         </div>
         <div class="kas-card">
             <i class="fa-solid fa-arrow-trend-down" style="color: #dc2626;"></i>
-            <div class="kas-label">Pengeluaran Tanggal Terpilih</div>
+            <div class="kas-label"><?= $filter_tanggal === 'semua' ? 'Total Pengeluaran' : 'Pengeluaran Tanggal Terpilih' ?></div>
             <div class="kas-value">Rp <?= number_format($pengeluaran_hari_ini, 0, ',', '.') ?></div>
         </div>
         <div class="kas-card">
             <i class="fa-solid fa-receipt" style="color: #3498db;"></i>
-            <div class="kas-label">Jumlah Transaksi Tanggal</div>
+            <div class="kas-label"><?= $filter_tanggal === 'semua' ? 'Total Aktivitas Transaksi' : 'Jumlah Transaksi Tanggal' ?></div>
             <div class="kas-value"><?= $total_transaksi ?> Catatan</div>
         </div>
     </div>
 
     <div class="kas-filter-bar">
-        <div class="kas-filter-left">
+        <div class="kas-filter-left" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <i class="fa-solid fa-filter" style="color:#3498db;"></i>
             <span>Pilih Tanggal Data:</span>
-            <input type="date" class="kas-input-date" id="filterKasTanggal" value="<?= $filter_tanggal ?>" onchange="pindahTanggal(this.value)">
+            <input type="date" class="kas-input-date" id="filterKasTanggal" value="<?= $filter_tanggal !== 'semua' ? $filter_tanggal : '' ?>" onchange="pindahTanggal(this.value)">
+            <?php if ($filter_tanggal !== 'semua'): ?>
+                <button class="kas-btn-all" onclick="pindahTanggal('semua')" style="padding: 6px 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; background: #fff; color: #475569; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;">
+                    <i class="fa-solid fa-list"></i> Tampilkan Semua
+                </button>
+            <?php else: ?>
+                <span style="font-size: 12px; background: #e0f2fe; color: #0369a1; padding: 6px 10px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                    <i class="fa-solid fa-eye"></i> Semua Tanggal
+                </span>
+                <button class="kas-btn-today" onclick="pindahTanggal('<?= date('Y-m-d') ?>')" style="padding: 6px 12px; border-radius: 6px; border: 1.5px solid #3498db; background: #fff; color: #3498db; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;">
+                    <i class="fa-solid fa-calendar-day"></i> Hari Ini
+                </button>
+            <?php endif; ?>
         </div>
         <div class="kas-btn-group">
             <button class="kas-btn-print" onclick="window.print()">

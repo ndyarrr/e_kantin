@@ -224,7 +224,7 @@ $isLocked = ($jumlahBannerAktif >= 2);
                             </div>
                             <div style="margin-top: 8px; font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 4px;">
                                 <i class="fa-solid fa-circle-info" style="color: #3498db;"></i>
-                                <span><strong>Tips:</strong> Drag untuk geser, scroll mouse / pinch untuk zoom — seperti Instagram.</span>
+                                <span><strong>Tips:</strong> Drag untuk geser area banner, geser sumbu z untuk mengatur zoom.</span>
                             </div>
                         </div>
 
@@ -259,7 +259,7 @@ $isLocked = ($jumlahBannerAktif >= 2);
                     <h3 style="margin: 0 0 15px 0; font-size: 17px; font-weight:600; color:#2c3e50;"><i class="fa-solid fa-list" style="color:#3498db;"></i> Daftar Banner Toko</h3>
                     <div class="pcard-divider" style="height: 1px; background: #eaedf1; margin: 15px 0;"></div>
                     
-                    <div style="flex: 1; display: flex; flex-direction: column; width: 100%;">
+                    <div class="table-scroll" style="flex: 1; display: flex; flex-direction: column; width: 100%; overflow-x: auto;">
                         <table class="banner-table-custom">
                             <thead>
                                 <tr>

@@ -62,27 +62,50 @@ $query_saldo = mysqli_query($conn, "SELECT
 $data_saldo = mysqli_fetch_assoc($query_saldo);
 $saldo_sekarang = (float)($data_saldo['saldo_sekarang'] ?? 0);
 
-// 2. Total Pemasukan pada Tanggal Terpilih (Otomatis Pesanan Selesai + Manual)
-$query_masuk = mysqli_query($conn, "SELECT SUM(`jumlah`) AS `total` FROM `keuangan` 
-    WHERE `id_toko` = $idToko AND `tipe` = 'masuk' AND `tanggal` = '$filter_tanggal' AND `deleted_at` IS NULL");
+if ($filter_tanggal === 'semua') {
+    // 2. Total Pemasukan Kumulatif Semua Tanggal
+    $query_masuk = mysqli_query($conn, "SELECT SUM(`jumlah`) AS `total` FROM `keuangan` 
+        WHERE `id_toko` = $idToko AND `tipe` = 'masuk' AND `deleted_at` IS NULL");
+    
+    // 3. Total Pengeluaran Kumulatif Semua Tanggal
+    $query_keluar = mysqli_query($conn, "SELECT SUM(`jumlah`) AS `total` FROM `keuangan` 
+        WHERE `id_toko` = $idToko AND `tipe` = 'keluar' AND `deleted_at` IS NULL");
+
+    // 4. Jumlah Aktivitas Log Semua Tanggal
+    $query_trx = mysqli_query($conn, "SELECT COUNT(*) AS `total_trx` FROM `keuangan` 
+        WHERE `id_toko` = $idToko AND `deleted_at` IS NULL");
+
+    // 5. Riwayat Penuh Semua Tanggal
+    $query_riwayat = mysqli_query($conn, "SELECT * FROM `keuangan` 
+        WHERE `id_toko` = $idToko 
+        AND `deleted_at` IS NULL 
+        ORDER BY `tanggal` DESC, `id_keuangan` DESC");
+} else {
+    // 2. Total Pemasukan pada Tanggal Terpilih (Otomatis Pesanan Selesai + Manual)
+    $query_masuk = mysqli_query($conn, "SELECT SUM(`jumlah`) AS `total` FROM `keuangan` 
+        WHERE `id_toko` = $idToko AND `tipe` = 'masuk' AND `tanggal` = '$filter_tanggal' AND `deleted_at` IS NULL");
+
+    // 3. Total Pengeluaran pada Tanggal Terpilih
+    $query_keluar = mysqli_query($conn, "SELECT SUM(`jumlah`) AS `total` FROM `keuangan` 
+        WHERE `id_toko` = $idToko AND `tipe` = 'keluar' AND `tanggal` = '$filter_tanggal' AND `deleted_at` IS NULL");
+
+    // 4. Jumlah Aktivitas Log/Catatan Transaksi pada Tanggal Terpilih
+    $query_trx = mysqli_query($conn, "SELECT COUNT(*) AS `total_trx` FROM `keuangan` 
+        WHERE `id_toko` = $idToko AND `tanggal` = '$filter_tanggal' AND `deleted_at` IS NULL");
+
+    // 5. Riwayat Penuh untuk Di-looping ke Tabel Utama (difilter per tanggal terpilih)
+    $query_riwayat = mysqli_query($conn, "SELECT * FROM `keuangan` 
+        WHERE `id_toko` = $idToko 
+        AND `tanggal` = '$filter_tanggal'
+        AND `deleted_at` IS NULL 
+        ORDER BY `id_keuangan` DESC");
+}
+
 $data_masuk = mysqli_fetch_assoc($query_masuk);
 $pemasukan_hari_ini = (float)($data_masuk['total'] ?? 0);
 
-// 3. Total Pengeluaran pada Tanggal Terpilih
-$query_keluar = mysqli_query($conn, "SELECT SUM(`jumlah`) AS `total` FROM `keuangan` 
-    WHERE `id_toko` = $idToko AND `tipe` = 'keluar' AND `tanggal` = '$filter_tanggal' AND `deleted_at` IS NULL");
 $data_keluar = mysqli_fetch_assoc($query_keluar);
 $pengeluaran_hari_ini = (float)($data_keluar['total'] ?? 0);
 
-// 4. Jumlah Aktivitas Log/Catatan Transaksi pada Tanggal Terpilih
-$query_trx = mysqli_query($conn, "SELECT COUNT(*) AS `total_trx` FROM `keuangan` 
-    WHERE `id_toko` = $idToko AND `tanggal` = '$filter_tanggal' AND `deleted_at` IS NULL");
 $data_trx = mysqli_fetch_assoc($query_trx);
 $total_transaksi = (int)($data_trx['total_trx'] ?? 0);
-
-// 5. Riwayat Penuh untuk Di-looping ke Tabel Utama (difilter per tanggal terpilih)
-$query_riwayat = mysqli_query($conn, "SELECT * FROM `keuangan` 
-    WHERE `id_toko` = $idToko 
-    AND `tanggal` = '$filter_tanggal'
-    AND `deleted_at` IS NULL 
-    ORDER BY `id_keuangan` DESC");

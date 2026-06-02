@@ -334,6 +334,14 @@ require __DIR__ . '/sections/inbox_data.php';
 
             if (name === 'menu') {
                 history.replaceState(null, '', '?section=' + name + '&search=<?= urlencode($_GET['search'] ?? '') ?>&kategori=<?= $_GET['kategori'] ?? 'semua' ?>');
+            } else if (name === 'keuangan') {
+                const urlParams = new URLSearchParams(window.location.search);
+                const filterDate = urlParams.get('filter_date');
+                if (filterDate) {
+                    history.replaceState(null, '', '?section=' + name + '&filter_date=' + filterDate);
+                } else {
+                    history.replaceState(null, '', '?section=' + name);
+                }
             } else {
                 history.replaceState(null, '', '?section=' + name);
             }

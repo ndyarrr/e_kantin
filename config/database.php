@@ -1,4 +1,7 @@
 <?php
+// Atur timezone default PHP agar sinkron dengan Waktu Indonesia Barat (WIB / GMT+7)
+date_default_timezone_set('Asia/Jakarta');
+
 /**
  * Koneksi MySQL — kompatibel XAMPP (Linux) & PHP 8+
  */
@@ -48,6 +51,8 @@ if (!$conn) {
 }
 
 mysqli_set_charset($conn, 'utf8mb4');
+// Atur timezone session MySQL agar sinkron dengan PHP (+07:00 / Asia/Jakarta)
+mysqli_query($conn, "SET time_zone = '+07:00'");
 
 /** Alias lama — beberapa file memakai $koneksi */
 $koneksi = $conn;
