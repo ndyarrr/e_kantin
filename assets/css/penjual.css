@@ -4216,6 +4216,20 @@ select.form-staf-control {
         border-top: 2px dashed #000000 !important;
         margin: 10px 0 !important;
     }
+
+    .nota-logo {
+        margin-bottom: 8px !important;
+    }
+
+    .nota-logo img {
+        width: 100px !important;
+        height: 100px !important;
+        border-radius: 8px !important;
+        border: 2px solid #000000 !important;
+        object-fit: cover !important;
+        display: block !important;
+        margin: 0 auto 8px !important;
+    }
 }
 
 @media (max-width: 400px) {

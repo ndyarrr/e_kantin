@@ -22,6 +22,7 @@ $tabs = [
 
 $is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
 $inbox_base = $is_php_s ? '' : '/e_kantin';
+$fotoBase = $inbox_base . '/assets/img/kantin/';
 ?>
 
 <!-- ══ MODAL NOTA ══ -->
@@ -116,7 +117,7 @@ function bukaNotaModal(data, idPesanan) {
     document.getElementById('notaTokoNama').textContent = data.toko;
     const logoEl = document.getElementById('notaLogo');
     if (data.foto) {
-        logoEl.innerHTML = `<img src="${data.foto}" style="width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:8px;border:2px solid #ddd;" onerror="this.onerror=null; this.outerHTML='🏪';">`;
+        logoEl.innerHTML = `<img src="${data.foto}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px;border:2px solid #ddd;" onerror="this.onerror=null; this.outerHTML='🏪';">`;
     } else {
         logoEl.innerHTML = '🏪';
     }

@@ -78,6 +78,14 @@
                 $kasirShift = $profilPenjual['shift'] ?? 'Bebas';
             }
 
+            // Prepare absolute path for photo
+            $fotoAbsolute = '';
+            if (!empty($profilPenjual['foto_toko'])) {
+                $is_php_s = ($_SERVER['SERVER_PORT'] == '8000' || strpos($_SERVER['HTTP_HOST'], ':') !== false);
+                $base_url = $is_php_s ? '' : '/e_kantin';
+                $fotoAbsolute = $base_url . '/assets/img/kantin/' . $profilPenjual['foto_toko'];
+            }
+
             $notaData = json_encode([
                 'id'      => $ps['id_pesanan'],
                 'pembeli' => $ps['nama_pembeli'],
@@ -86,7 +94,7 @@
                 'total'   => $ps['total_harga'],
                 'items'   => $notaItems,
                 'toko'    => $profilPenjual['nama_toko'] ?? 'Kantin',
-                'foto'    => $fotoTokoNota,
+                'foto'    => $fotoAbsolute,
                 'kasir'   => $kasirNama,
                 'shift'   => $kasirShift,
                 'metode'  => $ps['metode_pembayaran'] === 'transfer' ? 'QRIS' : 'Tunai',
