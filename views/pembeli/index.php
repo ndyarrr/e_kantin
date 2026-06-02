@@ -186,8 +186,8 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             <div class="logo-area">
                 <img src="../../assets/img/logo_ekantin_hijau.png" class="school-logo" alt="Logo">
                 <div class="greeting-area">
-                    <span class="greeting-name">Halo, <?= htmlspecialchars($user_nama); ?>! 👋</span>
-                    <span class="greeting-sub">Mau pesan apa hari ini?</span>
+                    <span class="greeting-name">Halo, <?= htmlspecialchars($user_nama); ?>!</span>
+                    <span class="greeting-sub">Selamat datang di E-Kantin!</span>
                 </div>
             </div>
             

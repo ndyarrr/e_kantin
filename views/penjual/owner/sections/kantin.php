@@ -590,10 +590,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    window.addEventListener('resize', function() {
-        refreshCanvas();
-        BannerCanvas.initAll(canvasPreview ? canvasPreview.closest('#panelDaftarKantin') : document);
-    });
+    // Gunakan ResizeObserver agar canvas otomatis re-render saat ukuran container berubah
+    // (akibat browser zoom Ctrl+/Ctrl-, sidebar toggle, resize window, dsb.)
+    if (canvasPreview && typeof ResizeObserver !== 'undefined') {
+        let resizeRafId = null;
+        const ro = new ResizeObserver(function() {
+            // debounce agar tidak terlalu sering memanggil refreshCanvas
+            if (resizeRafId) cancelAnimationFrame(resizeRafId);
+            resizeRafId = requestAnimationFrame(function() {
+                refreshCanvas();
+                BannerCanvas.initAll(canvasPreview.closest('[id]') || document);
+            });
+        });
+        ro.observe(canvasPreview);
+    } else {
+        // Fallback untuk browser lama yang tidak mendukung ResizeObserver
+        window.addEventListener('resize', function() {
+            refreshCanvas();
+            BannerCanvas.initAll(canvasPreview ? canvasPreview.closest('[id]') : document);
+        });
+    }
 
     // -------------------------------------------------------------
     // 2. LIVE COUNTDOWN TIMERS LOGIC

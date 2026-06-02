@@ -145,6 +145,22 @@ window.BannerCanvas = (function () {
             } else {
                 img.addEventListener('load', run, { once: true });
             }
+
+            // Re-render saat ukuran viewport berubah (browser zoom Ctrl+/-, sidebar toggle, dsb.)
+            if (typeof ResizeObserver !== 'undefined') {
+                // Tandai agar tidak memasang observer ganda pada elemen yang sama
+                if (!viewport._roAttached) {
+                    viewport._roAttached = true;
+                    let rafId = null;
+                    const ro = new ResizeObserver(() => {
+                        if (rafId) cancelAnimationFrame(rafId);
+                        rafId = requestAnimationFrame(() => {
+                            apply(viewport, img, viewport.dataset.bannerCanvas);
+                        });
+                    });
+                    ro.observe(viewport);
+                }
+            }
         });
     }
 
