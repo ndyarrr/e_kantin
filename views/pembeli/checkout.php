@@ -333,11 +333,47 @@ if ($q_toko_qris) {
             box-shadow: none !important;
         }
 
+        /* Make header compact on desktop to save vertical space */
+        @media (min-width: 769px) {
+            .main-header {
+                border-radius: 0 0 16px 16px !important;
+            }
+            .main-header .top-bar {
+                padding: 4px 0 2px 0 !important;
+            }
+            .main-header .nav-menu-wrapper {
+                padding: 0 0 4px 0 !important;
+            }
+            .content-container {
+                padding-top: 10px !important;
+            }
+        }
+
+        /* Mobile specific layout optimizations for a cool, aesthetic, modern header */
+        @media (max-width: 768px) {
+            .main-header {
+                border-radius: 0 0 32px 32px !important; /* Smooth large bottom curve */
+                box-shadow: 0 8px 30px rgba(26, 122, 58, 0.18) !important; /* Soft green shadow glow */
+            }
+            .main-header::before {
+                border-radius: 0 0 32px 32px !important;
+            }
+            .main-header .top-bar {
+                padding: 16px 16px 14px 16px !important; /* Thicker vertical padding to push elements down */
+            }
+            /* Hide empty/unneeded nav wrapper on mobile in checkout */
+            .main-header .nav-menu-wrapper {
+                display: none !important;
+            }
+            .content-container {
+                padding-top: 16px !important;
+            }
+        }
+
         .checkout-container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 16px;
-            padding-bottom: 160px; /* Jarak agar tidak ketutup sticky bottom bar yang sekarang bertumpuk */
+            padding: 10px 16px 110px 16px; /* Reduced top padding and bottom padding to give more space */
         }
         .checkout-section-title {
             font-size: 17px;
@@ -632,12 +668,12 @@ if ($q_toko_qris) {
             width: 100%;
             background: #eaeaea; /* Light gray background to match mockup */
             box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.05);
-            padding: 16px 20px;
+            padding: 10px 16px; /* Reduced padding to save height */
             box-sizing: border-box;
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 10px; /* Reduced gap */
         }
         .checkout-payment-row {
             display: flex;
@@ -668,11 +704,11 @@ if ($q_toko_qris) {
         }
         .btn-submit-order {
             width: 100%;
-            padding: 14px;
+            padding: 11px; /* Thinner button */
             background: #5cb85c; /* Green button */
             color: #ffffff;
             border: none;
-            border-radius: 14px;
+            border-radius: 12px;
             font-weight: 800;
             font-size: 16px;
             cursor: pointer;
@@ -686,6 +722,40 @@ if ($q_toko_qris) {
         }
         .btn-submit-order:active {
             transform: translateY(0);
+        }
+
+        /* Desktop optimizations to make middle space roomy */
+        @media (min-width: 769px) {
+            /* Compact Header spacing to pull content up */
+            .main-header .top-bar {
+                padding: 4px 0 !important;
+            }
+            .main-header .nav-menu-wrapper {
+                padding: 0 0 4px 0 !important;
+            }
+            .content-container {
+                padding-top: 6px !important;
+            }
+
+            /* Compact Bottom Bar spacing to push buttons down */
+            .checkout-container {
+                padding-bottom: 80px; /* Thinner offset for thinner bottom bar */
+            }
+            .checkout-bottom-bar {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px calc((100% - 600px) / 2 + 16px);
+                gap: 24px;
+            }
+            .checkout-payment-row {
+                flex: 1;
+            }
+            .btn-submit-order {
+                width: auto;
+                min-width: 240px;
+                padding: 11px 36px;
+            }
         }
     </style>
 </head>
