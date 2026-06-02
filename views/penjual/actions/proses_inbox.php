@@ -36,6 +36,20 @@ $isAjax = !empty($_POST['ajax'])
 $ajaxResponse = ['success' => false, 'message' => 'Aksi tidak dikenali.'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Owner hanya diizinkan memantau (read-only)
+    if (($_SESSION['user_sub_role'] ?? '') === 'owner') {
+        $ajaxResponse = ['success' => false, 'message' => 'Owner hanya diperbolehkan memantau pesanan (read-only).'];
+        if ($isAjax) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($ajaxResponse);
+            exit;
+        } else {
+            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+            header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=inbox&t=' . time());
+            exit;
+        }
+    }
+
     $action = $_POST['action'] ?? '';
     
     if ($action === 'konfirmasi_pembayaran_qris') {

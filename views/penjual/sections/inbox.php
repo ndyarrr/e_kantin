@@ -28,6 +28,8 @@ $inbox_base = $is_php_s ? '' : '/e_kantin';
 <div id="notaModal" class="nota-overlay" onclick="tutupNota(event)">
     <div class="nota-box" id="notaBox">
         <div id="notaKonten">
+            <!-- Jagged Edge Top -->
+            <div class="nota-jagged-top"></div>
             <div class="nota-header">
                 <div class="nota-logo" id="notaLogo"></div>
                 <div class="nota-toko-nama" id="notaTokoNama"></div>
@@ -39,6 +41,9 @@ $inbox_base = $is_php_s ? '' : '/e_kantin';
                 <div class="nota-info-row"><span>Pembeli</span><span id="notaPembeli"></span></div>
                 <div class="nota-info-row"><span>Kelas</span><span id="notaKelas"></span></div>
                 <div class="nota-info-row"><span>Waktu</span><span id="notaWaktu"></span></div>
+                <div class="nota-info-row"><span>Kasir</span><span id="notaKasir"></span></div>
+                <div class="nota-info-row"><span>Shift</span><span id="notaShift"></span></div>
+                <div class="nota-info-row"><span>Pembayaran</span><span id="notaMetode"></span></div>
             </div>
             <div class="nota-garis"></div>
             <table class="nota-table" id="notaTable">
@@ -54,15 +59,22 @@ $inbox_base = $is_php_s ? '' : '/e_kantin';
             <div class="nota-garis"></div>
             <div class="nota-total-row"><span>TOTAL</span><span id="notaTotal"></span></div>
             <div class="nota-garis"></div>
-            <div class="nota-footer">Terima kasih!</div>
+            <div class="nota-footer">
+                <div class="nota-footer-bold">Terima kasih atas kunjungan Anda!</div>
+                <div class="nota-footer-sub">Semoga hari Anda menyenangkan</div>
+            </div>
+            <!-- Jagged Edge Bottom -->
+            <div class="nota-jagged-bottom"></div>
         </div>
         <div class="nota-actions no-print">
             <button type="button" class="pcard-btn pcard-btn-batal" onclick="tutupNota()">
                 <i class="fa-solid fa-xmark"></i> Tutup
             </button>
+            <?php if (($_SESSION['user_sub_role'] ?? '') !== 'owner'): ?>
             <button type="button" class="pcard-btn pcard-btn-print" onclick="cetakNota()">
                 <i class="fa-solid fa-print"></i> Cetak
             </button>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -104,7 +116,7 @@ function bukaNotaModal(data, idPesanan) {
     document.getElementById('notaTokoNama').textContent = data.toko;
     const logoEl = document.getElementById('notaLogo');
     if (data.foto) {
-        logoEl.innerHTML = `<img src="${data.foto}" style="width:90px;height:90px;object-fit:cover;border-radius:14px;" onerror="this.onerror=null; this.outerHTML='🏪';">`;
+        logoEl.innerHTML = `<img src="${data.foto}" style="width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:8px;border:2px solid #ddd;" onerror="this.onerror=null; this.outerHTML='🏪';">`;
     } else {
         logoEl.innerHTML = '🏪';
     }
@@ -112,6 +124,12 @@ function bukaNotaModal(data, idPesanan) {
     document.getElementById('notaPembeli').textContent = data.pembeli;
     document.getElementById('notaKelas').textContent = data.kelas;
     document.getElementById('notaWaktu').textContent = data.waktu;
+
+    // Set new fields
+    document.getElementById('notaKasir').textContent = data.kasir || 'Kasir';
+    document.getElementById('notaShift').textContent = data.shift ? 'Shift ' + data.shift : '-';
+    document.getElementById('notaMetode').textContent = data.metode || 'Tunai';
+
     document.getElementById('notaTotal').textContent = 'Rp ' + Number(data.total).toLocaleString('id-ID');
 
     const tbody = document.getElementById('notaItems');
@@ -138,6 +156,7 @@ function tutupNota(e) {
 function cetakNota() {
     window.print();
     if (_notaIdPesanan) {
+        localStorage.setItem('printed_order_' + _notaIdPesanan, 'true');
         const btn = document.getElementById('btnSelesai-' + _notaIdPesanan);
         if (btn) {
             btn.disabled = false;

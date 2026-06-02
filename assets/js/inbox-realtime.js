@@ -35,6 +35,17 @@
         history.replaceState(null, '', url.toString());
     }
 
+    function syncPrintedButtons() {
+        document.querySelectorAll('.pcard-btn-selesai').forEach(btn => {
+            const id = btn.id.replace('btnSelesai-', '');
+            if (localStorage.getItem('printed_order_' + id) === 'true') {
+                btn.disabled = false;
+                btn.classList.remove('pcard-btn-selesai-locked');
+                btn.title = '';
+            }
+        });
+    }
+
     async function fetchInbox() {
         if (!isInboxActive() || isFetching) return;
         isFetching = true;
@@ -58,6 +69,7 @@
             cfg.filterStatus = filterStatus;
             cfg.inboxSearch = inboxSearch;
             syncUrl();
+            syncPrintedButtons();
         } catch (err) {
             console.error('Gagal memuat inbox:', err);
         } finally {
@@ -90,6 +102,9 @@
             });
             const data = await res.json();
             if (data.success) {
+                if (statusBaru === 'selesai' || statusBaru === 'dibatalkan') {
+                    localStorage.removeItem('printed_order_' + idPesanan);
+                }
                 await fetchInbox();
             } else if (data.message) {
                 alert(data.message);

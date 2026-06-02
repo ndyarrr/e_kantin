@@ -46,6 +46,17 @@ $profilPenjual = mysqli_fetch_assoc(mysqli_query(
     "SELECT t.nama_toko, t.foto_toko FROM toko t WHERE t.id_toko = $idToko AND t.deleted_at IS NULL LIMIT 1"
 )) ?: ['nama_toko' => 'Kantin', 'foto_toko' => ''];
 
+$kasirInfo = mysqli_fetch_assoc(mysqli_query(
+    $conn,
+    "SELECT p.nama, tp.shift 
+     FROM penjual p
+     LEFT JOIN toko_penjual tp ON tp.id_penjual = p.id_penjual AND tp.status = 'aktif'
+     WHERE p.id_penjual = $penjualId
+     LIMIT 1"
+));
+$profilPenjual['nama'] = $kasirInfo['nama'] ?? $_SESSION['user_nama'] ?? 'Kasir';
+$profilPenjual['shift'] = !empty($kasirInfo['shift']) ? $kasirInfo['shift'] : 'Bebas';
+
 $fotoTokoNota = !empty($profilPenjual['foto_toko'])
     ? tokoFotoUrl($profilPenjual['foto_toko'], '../../../')
     : '';
