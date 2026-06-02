@@ -110,11 +110,40 @@
                 </div>
 
                 <div class="pcard-footer">
-                    <div class="pcard-total">
-                        <span class="pcard-total-label">Total</span>
-                        <span class="pcard-total-value">Rp <?= number_format($ps['total_harga'], 0, ',', '.') ?></span>
+                    <div class="pcard-total" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                            <span class="pcard-total-label">Total</span>
+                            <span class="pcard-total-value">Rp <?= number_format($ps['total_harga'], 0, ',', '.') ?></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; font-family: 'Poppins', sans-serif;">
+                            <span style="color: #64748b; font-weight: 500;">Pembayaran:</span>
+                            <span style="font-weight: 700; color: #1e293b; display: inline-flex; align-items: center; gap: 4px;">
+                                <?php if ($ps['metode_pembayaran'] === 'transfer'): ?>
+                                    <i class="fa-solid fa-qrcode" style="color: #0ea5e9; font-size: 11px;"></i> QRIS
+                                <?php else: ?>
+                                    <i class="fa-solid fa-money-bill-wave" style="color: #16a34a; font-size: 11px;"></i> Tunai
+                                <?php endif; ?>
+                            </span>
+                            <?php if ($ps['status_pembayaran'] === 'lunas'): ?>
+                                <span style="background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; border: 1px solid #bbf7d0;">
+                                    <i class="fa-solid fa-circle-check" style="font-size: 9px;"></i> Lunas
+                                </span>
+                            <?php else: ?>
+                                <span style="background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; border: 1px solid #fecaca;">
+                                    <i class="fa-solid fa-circle-xmark" style="font-size: 9px;"></i> Belum Bayar
+                                </span>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="pcard-actions">
+                        <?php if ($ps['metode_pembayaran'] === 'transfer' && $ps['status_pembayaran'] === 'belum_bayar' && $ps['status'] !== 'dibatalkan' && $ps['status'] !== 'selesai'): ?>
+                            <button type="button" class="pcard-btn" 
+                                style="background: #16a34a; color: #ffffff; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);"
+                                data-action="konfirmasi_pembayaran_qris" data-id="<?= (int) $ps['id_pesanan'] ?>" data-confirm="Apakah Anda yakin uang pembayaran QRIS pesanan ini sudah masuk ke rekening Anda?">
+                                <i class="fa-solid fa-check-double"></i> Konfirmasi QRIS
+                            </button>
+                        <?php endif; ?>
+
                         <?php if ($ps['status'] === 'menunggu'): ?>
                             <button type="button" class="pcard-btn pcard-btn-proses"
                                 data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="dikonfirmasi">

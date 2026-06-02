@@ -11,12 +11,14 @@ function inbox_get_data(mysqli $conn, int $idToko, string $filterStatus = 'semua
 
     $sqlPesanan = "SELECT p.id_pesanan, p.waktu_pesan, p.status, p.total_harga, p.waktu_ambil,
                           COALESCE(m2.nama, g.nama, 'Unknown') AS nama_pembeli,
-                          COALESCE(CONCAT(k.kelas, ' ', j.nama_jurusan, ' ', k.rombel), '-') AS kelas_pembeli
+                          COALESCE(CONCAT(k.kelas, ' ', j.nama_jurusan, ' ', k.rombel), '-') AS kelas_pembeli,
+                          pb.metode AS metode_pembayaran, pb.status AS status_pembayaran
                    FROM pesanan p
                    LEFT JOIN murid m2 ON m2.nisn  = p.nisn_pembeli
                    LEFT JOIN kelas k ON k.id_kelas = m2.id_kelas
                    LEFT JOIN jurusan j ON j.id_jurusan = k.id_jurusan
                    LEFT JOIN guru  g  ON g.nuptk  = p.nuptk_pembeli
+                   LEFT JOIN pembayaran pb ON pb.id_pesanan = p.id_pesanan
                    WHERE p.id_toko = $idToko";
 
     if ($filterStatus !== 'semua') {
