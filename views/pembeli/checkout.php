@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $jumlah = (int) $item['jumlah'];
                 
                 // Validasi ketersediaan stok
-                $cek_stok = mysqli_query($conn, "SELECT nama_menu, stok, tersedia FROM menu WHERE id_menu = $id_menu LIMIT 1");
+                $cek_stok = mysqli_query($conn, "SELECT nama_menu, stok, tersedia FROM menu WHERE id_menu = $id_menu AND deleted_at IS NULL LIMIT 1");
                 if (mysqli_num_rows($cek_stok) > 0) {
                     $r_menu = mysqli_fetch_assoc($cek_stok);
                     if (!$r_menu['tersedia']) {
@@ -154,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             foreach ($items as $item) {
                 $mid = (int) $item['id_menu'];
                 $r_detail = mysqli_fetch_assoc(mysqli_query($conn,
-                    "SELECT nama_menu, foto_menu, kategori, harga FROM menu WHERE id_menu = $mid LIMIT 1"
+                    "SELECT nama_menu, foto_menu, kategori, harga FROM menu WHERE id_menu = $mid AND deleted_at IS NULL LIMIT 1"
                 ));
                 if ($r_detail) {
                     $chat_items[] = [

@@ -18,7 +18,7 @@ if (!$toko) {
 }
 
 // Ambil daftar menu
-$queryMenu = mysqli_query($conn, "SELECT * FROM menu WHERE id_toko = $id AND tersedia = 1");
+$queryMenu = mysqli_query($conn, "SELECT * FROM menu WHERE id_toko = $id AND tersedia = 1 AND deleted_at IS NULL");
 $menus = mysqli_fetch_all($queryMenu, MYSQLI_ASSOC);
 
 // Set header JSON

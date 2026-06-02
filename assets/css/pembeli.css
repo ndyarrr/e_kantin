@@ -2870,6 +2870,13 @@ body {
     box-sizing: border-box;
 }
 
+.toko-avatar-placeholder svg, .toko-banner-icon {
+    width: 48px;
+    height: 48px;
+    fill: #5cb85c;
+    color: #5cb85c;
+}
+
 .cart-img-placeholder, .dropdown-item img.cart-img-placeholder {
     width: 40px;
     height: 40px;

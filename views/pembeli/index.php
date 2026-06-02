@@ -111,7 +111,7 @@ function resolveMenuImg($foto)
     return '';
 }
 
-function resolveTokoImg($foto, $nama)
+function resolveTokoImg($foto)
 {
     if (!empty($foto)) {
         if (file_exists(__DIR__ . '/../../assets/img/kantin/' . $foto))
@@ -119,36 +119,10 @@ function resolveTokoImg($foto, $nama)
         if (file_exists(__DIR__ . '/../../assets/img/' . $foto))
             return '../../assets/img/' . $foto;
     }
-    $n = strtolower($nama);
-    $map = [
-        'tika' => 'kantin_bu_tika.jpeg',
-        'fajar' => 'kantin_pak_fajar.jpeg',
-        'agus' => 'kantin_pak_agus.jpeg',
-        'mardika' => 'kantin_pak_mardika.jpeg',
-        'basuni' => 'kantin_pak_basuni.jpeg',
-        'sahudi' => 'kantin_pak_sahudi.jpeg',
-        'sukamto' => 'kantin_pak_sukamto.jpeg',
-        'angga' => 'kantin_pak_angga.jpeg',
-        'dian' => 'kantin_bu_dian.jpeg',
-        'kom' => 'kantin_bu_kom.jpeg'
-    ];
-    foreach ($map as $key => $file) {
-        if (str_contains($n, $key)) {
-            if (file_exists(__DIR__ . '/../../assets/img/kantin/' . $file))
-                return '../../assets/img/kantin/' . $file;
-            if (file_exists(__DIR__ . '/../../assets/img/' . $file))
-                return '../../assets/img/' . $file;
-        }
-    }
     return '';
 }
 
 require_once __DIR__ . '/../../config/banner_canvas.php';
-
-function promoBannerImgStyle(array $banner): string
-{
-    return '';
-}
 
 function renderPromoSlides(array $banners, int $activeIndex = 0): void
 {

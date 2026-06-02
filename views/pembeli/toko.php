@@ -40,23 +40,6 @@ if ($id_toko <= 0) {
             }
         }
 
-        // Fallback berdasarkan nama toko
-        if (empty($toko_img_src)) {
-            $nama_kecil = strtolower($toko['nama_toko']);
-            if (str_contains($nama_kecil, 'tika')) {
-                $toko_img_src = '../../assets/img/kantin_bu_tika.jpeg';
-            } elseif (str_contains($nama_kecil, 'fajar')) {
-                $toko_img_src = '../../assets/img/kantin_pak_fajar.jpeg';
-            } elseif (str_contains($nama_kecil, 'agus')) {
-                $toko_img_src = '../../assets/img/kantin_pak_agus.jpeg';
-            } elseif (str_contains($nama_kecil, 'mardika')) {
-                $toko_img_src = '../../assets/img/kantin_pak_mardika.jpeg';
-            } elseif (str_contains($nama_kecil, 'basuni')) {
-                $toko_img_src = '../../assets/img/kantin_pak_basuni.jpeg';
-            } else {
-                $toko_img_src = '';
-            }
-        }
 
         // ── Status toko ──
         $is_buka = (strtolower($toko['status'] ?? '') === 'buka');
@@ -64,7 +47,7 @@ if ($id_toko <= 0) {
         $status_teks = $is_buka ? 'Buka' : 'Tutup';
 
         // ── Ambil menu toko ──
-        $stmt_menu = mysqli_prepare($conn, "SELECT * FROM menu WHERE id_toko = ? ORDER BY kategori ASC, nama_menu ASC");
+        $stmt_menu = mysqli_prepare($conn, "SELECT * FROM menu WHERE id_toko = ? AND deleted_at IS NULL ORDER BY kategori ASC, nama_menu ASC");
         mysqli_stmt_bind_param($stmt_menu, "i", $id_toko);
         mysqli_stmt_execute($stmt_menu);
         $result_menu = mysqli_stmt_get_result($stmt_menu);
