@@ -78,6 +78,15 @@ if ($checkColKelasDel && mysqli_num_rows($checkColKelasDel) === 0) {
     mysqli_query($conn, "ALTER TABLE `kelas` ADD `deleted_at` DATETIME NULL DEFAULT NULL");
 }
 
+// Migrasi kolom shift di toko_penjual dari ENUM ke VARCHAR agar lebih fleksibel
+$checkShiftType = mysqli_query($conn, "SHOW COLUMNS FROM `toko_penjual` LIKE 'shift'");
+if ($checkShiftType) {
+    $row = mysqli_fetch_assoc($checkShiftType);
+    if ($row && str_contains(strtolower($row['Type']), 'enum')) {
+        mysqli_query($conn, "ALTER TABLE `toko_penjual` MODIFY `shift` VARCHAR(50) NULL DEFAULT NULL");
+    }
+}
+
 /** Alias lama — beberapa file memakai $koneksi */
 $koneksi = $conn;
 

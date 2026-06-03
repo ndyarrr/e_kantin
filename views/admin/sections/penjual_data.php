@@ -26,7 +26,7 @@ $semuaToko = mysqli_fetch_all(mysqli_query(
      AND id_toko NOT IN (
          SELECT tp.id_toko FROM toko_penjual tp
          JOIN penjual p ON p.id_penjual = tp.id_penjual
-         WHERE p.role = 'owner' AND tp.status = 'aktif'
+         WHERE p.role = 'owner' AND tp.status = 'aktif' AND p.deleted_at IS NULL
      )
      ORDER BY nama_toko ASC"
 ), MYSQLI_ASSOC);

@@ -9,7 +9,7 @@ $id_toko_owner = 0;
 if (isset($profilPenjual['id_toko']) && (int)$profilPenjual['id_toko'] > 0) {
     $id_toko_owner = (int)$profilPenjual['id_toko'];
 } else {
-    $query_toko = mysqli_query($conn, "SELECT id_toko FROM toko_penjual WHERE id_penjual = $penjualId AND status = 'aktif' ORDER BY id DESC LIMIT 1");
+    $query_toko = mysqli_query($conn, "SELECT tp.id_toko FROM toko_penjual tp JOIN toko t ON tp.id_toko = t.id_toko WHERE tp.id_penjual = $penjualId AND tp.status = 'aktif' AND t.deleted_at IS NULL ORDER BY tp.id DESC LIMIT 1");
     $r_toko = mysqli_fetch_assoc($query_toko);
     $id_toko_owner = (int)($r_toko['id_toko'] ?? 0);
 }

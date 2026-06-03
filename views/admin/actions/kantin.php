@@ -98,6 +98,16 @@ if ($action === 'kantin_hapus') {
         $nama_target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama_toko FROM toko WHERE id_toko=$id"))['nama_toko'] ?? '';
         mysqli_query($conn, "UPDATE toko SET deleted_at = NOW() WHERE id_toko=$id");
         mysqli_query($conn, "UPDATE menu SET deleted_at = NOW() WHERE id_toko=$id");
+        
+        // Deactivate all seller relationships associated with this canteen
+        mysqli_query($conn, "UPDATE toko_penjual SET status = 'nonaktif' WHERE id_toko = $id");
+        
+        // Remove cart items for this canteen
+        mysqli_query($conn, "DELETE FROM keranjang WHERE id_toko = $id");
+        
+        // Cancel all ongoing orders for this canteen
+        mysqli_query($conn, "UPDATE pesanan SET status = 'dibatalkan' WHERE id_toko = $id AND status NOT IN ('selesai', 'dibatalkan')");
+        
         catatLog($conn, 'Hapus Kantin', 'Menghapus kantin ID: ' . $id . ' (' . $nama_target . ')');
         $feedback = ['type' => 'success', 'msg' => "Kantin <strong>" . htmlspecialchars($nama_target) . "</strong> berhasil dihapus."];
         $selectedToko = 0;

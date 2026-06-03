@@ -375,6 +375,7 @@ if ($action === 'tools_permanent_delete') {
         $id = mysqli_real_escape_string($conn, $id_val);
 
         if ($tabel === 'toko') {
+            mysqli_query($conn, "DELETE FROM pembayaran WHERE id_pesanan IN (SELECT id_pesanan FROM pesanan WHERE id_toko = '$id')");
             mysqli_query($conn, "DELETE dp FROM detail_pesanan dp JOIN pesanan p ON p.id_pesanan = dp.id_pesanan WHERE p.id_toko = '$id'");
             mysqli_query($conn, "DELETE FROM pesanan WHERE id_toko = '$id'");
             mysqli_query($conn, "DELETE FROM menu WHERE id_toko = '$id'");
@@ -384,8 +385,29 @@ if ($action === 'tools_permanent_delete') {
             mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_penjual = '$id'");
         }
         if ($tabel === 'kelas') {
-            // Hapus murid di kelas tersebut terlebih dahulu secara permanen agar FK terpenuhi
+            mysqli_query($conn, "DELETE FROM keranjang WHERE user_role = 'siswa' AND user_id IN (SELECT nisn FROM murid WHERE id_kelas = '$id')");
+            mysqli_query($conn, "DELETE FROM pembayaran WHERE id_pesanan IN (SELECT id_pesanan FROM pesanan WHERE nisn_pembeli IN (SELECT nisn FROM murid WHERE id_kelas = '$id'))");
+            mysqli_query($conn, "DELETE dp FROM detail_pesanan dp JOIN pesanan p ON p.id_pesanan = dp.id_pesanan JOIN murid m ON p.nisn_pembeli = m.nisn WHERE m.id_kelas = '$id'");
+            mysqli_query($conn, "DELETE FROM pesanan WHERE nisn_pembeli IN (SELECT nisn FROM murid WHERE id_kelas = '$id')");
             mysqli_query($conn, "DELETE FROM murid WHERE id_kelas = '$id'");
+        }
+        if ($tabel === 'murid') {
+            mysqli_query($conn, "DELETE FROM keranjang WHERE user_id = '$id' AND user_role = 'siswa'");
+            mysqli_query($conn, "DELETE FROM pembayaran WHERE id_pesanan IN (SELECT id_pesanan FROM pesanan WHERE nisn_pembeli = '$id')");
+            mysqli_query($conn, "DELETE dp FROM detail_pesanan dp JOIN pesanan p ON p.id_pesanan = dp.id_pesanan WHERE p.nisn_pembeli = '$id'");
+            mysqli_query($conn, "DELETE FROM pesanan WHERE nisn_pembeli = '$id'");
+        }
+        if ($tabel === 'guru') {
+            mysqli_query($conn, "DELETE FROM keranjang WHERE user_id = '$id' AND user_role = 'guru'");
+            mysqli_query($conn, "DELETE FROM pembayaran WHERE id_pesanan IN (SELECT id_pesanan FROM pesanan WHERE nuptk_pembeli = '$id')");
+            mysqli_query($conn, "DELETE dp FROM detail_pesanan dp JOIN pesanan p ON p.id_pesanan = dp.id_pesanan WHERE p.nuptk_pembeli = '$id'");
+            mysqli_query($conn, "DELETE FROM pesanan WHERE nuptk_pembeli = '$id'");
+        }
+        if ($tabel === 'menu') {
+            mysqli_query($conn, "DELETE FROM pembayaran WHERE id_pesanan IN (SELECT DISTINCT id_pesanan FROM detail_pesanan WHERE id_menu = '$id')");
+            mysqli_query($conn, "DELETE FROM detail_pesanan WHERE id_pesanan IN (SELECT DISTINCT id_pesanan FROM detail_pesanan WHERE id_menu = '$id')");
+            mysqli_query($conn, "DELETE FROM pesanan WHERE id_pesanan IN (SELECT DISTINCT id_pesanan FROM detail_pesanan WHERE id_menu = '$id')");
+            mysqli_query($conn, "DELETE FROM detail_pesanan WHERE id_menu = '$id'");
         }
 
         mysqli_query($conn, "DELETE FROM `$tabel` WHERE `$id_col` = '$id'");

@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_owner = (int) ($_SESSION['user_id'] ?? 0);
 
         // Ambil id_toko milik owner agar staf terikat ke toko yang sama
-        $q_toko = mysqli_query($conn, "SELECT id_toko FROM toko_penjual WHERE id_penjual = $id_owner AND status = 'aktif' ORDER BY id DESC LIMIT 1");
+        $q_toko = mysqli_query($conn, "SELECT tp.id_toko FROM toko_penjual tp JOIN toko t ON tp.id_toko = t.id_toko WHERE tp.id_penjual = $id_owner AND tp.status = 'aktif' AND t.deleted_at IS NULL ORDER BY tp.id DESC LIMIT 1");
         $r_toko = mysqli_fetch_assoc($q_toko);
         $id_toko = (int) ($r_toko['id_toko'] ?? 0);
 
