@@ -33,6 +33,18 @@ if ($qHitungAktif) {
 }
 
 $isLocked = ($jumlahBannerAktif >= 2);
+
+// =========================================================================
+// 3. QUERY AMBIL DATA FOTO LATAR BELAKANG
+// =========================================================================
+$queryLatar = mysqli_query($conn, "SELECT * FROM `foto_latar_belakang` 
+                                    WHERE `id_toko` = $idToko 
+                                    ORDER BY `urutan` ASC");
+$jumlahLatar = 0;
+if ($queryLatar) {
+    $jumlahLatar = mysqli_num_rows($queryLatar);
+}
+$isLatarLimit = ($jumlahLatar >= 5);
 ?>
 
 <div class="kantin-container">
@@ -197,6 +209,140 @@ $isLocked = ($jumlahBannerAktif >= 2);
                             <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Gambar QRIS
                         </button>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CARD FOTO LATAR BELAKANG TOKO -->
+    <div class="pcard" style="margin-top: 25px;">
+        <div class="pcard-inner" style="padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <h3 style="margin: 0; font-size: 18px;"><i class="fa-solid fa-images"></i> Foto Latar Belakang Toko (Slideshow)</h3>
+                <span class="banner-badge-status <?= $isLatarLimit ? 'locked' : 'active' ?>" style="font-weight: 700; padding: 4px 10px; border-radius: 20px; font-size: 12px; background: <?= $isLatarLimit ? '#fef2f2; color: #ef4444; border: 1px solid #fee2e2;' : '#f0fdf4; color: #15803d; border: 1px solid #dcfce7;' ?>">
+                    <?= $jumlahLatar ?> / 5 Foto Aktif
+                </span>
+            </div>
+            <div class="pcard-divider" style="margin-bottom: 20px;"></div>
+
+            <?php if ($isLatarLimit): ?>
+                <div class="alert-limit-banner" style="background: #fff5f5; color: #c53030; padding: 12px; border-radius: 8px; font-size: 13.5px; border-left: 4px solid #f56565; margin-bottom: 20px; font-family: 'Poppins', sans-serif;">
+                    <strong>Batas Maksimal Terpenuhi:</strong> Maksimal 5 foto latar belakang telah diunggah. Hapus salah satu foto lama untuk dapat menambahkan foto baru.
+                </div>
+            <?php endif; ?>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-start;">
+                <!-- Upload & Canvas Tools (Only if not limit) -->
+                <div style="flex: 1; min-width: 300px;">
+                    <form action="index.php?section=kantin" method="POST" enctype="multipart/form-data" id="addLatarForm" style="display: flex; flex-direction: column; gap: 15px;">
+                        <input type="hidden" name="_current_section" value="kantin">
+                        <input type="hidden" name="action" value="add_latar_belakang">
+                        
+                        <!-- Hidden inputs for canvas values -->
+                        <input type="hidden" name="latar_scale" id="latarScale" value="1.0">
+                        <input type="hidden" name="latar_pan_norm_x" id="latarPanNormX" value="0">
+                        <input type="hidden" name="latar_pan_norm_y" id="latarPanNormY" value="0">
+
+                        <div class="kantin-form-group">
+                            <label style="font-weight: bold; margin-bottom: 6px; display: block; font-size: 13.5px;">File Gambar Latar Belakang</label>
+                            <input type="file" name="gambar_latar" id="gambarLatarInput" accept="image/jpeg, image/jpg, image/png, image/webp" required <?= $isLatarLimit ? 'disabled' : '' ?> style="font-size: 13px;">
+                            <small style="color: #64748b; display: block; margin-top: 4px; line-height: 1.4;">
+                                Format: <strong>JPG, JPEG, PNG, WEBP</strong> (Maksimal 2MB). Rekomendasi rasio banner lebar (seperti 3:1 atau 16:9).
+                            </small>
+                        </div>
+
+                        <!-- Canvas Preview Box -->
+                        <div class="kantin-form-group" style="margin-top: 5px;">
+                            <label style="font-weight: bold; margin-bottom: 6px; display: block; font-size: 13.5px;">Pratinjau Posisi Kanvas (Hero Toko)</label>
+                            <div class="latar-canvas-preview" id="latarCanvasPreview" style="position: relative; width: 100%; height: 180px; background: #e2e8f0; border-radius: 12px; overflow: hidden; border: 2px dashed #cbd5e1; display: flex; align-items: center; justify-content: center;">
+                                <img id="latarCanvasPreviewImg" src="" alt="Pratinjau Latar" style="display: none; position: absolute; max-width: none;">
+                                <div class="canvas-placeholder" id="latarCanvasPlaceholder" style="text-align: center; pointer-events: none;">
+                                    <i class="fa-solid fa-images" style="font-size: 32px; color: #cbd5e1; margin-bottom: 8px;"></i>
+                                    <span style="display: block; font-size: 12px; color: #94a3b8; padding: 0 10px;">Pilih file gambar untuk mengatur posisi latar belakang</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Zoom and Position Controls -->
+                        <div id="latarCanvasControls" style="display: none; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 5px;">
+                            <div class="kantin-form-group" style="margin-bottom: 10px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <label style="margin: 0; font-size:12px; font-weight:600; color:#475569;">Zoom Gambar:</label>
+                                    <span id="latarScaleValText" style="font-size:12px; font-weight:bold; color:#27ae60;">1.0x</span>
+                                </div>
+                                <input type="range" id="latarSliderScale" min="1.0" max="3.0" step="0.05" value="1.0" style="margin-top: 4px; cursor: pointer; width: 100%;">
+                            </div>
+                            <div class="kantin-form-group" style="margin-bottom: 10px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <label style="margin: 0; font-size:12px; font-weight:600; color:#475569;">Geser Kiri/Kanan (X):</label>
+                                    <span id="latarXValText" style="font-size:12px; font-weight:bold; color:#27ae60;">Tengah</span>
+                                </div>
+                                <input type="range" id="latarSliderX" min="0" max="100" step="1" value="50" style="margin-top: 4px; cursor: pointer; width: 100%;">
+                            </div>
+                            <div class="kantin-form-group" style="margin-bottom: 5px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <label style="margin: 0; font-size:12px; font-weight:600; color:#475569;">Geser Atas/Bawah (Y):</label>
+                                    <span id="latarYValText" style="font-size:12px; font-weight:bold; color:#27ae60;">Tengah</span>
+                                </div>
+                                <input type="range" id="latarSliderY" min="0" max="100" step="1" value="50" style="margin-top: 4px; cursor: pointer; width: 100%;">
+                            </div>
+                            <div style="margin-top: 8px; font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 4px;">
+                                <i class="fa-solid fa-circle-info" style="color: #27ae60;"></i>
+                                <span><strong>Tips:</strong> Drag foto di atas atau geser slider untuk posisi terbaik.</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="pcard-btn" <?= $isLatarLimit ? 'disabled' : '' ?>
+                                style="width: 100%; padding: 12px; font-size: 14px; font-weight: bold; background: <?= $isLatarLimit ? '#94a3b8' : '#27ae60' ?>; color: #fff; border: none; border-radius: 6px; cursor: <?= $isLatarLimit ? 'not-allowed' : 'pointer' ?>; margin-top: 5px; transition: background 0.2s;">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Foto Latar Belakang
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Existing background photos grid with reordering -->
+                <div style="flex: 1.2; min-width: 320px;">
+                    <label style="font-weight: bold; margin-bottom: 12px; display: block; font-size: 14px;"><i class="fa-solid fa-list-ol"></i> Daftar & Urutan Slideshow (Drag untuk Reorder)</label>
+                    
+                    <div class="latar-grid" id="latarListGrid" style="display: flex; flex-direction: column; gap: 12px;">
+                        <?php if (!$queryLatar || mysqli_num_rows($queryLatar) == 0): ?>
+                            <div style="text-align: center; padding: 40px 20px; border: 1px dashed #cbd5e1; border-radius: 12px; color: #94a3b8; background: #f8fafc;">
+                                <i class="fa-solid fa-images" style="font-size: 40px; margin-bottom: 10px; color: #cbd5e1; display: block; margin-left: auto; margin-right: auto;"></i>
+                                <span style="font-size: 13px;">Belum ada foto latar belakang toko. Halaman pembeli akan menggunakan foto utama kantin secara default.</span>
+                            </div>
+                        <?php else: ?>
+                            <?php while ($row = mysqli_fetch_assoc($queryLatar)): 
+                                $latarCanvasData = bannerCanvasDataAttrs($row['canvas_config'] ?? '');
+                            ?>
+                                <div class="latar-item-row" data-id="<?= $row['id'] ?>" style="display: flex; align-items: center; gap: 15px; background: #ffffff; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); cursor: grab; position: relative;" draggable="true">
+                                    <div class="latar-handle" style="color: #94a3b8; font-size: 18px; padding: 0 5px; cursor: grab;">
+                                        <i class="fa-solid fa-grip-vertical"></i>
+                                    </div>
+                                    <div class="latar-order-badge" style="width: 24px; height: 24px; border-radius: 50%; background: #e8f5e9; color: #2e7d32; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">
+                                        <?= (int)$row['urutan'] + 1 ?>
+                                    </div>
+                                    <!-- Canvas Preview thumbnail -->
+                                    <div class="thumbnail-canvas-container banner-canvas-viewport" <?= $latarCanvasData ?> style="width: 120px; height: 50px; border-radius: 6px; overflow: hidden; background: #e2e8f0; border: 1px solid #e2e8f0; flex-shrink: 0;">
+                                        <img src="../../../assets/img/latar_belakang/<?= htmlspecialchars($row['gambar']) ?>?v=<?= time() ?>" 
+                                             class="banner-thumbnail"
+                                             alt="Foto Latar"
+                                             style="display: block;"
+                                             onerror="this.onerror=null; this.src='../../../assets/img/promo_banner.png';">
+                                    </div>
+                                    <div style="flex: 1; min-width: 0;">
+                                        <span style="font-size: 11px; color: #64748b; display: block; word-break: break-all;"><?= htmlspecialchars($row['gambar']) ?></span>
+                                    </div>
+                                    <form action="index.php?section=kantin" method="POST" onsubmit="return confirm('Yakin ingin menghapus foto latar belakang ini?');" style="margin: 0; padding: 0;">
+                                        <input type="hidden" name="_current_section" value="kantin">
+                                        <input type="hidden" name="action" value="hapus_latar_belakang">
+                                        <input type="hidden" name="id_latar" value="<?= $row['id'] ?>">
+                                        <button type="submit" class="btn-delete-banner" style="padding: 8px 12px; font-size: 12px; margin: 0; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; cursor: pointer;">
+                                            <i class="fa-solid fa-trash-can"></i> Hapus
+                                        </button>
+                                    </form>
+                                </div>
+                            <?php endwhile; ?>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -700,5 +846,354 @@ document.addEventListener('DOMContentLoaded', function() {
     
     setInterval(updateCountdownTimers, 1000);
     updateCountdownTimers();
+
+    // -------------------------------------------------------------
+    // 3. FOTO LATAR BELAKANG CANVAS PREVIEW LOGIC
+    // -------------------------------------------------------------
+    const gambarLatarInput = document.getElementById('gambarLatarInput');
+    const latarCanvasPreview = document.getElementById('latarCanvasPreview');
+    const latarCanvasPreviewImg = document.getElementById('latarCanvasPreviewImg');
+    const latarCanvasPlaceholder = document.getElementById('latarCanvasPlaceholder');
+    const latarCanvasControls = document.getElementById('latarCanvasControls');
+    
+    const latarSliderScale = document.getElementById('latarSliderScale');
+    const latarSliderX = document.getElementById('latarSliderX');
+    const latarSliderY = document.getElementById('latarSliderY');
+    
+    const latarScaleValText = document.getElementById('latarScaleValText');
+    const latarXValText = document.getElementById('latarXValText');
+    const latarYValText = document.getElementById('latarYValText');
+    
+    const latarScale = document.getElementById('latarScale');
+    const latarPanNormX = document.getElementById('latarPanNormX');
+    const latarPanNormY = document.getElementById('latarPanNormY');
+
+    let l_scale = 1.0;
+    let l_panNormX = 0;
+    let l_panNormY = 0;
+    let l_imgReady = false;
+    let l_isDragging = false;
+    let l_startMouseX = 0;
+    let l_startMouseY = 0;
+    let l_startPanX = 0;
+    let l_startPanY = 0;
+
+    function getLatarMetrics() {
+        if (!l_imgReady || typeof BannerCanvas === 'undefined') return null;
+        return BannerCanvas.getMetrics(latarCanvasPreview, latarCanvasPreviewImg, l_scale);
+    }
+
+    function syncLatarHiddenFields() {
+        const cfg = BannerCanvas.buildSaveConfig(l_scale, l_panNormX, l_panNormY);
+        latarScale.value = cfg.scale;
+        latarPanNormX.value = cfg.panNormX;
+        latarPanNormY.value = cfg.panNormY;
+    }
+
+    function updateLatarControlsUI() {
+        const m = getLatarMetrics();
+        latarScaleValText.textContent = l_scale.toFixed(2) + 'x';
+
+        if (!m) return;
+
+        const canPanX = m.maxPanX > 0.5;
+        const canPanY = m.maxPanY > 0.5;
+
+        latarSliderX.disabled = !canPanX;
+        latarSliderY.disabled = !canPanY;
+        latarXValText.textContent = canPanX ? panLabel(l_panNormX, 'X') : 'Tidak tersedia';
+        latarYValText.textContent = canPanY ? panLabel(l_panNormY, 'Y') : 'Tidak tersedia';
+        latarSliderX.value = Math.round(l_panNormX * 50 + 50);
+        latarSliderY.value = Math.round(l_panNormY * 50 + 50);
+        syncLatarHiddenFields();
+    }
+
+    function refreshLatarCanvas() {
+        if (!l_imgReady || typeof BannerCanvas === 'undefined') return;
+        BannerCanvas.apply(latarCanvasPreview, latarCanvasPreviewImg, BannerCanvas.buildSaveConfig(l_scale, l_panNormX, l_panNormY));
+        updateLatarControlsUI();
+    }
+
+    function setLatarScale(newScale) {
+        const m = getLatarMetrics();
+        if (!m) {
+            l_scale = newScale;
+            refreshLatarCanvas();
+            return;
+        }
+
+        const { panX, panY } = BannerCanvas.normToPan(m, l_panNormX, l_panNormY);
+        l_scale = BannerCanvas.clamp(newScale, 1, parseFloat(latarSliderScale.max));
+
+        const m2 = BannerCanvas.getMetrics(latarCanvasPreview, latarCanvasPreviewImg, l_scale);
+        if (m2) {
+            const clampedPanX = BannerCanvas.clamp(panX, -m2.maxPanX, m2.maxPanX);
+            const clampedPanY = BannerCanvas.clamp(panY, -m2.maxPanY, m2.maxPanY);
+            const norm = BannerCanvas.panToNorm(m2, clampedPanX, clampedPanY);
+            l_panNormX = norm.panNormX;
+            l_panNormY = norm.panNormY;
+        }
+
+        latarSliderScale.value = l_scale;
+        refreshLatarCanvas();
+    }
+
+    function resetLatarCanvasParams() {
+        l_scale = 1.0;
+        l_panNormX = 0;
+        l_panNormY = 0;
+
+        if (typeof BannerCanvas !== 'undefined' && l_imgReady) {
+            const maxZoom = BannerCanvas.getMaxZoom(latarCanvasPreview, latarCanvasPreviewImg);
+            latarSliderScale.min = 1;
+            latarSliderScale.max = maxZoom.toFixed(2);
+            latarSliderScale.step = 0.05;
+        } else {
+            latarSliderScale.min = 1;
+            latarSliderScale.max = 3;
+        }
+
+        latarSliderScale.value = 1;
+        latarSliderX.value = 50;
+        latarSliderY.value = 50;
+        refreshLatarCanvas();
+    }
+
+    if (gambarLatarInput) {
+        gambarLatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            l_imgReady = false;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                latarCanvasPreviewImg.onload = function() {
+                    l_imgReady = true;
+                    latarCanvasPreviewImg.style.display = 'block';
+                    latarCanvasPlaceholder.style.display = 'none';
+                    latarCanvasControls.style.display = 'block';
+                    resetLatarCanvasParams();
+                };
+                latarCanvasPreviewImg.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (latarSliderScale) {
+        latarSliderScale.addEventListener('input', function() {
+            setLatarScale(parseFloat(this.value));
+        });
+    }
+
+    if (latarSliderX) {
+        latarSliderX.addEventListener('input', function() {
+            l_panNormX = BannerCanvas.clamp((parseInt(this.value, 10) - 50) / 50, -1, 1);
+            refreshLatarCanvas();
+        });
+    }
+
+    if (latarSliderY) {
+        latarSliderY.addEventListener('input', function() {
+            l_panNormY = BannerCanvas.clamp((parseInt(this.value, 10) - 50) / 50, -1, 1);
+            refreshLatarCanvas();
+        });
+    }
+
+    if (latarCanvasPreview) {
+        latarCanvasPreview.style.cursor = 'grab';
+        latarCanvasPreview.style.touchAction = 'none';
+
+        latarCanvasPreview.addEventListener('mousedown', function(e) {
+            if (!l_imgReady) return;
+            const m = getLatarMetrics();
+            if (!m) return;
+            e.preventDefault();
+            l_isDragging = true;
+            l_startMouseX = e.clientX;
+            l_startMouseY = e.clientY;
+            const pan = BannerCanvas.normToPan(m, l_panNormX, l_panNormY);
+            l_startPanX = pan.panX;
+            l_startPanY = pan.panY;
+            latarCanvasPreview.style.cursor = 'grabbing';
+        });
+
+        latarCanvasPreview.addEventListener('wheel', function(e) {
+            if (!l_imgReady) return;
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.08 : 0.08;
+            setLatarScale(l_scale + delta);
+        }, { passive: false });
+
+        window.addEventListener('mousemove', function(e) {
+            if (!l_isDragging) return;
+            const m = getLatarMetrics();
+            if (!m) return;
+
+            const dx = e.clientX - l_startMouseX;
+            const dy = e.clientY - l_startMouseY;
+            const newPanX = BannerCanvas.clamp(l_startPanX + dx, -m.maxPanX, m.maxPanX);
+            const newPanY = BannerCanvas.clamp(l_startPanY + dy, -m.maxPanY, m.maxPanY);
+            const norm = BannerCanvas.panToNorm(m, newPanX, newPanY);
+            l_panNormX = norm.panNormX;
+            l_panNormY = norm.panNormY;
+            refreshLatarCanvas();
+        });
+
+        window.addEventListener('mouseup', function() {
+            if (!l_isDragging) return;
+            l_isDragging = false;
+            latarCanvasPreview.style.cursor = 'grab';
+        });
+
+        latarCanvasPreview.addEventListener('touchstart', function(e) {
+            if (!l_imgReady) return;
+            const m = getLatarMetrics();
+            if (!m) return;
+            l_isDragging = true;
+            l_startMouseX = e.touches[0].clientX;
+            l_startMouseY = e.touches[0].clientY;
+            const pan = BannerCanvas.normToPan(m, l_panNormX, l_panNormY);
+            l_startPanX = pan.panX;
+            l_startPanY = pan.panY;
+        }, { passive: true });
+
+        window.addEventListener('touchmove', function(e) {
+            if (!l_isDragging) return;
+            const m = getLatarMetrics();
+            if (!m) return;
+
+            const dx = e.touches[0].clientX - l_startMouseX;
+            const dy = e.touches[0].clientY - l_startMouseY;
+            const newPanX = BannerCanvas.clamp(l_startPanX + dx, -m.maxPanX, m.maxPanX);
+            const newPanY = BannerCanvas.clamp(l_startPanY + dy, -m.maxPanY, m.maxPanY);
+            const norm = BannerCanvas.panToNorm(m, newPanX, newPanY);
+            l_panNormX = norm.panNormX;
+            l_panNormY = norm.panNormY;
+            refreshLatarCanvas();
+        }, { passive: true });
+
+        window.addEventListener('touchend', function() {
+            l_isDragging = false;
+        });
+    }
+
+    if (latarCanvasPreview && typeof ResizeObserver !== 'undefined') {
+        let l_resizeRafId = null;
+        const l_ro = new ResizeObserver(function() {
+            if (l_resizeRafId) cancelAnimationFrame(l_resizeRafId);
+            l_resizeRafId = requestAnimationFrame(function() {
+                refreshLatarCanvas();
+                BannerCanvas.initAll(latarCanvasPreview.closest('[id]') || document);
+            });
+        });
+        l_ro.observe(latarCanvasPreview);
+    } else {
+        window.addEventListener('resize', function() {
+            refreshLatarCanvas();
+            BannerCanvas.initAll(latarCanvasPreview ? latarCanvasPreview.closest('[id]') : document);
+        });
+    }
+
+    // Initialize Canvas on thumbnails in case they are not initialized
+    if (typeof BannerCanvas !== 'undefined') {
+        BannerCanvas.initAll(document.getElementById('latarListGrid') || document);
+    }
+
+    // -------------------------------------------------------------
+    // 4. DRAG AND DROP FOR BACKGROUND PHOTOS REORDERING
+    // -------------------------------------------------------------
+    const latarListGrid = document.getElementById('latarListGrid');
+    if (latarListGrid) {
+        const rows = latarListGrid.querySelectorAll('.latar-item-row');
+        let dragSrcEl = null;
+
+        rows.forEach(function(row) {
+            row.addEventListener('dragstart', function(e) {
+                dragSrcEl = this;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', this.innerHTML);
+                this.style.opacity = '0.4';
+                this.classList.add('dragging');
+            });
+
+            row.addEventListener('dragover', function(e) {
+                if (e.preventDefault) {
+                    e.preventDefault();
+                }
+                e.dataTransfer.dropEffect = 'move';
+                return false;
+            });
+
+            row.addEventListener('dragenter', function(e) {
+                this.classList.add('over');
+            });
+
+            row.addEventListener('dragleave', function(e) {
+                this.classList.remove('over');
+            });
+
+            row.addEventListener('drop', function(e) {
+                if (e.stopPropagation) {
+                    e.stopPropagation();
+                }
+
+                if (dragSrcEl !== this) {
+                    const allItems = Array.from(latarListGrid.querySelectorAll('.latar-item-row'));
+                    const srcIndex = allItems.indexOf(dragSrcEl);
+                    const targetIndex = allItems.indexOf(this);
+
+                    if (srcIndex < targetIndex) {
+                        latarListGrid.insertBefore(dragSrcEl, this.nextSibling);
+                    } else {
+                        latarListGrid.insertBefore(dragSrcEl, this);
+                    }
+
+                    saveNewLatarOrder();
+                }
+                return false;
+            });
+
+            row.addEventListener('dragend', function() {
+                this.style.opacity = '1';
+                this.classList.remove('dragging');
+                rows.forEach(function(r) {
+                    r.classList.remove('over');
+                });
+            });
+        });
+
+        function saveNewLatarOrder() {
+            const allItems = Array.from(latarListGrid.querySelectorAll('.latar-item-row'));
+            const ids = allItems.map(item => item.getAttribute('data-id'));
+            
+            allItems.forEach((item, idx) => {
+                const badge = item.querySelector('.latar-order-badge');
+                if (badge) badge.textContent = idx + 1;
+            });
+
+            const formData = new FormData();
+            formData.append('action', 'update_urutan_latar');
+            formData.append('ids_json', JSON.stringify(ids));
+            formData.append('is_ajax', '1');
+
+            fetch('index.php?section=kantin', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Order updated successfully');
+                } else {
+                    alert('Gagal memperbarui urutan: ' + (data.message || 'unknown'));
+                }
+            })
+            .catch(err => {
+                console.error('Error updating order:', err);
+                alert('Koneksi terputus saat memperbarui urutan.');
+            });
+        }
+    }
 });
 </script>

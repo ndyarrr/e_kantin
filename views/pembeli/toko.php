@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/banner_canvas.php';
 
 // ── Validasi parameter id toko ──
 $id_toko = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -27,7 +28,7 @@ if ($id_toko <= 0) {
         $error_message = 'Toko tidak ditemukan.';
     } else {
         $error_page = false;
-
+        
         // ── Tentukan gambar toko ──
         $foto_toko = $toko['foto_toko'] ?? '';
         $toko_img_src = '';
@@ -37,6 +38,15 @@ if ($id_toko <= 0) {
                 $toko_img_src = '../../assets/img/kantin/' . $foto_toko;
             } elseif (file_exists(__DIR__ . '/../../assets/img/' . $foto_toko)) {
                 $toko_img_src = '../../assets/img/' . $foto_toko;
+            }
+        }
+
+        // ── Query foto latar belakang untuk slideshow ──
+        $q_latar = mysqli_query($conn, "SELECT * FROM `foto_latar_belakang` WHERE `id_toko` = $id_toko ORDER BY `urutan` ASC");
+        $latar_photos = [];
+        if ($q_latar) {
+            while ($row = mysqli_fetch_assoc($q_latar)) {
+                $latar_photos[] = $row;
             }
         }
 
@@ -84,6 +94,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
     <title><?= $error_page ? 'Toko Tidak Ditemukan' : htmlspecialchars($toko['nama_toko']) . ' - E-Kantin'; ?></title>
     <link rel="stylesheet" href="../../assets/css/pembeli.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="../../assets/js/banner-canvas.js?v=<?= time(); ?>"></script>
     <!-- Stylesheets consolidated in assets/css/pembeli.css -->
 </head>
 
@@ -181,10 +192,39 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 
                 <!-- ── Store Hero ── -->
                 <div class="toko-hero">
-                    <div class="toko-hero-banner <?= empty($toko_img_src) ? 'toko-banner-placeholder' : ''; ?>">
-                        <?php if (!empty($toko_img_src)): ?>
-                            <img src="<?= $toko_img_src; ?>" alt="<?= htmlspecialchars($toko['nama_toko']); ?>"
-                                onerror="this.style.display='none'; this.parentElement.classList.add('toko-banner-placeholder');">
+                    <div class="toko-hero-banner <?= (empty($toko_img_src) && empty($latar_photos)) ? 'toko-banner-placeholder' : ''; ?>">
+                        <?php if (!empty($latar_photos)): ?>
+                            <div class="hero-slideshow-container" style="position: relative; width: 100%; height: 100%; overflow: hidden;">
+                                <?php foreach ($latar_photos as $index => $photo): 
+                                    $latarCanvasData = bannerCanvasDataAttrs($photo['canvas_config'] ?? '');
+                                ?>
+                                    <div class="hero-slide <?= $index === 0 ? 'active' : ''; ?>" data-slide-index="<?= $index ?>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.8s ease-in-out; z-index: 1;">
+                                        <div class="hero-slide-viewport banner-canvas-viewport" <?= $latarCanvasData ?> style="width:100%; height:100%; position: relative; overflow: hidden;">
+                                            <img src="../../assets/img/latar_belakang/<?= htmlspecialchars($photo['gambar']); ?>" alt="<?= htmlspecialchars($toko['nama_toko']); ?>" style="display: block; position: absolute; max-width: none; max-height: none;">
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php if (count($latar_photos) > 1): ?>
+                                <div class="hero-slideshow-dots" style="position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10;">
+                                    <?php foreach ($latar_photos as $index => $photo): ?>
+                                        <span class="hero-dot <?= $index === 0 ? 'active' : ''; ?>" onclick="currentHeroSlide(<?= $index ?>)" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.3s ease;"></span>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div class="toko-banner-placeholder-svg">
+                                <div class="banner-pattern-overlay"></div>
+                                <div class="toko-banner-fallback-icon-container">
+                                    <div class="toko-banner-fallback-icon-wrap">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ffffff;">
+                                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                        </svg>
+                                    </div>
+                                    <span class="toko-banner-fallback-text"><?= htmlspecialchars($toko['nama_toko']); ?></span>
+                                </div>
+                            </div>
                         <?php endif; ?>
                     </div>
                     <div class="toko-hero-info">
@@ -1637,12 +1677,198 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                 });
             }
 
+            // ── Slideshow Latar Belakang Toko ──
+            let currentHeroSlideIndex = 0;
+            let heroSlideshowInterval = null;
+
+            window.currentHeroSlide = function(index) {
+                showHeroSlide(index);
+                resetHeroSlideshowTimer();
+            };
+
+            function showHeroSlide(index) {
+                const slides = document.querySelectorAll('.hero-slide');
+                const dots = document.querySelectorAll('.hero-dot');
+                if (slides.length === 0) return;
+
+                if (index >= slides.length) {
+                    currentHeroSlideIndex = 0;
+                } else if (index < 0) {
+                    currentHeroSlideIndex = slides.length - 1;
+                } else {
+                    currentHeroSlideIndex = index;
+                }
+
+                slides.forEach((slide, idx) => {
+                    // Reset inline styles applied during dragging
+                    slide.style.transform = '';
+                    slide.style.transition = '';
+                    if (idx === currentHeroSlideIndex) {
+                        slide.classList.add('active');
+                        slide.style.opacity = '1';
+                        slide.style.zIndex = '2';
+                    } else {
+                        slide.classList.remove('active');
+                        slide.style.opacity = '0';
+                        slide.style.zIndex = '1';
+                    }
+                });
+
+                dots.forEach((dot, idx) => {
+                    if (idx === currentHeroSlideIndex) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            }
+
+            function startHeroSlideshow() {
+                const slides = document.querySelectorAll('.hero-slide');
+                if (slides.length <= 1) return;
+                heroSlideshowInterval = setInterval(() => {
+                    showHeroSlide(currentHeroSlideIndex + 1);
+                }, 5000);
+            }
+
+            function resetHeroSlideshowTimer() {
+                if (heroSlideshowInterval) {
+                    clearInterval(heroSlideshowInterval);
+                }
+                startHeroSlideshow();
+            }
+
+            // ── Swipe & Drag Touch support for Slideshow ──
+            function initSlideshowSwipe() {
+                const container = document.querySelector('.hero-slideshow-container');
+                if (!container) return;
+
+                const slides = container.querySelectorAll('.hero-slide');
+                if (slides.length <= 1) return;
+
+                let startX = 0;
+                let startY = 0;
+                let isDragging = false;
+                let diffX = 0;
+                const threshold = 50; // min distance in px to trigger slide change
+
+                // Grab cursor for desktop feel
+                container.style.cursor = 'grab';
+
+                // Prevent default image drag ghosting
+                container.addEventListener('dragstart', (e) => {
+                    if (e.target.tagName === 'IMG') {
+                        e.preventDefault();
+                    }
+                });
+
+                function getEventX(e) {
+                    return e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+                }
+
+                function getEventY(e) {
+                    return e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+                }
+
+                function handleStart(e) {
+                    // Stop auto-slide timer temporarily during interaction
+                    if (heroSlideshowInterval) {
+                        clearInterval(heroSlideshowInterval);
+                    }
+
+                    startX = getEventX(e);
+                    startY = getEventY(e);
+                    isDragging = true;
+                    diffX = 0;
+
+                    if (!e.touches) {
+                        container.style.cursor = 'grabbing';
+                    }
+
+                    const activeSlide = container.querySelector('.hero-slide.active');
+                    if (activeSlide) {
+                        activeSlide.style.transition = 'none';
+                    }
+                }
+
+                function handleMove(e) {
+                    if (!isDragging) return;
+
+                    const currentX = getEventX(e);
+                    const currentY = getEventY(e);
+                    diffX = currentX - startX;
+                    const diffY = currentY - startY;
+
+                    // If user is swiping horizontally, prevent page scroll
+                    if (Math.abs(diffX) > Math.abs(diffY)) {
+                        if (e.cancelable) e.preventDefault();
+
+                        // Apply visual drag offset with resistance
+                        const activeSlide = container.querySelector('.hero-slide.active');
+                        if (activeSlide) {
+                            activeSlide.style.transform = `translateX(${diffX * 0.4}px)`;
+                        }
+                    }
+                }
+
+                function handleEnd() {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    container.style.cursor = 'grab';
+
+                    const activeSlide = container.querySelector('.hero-slide.active');
+                    if (activeSlide) {
+                        // Smoothly animate back to center or let slide change handle it
+                        activeSlide.style.transition = 'opacity 0.8s ease-in-out, transform 0.3s ease-out';
+                        activeSlide.style.transform = 'translateX(0)';
+                    }
+
+                    if (Math.abs(diffX) >= threshold) {
+                        if (diffX > 0) {
+                            // Swipe Right -> Go to Previous Slide
+                            showHeroSlide(currentHeroSlideIndex - 1);
+                        } else {
+                            // Swipe Left -> Go to Next Slide
+                            showHeroSlide(currentHeroSlideIndex + 1);
+                        }
+                    }
+
+                    // Resume auto-slide
+                    resetHeroSlideshowTimer();
+                }
+
+                // Touch support (mobile)
+                container.addEventListener('touchstart', handleStart, { passive: true });
+                container.addEventListener('touchmove', handleMove, { passive: false });
+                container.addEventListener('touchend', handleEnd);
+
+                // Mouse drag support (laptop/desktop)
+                container.addEventListener('mousedown', handleStart);
+                
+                // Add move/up to window so drag behaves correctly even if cursor leaves banner
+                window.addEventListener('mousemove', (e) => {
+                    if (isDragging) handleMove(e);
+                });
+                window.addEventListener('mouseup', () => {
+                    if (isDragging) handleEnd();
+                });
+            }
+
             // ── Initialize on page load ──
             document.addEventListener('DOMContentLoaded', function () {
                 fetchDBCart();
                 updateBadges();
                 initFavorites();
                 makeCartDraggable();
+                
+                // Initialize background banner canvases
+                if (typeof BannerCanvas !== 'undefined') {
+                    BannerCanvas.initAll(document.querySelector('.toko-hero-banner') || document);
+                }
+                // Start background slideshow
+                startHeroSlideshow();
+                // Initialize touch/drag swipe support
+                initSlideshowSwipe();
             });
         </script>
     <?php endif; ?>

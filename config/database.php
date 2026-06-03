@@ -87,6 +87,20 @@ if ($checkShiftType) {
     }
 }
 
+// Migrasi tabel foto_latar_belakang jika belum ada
+$checkLatarTable = mysqli_query($conn, "SHOW TABLES LIKE 'foto_latar_belakang'");
+if ($checkLatarTable && mysqli_num_rows($checkLatarTable) === 0) {
+    mysqli_query($conn, "CREATE TABLE `foto_latar_belakang` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `id_toko` INT NOT NULL,
+        `gambar` VARCHAR(255) NOT NULL,
+        `canvas_config` TEXT DEFAULT NULL,
+        `urutan` INT NOT NULL DEFAULT 0,
+        `dibuat_pada` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (`id_toko`) REFERENCES `toko`(`id_toko`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+}
+
 /** Alias lama — beberapa file memakai $koneksi */
 $koneksi = $conn;
 
