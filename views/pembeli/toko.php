@@ -79,14 +79,6 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 <html lang="id">
 
 <head>
-    <script>
-        (function() {
-            const isDark = localStorage.getItem('darkMode') === 'enabled';
-            if (isDark) {
-                document.documentElement.classList.add('dark-mode');
-            }
-        })();
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $error_page ? 'Toko Tidak Ditemukan' : htmlspecialchars($toko['nama_toko']) . ' - E-Kantin'; ?></title>
@@ -124,7 +116,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                 </div>
                 <div class="search-container">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" placeholder="Cari menu..." id="searchInput" oninput="searchMenu(this.value)">
+                    <input type="text" placeholder="Cari menu..." id="searchInput" oninput="searchMenu(this.value)" onkeydown="handleSearchKeydown(event)">
                 </div>
                 <div class="header-icons">
                     <div class="icon-badge" onclick="toggleCartDrawer()">
@@ -264,10 +256,11 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                             }
                             ?>
                             <div class="menu-grid-item" data-kategori="<?= htmlspecialchars($kategori); ?>"
-                                 data-nama="<?= htmlspecialchars(strtolower($menu['nama_menu'])); ?>">
+                                 data-nama="<?= htmlspecialchars(strtolower($menu['nama_menu'])); ?>"
+                                 onclick="bukaDetailMenu(<?= (int) $menu['id_menu'] ?>)" style="cursor: pointer;">
                                 <div class="menu-item-img-wrap">
                                     <button class="btn-favorite-toko" data-id="<?= $menu['id_menu']; ?>" 
-                                            onclick="toggleFavoriteToko(<?= $menu['id_menu']; ?>, this)" title="Tambah ke Favorit">
+                                            onclick="toggleFavoriteToko(<?= $menu['id_menu']; ?>, this); event.stopPropagation();" title="Tambah ke Favorit">
                                         <i class="fa-regular fa-heart"></i>
                                     </button>
 
@@ -311,11 +304,21 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                                         <?php else: ?>
                                             <span class="menu-item-price">Rp <?= number_format($menu['harga'], 0, ',', '.'); ?></span>
                                         <?php endif; ?>
-                                        <button class="btn-tambah" <?= !$is_available ? 'disabled' : ''; ?>
-                                            onclick="tambahKeKeranjang(<?= $menu['id_menu']; ?>, '<?= htmlspecialchars(addslashes($menu['nama_menu']), ENT_QUOTES); ?>', <?= $menu['harga']; ?>, '<?= htmlspecialchars(addslashes($foto_menu), ENT_QUOTES); ?>', '<?= htmlspecialchars(addslashes($toko['nama_toko']), ENT_QUOTES); ?>', <?= $toko['id_toko']; ?>, <?= $stok; ?>, <?= (int)($menu['is_fleksibel'] ?? 0); ?>)">
-                                            <i class="fa-solid fa-plus"></i>
-                                            <?= $is_available ? 'Tambah' : ($stok <= 0 ? 'Habis' : 'Tutup'); ?>
-                                        </button>
+                                         <?php if (!$is_buka): ?>
+                                             <button class="btn-tambah" style="background-color:#94a3b8; pointer-events:none; box-shadow:none" disabled>
+                                                 Tutup
+                                             </button>
+                                         <?php elseif ($stok <= 0 || !$tersedia): ?>
+                                             <button class="btn-tambah" style="background-color:#ef4444; color:#ffffff; box-shadow:none; cursor:pointer;"
+                                                 onclick="bukaDetailMenu(<?= $menu['id_menu']; ?>); event.stopPropagation();">
+                                                 Habis
+                                             </button>
+                                         <?php else: ?>
+                                             <button class="btn-tambah"
+                                                 onclick="bukaDetailMenu(<?= $menu['id_menu']; ?>); event.stopPropagation();">
+                                                 <i class="fa-solid fa-plus"></i> Tambah
+                                             </button>
+                                         <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -328,9 +331,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                         </div>
                     <?php endif; ?>
                 </div>
-
             <?php endif; ?>
-
         </div>
     </main>
 
@@ -338,13 +339,26 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
         <!-- Toast container -->
         <div class="toast-container" id="toastContainer"></div>
 
+        <!-- ── OVERLAY DETAIL MENU ── -->
+        <div id="section-menu-detail" class="kategori-overlay-page">
+            <div class="kategori-detail-header">
+                <button class="btn-back-kategori" onclick="tutupDetailMenu()">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h2 class="kategori-detail-title" id="menuDetailTitle">Detail Menu</h2>
+            </div>
+            <div class="kategori-detail-content" style="background: #ffffff;">
+                <div id="menuDetailContainer" class="menu-detail-content-wrapper">
+                    <!-- Dynamically populated via JS -->
+                </div>
+            </div>
+        </div>
+
         <!-- ── Floating Cart Button ── -->
         <button class="fab-cart" title="Lihat Keranjang">
             <i class="fa-solid fa-cart-shopping"></i>
             <span class="fab-cart-badge" id="fabCartBadge">0</span>
         </button>
-
-        <!-- ── Cart Drawer Overlay ── -->
         <div class="cart-drawer-overlay" id="cartOverlay" onclick="toggleCartDrawer()"></div>
 
         <!-- ── Cart Drawer ── -->
@@ -373,6 +387,414 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
             // ══════════════════════════════════════════════
 
             const CART_KEY = 'ekantin_cart';
+
+            const ALL_MENUS = <?= json_encode(array_map(function ($m) use ($toko) {
+                return [
+                    'id_menu' => (int) $m['id_menu'],
+                    'nama_menu' => $m['nama_menu'],
+                    'deskripsi' => $m['deskripsi'] ?? '',
+                    'harga' => $m['harga'],
+                    'foto_menu' => $m['foto_menu'] ?? '',
+                    'kategori' => strtolower($m['kategori'] ?? 'makanan'),
+                    'nama_toko' => $toko['nama_toko'],
+                    'id_toko' => (int) $toko['id_toko'],
+                    'stok' => (int) $m['stok'],
+                    'status_toko' => strtolower($toko['status'] ?? 'tutup'),
+                    'is_fleksibel' => (int) ($m['is_fleksibel'] ?? 0)
+                ];
+            }, $menus)); ?>;
+
+            let activeDetailMenu = null;
+            let activeDetailPrice = 0;
+
+            function bukaDetailMenu(id) {
+                const menu = ALL_MENUS.find(m => m.id_menu === id);
+                if (!menu) return;
+                
+                activeDetailMenu = menu;
+                
+                const overlay = document.getElementById('section-menu-detail');
+                const container = document.getElementById('menuDetailContainer');
+                
+                // Format Image
+                const imgWrapHTML = renderDetailMenuImageHTML(menu.foto_menu, menu.kategori, menu.nama_menu);
+                
+                // Pricing layout
+                let pricingHTML = '';
+                if (menu.is_fleksibel === 1) {
+                    const suggestions = [2000, 5000, 10000, 15000, 20000, 25000];
+                    const chipsHtml = suggestions.map(price => `
+                        <button type="button" class="price-chip-btn-detail" data-val="${price}" onclick="setDetailFlexPrice(${price}, this)">
+                            Rp ${price.toLocaleString('id-ID')}
+                        </button>
+                    `).join('');
+                    
+                    pricingHTML = `
+                        <div class="menu-detail-divider"></div>
+                        <div class="menu-detail-section-title">Harga Fleksibel</div>
+                        <div style="font-size: 13px; color: #64748b; margin-bottom: 10px;">Menu ini memiliki harga fleksibel. Masukkan harga yang Anda inginkan:</div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <span style="position: absolute; left: 16px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 700; color: #64748b;">Rp</span>
+                                <input type="number" id="detailFlexPriceInput" placeholder="Masukkan harga..." min="1000" oninput="updateDetailFlexPriceFromInput(this)" style="
+                                    width: 100%;
+                                    padding: 14px 16px 14px 44px;
+                                    border: 2px solid #cbd5e1;
+                                    border-radius: 16px;
+                                    font-family: 'Poppins', sans-serif;
+                                    font-size: 18px;
+                                    font-weight: 700;
+                                    color: #1e293b;
+                                    outline: none;
+                                    box-sizing: border-box;
+                                    transition: border-color 0.2s;
+                                ">
+                            </div>
+                            <div id="detailPriceValidationError" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 6px; display: none;">Minimal harga pembelian Rp 1.000</div>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Rekomendasi Harga</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${chipsHtml}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    pricingHTML = `
+                        <div class="menu-detail-divider"></div>
+                        <div class="menu-detail-section-title">Harga</div>
+                        <div class="menu-detail-price" id="menuDetailPriceLabel">
+                            Rp ${Number(menu.harga).toLocaleString('id-ID')}
+                        </div>
+                    `;
+                }
+
+                // Description HTML
+                const desc = menu.deskripsi || '';
+                const descHTML = `
+                    <div class="menu-detail-section-title">Deskripsi Menu</div>
+                    <div class="menu-detail-desc" style="margin-bottom: 16px;">
+                        ${desc ? desc : '<span style="color:#94a3b8; font-style: italic;">Tidak ada deskripsi untuk menu ini.</span>'}
+                    </div>
+                `;
+                
+                // Stock display
+                let stockBadgeHTML = '';
+                if (menu.stok <= 0) {
+                    stockBadgeHTML = `<span class="menu-item-stock-badge out">Stok Habis</span>`;
+                } else if (menu.stok <= 5) {
+                    stockBadgeHTML = `<span class="menu-item-stock-badge low">Sisa ${menu.stok}</span>`;
+                } else {
+                    stockBadgeHTML = `<span class="menu-item-stock-badge">Stok Tersedia (${menu.stok})</span>`;
+                }
+                
+                // Canteen status display
+                const isTokoBuka = menu.status_toko === 'buka';
+                const tokoBadgeHTML = isTokoBuka 
+                    ? `<span class="toko-status-badge open">Kantin Buka</span>`
+                    : `<span class="toko-status-badge closed">Kantin Tutup</span>`;
+
+                container.innerHTML = `
+                    <div class="menu-detail-card">
+                        ${imgWrapHTML}
+                        
+                        <div class="menu-detail-badge-row" style="display: flex; gap: 8px; margin-top: 16px; margin-bottom: 8px; flex-wrap: wrap;">
+                            <span class="menu-item-category ${menu.kategori}">${menu.kategori.charAt(0).toUpperCase() + menu.kategori.slice(1)}</span>
+                            ${stockBadgeHTML}
+                            ${tokoBadgeHTML}
+                        </div>
+                        
+                        <h2 class="menu-detail-name">${menu.nama_menu}</h2>
+                        <div class="menu-detail-toko">
+                            <i class="fa-solid fa-store" style="color:#16a34a"></i>
+                            <span>${menu.nama_toko}</span>
+                        </div>
+                        
+                        <div class="menu-detail-divider"></div>
+                        ${descHTML}
+                        
+                        ${pricingHTML}
+                        
+                        <div class="menu-detail-divider"></div>
+                        <div class="menu-detail-section-title">Jumlah yang Ingin Dibeli</div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; background: #f8fafc; padding: 12px 16px; border-radius: 16px; border: 1.5px solid #f1f5f9;">
+                            <span style="font-size: 14px; font-weight: 600; color: #475569;">Kuantitas</span>
+                            <div class="qty-counter-container" style="display: flex; align-items: center; gap: 12px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 4px 8px;">
+                                <button type="button" class="qty-btn-detail" onclick="adjustDetailQtyBtn(-1)" style="background:none; border:none; color:#16a34a; font-size:16px; font-weight:bold; cursor:pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="detailQtyInput" value="1" min="1" max="${menu.stok}" oninput="validateDetailQtyInput(this)" style="width: 40px; text-align: center; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 700; border: none; outline: none; -moz-appearance: textfield;">
+                                <button type="button" class="qty-btn-detail" onclick="adjustDetailQtyBtn(1)" style="background:none; border:none; color:#16a34a; font-size:16px; font-weight:bold; cursor:pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+                        
+                        <button class="btn-add-to-cart-large" id="btnAddToCartLarge" onclick="tambahKeKeranjangDariDetail()" style="
+                            width: 100%;
+                            padding: 16px;
+                            border: none;
+                            border-radius: 16px;
+                            background: ${isTokoBuka && menu.stok > 0 ? 'linear-gradient(135deg, #16a34a, #15803d)' : '#cbd5e1'};
+                            color: #ffffff;
+                            font-family: 'Poppins', sans-serif;
+                            font-size: 16px;
+                            font-weight: 700;
+                            cursor: ${isTokoBuka && menu.stok > 0 ? 'pointer' : 'not-allowed'};
+                            transition: all 0.2s;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 10px;
+                            box-shadow: ${isTokoBuka && menu.stok > 0 ? '0 4px 12px rgba(22, 163, 74, 0.2)' : 'none'};
+                        " ${isTokoBuka && menu.stok > 0 ? '' : 'disabled'}>
+                            <i class="fa-solid fa-cart-plus"></i>
+                            <span id="btnAddToCartLargeText">
+                                ${!isTokoBuka ? 'Kantin Tutup' : (menu.stok <= 0 ? 'Stok Habis' : 'Tambah ke Keranjang (Rp ' + Number(menu.harga).toLocaleString('id-ID') + ')')}
+                            </span>
+                        </button>
+                    </div>
+                `;
+                
+                document.body.style.overflow = 'hidden'; // Lock scrolling
+                overlay.classList.add('active');
+                
+                if (menu.is_fleksibel !== 1) {
+                    activeDetailPrice = menu.harga;
+                } else {
+                    activeDetailPrice = 0;
+                }
+            }
+            
+            function renderDetailMenuImageHTML(foto_menu, kategori, nama_menu) {
+                const kat = (kategori || 'makanan').toLowerCase();
+                let img_src = '';
+                if (foto_menu) {
+                    img_src = '../../assets/img/menu/' + foto_menu;
+                }
+
+                let svgContent = '';
+                if (kat === 'minuman') {
+                    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z" /></svg>`;
+                } else if (kat === 'snack') {
+                    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z" /></svg>`;
+                } else {
+                    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z" /></svg>`;
+                }
+
+                if (img_src) {
+                    return `
+                    <div class="menu-detail-img-wrap">
+                        <img src="${img_src}" alt="${nama_menu}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="menu-img-placeholder ${kat}" style="display:none; width: 100%; height: 100%; min-height: 220px; align-items: center; justify-content: center; background: #e2e8f0;">
+                            ${svgContent}
+                        </div>
+                    </div>`;
+                } else {
+                    return `
+                    <div class="menu-detail-img-wrap">
+                        <div class="menu-img-placeholder ${kat}" style="display:flex; width: 100%; height: 100%; min-height: 220px; align-items: center; justify-content: center; background: #e2e8f0;">
+                            ${svgContent}
+                        </div>
+                    </div>`;
+                }
+            }
+
+            function tutupDetailMenu() {
+                const overlay = document.getElementById('section-menu-detail');
+                if (overlay) overlay.classList.remove('active');
+                document.body.style.overflow = ''; // Restore scroll
+                
+                activeDetailMenu = null;
+                activeDetailPrice = 0;
+            }
+
+            function setDetailFlexPrice(price, el) {
+                const input = document.getElementById('detailFlexPriceInput');
+                if (input) input.value = price;
+                
+                document.querySelectorAll('.price-chip-btn-detail').forEach(b => {
+                    b.classList.remove('active');
+                });
+                if (el) el.classList.add('active');
+                
+                activeDetailPrice = price;
+                const errDiv = document.getElementById('detailPriceValidationError');
+                if (errDiv) errDiv.style.display = 'none';
+                if (input) input.style.borderColor = '#cbd5e1';
+                
+                updateDetailTotalText();
+            }
+
+            function updateDetailFlexPriceFromInput(input) {
+                const price = parseInt(input.value) || 0;
+                activeDetailPrice = price;
+                
+                document.querySelectorAll('.price-chip-btn-detail').forEach(b => {
+                    b.classList.remove('active');
+                });
+                
+                const errDiv = document.getElementById('detailPriceValidationError');
+                if (errDiv) errDiv.style.display = 'none';
+                
+                if (price >= 1000) {
+                    input.style.borderColor = '#16a34a';
+                } else {
+                    input.style.borderColor = '#cbd5e1';
+                }
+                
+                updateDetailTotalText();
+            }
+
+            function adjustDetailQtyBtn(delta) {
+                const input = document.getElementById('detailQtyInput');
+                if (!input || !activeDetailMenu) return;
+                
+                let val = parseInt(input.value) || 1;
+                val += delta;
+                
+                const max = activeDetailMenu.stok;
+                if (val < 1) val = 1;
+                if (val > max) {
+                    showToast('Stok tidak mencukupi! Maksimum stok: ' + max, 'error');
+                    val = max;
+                }
+                
+                input.value = val;
+                updateDetailTotalText();
+            }
+
+            function validateDetailQtyInput(input) {
+                if (!activeDetailMenu) return;
+                let val = parseInt(input.value);
+                const max = activeDetailMenu.stok;
+                
+                if (isNaN(val) || val < 1) {
+                    return;
+                }
+                if (val > max) {
+                    showToast('Stok tidak mencukupi! Maksimum stok: ' + max, 'error');
+                    val = max;
+                    input.value = val;
+                }
+                updateDetailTotalText();
+            }
+
+            function updateDetailTotalText() {
+                const btnText = document.getElementById('btnAddToCartLargeText');
+                if (!btnText || !activeDetailMenu) return;
+                
+                const qtyInput = document.getElementById('detailQtyInput');
+                const qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
+                
+                if (activeDetailMenu.status_toko !== 'buka') {
+                    btnText.textContent = 'Kantin Tutup';
+                    return;
+                }
+                if (activeDetailMenu.stok <= 0) {
+                    btnText.textContent = 'Stok Habis';
+                    return;
+                }
+                
+                if (activeDetailMenu.is_fleksibel === 1) {
+                    if (activeDetailPrice < 1000) {
+                        btnText.textContent = 'Tentukan Harga Dahulu';
+                    } else {
+                        btnText.textContent = `Tambah ke Keranjang (Rp ${(activeDetailPrice * qty).toLocaleString('id-ID')})`;
+                    }
+                } else {
+                    btnText.textContent = `Tambah ke Keranjang (Rp ${(activeDetailMenu.harga * qty).toLocaleString('id-ID')})`;
+                }
+            }
+
+            function tambahKeKeranjangDariDetail() {
+                if (!activeDetailMenu) return;
+                
+                if (activeDetailMenu.status_toko !== 'buka') {
+                    showToast('Kantin sedang tutup!', 'error');
+                    return;
+                }
+                
+                const qtyInput = document.getElementById('detailQtyInput');
+                let qty = parseInt(qtyInput ? qtyInput.value : 1);
+                if (isNaN(qty) || qty < 1) qty = 1;
+                
+                const max = activeDetailMenu.stok;
+                if (qty > max) {
+                    showToast('Stok tidak mencukupi! Maksimum stok: ' + max, 'error');
+                    return;
+                }
+                
+                let customHarga = null;
+                if (activeDetailMenu.is_fleksibel === 1) {
+                    const price = activeDetailPrice;
+                    if (price < 1000) {
+                        const errDiv = document.getElementById('detailPriceValidationError');
+                        if (errDiv) errDiv.style.display = 'block';
+                        const input = document.getElementById('detailFlexPriceInput');
+                        if (input) {
+                            input.style.borderColor = '#ef4444';
+                            input.focus();
+                        }
+                        return;
+                    }
+                    customHarga = price;
+                }
+                
+                const hargaToAdd = customHarga !== null ? customHarga : activeDetailMenu.harga;
+                
+                const success = tambahKeKeranjangWithQty(
+                    activeDetailMenu.id_menu,
+                    activeDetailMenu.nama_menu,
+                    hargaToAdd,
+                    activeDetailMenu.foto_menu,
+                    activeDetailMenu.nama_toko,
+                    activeDetailMenu.id_toko,
+                    activeDetailMenu.stok,
+                    qty,
+                    activeDetailMenu.is_fleksibel,
+                    customHarga
+                );
+                
+                if (success) {
+                    tutupDetailMenu();
+                }
+            }
+
+            function tambahKeKeranjangWithQty(id_menu, nama_menu, harga, foto_menu, nama_toko, id_toko, stok, qty = 1, is_fleksibel = 0, customHarga = null) {
+                let cart = getCart();
+                const activeHarga = customHarga !== null ? customHarga : harga;
+                const existingIndex = cart.findIndex(item => item.id_menu === id_menu && item.harga === activeHarga);
+
+                if (existingIndex !== -1) {
+                    if (cart[existingIndex].jumlah + qty > stok) {
+                        showToast('Stok tidak mencukupi! Maksimum stok: ' + stok, 'error');
+                        return false;
+                    }
+                    cart[existingIndex].jumlah += qty;
+                    cart[existingIndex].selected = true;
+                } else {
+                    if (stok <= 0) {
+                        showToast('Stok habis!', 'error');
+                        return false;
+                    }
+                    if (qty > stok) {
+                        showToast('Stok tidak mencukupi! Maksimum stok: ' + stok, 'error');
+                        return false;
+                    }
+                    cart.push({
+                        id_menu: id_menu,
+                        nama_menu: nama_menu,
+                        harga: activeHarga,
+                        jumlah: qty,
+                        foto_menu: foto_menu,
+                        nama_toko: nama_toko,
+                        id_toko: id_toko,
+                        selected: true,
+                        catatan: '',
+                        stok: stok
+                    });
+                }
+                saveCart(cart);
+                showToast(nama_menu + ' x' + qty + ' (Rp ' + (activeHarga * qty).toLocaleString('id-ID') + ')', 'success', { foto: foto_menu, toko: nama_toko });
+                return true;
+            }
 
             // ── Get cart from localStorage ──
             function getCart() {
@@ -1035,6 +1457,19 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                     emptyState.style.display = 'block';
                 } else if (emptyState) {
                     emptyState.style.display = 'none';
+                }
+            }
+
+            function handleSearchKeydown(e) {
+                if (e.key === 'Enter') {
+                    const val = e.target.value.trim().toLowerCase();
+                    if (val.length >= 2) {
+                        const menu = ALL_MENUS.find(m => m.nama_menu.toLowerCase().includes(val));
+                        if (menu) {
+                            bukaDetailMenu(menu.id_menu);
+                            e.target.blur();
+                        }
+                    }
                 }
             }
 

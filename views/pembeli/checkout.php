@@ -298,14 +298,6 @@ if ($q_toko_qris) {
 <html lang="id">
 
 <head>
-    <script>
-        (function() {
-            const isDark = localStorage.getItem('darkMode') === 'enabled';
-            if (isDark) {
-                document.documentElement.classList.add('dark-mode');
-            }
-        })();
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout Pesanan - E-Kantin</title>

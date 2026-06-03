@@ -75,9 +75,17 @@ if ($checkColKeranjang && mysqli_num_rows($checkColKeranjang) === 0) {
 /** Alias lama — beberapa file memakai $koneksi */
 $koneksi = $conn;
 
+/** Konfigurasi Global Logging: Ubah ke false untuk mematikan pencatatan log sistem secara global */
+if (!defined('SYSTEM_LOGGING_ACTIVE')) {
+    define('SYSTEM_LOGGING_ACTIVE', true);
+}
+
 if (!function_exists('catatLog')) {
     function catatLog($conn, $aksi, $keterangan = '')
     {
+        if (defined('SYSTEM_LOGGING_ACTIVE') && !SYSTEM_LOGGING_ACTIVE) {
+            return;
+        }
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }

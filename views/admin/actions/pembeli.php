@@ -193,3 +193,111 @@ if ($action === 'pembeli_hapus_guru') {
     header('Location: ?section=pembeli');
     exit;
 }
+
+/* ══ TAMBAH JURUSAN ══ */
+if ($action === 'pembeli_tambah_jurusan') {
+    $nama_jurusan = strtoupper(trim($_POST['nama_jurusan'] ?? ''));
+    if ($nama_jurusan === '') {
+        $feedback = ['type' => 'error', 'msg' => 'Nama jurusan tidak boleh kosong.'];
+    } else {
+        $nj = mysqli_real_escape_string($conn, $nama_jurusan);
+        $cek = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id_jurusan FROM jurusan WHERE nama_jurusan='$nj'"));
+        if ($cek) {
+            $feedback = ['type' => 'error', 'msg' => "Jurusan <strong>$nama_jurusan</strong> sudah terdaftar."];
+        } else {
+            if (mysqli_query($conn, "INSERT INTO jurusan (nama_jurusan) VALUES ('$nj')")) {
+                catatLog($conn, 'Tambah Jurusan', "Menambahkan jurusan baru: $nama_jurusan");
+                $feedback = ['type' => 'success', 'msg' => "Jurusan <strong>$nama_jurusan</strong> berhasil ditambahkan."];
+            } else {
+                $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan jurusan: ' . mysqli_error($conn)];
+            }
+        }
+    }
+    if ($feedback)
+        $_SESSION['feedback'] = $feedback;
+    header('Location: ?section=pembeli');
+    exit;
+}
+
+/* ══ TAMBAH KELAS ══ */
+if ($action === 'pembeli_tambah_kelas') {
+    $kelas = trim($_POST['kelas'] ?? '');
+    $id_jurusan = (int) ($_POST['id_jurusan'] ?? 0);
+    $rombel = (int) ($_POST['rombel'] ?? 1);
+
+    if ($kelas === '' || !$id_jurusan || $rombel < 1) {
+        $feedback = ['type' => 'error', 'msg' => 'Semua field (tingkat, jurusan, rombel) wajib diisi.'];
+    } else {
+        $kls = mysqli_real_escape_string($conn, $kelas);
+        $cek = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id_kelas FROM kelas WHERE kelas='$kls' AND id_jurusan=$id_jurusan AND rombel=$rombel"));
+        if ($cek) {
+            $feedback = ['type' => 'error', 'msg' => 'Kombinasi kelas tersebut sudah terdaftar.'];
+        } else {
+            if (mysqli_query($conn, "INSERT INTO kelas (kelas, id_jurusan, rombel) VALUES ('$kls', $id_jurusan, $rombel)")) {
+                $jur = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama_jurusan FROM jurusan WHERE id_jurusan=$id_jurusan"));
+                $nama_jur = $jur['nama_jurusan'] ?? '';
+                $nama_kelas_lengkap = "$kelas $nama_jur $rombel";
+                catatLog($conn, 'Tambah Kelas', "Menambahkan kelas baru: $nama_kelas_lengkap");
+                $feedback = ['type' => 'success', 'msg' => "Kelas <strong>$nama_kelas_lengkap</strong> berhasil ditambahkan."];
+            } else {
+                $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan kelas: ' . mysqli_error($conn)];
+            }
+        }
+    }
+    if ($feedback)
+        $_SESSION['feedback'] = $feedback;
+    header('Location: ?section=pembeli');
+    exit;
+}
+
+/* ══ HAPUS KELAS ══ */
+if ($action === 'pembeli_hapus_kelas') {
+    $id_kelas = (int) ($_POST['id_kelas'] ?? 0);
+    if ($id_kelas) {
+        $cek_murid = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM murid WHERE id_kelas=$id_kelas"));
+        if ($cek_murid['c'] > 0) {
+            $feedback = ['type' => 'error', 'msg' => 'Gagal menghapus kelas: Kelas ini masih dirujuk oleh ' . $cek_murid['c'] . ' data murid di database.'];
+        } else {
+            $k_info = mysqli_fetch_assoc(mysqli_query($conn, "SELECT k.kelas, k.rombel, j.nama_jurusan FROM kelas k JOIN jurusan j ON j.id_jurusan = k.id_jurusan WHERE k.id_kelas=$id_kelas"));
+            $nama_kelas = $k_info ? ($k_info['kelas'] . ' ' . $k_info['nama_jurusan'] . ' ' . $k_info['rombel']) : "ID $id_kelas";
+            
+            if (mysqli_query($conn, "DELETE FROM kelas WHERE id_kelas=$id_kelas")) {
+                catatLog($conn, 'Hapus Kelas', "Menghapus kelas: $nama_kelas");
+                $feedback = ['type' => 'success', 'msg' => "Kelas <strong>$nama_kelas</strong> berhasil dihapus."];
+            } else {
+                $feedback = ['type' => 'error', 'msg' => 'Gagal menghapus kelas: ' . mysqli_error($conn)];
+            }
+        }
+    }
+    if ($feedback)
+        $_SESSION['feedback'] = $feedback;
+    header('Location: ?section=pembeli');
+    exit;
+}
+
+/* ══ HAPUS JURUSAN ══ */
+if ($action === 'pembeli_hapus_jurusan') {
+    $id_jurusan = (int) ($_POST['id_jurusan'] ?? 0);
+    if ($id_jurusan) {
+        $cek_kelas = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM kelas WHERE id_jurusan=$id_jurusan"));
+        $cek_murid = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM murid WHERE id_jurusan=$id_jurusan"));
+        
+        if ($cek_kelas['c'] > 0 || $cek_murid['c'] > 0) {
+            $feedback = ['type' => 'error', 'msg' => 'Gagal menghapus jurusan: Masih digunakan oleh ' . $cek_kelas['c'] . ' kelas atau ' . $cek_murid['c'] . ' data murid.'];
+        } else {
+            $j_info = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama_jurusan FROM jurusan WHERE id_jurusan=$id_jurusan"));
+            $nama_jur = $j_info['nama_jurusan'] ?? "ID $id_jurusan";
+            
+            if (mysqli_query($conn, "DELETE FROM jurusan WHERE id_jurusan=$id_jurusan")) {
+                catatLog($conn, 'Hapus Jurusan', "Menghapus jurusan: $nama_jur");
+                $feedback = ['type' => 'success', 'msg' => "Jurusan <strong>$nama_jur</strong> berhasil dihapus."];
+            } else {
+                $feedback = ['type' => 'error', 'msg' => 'Gagal menghapus jurusan: ' . mysqli_error($conn)];
+            }
+        }
+    }
+    if ($feedback)
+        $_SESSION['feedback'] = $feedback;
+    header('Location: ?section=pembeli');
+    exit;
+}

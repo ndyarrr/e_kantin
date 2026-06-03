@@ -69,11 +69,7 @@ $chats = [];
 
 if ($terakhir_id > 0) {
     $query = "SELECT pc.id_pesan, pc.id_pengirim, pc.isi_pesan,
-<<<<<<< HEAD
                      pc.waktu_kirim,
-=======
-                     DATE_FORMAT(pc.waktu_kirim, '%Y-%m-%d %H:%i:%s') as jam,
->>>>>>> 02fd2e94f861cdd2c8dce32789ebae708f665ffb
                      pc.id_staf_balasan,
                      p.nama as nama_staf
               FROM pesan_chat pc
@@ -87,11 +83,7 @@ if ($terakhir_id > 0) {
 } else {
     $query = "SELECT * FROM (
                 SELECT pc.id_pesan, pc.id_pengirim, pc.isi_pesan,
-<<<<<<< HEAD
                        pc.waktu_kirim,
-=======
-                       DATE_FORMAT(pc.waktu_kirim, '%Y-%m-%d %H:%i:%s') as jam,
->>>>>>> 02fd2e94f861cdd2c8dce32789ebae708f665ffb
                        pc.id_staf_balasan,
                        p.nama as nama_staf
                 FROM pesan_chat pc

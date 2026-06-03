@@ -1,6 +1,6 @@
 <?php // sections/pembeli.php ?>
 
-<div class="stats-grid col2">
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); max-width: 800px; margin-bottom: 20px;">
     <div class="stat-card">
         <div class="stat-label">Total Pembeli</div>
         <div class="stat-row">
@@ -19,6 +19,17 @@
                 </span>
             </div>
             <i class="fa-solid fa-circle-check stat-icon"></i>
+        </div>
+    </div>
+    <div class="stat-card" style="display: flex; flex-direction: column; justify-content: center; gap: 8px;">
+        <div class="stat-label" style="margin-bottom: 4px;">Pengaturan Kelas & Jurusan</div>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn-submit" onclick="bukaModalTambahKelasJurusan()" style="padding: 8px 12px; font-size: 12px; flex: 1; white-space: nowrap; margin: 0; height: auto;">
+                <i class="fa-solid fa-plus" style="margin-right: 4px;"></i> Tambah
+            </button>
+            <button class="btn-submit" onclick="bukaModalKelolaKelasJurusan()" style="padding: 8px 12px; font-size: 12px; flex: 1; white-space: nowrap; background: #4b5563; margin: 0; height: auto;">
+                <i class="fa-solid fa-gear" style="margin-right: 4px;"></i> Kelola
+            </button>
         </div>
     </div>
 </div>
@@ -351,4 +362,210 @@
     window.addEventListener('DOMContentLoaded', () => {
         updateDropdownFilterState();
     });
+
+    // ── MODAL TAMBAH KELAS / JURUSAN ──
+    function bukaModalTambahKelasJurusan() {
+        document.getElementById('modalTambahKelasJurusan').style.display = 'flex';
+    }
+    function tutupModalTambahKelasJurusan() {
+        document.getElementById('modalTambahKelasJurusan').style.display = 'none';
+    }
+    function switchTambahTab(tab) {
+        const tabKelasBtn = document.getElementById('tabKelasBtn');
+        const tabJurusanBtn = document.getElementById('tabJurusanBtn');
+        const formTambahKelas = document.getElementById('formTambahKelas');
+        const formTambahJurusan = document.getElementById('formTambahJurusan');
+        
+        if (tab === 'kelas') {
+            tabKelasBtn.style.background = 'var(--green)';
+            tabKelasBtn.style.color = '#fff';
+            tabJurusanBtn.style.background = '#f3f4f6';
+            tabJurusanBtn.style.color = 'var(--text)';
+            formTambahKelas.style.display = 'block';
+            formTambahJurusan.style.display = 'none';
+        } else {
+            tabJurusanBtn.style.background = 'var(--green)';
+            tabJurusanBtn.style.color = '#fff';
+            tabKelasBtn.style.background = '#f3f4f6';
+            tabKelasBtn.style.color = 'var(--text)';
+            formTambahKelas.style.display = 'none';
+            formTambahJurusan.style.display = 'block';
+        }
+    }
+
+    // ── MODAL KELOLA KELAS / JURUSAN ──
+    function bukaModalKelolaKelasJurusan() {
+        document.getElementById('modalKelolaKelasJurusan').style.display = 'flex';
+    }
+    function tutupModalKelolaKelasJurusan() {
+        document.getElementById('modalKelolaKelasJurusan').style.display = 'none';
+    }
+    function switchKelolaTab(tab) {
+        const tabKelolaKelasBtn = document.getElementById('tabKelolaKelasBtn');
+        const tabKelolaJurusanBtn = document.getElementById('tabKelolaJurusanBtn');
+        const kelolaKelasSection = document.getElementById('kelolaKelasSection');
+        const kelolaJurusanSection = document.getElementById('kelolaJurusanSection');
+        
+        if (tab === 'kelas') {
+            tabKelolaKelasBtn.style.background = 'var(--green)';
+            tabKelolaKelasBtn.style.color = '#fff';
+            tabKelolaJurusanBtn.style.background = '#f3f4f6';
+            tabKelolaJurusanBtn.style.color = 'var(--text)';
+            kelolaKelasSection.style.display = 'block';
+            kelolaJurusanSection.style.display = 'none';
+        } else {
+            tabKelolaJurusanBtn.style.background = 'var(--green)';
+            tabKelolaJurusanBtn.style.color = '#fff';
+            tabKelolaKelasBtn.style.background = '#f3f4f6';
+            tabKelolaKelasBtn.style.color = 'var(--text)';
+            kelolaKelasSection.style.display = 'none';
+            kelolaJurusanSection.style.display = 'block';
+        }
+    }
+
+    // Bind Escape key to close modals
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            tutupModalTambahKelasJurusan();
+            tutupModalKelolaKelasJurusan();
+        }
+    });
 </script>
+
+<!-- ── OVERLAY MODAL TAMBAH KELAS / JURUSAN ── -->
+<div id="modalTambahKelasJurusan" class="modalResetPembeli" style="display:none; position:fixed; inset:0; z-index:99999; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); backdrop-filter:blur(2px);">
+    <div style="position:relative; background:#fff; border-radius:16px; padding:28px; width:90%; max-width:440px; box-shadow:0 8px 32px rgba(0,0,0,.15); z-index:101; font-family:'Segoe UI',sans-serif;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom: 1.5px solid var(--border); padding-bottom: 10px;">
+            <h2 style="font-size:16px; font-weight:700; margin:0; color:var(--text);">Tambah Kelas / Jurusan</h2>
+            <button onclick="tutupModalTambahKelasJurusan()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#6b7280"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <!-- Tabs -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+            <button type="button" id="tabKelasBtn" onclick="switchTambahTab('kelas')" style="flex:1; padding:10px; border-radius:10px; border:1.5px solid var(--border); background:var(--green); color:#fff; font-weight:600; font-size:13px; cursor:pointer; font-family:inherit;">Kelas</button>
+            <button type="button" id="tabJurusanBtn" onclick="switchTambahTab('jurusan')" style="flex:1; padding:10px; border-radius:10px; border:1.5px solid var(--border); background:#f3f4f6; color:var(--text); font-weight:600; font-size:13px; cursor:pointer; font-family:inherit;">Jurusan</button>
+        </div>
+
+        <!-- Form Tambah Kelas -->
+        <form method="POST" id="formTambahKelas" style="display: block; margin:0;">
+            <input type="hidden" name="action" value="pembeli_tambah_kelas">
+            <div class="form-group">
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px;">Tingkat Kelas</label>
+                <select name="kelas" style="width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:10px; background:var(--bg); font-size:14px; outline:none;" required>
+                    <option value="">Pilih Tingkat</option>
+                    <option value="10">Kelas 10</option>
+                    <option value="11">Kelas 11</option>
+                    <option value="12">Kelas 12</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px;">Jurusan</label>
+                <select name="id_jurusan" style="width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:10px; background:var(--bg); font-size:14px; outline:none;" required>
+                    <option value="">Pilih Jurusan</option>
+                    <?php foreach ($semuaJurusan as $j): ?>
+                        <option value="<?= $j['id_jurusan'] ?>"><?= htmlspecialchars($j['nama_jurusan']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px;">Rombel / Urutan Kelas (cth: 1, 2)</label>
+                <input type="number" name="rombel" min="1" value="1" placeholder="cth: 1" style="width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:10px; background:var(--bg); font-size:14px; outline:none; box-sizing:border-box;" required>
+            </div>
+            <button type="submit" class="btn-submit" style="margin-top:18px; width:100%; padding:12px; background:var(--green); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;"><i class="fa-solid fa-plus" style="margin-right:6px"></i>Tambah Kelas</button>
+        </form>
+
+        <!-- Form Tambah Jurusan -->
+        <form method="POST" id="formTambahJurusan" style="display: none; margin:0;">
+            <input type="hidden" name="action" value="pembeli_tambah_jurusan">
+            <div class="form-group">
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px;">Nama Singkat Jurusan (cth: RPL, TKJ, AKL)</label>
+                <input type="text" name="nama_jurusan" placeholder="cth: RPL" style="width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:10px; background:var(--bg); font-size:14px; outline:none; box-sizing:border-box; text-transform:uppercase;" required>
+            </div>
+            <button type="submit" class="btn-submit" style="margin-top:18px; width:100%; padding:12px; background:var(--green); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;"><i class="fa-solid fa-plus" style="margin-right:6px"></i>Tambah Jurusan</button>
+        </form>
+    </div>
+</div>
+
+<!-- ── OVERLAY MODAL KELOLA KELAS / JURUSAN ── -->
+<div id="modalKelolaKelasJurusan" class="modalResetPembeli" style="display:none; position:fixed; inset:0; z-index:99999; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); backdrop-filter:blur(2px);">
+    <div style="position:relative; background:#fff; border-radius:16px; padding:28px; width:90%; max-width:500px; box-shadow:0 8px 32px rgba(0,0,0,.15); z-index:101; display:flex; flex-direction:column; max-height:80vh; font-family:'Segoe UI',sans-serif;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom: 1.5px solid var(--border); padding-bottom: 10px; flex-shrink:0;">
+            <h2 style="font-size:16px; font-weight:700; margin:0; color:var(--text);">Kelola Kelas & Jurusan</h2>
+            <button onclick="tutupModalKelolaKelasJurusan()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#6b7280"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <!-- Tabs -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-shrink:0;">
+            <button type="button" id="tabKelolaKelasBtn" onclick="switchKelolaTab('kelas')" style="flex:1; padding:10px; border-radius:10px; border:1.5px solid var(--border); background:var(--green); color:#fff; font-weight:600; font-size:13px; cursor:pointer; font-family:inherit;">Daftar Kelas</button>
+            <button type="button" id="tabKelolaJurusanBtn" onclick="switchKelolaTab('jurusan')" style="flex:1; padding:10px; border-radius:10px; border:1.5px solid var(--border); background:#f3f4f6; color:var(--text); font-weight:600; font-size:13px; cursor:pointer; font-family:inherit;">Daftar Jurusan</button>
+        </div>
+
+        <!-- Kelola Kelas Section -->
+        <div id="kelolaKelasSection" style="display: block; overflow-y: auto; flex:1;">
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="padding:10px; font-size:12px; border-bottom: 2px solid var(--border); font-weight:700; color:var(--text-muted); text-transform:uppercase;">Nama Kelas</th>
+                        <th style="padding:10px; font-size:12px; border-bottom: 2px solid var(--border); font-weight:700; color:var(--text-muted); text-transform:uppercase; text-align:center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($semuaKelas)): ?>
+                        <tr>
+                            <td colspan="2" style="padding:16px; text-align:center; color:#9ca3af; font-size:13px;">Belum ada kelas terdaftar.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($semuaKelas as $k): ?>
+                            <tr style="border-bottom:1px solid #f3f4f6;">
+                                <td style="padding:10px; font-size:13px; font-weight:600; color:var(--text);"><?= htmlspecialchars($k['nama_kelas']) ?></td>
+                                <td style="padding:10px; text-align:center;">
+                                    <form method="POST" style="display:inline; margin:0;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kelas <?= htmlspecialchars($k['nama_kelas'], ENT_QUOTES) ?>?')">
+                                        <input type="hidden" name="action" value="pembeli_hapus_kelas">
+                                        <input type="hidden" name="id_kelas" value="<?= $k['id_kelas'] ?>">
+                                        <button type="submit" class="btn-aksi danger" style="padding: 6px; border:none; background:none; cursor:pointer; color:var(--red);" title="Hapus Kelas">
+                                            <i class="fa-solid fa-trash" style="font-size:14px;"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Kelola Jurusan Section -->
+        <div id="kelolaJurusanSection" style="display: none; overflow-y: auto; flex:1;">
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="padding:10px; font-size:12px; border-bottom: 2px solid var(--border); font-weight:700; color:var(--text-muted); text-transform:uppercase;">Nama Jurusan</th>
+                        <th style="padding:10px; font-size:12px; border-bottom: 2px solid var(--border); font-weight:700; color:var(--text-muted); text-transform:uppercase; text-align:center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($semuaJurusan)): ?>
+                        <tr>
+                            <td colspan="2" style="padding:16px; text-align:center; color:#9ca3af; font-size:13px;">Belum ada jurusan terdaftar.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($semuaJurusan as $j): ?>
+                            <tr style="border-bottom:1px solid #f3f4f6;">
+                                <td style="padding:10px; font-size:13px; font-weight:600; color:var(--text);"><?= htmlspecialchars($j['nama_jurusan']) ?></td>
+                                <td style="padding:10px; text-align:center;">
+                                    <form method="POST" style="display:inline; margin:0;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus jurusan <?= htmlspecialchars($j['nama_jurusan'], ENT_QUOTES) ?>?')">
+                                        <input type="hidden" name="action" value="pembeli_hapus_jurusan">
+                                        <input type="hidden" name="id_jurusan" value="<?= $j['id_jurusan'] ?>">
+                                        <button type="submit" class="btn-aksi danger" style="padding: 6px; border:none; background:none; cursor:pointer; color:var(--red);" title="Hapus Jurusan">
+                                            <i class="fa-solid fa-trash" style="font-size:14px;"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

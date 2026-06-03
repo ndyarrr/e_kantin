@@ -67,13 +67,6 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                             <span><?= htmlspecialchars($user_db['nama_kelas'] ?? '-') ?></span>
                         </div>
                     <?php endif; ?>
-                    <div class="profil-meta-row theme-toggle-row">
-                        <span>Mode Gelap</span>
-                        <label class="theme-switch">
-                            <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
-                            <span class="theme-slider"></span>
-                        </label>
-                    </div>
                 </div>
 
                 <!-- Input File Trigger (Hidden) -->
@@ -285,85 +278,13 @@ function profilSubmitGantiPassword(e) {
         console.error(err);
         btn.disabled = false;
         btn.innerHTML = oldBtnText;
-        showToast('Koneksi gagal saat memperbarui password!', 'error');
+    showToast('Koneksi gagal saat memperbarui password!', 'error');
     });
 }
-
-function toggleDarkMode(enabled) {
-    if (enabled) {
-        document.documentElement.classList.add('dark-mode');
-        localStorage.setItem('darkMode', 'enabled');
-    } else {
-        document.documentElement.classList.remove('dark-mode');
-        localStorage.setItem('darkMode', 'disabled');
-    }
-}
-
-// Initial Sync check
-(function() {
-    const isDark = localStorage.getItem('darkMode') === 'enabled';
-    setTimeout(() => {
-        const toggle = document.getElementById('darkModeToggle');
-        if (toggle) {
-            toggle.checked = isDark;
-        }
-    }, 50);
-})();
 </script>
 
 <style>
 /* CSS Styling */
-/* ── Theme Switch Switcher ── */
-.theme-toggle-row {
-    align-items: center;
-    margin-top: 8px;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 12px;
-}
-html.dark-mode .theme-toggle-row {
-    border-top: 1px solid #334155;
-}
-.theme-switch {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 24px;
-    margin: 0;
-}
-.theme-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-.theme-switch input:checked + .theme-slider {
-    background-color: #16a34a;
-}
-.theme-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #cbd5e1;
-    transition: .4s;
-    border-radius: 24px;
-}
-.theme-slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-}
-.theme-switch input:checked + .theme-slider:before {
-    transform: translateX(20px);
-}
 
 .profil-grid {
     display: grid;

@@ -45,6 +45,9 @@ $kendalaNotif = mysqli_fetch_all(mysqli_query(
 if (!function_exists('catatLog')) {
     function catatLog($conn, $aksi, $keterangan = '')
     {
+        if (defined('SYSTEM_LOGGING_ACTIVE') && !SYSTEM_LOGGING_ACTIVE) {
+            return;
+        }
         $role = mysqli_real_escape_string($conn, $_SESSION['user_role'] ?? '');
         $uid = mysqli_real_escape_string($conn, $_SESSION['user_id'] ?? '');
         $nama = mysqli_real_escape_string($conn, $_SESSION['user_nama'] ?? '');

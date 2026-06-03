@@ -4005,339 +4005,155 @@ body {
     }
 }
 
-/* ==========================================
-   DARK MODE SELECTORS
-   ========================================== */
-html.dark-mode body {
-    background-color: #0b0f17 !important;
-    color: #f1f5f9 !important;
-    background-image:
-        radial-gradient(#1e293b 1.2px, transparent 1.2px),
-        radial-gradient(#1e293b 1.2px, #0b0f17 1.2px) !important;
+/* --- OVERLAY HALAMAN DETAIL MENU --- */
+.menu-detail-content-wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+.menu-detail-card {
+    background: #ffffff;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+}
+.menu-detail-img-wrap {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    background: #f8fafc;
+}
+.menu-detail-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.menu-detail-img-wrap .menu-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+}
+.menu-detail-img-wrap .menu-img-placeholder svg {
+    width: 72px;
+    height: 72px;
+}
+.menu-detail-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 12px 0 6px 0;
+    line-height: 1.3;
+}
+.menu-detail-toko {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.menu-detail-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 16px 0;
+}
+.menu-detail-section-title {
+    font-size: 11.5px;
+    font-weight: 750;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.75px;
+    margin-bottom: 8px;
+}
+.menu-detail-desc {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #4b5563;
+}
+.menu-item-stock-badge {
+    background: rgba(22, 163, 74, 0.1);
+    color: #16a34a;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.menu-item-stock-badge.low {
+    background: rgba(217, 119, 6, 0.1);
+    color: #d97706;
+}
+.menu-item-stock-badge.out {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+.toko-status-badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.toko-status-badge.open {
+    background: rgba(92, 184, 92, 0.1);
+    color: #5cb85c;
+}
+.toko-status-badge.closed {
+    background: rgba(148, 163, 184, 0.1);
+    color: #94a3b8;
+}
+.menu-detail-price {
+    font-size: 22px;
+    font-weight: 800;
+    color: #16a34a;
+    margin-top: 4px;
+}
+.price-chip-btn-detail {
+    padding: 8px 14px;
+    background: #f1f5f9;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.price-chip-btn-detail.active {
+    background: rgba(92, 184, 92, 0.1);
+    border-color: #5cb85c;
+    color: #5cb85c;
+}
+.qty-btn-detail {
+    background: none;
+    border: none;
+    color: #16a34a;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    border-radius: 6px;
+}
+.qty-btn-detail:hover {
+    background: rgba(22, 163, 74, 0.1);
+}
+#detailQtyInput::-webkit-outer-spin-button,
+#detailQtyInput::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
-/* Header & Navigation */
-html.dark-mode .main-header {
-    background: linear-gradient(180deg, #0a2713 0%, #0f1712 100%) !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
-}
-html.dark-mode .nav-menu-container {
-    background-color: #1e293b !important;
-    border: 1px solid #334155 !important;
-}
-html.dark-mode .nav-item {
-    color: #94a3b8 !important;
-}
-html.dark-mode .nav-item.active {
-    background-color: #334155 !important;
-    color: #10b981 !important;
-}
-html.dark-mode .topbar-wrap,
-html.dark-mode .wallet-section,
-html.dark-mode .wallet-container {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
-}
-
-/* Cards & Lists */
-html.dark-mode .profil-avatar-card,
-html.dark-mode .profil-card,
-html.dark-mode .menu-card-full,
-html.dark-mode .menu-card,
-html.dark-mode .kantin-card,
-html.dark-mode .cart-drawer,
-html.dark-mode .checkout-card,
-html.dark-mode .summary-card,
-html.dark-mode .payment-method-card,
-html.dark-mode .dropdown-item,
-html.dark-mode .info-alert,
-html.dark-mode .chat-bubble,
-html.dark-mode .checkout-item-row,
-html.dark-mode .canteen-detail-card,
-html.dark-mode .pesanan-card,
-html.dark-mode .detail-card,
-html.dark-mode .promo-slider-container {
-    background-color: #1e293b !important;
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Typography & Titles */
-html.dark-mode h1,
-html.dark-mode h2,
-html.dark-mode h3,
-html.dark-mode h4,
-html.dark-mode h5,
-html.dark-mode h6,
-html.dark-mode .profil-nama-big,
-html.dark-mode .checkout-item-title,
-html.dark-mode .section-title,
-html.dark-mode .search-title-text,
-html.dark-mode .empty-state h3,
-html.dark-mode .wallet-label,
-html.dark-mode .wallet-amount,
-html.dark-mode .menu-item-name,
-html.dark-mode .kantin-info h3,
-html.dark-mode .logo-text,
-html.dark-mode .pesanan-status-title {
-    color: #ffffff !important;
-}
-
-html.dark-mode p,
-html.dark-mode .seller-name,
-html.dark-mode .profil-meta-row span:first-child,
-html.dark-mode .checkout-item-meta,
-html.dark-mode .cart-drawer p,
-html.dark-mode .menu-item-desc,
-html.dark-mode .kantin-info p,
-html.dark-mode .empty-state p,
-html.dark-mode .pesanan-meta-row span:first-child {
-    color: #cbd5e1 !important;
-}
-
-/* Form Controls & Inputs */
-html.dark-mode input[type="text"],
-html.dark-mode input[type="number"],
-html.dark-mode input[type="password"],
-html.dark-mode input[type="search"],
-html.dark-mode textarea,
-html.dark-mode select,
-html.dark-mode .checkout-note-input,
-html.dark-mode .cart-item-note-input {
-    background-color: #0f172a !important;
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
-}
-
-html.dark-mode input:focus,
-html.dark-mode textarea:focus,
-html.dark-mode select:focus {
-    border-color: #10b981 !important;
-    background-color: #0f172a !important;
-}
-
-/* Specific Values & Badges */
-html.dark-mode .profil-meta-row span:last-child,
-html.dark-mode .checkout-item-price,
-html.dark-mode .pesanan-meta-row span:last-child {
-    color: #f1f5f9 !important;
-}
-
-html.dark-mode .profil-btn-avatar-upload,
-html.dark-mode .btn-clear-cart,
-html.dark-mode .btn-clear-search,
-html.dark-mode .filter-tab,
-html.dark-mode .btn-favorite-toko,
-html.dark-mode .qty-btn-circle {
-    background-color: #334155 !important;
-    border-color: #475569 !important;
-    color: #f1f5f9 !important;
-}
-
-html.dark-mode .filter-tab.active {
-    background-color: #10b981 !important;
-    color: #ffffff !important;
-}
-
-html.dark-mode .cart-item-row,
-html.dark-mode .checkout-item-row,
-html.dark-mode .pesanan-item-row {
-    border-bottom: 1px solid #334155 !important;
-}
-
-html.dark-mode .item-qty {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-}
-
-html.dark-mode .item-qty button {
-    color: #94a3b8 !important;
-}
-
-html.dark-mode .cart-drawer-footer,
-html.dark-mode .checkout-bottom-bar {
-    background-color: #1e293b !important;
-    border-top: 1px solid #334155 !important;
-}
-
-html.dark-mode .cart-drawer-total .amount {
-    color: #10b981 !important;
-}
-
-/* Smooth theme transition */
-html, body, .main-header, .profil-avatar-card, .profil-card, .menu-card-full, .menu-card, .kantin-card, .cart-drawer, .checkout-card, .summary-card, .payment-method-card, .dropdown-item, .chat-bubble, .nav-menu-container {
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease !important;
-}
-
-/* Promo slide styling for dark mode */
-html.dark-mode .promo-slide-card {
-    background: #1e293b !important;
-    color: #ffffff !important;
-}
-
-/* Modal styling for dark mode */
-html.dark-mode #removeItemConfirmModal > div,
-html.dark-mode #priceInputModal > div {
-    background: #1e293b !important;
-    color: #ffffff !important;
-    border: 1px solid #334155 !important;
-}
-
-/* Chat overlay and layout in dark mode */
-html.dark-mode .chat-body {
-    background-color: #0b0f17 !important;
-}
-html.dark-mode .chat-footer {
-    background-color: #1e293b !important;
-    border-top: 1px solid #334155 !important;
-}
-html.dark-mode .chat-bubble.sent {
-    background: linear-gradient(135deg, #10b981, #059669) !important;
-    color: #ffffff !important;
-}
-html.dark-mode .chat-bubble.received {
-    background-color: #334155 !important;
-    color: #ffffff !important;
-    border-color: #475569 !important;
-}
-
-/* ── Extended Dark Mode: Profile Section ── */
-html.dark-mode .profil-meta-info {
-    border-top-color: #334155 !important;
-}
-html.dark-mode .profil-role-badge {
-    background: #1a3a2a !important;
-    color: #4ade80 !important;
-    border-color: #2d5a3d !important;
-}
-html.dark-mode .profil-form-group label {
-    color: #94a3b8 !important;
-}
-html.dark-mode .profil-form-group small {
-    color: #64748b !important;
-}
-html.dark-mode .profil-avatar-big {
-    background: #1a3a2a !important;
-    border-color: #2d5a3d !important;
-    color: #4ade80 !important;
-}
-html.dark-mode .profil-btn-submit {
-    background: linear-gradient(135deg, #10b981, #059669) !important;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
-}
-
-/* ── Extended Dark Mode: Logout Button ── */
-html.dark-mode .profil-avatar-card > a[href*="logout"] {
-    background: #2a1215 !important;
-    color: #f87171 !important;
-    border-color: #5c2327 !important;
-}
-html.dark-mode .profil-avatar-card > a[href*="logout"]:hover {
-    background: #3b1519 !important;
-}
-
-/* ── Extended Dark Mode: Dropdown Panels ── */
-html.dark-mode .dropdown-panel {
-    background: #1e293b !important;
-    border: 1px solid #334155 !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
-}
-html.dark-mode .dropdown-header {
-    border-bottom-color: #334155 !important;
-}
-html.dark-mode .dropdown-header h3 {
-    color: #f1f5f9 !important;
-}
-
-/* ── Extended Dark Mode: Search Bar ── */
-html.dark-mode .search-box,
-html.dark-mode .search-bar {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
-}
-html.dark-mode .search-box input,
-html.dark-mode .search-bar input {
-    background: transparent !important;
-    color: #f1f5f9 !important;
-}
-html.dark-mode .search-box input::placeholder,
-html.dark-mode .search-bar input::placeholder {
-    color: #64748b !important;
-}
-
-/* ── Extended Dark Mode: Section Blocks ── */
-html.dark-mode .section-block {
-    background: transparent !important;
-}
-
-/* ── Extended Dark Mode: Icon Badges ── */
-html.dark-mode .icon-badge {
-    color: #f1f5f9 !important;
-}
-
-/* ── Extended Dark Mode: Greeting Text ── */
-html.dark-mode .greeting-name {
-    color: #ffffff !important;
-}
-html.dark-mode .greeting-sub {
-    color: #94a3b8 !important;
-}
-
-/* ── Extended Dark Mode: Toast Notification ── */
-html.dark-mode .toast-notification {
-    background: #1e293b !important;
-    border: 1px solid #334155 !important;
-    color: #f1f5f9 !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
-}
-
-/* ── Extended Dark Mode: Payment Options (Checkout) ── */
-html.dark-mode .payment-option-card {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
-}
-html.dark-mode .payment-option-card.active {
-    background: #1a3a2a !important;
-    border-color: #10b981 !important;
-}
-
-/* ── Extended Dark Mode: Promo Container ── */
-html.dark-mode .promo-dots .dot {
-    background: #475569 !important;
-}
-html.dark-mode .promo-dots .dot.active {
-    background: #10b981 !important;
-}
-
-/* ── Extended Dark Mode: Category Filter Tabs ── */
-html.dark-mode .filter-tab {
-    background: #334155 !important;
-    color: #94a3b8 !important;
-    border-color: #475569 !important;
-}
-html.dark-mode .filter-tab.active {
-    background: #10b981 !important;
-    color: #ffffff !important;
-    border-color: #10b981 !important;
-}
-
-/* ── Extended Dark Mode: Scrollbar ── */
-html.dark-mode ::-webkit-scrollbar {
-    width: 6px;
-}
-html.dark-mode ::-webkit-scrollbar-track {
-    background: #0f172a;
-}
-html.dark-mode ::-webkit-scrollbar-thumb {
-    background: #334155;
-    border-radius: 3px;
-}
-html.dark-mode ::-webkit-scrollbar-thumb:hover {
-    background: #475569;
-}
+
