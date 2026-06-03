@@ -187,12 +187,9 @@ if ($action === 'add_banner') {
         ]);
         $canvas_config_db = mysqli_real_escape_string($conn, $canvas_config);
 
-        $kode_promo = mysqli_real_escape_string($conn, strtoupper(trim($_POST['kode_promo'] ?? '')));
-        $diskon_persen = (int)($_POST['diskon_persen'] ?? 0);
-
-        // Insert awal data banner (mengisi juga kolom berlaku_hingga, canvas_config, kode_promo, diskon_persen)
-        $queryInsertBanner = "INSERT INTO `banner_promo` (`id_toko`, `gambar`, `berlaku_hingga`, `aktif`, `dibuat_pada`, `deleted_at`, `canvas_config`, `kode_promo`, `diskon_persen`) 
-                              VALUES ($idToko, '', '$berlaku_hingga', 1, NOW(), NULL, '$canvas_config_db', '$kode_promo', $diskon_persen)";
+        // Insert awal data banner (mengisi juga kolom berlaku_hingga, canvas_config)
+        $queryInsertBanner = "INSERT INTO `banner_promo` (`id_toko`, `gambar`, `berlaku_hingga`, `aktif`, `dibuat_pada`, `deleted_at`, `canvas_config`) 
+                              VALUES ($idToko, '', '$berlaku_hingga', 1, NOW(), NULL, '$canvas_config_db')";
 
         if (mysqli_query($conn, $queryInsertBanner)) {
             $id_banner_baru = mysqli_insert_id($conn);

@@ -74,28 +74,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $subtotal += $item['harga'] * $item['jumlah'];
             }
             
-            // Terapkan diskon berdasarkan kode promo yang dipilih/diinput
+            // Tanpa diskon karena fitur kode promo telah dinonaktifkan
             $biaya_admin = 500;
             $diskon = 0;
-            if (!empty($kode_promo)) {
-                $q_promo = mysqli_query($conn, "SELECT diskon_persen FROM banner_promo 
-                                                WHERE kode_promo = '" . mysqli_real_escape_string($conn, $kode_promo) . "' 
-                                                AND id_toko = $id_toko
-                                                AND aktif = 1 
-                                                AND deleted_at IS NULL 
-                                                AND berlaku_hingga >= CURDATE() 
-                                                LIMIT 1");
-                if ($q_promo && mysqli_num_rows($q_promo) > 0) {
-                    $r_promo = mysqli_fetch_assoc($q_promo);
-                    $persen = (int)$r_promo['diskon_persen'];
-                    $diskon = round($subtotal * ($persen / 100));
-                } elseif ($kode_promo === 'KANTINJOSS25') {
-                    $diskon = round($subtotal * 0.25); // Fallback default
-                }
-            }
             
-            $total_pembayaran = $subtotal + $biaya_admin - $diskon;
-            if ($total_pembayaran < 0) $total_pembayaran = 0;
+            $total_pembayaran = $subtotal + $biaya_admin;
 
             // Tentukan kolom pembeli berdasarkan role (nisn_pembeli atau nuptk_pembeli)
             $col_pembeli = ($user_role === 'siswa') ? 'nisn_pembeli' : 'nuptk_pembeli';
@@ -267,21 +250,8 @@ if ($q_reco) {
     }
 }
 
-// Ambil semua banner promo aktif untuk ditampilkan di modal "Cek Promo Lainnya"
+// Promo dinonaktifkan dari checkout
 $checkout_promos = [];
-$q_checkout_promos = mysqli_query($conn, "SELECT bp.*, t.nama_toko FROM banner_promo bp 
-                                          JOIN toko t ON bp.id_toko = t.id_toko 
-                                          WHERE bp.aktif = 1 
-                                          AND bp.deleted_at IS NULL 
-                                          AND bp.berlaku_hingga >= CURDATE() 
-                                          AND bp.kode_promo IS NOT NULL 
-                                          AND bp.kode_promo != ''
-                                          ORDER BY bp.id_banner DESC");
-if ($q_checkout_promos) {
-    while ($r = mysqli_fetch_assoc($q_checkout_promos)) {
-        $checkout_promos[] = $r;
-    }
-}
 
 // Ambil semua toko untuk cek QRIS
 $tokos_qris = [];
@@ -896,25 +866,11 @@ if ($q_toko_qris) {
                         <span class="label">Biaya Admin</span>
                         <span class="val" id="summaryAdmin">Rp. 500</span>
                     </div>
-                    <div class="summary-row discount">
-                        <span class="label">Diskon</span>
-                        <span class="val" id="summaryDiscount">-Rp. 0</span>
-                    </div>
                     <div class="summary-row total">
                         <span class="label">Total Pembayaran</span>
                         <span class="val" id="summaryTotal">Rp. 0</span>
                     </div>
                 </div>
-            </div>
-
-            <!-- Section 5: Promo Code apply box -->
-            <div class="promo-apply-box" id="promoApplyBox" style="display: none;">
-                <span id="promoApplyText">Kode Promo : -</span>
-                <i class="fa-solid fa-circle-check"></i>
-            </div>
-            <div class="promo-link-row" id="promoLinkRow" onclick="openPromoModal()" style="cursor: pointer;">
-                <span>Cek Promo Lainnya</span>
-                <i class="fa-solid fa-arrow-right"></i>
             </div>
 
         </div>
@@ -942,24 +898,8 @@ if ($q_toko_qris) {
         const CART_KEY = 'ekantin_cart';
 
         // Promo database data
-        const activePromos = <?= json_encode($checkout_promos); ?>;
-        
-        function getInitialPromo() {
-            const cart = getCart();
-            const selectedItems = cart.filter(item => item.selected !== false);
-            const checkoutTokoIds = selectedItems.map(item => parseInt(item.id_toko));
-            const matchedPromo = activePromos.find(p => checkoutTokoIds.includes(parseInt(p.id_toko)));
-            if (matchedPromo) {
-                return {
-                    kode_promo: matchedPromo.kode_promo,
-                    diskon_persen: parseInt(matchedPromo.diskon_persen),
-                    id_toko: parseInt(matchedPromo.id_toko)
-                };
-            }
-            return null;
-        }
-        
-        let appliedPromo = getInitialPromo();
+        const activePromos = [];
+        let appliedPromo = null;
 
         // ── Get cart from localStorage ──
         function getCart() {
@@ -1217,6 +1157,22 @@ if ($q_toko_qris) {
             renderCheckoutPage();
         }
 
+        function updateCheckoutSummary() {
+            const cart = getCart();
+            const selectedItems = cart.filter(item => item.selected !== false);
+
+            const subtotal = selectedItems.reduce((sum, item) => sum + (item.harga * item.jumlah), 0);
+            const biaya_admin = 500;
+            const total = subtotal + biaya_admin;
+
+            document.getElementById('summarySubtotal').textContent = 'Rp. ' + subtotal.toLocaleString('id-ID');
+            document.getElementById('summaryAdmin').textContent = 'Rp. ' + biaya_admin.toLocaleString('id-ID');
+            document.getElementById('summaryTotal').textContent = 'Rp. ' + total.toLocaleString('id-ID');
+
+            // Bottom Bar Cash Payment text
+            document.getElementById('bottomBarTotal').textContent = 'Rp.' + total.toLocaleString('id-ID');
+        }
+
         function manualUpdateCheckoutQty(id, harga, value, maxStock) {
             let qty = parseInt(value);
             const cart = getCart();
@@ -1246,51 +1202,9 @@ if ($q_toko_qris) {
                     qty = maxStock;
                 }
                 item.jumlah = qty;
+                saveCart(cart);
+                renderCheckoutPage();
             }
-            saveCart(cart);
-            renderCheckoutPage();
-        }
-
-        // ── Recalculate summary details ──
-        function updateCheckoutSummary() {
-            const cart = getCart();
-            const selectedItems = cart.filter(item => item.selected !== false);
-            
-            const subtotal = selectedItems.reduce((sum, item) => sum + (item.harga * item.jumlah), 0);
-            const biaya_admin = 500;
-            
-            let diskon = 0;
-            const promoBox = document.getElementById('promoApplyBox');
-            const promoText = document.getElementById('promoApplyText');
-
-            if (appliedPromo) {
-                let subtotalPromo = 0;
-                if (appliedPromo.kode_promo === 'KANTINJOSS25') {
-                    subtotalPromo = subtotal;
-                } else {
-                    const promoItems = selectedItems.filter(item => parseInt(item.id_toko) === parseInt(appliedPromo.id_toko));
-                    subtotalPromo = promoItems.reduce((sum, item) => sum + (item.harga * item.jumlah), 0);
-                }
-                diskon = Math.round(subtotalPromo * (appliedPromo.diskon_persen / 100));
-                if (promoBox && promoText) {
-                    promoText.textContent = `Kode Promo : ${appliedPromo.kode_promo} (${appliedPromo.diskon_persen}%)`;
-                    promoBox.style.display = 'flex';
-                }
-            } else {
-                if (promoBox) {
-                    promoBox.style.display = 'none';
-                }
-            }
-
-            const total = Math.max(0, subtotal + biaya_admin - diskon);
-            
-            document.getElementById('summarySubtotal').textContent = 'Rp. ' + subtotal.toLocaleString('id-ID');
-            document.getElementById('summaryAdmin').textContent = 'Rp. ' + biaya_admin.toLocaleString('id-ID');
-            document.getElementById('summaryDiscount').textContent = '-Rp. ' + diskon.toLocaleString('id-ID');
-            document.getElementById('summaryTotal').textContent = 'Rp. ' + total.toLocaleString('id-ID');
-            
-            // Bottom Bar Cash Payment text
-            document.getElementById('bottomBarTotal').textContent = 'Rp.' + total.toLocaleString('id-ID');
         }
 
         // ── Add recommended menu item to current order selection ──
@@ -1456,154 +1370,7 @@ if ($q_toko_qris) {
             });
         }
 
-        // ── Promo Modal Helpers ──
-        function openPromoModal() {
-            let existingModal = document.getElementById('promoListModal');
-            if (existingModal) existingModal.remove();
-            
-            const modal = document.createElement('div');
-            modal.id = 'promoListModal';
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.4);
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 9999999;
-                opacity: 0;
-                transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            `;
-            
-            const card = document.createElement('div');
-            card.style.cssText = `
-                background: #ffffff;
-                padding: 24px;
-                border-radius: 24px;
-                width: 90%;
-                max-width: 400px;
-                max-height: 85vh;
-                overflow-y: auto;
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-                transform: scale(0.9);
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                box-sizing: border-box;
-            `;
-            
-            const cart = getCart();
-            const selectedItems = cart.filter(item => item.selected !== false);
-            const checkoutTokoIds = selectedItems.map(item => parseInt(item.id_toko));
-            const filteredPromos = activePromos.filter(p => checkoutTokoIds.includes(parseInt(p.id_toko)));
 
-            let promosHTML = '';
-            if (filteredPromos.length === 0) {
-                promosHTML = `
-                    <div style="text-align: center; padding: 30px 10px; color: #64748b;">
-                        <i class="fa-solid fa-ticket-simple" style="font-size: 36px; color: #cbd5e1; margin-bottom: 12px; display: block; margin: 0 auto 12px auto;"></i>
-                        <span style="font-size: 13.5px; font-weight: 500; font-family: 'Poppins', sans-serif;">Tidak ada promo untuk kantin yang Anda pilih.</span>
-                    </div>
-                `;
-            } else {
-                filteredPromos.forEach(p => {
-                    const isApplied = appliedPromo && appliedPromo.kode_promo === p.kode_promo;
-                    promosHTML += renderPromoCardHTML(p, isApplied);
-                });
-            }
-            
-            card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 750; color: #1e293b;">Pilih Promo</h3>
-                    <button id="closePromoModalBtn" style="background: none; border: none; font-size: 20px; color: #64748b; cursor: pointer; padding: 0 4px;"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px;">
-                    ${promosHTML}
-                </div>
-                <button id="promoModalCloseBtn" style="width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Tutup</button>
-            `;
-            
-            modal.appendChild(card);
-            document.body.appendChild(modal);
-            
-            if (typeof BannerCanvas !== 'undefined') {
-                BannerCanvas.initAll(modal);
-            }
-            
-            setTimeout(() => {
-                modal.style.opacity = '1';
-                card.style.transform = 'scale(1)';
-            }, 10);
-            
-            function closeModal() {
-                modal.style.opacity = '0';
-                card.style.transform = 'scale(0.9)';
-                setTimeout(() => modal.remove(), 300);
-            }
-            
-            document.getElementById('closePromoModalBtn').addEventListener('click', closeModal);
-            document.getElementById('promoModalCloseBtn').addEventListener('click', closeModal);
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) closeModal();
-            });
-        }
-        
-        function renderPromoCardHTML(p, isApplied) {
-            let canvasData = '';
-            if (p.canvas_config) {
-                try {
-                    const conf = JSON.parse(p.canvas_config);
-                    canvasData = JSON.stringify({
-                        scale: conf.scale ?? 1.0,
-                        panNormX: conf.panNormX ?? ((conf.bgX ?? 50) - 50) / 50,
-                        panNormY: conf.panNormY ?? ((conf.bgY ?? 50) - 50) / 50,
-                        version: 2
-                    }).replace(/"/g, '&quot;');
-                } catch (e) {}
-            }
-            const imgPath = p.gambar === 'promo_banner.png' ? '../../assets/img/promo_banner.png' : `../../assets/img/banner/${p.gambar}`;
-            
-            return `
-                <div style="border: 1.5px solid ${isApplied ? '#5cb85c' : '#e2e8f0'}; border-radius: 16px; padding: 12px; background: ${isApplied ? '#f0fdf4' : '#ffffff'}; transition: all 0.2s;">
-                    <div class="banner-canvas-viewport" data-banner-canvas="${canvasData}" style="width: 100%; height: 110px; overflow: hidden; border-radius: 12px; margin-bottom: 12px; position: relative;">
-                        <img src="${imgPath}" alt="Banner promo" onerror="this.src='../../assets/img/promo_banner.png';">
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                        <div style="text-align: left;">
-                            <span style="font-size: 11px; font-weight: 700; color: #8c8c8c; display: block; text-transform: uppercase; margin-bottom: 2px;">${p.nama_toko}</span>
-                            <span style="font-size: 13.5px; font-weight: 800; color: #1e293b; text-transform: uppercase; font-family: 'Poppins', sans-serif; letter-spacing: 0.5px;">${p.kode_promo}</span>
-                        </div>
-                        <span style="font-size: 15px; font-weight: 850; color: #5cb85c; font-family: 'Poppins', sans-serif;">Diskon ${p.diskon_persen}%</span>
-                    </div>
-                    <button onclick="applyPromoCode('${p.kode_promo}', ${p.diskon_persen}, ${p.id_toko})" ${isApplied ? 'disabled' : ''} style="width: 100%; padding: 10px; border-radius: 10px; border: none; background: ${isApplied ? '#cbd5e1' : '#5cb85c'}; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 12.5px; font-weight: 700; cursor: ${isApplied ? 'default' : 'pointer'}; transition: all 0.2s; box-shadow: ${isApplied ? 'none' : '0 4px 10px rgba(92, 184, 92, 0.2)'};">
-                        ${isApplied ? 'Sedang Digunakan' : 'Gunakan Promo'}
-                    </button>
-                </div>
-            `;
-        }
-        
-        function applyPromoCode(code, diskonPersen, idToko) {
-            appliedPromo = {
-                kode_promo: code,
-                diskon_persen: parseInt(diskonPersen),
-                id_toko: parseInt(idToko)
-            };
-            updateCheckoutSummary();
-            
-            // Close modal
-            const modal = document.getElementById('promoListModal');
-            if (modal) {
-                modal.style.opacity = '0';
-                const card = modal.querySelector('div');
-                if (card) card.style.transform = 'scale(0.9)';
-                setTimeout(() => modal.remove(), 300);
-            }
-            
-            showToast('🎉 Promo berhasil dipasang!', 'success');
-        }
 
         function showToast(message, type) {
             const container = document.getElementById('toastContainer');
