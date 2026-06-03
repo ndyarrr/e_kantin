@@ -433,7 +433,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                     'id_menu' => (int) $m['id_menu'],
                     'nama_menu' => $m['nama_menu'],
                     'deskripsi' => $m['deskripsi'] ?? '',
-                    'harga' => $m['harga'],
+                    'harga' => (int) $m['harga'],
                     'foto_menu' => $m['foto_menu'] ?? '',
                     'kategori' => strtolower($m['kategori'] ?? 'makanan'),
                     'nama_toko' => $toko['nama_toko'],
@@ -799,8 +799,8 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 
             function tambahKeKeranjangWithQty(id_menu, nama_menu, harga, foto_menu, nama_toko, id_toko, stok, qty = 1, is_fleksibel = 0, customHarga = null) {
                 let cart = getCart();
-                const activeHarga = customHarga !== null ? customHarga : harga;
-                const existingIndex = cart.findIndex(item => item.id_menu === id_menu && item.harga === activeHarga);
+                const activeHarga = Number(customHarga !== null ? customHarga : harga);
+                const existingIndex = cart.findIndex(item => Number(item.id_menu) === Number(id_menu) && Number(item.harga) === Number(activeHarga));
 
                 if (existingIndex !== -1) {
                     if (cart[existingIndex].jumlah + qty > stok) {
@@ -1101,8 +1101,8 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                     return;
                 }
 
-                const activeHarga = customHarga !== null ? customHarga : harga;
-                const existingIndex = cart.findIndex(item => item.id_menu === id_menu && item.harga === activeHarga);
+                const activeHarga = Number(customHarga !== null ? customHarga : harga);
+                const existingIndex = cart.findIndex(item => Number(item.id_menu) === Number(id_menu) && Number(item.harga) === Number(activeHarga));
 
                 if (existingIndex !== -1) {
                     if (cart[existingIndex].jumlah >= stok) {
@@ -1302,17 +1302,16 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 
             function updateCartItemNote(id, harga, val) {
                 const cart = getCart();
-                const item = cart.find(c => c.id_menu === id && c.harga === harga);
+                const item = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
                 if (item) {
                     item.catatan = val.trim();
                     saveCart(cart);
                 }
             }
 
-            // ── Update Cart Item Quantity in Canteen page ──
             function updateCartQtyToko(id_menu, harga, delta) {
                 let cart = getCart();
-                const existingIndex = cart.findIndex(item => item.id_menu === id_menu && item.harga === harga);
+                const existingIndex = cart.findIndex(item => Number(item.id_menu) === Number(id_menu) && Number(item.harga) === Number(harga));
                 if (existingIndex !== -1) {
                     if (delta > 0) {
                         const item = cart[existingIndex];
@@ -1333,7 +1332,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
             function manualUpdateCartQtyToko(id_menu, harga, value, maxStock) {
                 let qty = parseInt(value);
                 let cart = getCart();
-                const existingIndex = cart.findIndex(item => item.id_menu === id_menu && item.harga === harga);
+                const existingIndex = cart.findIndex(item => Number(item.id_menu) === Number(id_menu) && Number(item.harga) === Number(harga));
                 if (existingIndex !== -1) {
                     if (isNaN(qty) || qty < 0) {
                         qty = 1; // Default fallback for invalid/empty inputs
@@ -1355,7 +1354,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
             // ── Toggle Item Selection in Cart ──
             function toggleCartItemSelection(id, harga) {
                 const cart = getCart();
-                const item = cart.find(c => c.id_menu === id && c.harga === harga);
+                const item = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
                 if (item) {
                     item.selected = item.selected === false ? true : false;
                 }

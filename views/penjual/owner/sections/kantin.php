@@ -93,11 +93,11 @@ $isLatarLimit = ($jumlahLatar >= 5);
                         <label>Status Kantin</label>
                         <input type="hidden" name="status_toko" id="inputStatusToko" value="<?= htmlspecialchars($tokoData['status'] ?? 'buka') ?>">
                         <div style="display: flex; gap: 8px;">
-                            <button type="button" id="btnStatusBuka" onclick="setStatusToko('buka')"
+                            <button type="button" id="btnStatusBuka" onclick="setStatusToko('buka', true)"
                                     style="flex: 1; padding: 10px; border-radius: 6px; font-weight: 700; border: 2.5px solid #22c55e; cursor: pointer; transition: all 0.2s; font-family: inherit; font-size: 13px;">
                                 <i class="fa-solid fa-circle-check"></i> Buka
                             </button>
-                            <button type="button" id="btnStatusTutup" onclick="setStatusToko('tutup')"
+                            <button type="button" id="btnStatusTutup" onclick="setStatusToko('tutup', true)"
                                     style="flex: 1; padding: 10px; border-radius: 6px; font-weight: 700; border: 2.5px solid #dc2626; cursor: pointer; transition: all 0.2s; font-family: inherit; font-size: 13px;">
                                 <i class="fa-solid fa-circle-xmark"></i> Tutup
                             </button>
@@ -123,7 +123,67 @@ $isLatarLimit = ($jumlahLatar >= 5);
                 </button>
             </form>
             <script>
-            function setStatusToko(status) {
+            function showStatusToast(message, type = 'success') {
+                let container = document.getElementById('statusToastContainer');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'statusToastContainer';
+                    container.style.cssText = `
+                        position: fixed;
+                        top: 24px;
+                        right: 24px;
+                        z-index: 999999;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                        pointer-events: none;
+                    `;
+                    document.body.appendChild(container);
+                }
+
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    background: #ffffff;
+                    color: #0f172a;
+                    padding: 14px 20px;
+                    border-radius: 16px;
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+                    border: 1.5px solid ${type === 'success' ? '#22c55e' : '#ef4444'};
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    font-family: 'Poppins', sans-serif;
+                    font-size: 13.5px;
+                    font-weight: 600;
+                    opacity: 0;
+                    transform: translateY(-20px);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    pointer-events: auto;
+                `;
+
+                const iconColor = type === 'success' ? '#22c55e' : '#ef4444';
+                const iconClass = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+
+                toast.innerHTML = `
+                    <i class="fa-solid ${iconClass}" style="color: ${iconColor}; font-size: 16px;"></i>
+                    <span>${message}</span>
+                `;
+
+                container.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translateY(0)';
+                }, 10);
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-20px)';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            function setStatusToko(status, shouldSave = false) {
                 document.getElementById('inputStatusToko').value = status;
                 
                 const btnBuka = document.getElementById('btnStatusBuka');
@@ -150,8 +210,40 @@ $isLatarLimit = ($jumlahLatar >= 5);
                     btnTutup.style.borderColor = '#dc2626';
                     btnTutup.style.boxShadow = '0 2px 6px rgba(220,38,38,0.3)';
                 }
+
+                if (shouldSave) {
+                    btnBuka.disabled = true;
+                    btnTutup.disabled = true;
+
+                    const formData = new FormData();
+                    formData.append('action', 'toggle_status_ajax');
+                    formData.append('status', status);
+
+                    fetch('../actions/proses_kantin.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        btnBuka.disabled = false;
+                        btnTutup.disabled = false;
+                        if (data.success) {
+                            showStatusToast('Kantin berhasil ' + (status === 'buka' ? 'di-Buka' : 'di-Tutup') + '!', 'success');
+                        } else {
+                            alert('Gagal memperbarui status: ' + data.message);
+                            setStatusToko(status === 'buka' ? 'tutup' : 'buka', false);
+                        }
+                    })
+                    .catch(err => {
+                        btnBuka.disabled = false;
+                        btnTutup.disabled = false;
+                        console.error(err);
+                        alert('Koneksi gagal saat memperbarui status!');
+                        setStatusToko(status === 'buka' ? 'tutup' : 'buka', false);
+                    });
+                }
             }
-            setStatusToko('<?= $tokoData['status'] ?? 'buka' ?>');
+            setStatusToko('<?= $tokoData['status'] ?? 'buka' ?>', false);
             </script>
         </div>
     </div>

@@ -380,7 +380,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 'id_menu' => (int) $m['id_menu'],
                 'nama_menu' => $m['nama_menu'],
                 'deskripsi' => $m['deskripsi'] ?? '',
-                'harga' => $m['harga'],
+                'harga' => (int) $m['harga'],
                 'foto_menu' => $m['foto_menu'] ?? '',
                 'kategori' => strtolower($m['kategori'] ?? 'makanan'),
                 'nama_toko' => $m['nama_toko'],
@@ -1116,14 +1116,14 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
 
         function addToCartWithQty(id, nama, harga, foto, toko, idToko, qty = 1, customHarga = null) {
             const cart = getCart();
-            const menuItem = ALL_MENUS.find(m => m.id_menu === id);
+            const menuItem = ALL_MENUS.find(m => Number(m.id_menu) === Number(id));
             if (menuItem && menuItem.status_toko !== 'buka') {
                 showToast('Kantin sedang tutup!', 'error');
                 return false;
             }
-            const activeHarga = customHarga !== null ? customHarga : harga;
+            const activeHarga = Number(customHarga !== null ? customHarga : harga);
             const stock = menuItem ? menuItem.stok : 999;
-            const existing = cart.find(c => c.id_menu === id && c.harga === activeHarga);
+            const existing = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(activeHarga));
             
             if (existing) {
                 if (existing.jumlah + qty > stock) {
@@ -1150,7 +1150,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
 
         function addToCart(id, nama, harga, foto, toko, idToko, customHarga = null) {
             const cart = getCart();
-            const menuItem = ALL_MENUS.find(m => m.id_menu === id);
+            const menuItem = ALL_MENUS.find(m => Number(m.id_menu) === Number(id));
             if (menuItem && menuItem.status_toko !== 'buka') {
                 showToast('Kantin sedang tutup!', 'error');
                 return;
@@ -1161,9 +1161,9 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 });
                 return;
             }
-            const activeHarga = customHarga !== null ? customHarga : harga;
+            const activeHarga = Number(customHarga !== null ? customHarga : harga);
             const stock = menuItem ? menuItem.stok : 999;
-            const existing = cart.find(c => c.id_menu === id && c.harga === activeHarga);
+            const existing = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(activeHarga));
             if (existing) {
                 if (existing.jumlah >= stock) {
                     showToast('Stok tidak mencukupi! Maksimum stok: ' + stock, 'error');
@@ -1220,7 +1220,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
         function updateCartQty(id, harga, delta, event) {
             if(event) event.stopPropagation();
             const cart = getCart();
-            const item = cart.find(c => c.id_menu == id && c.harga == harga);
+            const item = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
             if (item) {
                 if (delta > 0) {
                     const menuItem = ALL_MENUS.find(m => m.id_menu == id);
@@ -1244,7 +1244,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
         function manualUpdateCartQty(id, harga, value, maxStock) {
             let qty = parseInt(value);
             const cart = getCart();
-            const item = cart.find(c => c.id_menu == id && c.harga == harga);
+            const item = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
             if (!item) return;
 
             if (isNaN(qty) || qty < 0) {
@@ -1285,7 +1285,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
 
         function toggleCartItemSelection(id, harga) {
             const cart = getCart();
-            const item = cart.find(c => c.id_menu == id && c.harga == harga);
+            const item = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
             if (item) {
                 item.selected = !item.selected;
             }
@@ -1416,7 +1416,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
 
         function updateCartItemNote(id, harga, val) {
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id && c.harga === harga);
+            const item = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
             if (item) {
                 item.catatan = val.trim();
                 saveCart(cart);

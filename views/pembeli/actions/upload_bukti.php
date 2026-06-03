@@ -139,7 +139,62 @@ try {
             mysqli_stmt_close($stmt_log);
         }
 
-        // C. Buat HTML Chat Auto-Reply dengan Gambar Bukti Transfer
+        // C. Buat HTML Chat Auto-Reply dengan Gambar Bukti Transfer & Rincian Pesanan
+        $q_items = mysqli_query($db, "
+            SELECT dp.jumlah, dp.harga_satuan, m.nama_menu, m.foto_menu, m.kategori
+            FROM detail_pesanan dp
+            JOIN menu m ON dp.id_menu = m.id_menu
+            WHERE dp.id_pesanan = $id_pesanan
+        ");
+        
+        $items_html = '';
+        if ($q_items) {
+            while ($ci = mysqli_fetch_assoc($q_items)) {
+                $subtotal_item = number_format($ci['harga_satuan'] * $ci['jumlah'], 0, ',', '.');
+                $harga_fmt     = number_format($ci['harga_satuan'], 0, ',', '.');
+                $kategori      = strtolower($ci['kategori'] ?? 'makanan');
+
+                // Tentukan SVG fallback berdasarkan kategori
+                if ($kategori === 'minuman') {
+                    $svg_path  = 'M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z';
+                    $svg_color = '#1890ff';
+                    $svg_bg    = '#eff6ff';
+                } elseif ($kategori === 'snack') {
+                    $svg_path  = 'M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z';
+                    $svg_color = '#9254de';
+                    $svg_bg    = '#f5f3ff';
+                } else {
+                    $svg_path  = 'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z';
+                    $svg_color = '#ff7a45';
+                    $svg_bg    = '#fff2e8';
+                }
+
+                // Gambar atau SVG fallback
+                if (!empty($ci['foto_menu'])) {
+                    $img_html = '<img src="{BASE_PATH}assets/img/menu/' . htmlspecialchars($ci['foto_menu']) . '" 
+                        onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';" 
+                        style="width:56px;height:56px;object-fit:cover;border-radius:10px;flex-shrink:0;">
+                        <div style="display:none;width:56px;height:56px;border-radius:10px;background:' . $svg_bg . ';align-items:center;justify-content:center;flex-shrink:0;">
+                            <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'24\' height=\'24\' fill=\'' . $svg_color . '\'><path d=\'' . $svg_path . '\'/></svg>
+                        </div>';
+                } else {
+                    $img_html = '<div style="width:56px;height:56px;border-radius:10px;background:' . $svg_bg . ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'24\' height=\'24\' fill=\'' . $svg_color . '\'><path d=\'' . $svg_path . '\'/></svg>
+                        </div>';
+                }
+
+                $items_html .= '
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                    ' . $img_html . '
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;font-size:13px;color:#0f172a;margin-bottom:2px;">' . htmlspecialchars($ci['nama_menu']) . '</div>
+                        <div style="font-size:12px;color:#64748b;">Rp ' . $harga_fmt . ' &times; ' . $ci['jumlah'] . '</div>
+                    </div>
+                    <div style="font-weight:700;font-size:13px;color:#16a34a;flex-shrink:0;">Rp ' . $subtotal_item . '</div>
+                </div>';
+            }
+        }
+
         $total_fmt = number_format($total_harga, 0, ',', '.');
         $card_html = '[AUTO_REPLY_ORDER]
         <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px; box-sizing:border-box;">
@@ -154,8 +209,10 @@ try {
             </div>
             
             <div style="font-size:12.5px;color:#334155;line-height:1.5;margin-bottom:10px;">
-                Halo <strong>' . htmlspecialchars($nama_toko) . '</strong>, saya telah melakukan transfer dan mengunggah bukti pembayaran untuk Pesanan #' . $id_pesanan . '.
+                Halo <strong>' . htmlspecialchars($nama_toko) . '</strong>, saya telah melakukan transfer dan mengunggah bukti pembayaran untuk pesanan saya:
             </div>
+
+            <div style="margin-bottom:12px;">' . $items_html . '</div>
 
             <!-- Sematan Gambar Bukti Transfer -->
             <a href="{BASE_PATH}assets/img/bukti_bayar/' . $new_filename . '" target="_blank" style="display:block; text-decoration:none;">

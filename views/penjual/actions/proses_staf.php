@@ -48,9 +48,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_owner = (int) ($_SESSION['user_id'] ?? 0);
 
         // Ambil id_toko milik owner agar staf terikat ke toko yang sama
-        $q_toko = mysqli_query($conn, "SELECT tp.id_toko FROM toko_penjual tp JOIN toko t ON tp.id_toko = t.id_toko WHERE tp.id_penjual = $id_owner AND tp.status = 'aktif' AND t.deleted_at IS NULL ORDER BY tp.id DESC LIMIT 1");
-        $r_toko = mysqli_fetch_assoc($q_toko);
-        $id_toko = (int) ($r_toko['id_toko'] ?? 0);
+        $id_toko = (int) ($_SESSION['id_toko'] ?? 0);
+        if ($id_toko <= 0) {
+            $q_toko = mysqli_query($conn, "SELECT tp.id_toko FROM toko_penjual tp JOIN toko t ON tp.id_toko = t.id_toko WHERE tp.id_penjual = $id_owner AND tp.status = 'aktif' AND t.deleted_at IS NULL ORDER BY tp.id DESC LIMIT 1");
+            $r_toko = mysqli_fetch_assoc($q_toko);
+            $id_toko = (int) ($r_toko['id_toko'] ?? 0);
+        }
+
+        // Validasi: Cegah pembuatan staf jika toko tidak ditemukan
+        if ($id_toko <= 0) {
+            $_SESSION['feedback'] = ['type' => 'error', 'msg' => 'Gagal: Kantin tidak ditemukan untuk owner ini. Silakan hubungi Admin.'];
+            echo "<script>window.location.href='../owner/index.php?section=staf';</script>";
+            exit;
+        }
 
         // Cek username ganda
         $cek_user = mysqli_query($conn, "SELECT id_penjual FROM penjual WHERE username = '$username'");
@@ -107,8 +117,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $update = mysqli_query($conn, "UPDATE penjual SET nama = '$nama', username = '$username' WHERE id_penjual = '$id_staf'");
 
         if ($update) {
-            // Update shift di tabel relasi toko_penjual
-            mysqli_query($conn, "UPDATE toko_penjual SET shift = '$shift' WHERE id_penjual = '$id_staf'");
+            // Auto-heal relasi toko_penjual jika belum ada
+            $cek_relasi = mysqli_query($conn, "SELECT id FROM toko_penjual WHERE id_penjual = '$id_staf' LIMIT 1");
+            if (mysqli_num_rows($cek_relasi) > 0) {
+                // Update shift di tabel relasi toko_penjual
+                mysqli_query($conn, "UPDATE toko_penjual SET shift = '$shift' WHERE id_penjual = '$id_staf'");
+            } else {
+                // Cari id_toko untuk owner dan buat relasi baru
+                $id_owner = (int) ($_SESSION['user_id'] ?? 0);
+                $id_toko = (int) ($_SESSION['id_toko'] ?? 0);
+                if ($id_toko <= 0) {
+                    $q_toko = mysqli_query($conn, "SELECT tp.id_toko FROM toko_penjual tp JOIN toko t ON tp.id_toko = t.id_toko WHERE tp.id_penjual = $id_owner AND tp.status = 'aktif' AND t.deleted_at IS NULL ORDER BY tp.id DESC LIMIT 1");
+                    $r_toko = mysqli_fetch_assoc($q_toko);
+                    $id_toko = (int) ($r_toko['id_toko'] ?? 0);
+                }
+                if ($id_toko > 0) {
+                    mysqli_query($conn, "INSERT INTO toko_penjual (id_toko, id_penjual, shift) VALUES ($id_toko, '$id_staf', '$shift')");
+                }
+            }
 
             // Jika password diisi baru, enkripsi menggunakan MD5 lalu simpan
             if (!empty($password)) {

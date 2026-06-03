@@ -133,98 +133,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             catatLog($conn, 'Buat Pesanan', "Pembeli $user_nama membuat pesanan #$id_pesanan senilai Rp $total_pembayaran");
 
             // ── AUTO-REPLY CHAT dari kantin ke pembeli ──
-            // Kumpulkan detail item pesanan lengkap (dengan foto + kategori)
-            $chat_items = [];
-            foreach ($items as $item) {
-                $mid = (int) $item['id_menu'];
-                $r_detail = mysqli_fetch_assoc(mysqli_query($conn,
-                    "SELECT nama_menu, foto_menu, kategori, harga FROM menu WHERE id_menu = $mid AND deleted_at IS NULL LIMIT 1"
-                ));
-                if ($r_detail) {
-                    $chat_items[] = [
-                        'nama'     => $r_detail['nama_menu'],
-                        'foto'     => $r_detail['foto_menu'],
-                        'kategori' => strtolower($r_detail['kategori'] ?? 'makanan'),
-                        'jumlah'   => (int) $item['jumlah'],
-                        'harga'    => (int) $item['harga'],
-                    ];
-                }
-            }
-
-            // Bangun HTML kartu order untuk dikirim ke chat
-            $items_html = '';
-            foreach ($chat_items as $ci) {
-                $subtotal_item = number_format($ci['harga'] * $ci['jumlah'], 0, ',', '.');
-                $harga_fmt     = number_format($ci['harga'], 0, ',', '.');
-
-                // Tentukan SVG fallback berdasarkan kategori
-                if ($ci['kategori'] === 'minuman') {
-                    $svg_path  = 'M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z';
-                    $svg_color = '#1890ff';
-                    $svg_bg    = '#eff6ff';
-                } elseif ($ci['kategori'] === 'snack') {
-                    $svg_path  = 'M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z';
-                    $svg_color = '#9254de';
-                    $svg_bg    = '#f5f3ff';
-                } else {
-                    $svg_path  = 'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z';
-                    $svg_color = '#ff7a45';
-                    $svg_bg    = '#fff2e8';
+            // Hanya dikirim langsung jika metodenya bukan transfer/QRIS. 
+            // Jika transfer/QRIS, chat akan dikirim setelah pembeli mengunggah bukti pembayaran.
+            if ($metode_pembayaran !== 'transfer') {
+                // Kumpulkan detail item pesanan lengkap (dengan foto + kategori)
+                $chat_items = [];
+                foreach ($items as $item) {
+                    $mid = (int) $item['id_menu'];
+                    $r_detail = mysqli_fetch_assoc(mysqli_query($conn,
+                        "SELECT nama_menu, foto_menu, kategori, harga FROM menu WHERE id_menu = $mid AND deleted_at IS NULL LIMIT 1"
+                    ));
+                    if ($r_detail) {
+                        $chat_items[] = [
+                            'nama'     => $r_detail['nama_menu'],
+                            'foto'     => $r_detail['foto_menu'],
+                            'kategori' => strtolower($r_detail['kategori'] ?? 'makanan'),
+                            'jumlah'   => (int) $item['jumlah'],
+                            'harga'    => (int) $item['harga'],
+                        ];
+                    }
                 }
 
-                // Gambar atau SVG fallback
-                if (!empty($ci['foto'])) {
-                    $img_html = '<img src="{BASE_PATH}assets/img/menu/' . htmlspecialchars($ci['foto']) . '" 
-                        onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';" 
-                        style="width:56px;height:56px;object-fit:cover;border-radius:10px;flex-shrink:0;">
-                        <div style="display:none;width:56px;height:56px;border-radius:10px;background:' . $svg_bg . ';align-items:center;justify-content:center;flex-shrink:0;">
-                            <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'24\' height=\'24\' fill=\'' . $svg_color . '\'><path d=\'' . $svg_path . '\'/></svg>
-                        </div>';
-                } else {
-                    $img_html = '<div style="width:56px;height:56px;border-radius:10px;background:' . $svg_bg . ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                            <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'24\' height=\'24\' fill=\'' . $svg_color . '\'><path d=\'' . $svg_path . '\'/></svg>
-                        </div>';
+                // Bangun HTML kartu order untuk dikirim ke chat
+                $items_html = '';
+                foreach ($chat_items as $ci) {
+                    $subtotal_item = number_format($ci['harga'] * $ci['jumlah'], 0, ',', '.');
+                    $harga_fmt     = number_format($ci['harga'], 0, ',', '.');
+
+                    // Tentukan SVG fallback berdasarkan kategori
+                    if ($ci['kategori'] === 'minuman') {
+                        $svg_path  = 'M3 2l2.01 18.23C5.13 21.23 5.97 22 7 22h10c1.03 0 1.87-.77 1.99-1.77L21 2H3zm9 17c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm1-9H8V8h5v2z';
+                        $svg_color = '#1890ff';
+                        $svg_bg    = '#eff6ff';
+                    } elseif ($ci['kategori'] === 'snack') {
+                        $svg_path  = 'M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.72-5-8.99-5-2.28 0-9.03.5-9.03 5h18.02z';
+                        $svg_color = '#9254de';
+                        $svg_bg    = '#f5f3ff';
+                    } else {
+                        $svg_path  = 'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z';
+                        $svg_color = '#ff7a45';
+                        $svg_bg    = '#fff2e8';
+                    }
+
+                    // Gambar atau SVG fallback
+                    if (!empty($ci['foto'])) {
+                        $img_html = '<img src="{BASE_PATH}assets/img/menu/' . htmlspecialchars($ci['foto']) . '" 
+                            onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';" 
+                            style="width:56px;height:56px;object-fit:cover;border-radius:10px;flex-shrink:0;">
+                            <div style="display:none;width:56px;height:56px;border-radius:10px;background:' . $svg_bg . ';align-items:center;justify-content:center;flex-shrink:0;">
+                                <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'24\' height=\'24\' fill=\'' . $svg_color . '\'><path d=\'' . $svg_path . '\'/></svg>
+                            </div>';
+                    } else {
+                        $img_html = '<div style="width:56px;height:56px;border-radius:10px;background:' . $svg_bg . ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'24\' height=\'24\' fill=\'' . $svg_color . '\'><path d=\'' . $svg_path . '\'/></svg>
+                            </div>';
+                    }
+
+                    $items_html .= '
+                    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                        ' . $img_html . '
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:700;font-size:13px;color:#0f172a;margin-bottom:2px;">' . htmlspecialchars($ci['nama']) . '</div>
+                            <div style="font-size:12px;color:#64748b;">Rp ' . $harga_fmt . ' &times; ' . $ci['jumlah'] . '</div>
+                        </div>
+                        <div style="font-weight:700;font-size:13px;color:#16a34a;flex-shrink:0;">Rp ' . $subtotal_item . '</div>
+                    </div>';
                 }
 
-                $items_html .= '
-                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
-                    ' . $img_html . '
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-weight:700;font-size:13px;color:#0f172a;margin-bottom:2px;">' . htmlspecialchars($ci['nama']) . '</div>
-                        <div style="font-size:12px;color:#64748b;">Rp ' . $harga_fmt . ' &times; ' . $ci['jumlah'] . '</div>
+                $total_fmt = number_format($total_pembayaran, 0, ',', '.');
+                $auto_msg  = '[AUTO_REPLY_ORDER]
+                <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                        <div style="background:linear-gradient(135deg,#ff9900,#ff5500);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'18\' height=\'18\' fill=\'white\'><path d=\'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z\'/></svg>
+                        </div>
+                        <div>
+                            <div style="font-weight:800;font-size:13px;color:#0f172a;">Pesanan #' . $id_pesanan . ' Berhasil Dikirim!</div>
+                            <div style="font-size:11px;color:#64748b;">Terima kasih telah memesan</div>
+                        </div>
                     </div>
-                    <div style="font-weight:700;font-size:13px;color:#16a34a;flex-shrink:0;">Rp ' . $subtotal_item . '</div>
+                    <div>' . $items_html . '</div>
+                    <div style="margin-top:12px;padding:10px 12px;background:#f0fdf4;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:12px;font-weight:600;color:#374151;">Total Pembayaran</span>
+                        <span style="font-size:14px;font-weight:800;color:#16a34a;">Rp ' . $total_fmt . '</span>
+                    </div>
+                    <div style="margin-top:10px;font-size:11px;color:#94a3b8;text-align:center;">Mohon bersabar</div>
                 </div>';
+
+                // Tentukan prefix ID pembeli
+                $prefix_pembeli = ($user_role === 'siswa') ? 'murid_' : 'guru_';
+                $id_pembeli_chat = $prefix_pembeli . $user_id;
+                $id_toko_chat    = 'toko_' . $id_toko;
+
+                $msg_escaped = mysqli_real_escape_string($conn, $auto_msg);
+                mysqli_query($conn, "INSERT INTO pesan_chat (id_pengirim, id_penerima, isi_pesan, waktu_kirim, sudah_dibaca)
+                                     VALUES ('$id_toko_chat', '$id_pembeli_chat', '$msg_escaped', NOW(), 0)");
             }
-
-            $total_fmt = number_format($total_pembayaran, 0, ',', '.');
-            $auto_msg  = '[AUTO_REPLY_ORDER]
-            <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                    <div style="background:linear-gradient(135deg,#ff9900,#ff5500);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'18\' height=\'18\' fill=\'white\'><path d=\'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z\'/></svg>
-                    </div>
-                    <div>
-                        <div style="font-weight:800;font-size:13px;color:#0f172a;">Pesanan #' . $id_pesanan . ' Berhasil Dikirim!</div>
-                        <div style="font-size:11px;color:#64748b;">Terima kasih telah memesan</div>
-                    </div>
-                </div>
-                <div>' . $items_html . '</div>
-                <div style="margin-top:12px;padding:10px 12px;background:#f0fdf4;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
-                    <span style="font-size:12px;font-weight:600;color:#374151;">Total Pembayaran</span>
-                    <span style="font-size:14px;font-weight:800;color:#16a34a;">Rp ' . $total_fmt . '</span>
-                </div>
-                <div style="margin-top:10px;font-size:11px;color:#94a3b8;text-align:center;">Mohon bersabar</div>
-            </div>';
-
-            // Tentukan prefix ID pembeli
-            $prefix_pembeli = ($user_role === 'siswa') ? 'murid_' : 'guru_';
-            $id_pembeli_chat = $prefix_pembeli . $user_id;
-            $id_toko_chat    = 'toko_' . $id_toko;
-
-            $msg_escaped = mysqli_real_escape_string($conn, $auto_msg);
-            mysqli_query($conn, "INSERT INTO pesan_chat (id_pengirim, id_penerima, isi_pesan, waktu_kirim, sudah_dibaca)
-                                 VALUES ('$id_toko_chat', '$id_pembeli_chat', '$msg_escaped', NOW(), 0)");
 
         }
         mysqli_commit($conn);
@@ -1021,12 +1025,14 @@ if ($q_toko_qris) {
             
             // Update Payment Summary
             updateCheckoutSummary();
+
+            // Real-time update payment method selection (QRIS availability)
+            initPaymentMethodSelection();
         }
 
-        // ── Update Notes ──
         function updateItemNote(id, harga, val) {
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id && c.harga === harga);
+            const item = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
             if (item) {
                 item.catatan = val.trim();
                 saveCart(cart);
@@ -1126,7 +1132,7 @@ if ($q_toko_qris) {
         // ── Edit Quantity in Checkout Page ──
         function updateCheckoutQty(id, harga, delta) {
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id && c.harga === harga);
+            const item = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
             if (item) {
                 if (delta > 0) {
                     const stock = item.stok !== undefined ? item.stok : 999;
@@ -1141,7 +1147,7 @@ if ($q_toko_qris) {
                     item.jumlah = 1;
                     confirmRemoveItem(item.nama_menu, () => {
                         const freshCart = getCart();
-                        const freshItemIndex = freshCart.findIndex(c => c.id_menu === id && c.harga === harga);
+                        const freshItemIndex = freshCart.findIndex(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
                         if (freshItemIndex !== -1) {
                             freshCart.splice(freshItemIndex, 1);
                             saveCart(freshCart);
@@ -1176,7 +1182,7 @@ if ($q_toko_qris) {
         function manualUpdateCheckoutQty(id, harga, value, maxStock) {
             let qty = parseInt(value);
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id && c.harga === harga);
+            const item = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
             if (!item) return;
 
             if (isNaN(qty) || qty < 0) {
@@ -1186,7 +1192,7 @@ if ($q_toko_qris) {
             if (qty === 0) {
                 confirmRemoveItem(item.nama_menu, () => {
                     const freshCart = getCart();
-                    const freshItemIndex = freshCart.findIndex(c => c.id_menu === id && c.harga === harga);
+                    const freshItemIndex = freshCart.findIndex(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
                     if (freshItemIndex !== -1) {
                         freshCart.splice(freshItemIndex, 1);
                         saveCart(freshCart);
@@ -1409,32 +1415,41 @@ if ($q_toko_qris) {
         function getAvailablePaymentMethods() {
             const cart = getCart();
             const selectedItems = cart.filter(item => item.selected !== false);
-            if (selectedItems.length === 0) return ['tunai'];
+            if (selectedItems.length === 0) return { methods: ['tunai'], noQrisCanteens: [] };
 
-            // Cek apakah semua kantin yang terlibat di pesanan ini punya QRIS
-            let allHaveQris = true;
+            // Kumpulkan kantin yang tidak punya QRIS
+            const noQrisCanteens = [];
+            const seen = new Set();
             selectedItems.forEach(item => {
                 const canteen = canteenQrisData[item.id_toko];
-                if (!canteen || !canteen.qris) {
-                    allHaveQris = false;
+                if ((!canteen || !canteen.qris) && !seen.has(item.id_toko)) {
+                    seen.add(item.id_toko);
+                    noQrisCanteens.push(canteen ? canteen.nama_toko : ('Kantin #' + item.id_toko));
                 }
             });
 
-            return allHaveQris ? ['tunai', 'qris'] : ['tunai'];
+            const allHaveQris = noQrisCanteens.length === 0;
+            return { methods: allHaveQris ? ['tunai', 'qris'] : ['tunai'], noQrisCanteens };
         }
 
         function initPaymentMethodSelection() {
             const container = document.getElementById('paymentMethodCard');
             if (!container) return;
 
-            const methods = getAvailablePaymentMethods();
+            const { methods, noQrisCanteens } = getAvailablePaymentMethods();
+            
+            // Jika metode QRIS (transfer) terpilih tetapi tidak lagi tersedia, turunkan ke tunai
+            if (selectedPaymentMethod === 'transfer' && !methods.includes('qris')) {
+                selectedPaymentMethod = 'tunai';
+            }
             
             if (methods.includes('qris')) {
+                const isTunai = (selectedPaymentMethod === 'tunai');
                 container.innerHTML = `
                     <div class="payment-method-options" style="display: flex; flex-direction: column; gap: 12px;">
-                        <label class="payment-option-card active" id="pay-tunai-label" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 16px; border: 2.5px solid #16a34a; background: #f0fdf4; cursor: pointer; transition: all 0.2s; text-align: left;">
+                        <label class="payment-option-card ${isTunai ? 'active' : ''}" id="pay-tunai-label" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 16px; border: ${isTunai ? '2.5px solid #16a34a' : '1.5px solid #e2e8f0'}; background: ${isTunai ? '#f0fdf4' : '#ffffff'}; cursor: pointer; transition: all 0.2s; text-align: left;">
                             <div style="display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 40px; height: 40px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 18px; flex-shrink: 0;">
+                                <div style="width: 40px; height: 40px; background: ${isTunai ? '#dcfce7' : '#f1f5f9'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: ${isTunai ? '#16a34a' : '#64748b'}; font-size: 18px; flex-shrink: 0;">
                                     <i class="fa-solid fa-money-bill-wave"></i>
                                 </div>
                                 <div>
@@ -1442,12 +1457,12 @@ if ($q_toko_qris) {
                                     <span style="font-size: 12px; color: #64748b;">Bayar langsung di kasir kantin</span>
                                 </div>
                             </div>
-                            <input type="radio" name="payment_method_input" value="tunai" checked onclick="selectPaymentMethod('tunai')" style="accent-color: #16a34a; transform: scale(1.15); flex-shrink: 0;">
+                            <input type="radio" name="payment_method_input" value="tunai" ${isTunai ? 'checked' : ''} onclick="selectPaymentMethod('tunai')" style="accent-color: #16a34a; transform: scale(1.15); flex-shrink: 0;">
                         </label>
 
-                        <label class="payment-option-card" id="pay-qris-label" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #e2e8f0; background: #ffffff; cursor: pointer; transition: all 0.2s; text-align: left;">
+                        <label class="payment-option-card ${!isTunai ? 'active' : ''}" id="pay-qris-label" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 16px; border: ${!isTunai ? '2.5px solid #16a34a' : '1.5px solid #e2e8f0'}; background: ${!isTunai ? '#f0fdf4' : '#ffffff'}; cursor: pointer; transition: all 0.2s; text-align: left;">
                             <div style="display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 18px; flex-shrink: 0;">
+                                <div style="width: 40px; height: 40px; background: ${!isTunai ? '#dcfce7' : '#f1f5f9'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: ${!isTunai ? '#16a34a' : '#64748b'}; font-size: 18px; flex-shrink: 0;">
                                     <i class="fa-solid fa-qrcode"></i>
                                 </div>
                                 <div>
@@ -1455,16 +1470,23 @@ if ($q_toko_qris) {
                                     <span style="font-size: 12px; color: #64748b;">Scan barcode QRIS kantin</span>
                                 </div>
                             </div>
-                            <input type="radio" name="payment_method_input" value="transfer" onclick="selectPaymentMethod('transfer')" style="accent-color: #16a34a; transform: scale(1.15); flex-shrink: 0;">
+                            <input type="radio" name="payment_method_input" value="transfer" ${!isTunai ? 'checked' : ''} onclick="selectPaymentMethod('transfer')" style="accent-color: #16a34a; transform: scale(1.15); flex-shrink: 0;">
                         </label>
                     </div>
                     
-                    <div id="qrisContainer" style="display: none; margin-top: 14px; padding: 14px 16px; text-align: left; border: 1.5px solid #3b82f6; background: #eff6ff; border-radius: 16px; box-sizing: border-box; align-items: flex-start; gap: 8px;">
+                    <div id="qrisContainer" style="display: ${!isTunai ? 'flex' : 'none'}; margin-top: 14px; padding: 14px 16px; text-align: left; border: 1.5px solid #3b82f6; background: #eff6ff; border-radius: 16px; box-sizing: border-box; align-items: flex-start; gap: 8px;">
                         <i class="fa-solid fa-circle-info" style="color: #3b82f6; font-size: 16px; margin-top: 2px; flex-shrink: 0;"></i>
                         <span style="font-size: 12px; color: #1e3a8a; line-height: 1.4;">Metode QRIS dipilih. Barcode pembayaran QRIS akan ditampilkan setelah Anda memproses pesanan ini.</span>
                     </div>
                 `;
+                selectPaymentMethod(selectedPaymentMethod);
             } else {
+                // Buat pesan yang menyebutkan kantin mana yang tidak punya QRIS
+                const namaKantin = noQrisCanteens.join(', ');
+                const warningMsg = noQrisCanteens.length === 1
+                    ? `<strong>${namaKantin}</strong> tidak menyediakan pembayaran QRIS. Pembayaran hanya dapat dilakukan secara <strong>Tunai</strong>.`
+                    : `Kantin <strong>${namaKantin}</strong> tidak menyediakan pembayaran QRIS. Pesanan hanya dapat dibayar secara <strong>Tunai</strong>.`;
+
                 container.innerHTML = `
                     <div class="payment-method-options" style="display: flex; flex-direction: column; gap: 12px;">
                         <label class="payment-option-card active" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 16px; border: 2.5px solid #16a34a; background: #f0fdf4; cursor: pointer; text-align: left;">
@@ -1481,7 +1503,7 @@ if ($q_toko_qris) {
                         </label>
                         <div style="font-size: 12px; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 10px 14px; border-radius: 12px; text-align: left; display: flex; align-items: flex-start; gap: 8px;">
                             <i class="fa-solid fa-triangle-exclamation" style="margin-top: 3px; font-size: 14px; flex-shrink: 0;"></i>
-                            <span>Kantin ini tidak menyediakan pembayaran QRIS. Pembayaran hanya dapat dilakukan secara Tunai.</span>
+                            <span>${warningMsg}</span>
                         </div>
                     </div>
                 `;

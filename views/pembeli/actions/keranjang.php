@@ -120,7 +120,8 @@ if ($action === 'sync' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 ON DUPLICATE KEY UPDATE 
                     jumlah = VALUES(jumlah), 
                     catatan = VALUES(catatan), 
-                    selected = VALUES(selected)
+                    selected = VALUES(selected),
+                    harga = VALUES(harga)
             ");
             
             if ($stmt) {

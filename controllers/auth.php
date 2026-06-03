@@ -126,13 +126,19 @@ function login()
 
             $pid = (int) $user['id_penjual'];
 
-            // 2. CEK APAKAH USER TERDAFTAR DI KANTIN TERSEBUT
+            // 2. CEK APAKAH USER TERDAFTAR DI KANTIN TERSEBUT DAN KANTIN TIDAK DIHAPUS
             $cek = mysqli_fetch_assoc(mysqli_query(
                 $conn,
-                "SELECT id FROM toko_penjual WHERE id_penjual=$pid AND id_toko=$id_toko AND status='aktif' LIMIT 1"
+                "SELECT tp.id FROM toko_penjual tp 
+                 JOIN toko t ON tp.id_toko = t.id_toko 
+                 WHERE tp.id_penjual=$pid 
+                   AND tp.id_toko=$id_toko 
+                   AND tp.status='aktif' 
+                   AND t.deleted_at IS NULL 
+                 LIMIT 1"
             ));
             if (!$cek)
-                return "Kamu tidak terdaftar di kantin tersebut.";
+                return "Kamu tidak terdaftar di kantin tersebut atau kantin sudah dinonaktifkan.";
 
             mysqli_query($conn, "UPDATE penjual SET terakhir_login = NOW() WHERE id_penjual = $pid");
 
