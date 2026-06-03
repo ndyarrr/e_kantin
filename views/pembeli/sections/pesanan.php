@@ -268,15 +268,30 @@ if ($q_pesanan) {
                     background: #e2e8f0;
                     color: #1e293b;
                 }
+                .btn-batalkan-pesanan:hover {
+                    background: #fecaca !important;
+                    color: #b91c1c !important;
+                    border-color: #f87171 !important;
+                }
             </style>
             
             <div class="pesanan-container">
                 <?php foreach ($pesanan_list as $pesanan): 
                     $badge_class = 'status-' . $pesanan['status'];
                     $status_text = $pesanan['status'];
-                    if ($pesanan['status'] === 'menunggu') $status_text = 'Menunggu Konfirmasi';
-                    elseif ($pesanan['status'] === 'diproses') $status_text = 'Sedang Disiapkan';
-                    elseif ($pesanan['status'] === 'siap') $status_text = 'Siap Diambil';
+                    if ($pesanan['status'] === 'menunggu') {
+                        $status_text = 'Menunggu Konfirmasi';
+                    } elseif ($pesanan['status'] === 'dikonfirmasi') {
+                        $badge_class = 'status-diproses';
+                        $status_text = 'Sedang Disiapkan';
+                    } elseif ($pesanan['status'] === 'siap_diambil') {
+                        $badge_class = 'status-siap';
+                        $status_text = 'Siap Diambil';
+                    } elseif ($pesanan['status'] === 'selesai') {
+                        $status_text = 'Selesai';
+                    } elseif ($pesanan['status'] === 'dibatalkan') {
+                        $status_text = 'Dibatalkan';
+                    }
                     
                     $waktu_format = date('d M Y, H:i', strtotime($pesanan['waktu_pesan']));
                     $is_lunas = isset($pesanan['pembayaran']['status']) && $pesanan['pembayaran']['status'] === 'lunas';
@@ -349,6 +364,12 @@ if ($q_pesanan) {
                                 ?>
                                     <button class="btn-bayar-qris" id="btn-qris-pay-<?= $pesanan['id_pesanan'] ?>" onclick="openPesananQrisModal('<?= htmlspecialchars(addslashes($pesanan['nama_toko']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($pesanan['qris_image']), ENT_QUOTES) ?>', <?= $pesanan['id_pesanan'] ?>, '<?= htmlspecialchars(addslashes($pesanan['pembayaran']['bukti_foto'] ?? ''), ENT_QUOTES) ?>')" style="background: <?= $btn_bg ?>; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
                                         <i class="fa-solid <?= $btn_icon ?>"></i> <?= $btn_text ?>
+                                    </button>
+                                <?php endif; ?>
+
+                                <?php if ($pesanan['status'] === 'menunggu'): ?>
+                                    <button class="btn-batalkan-pesanan" onclick="batalkanPesanan(<?= $pesanan['id_pesanan'] ?>)" style="background: #fee2e2; border: 1px solid #fca5a5; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; color: #dc2626; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                        <i class="fa-solid fa-ban"></i> Batalkan Pesanan
                                     </button>
                                 <?php endif; ?>
 
@@ -588,5 +609,141 @@ function openPesananQrisModal(namaToko, qrisImage, idPesanan, existingBukti) {
 
     card.querySelector('#btnPesananQrisClose').addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+}
+
+function batalkanPesanan(idPesanan) {
+    // Buat modal konfirmasi kustom yang cantik
+    let oldModal = document.getElementById('cancelOrderConfirmModal');
+    if (oldModal) oldModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'cancelOrderConfirmModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 9999999;
+        opacity: 0; transition: opacity 0.3s ease;
+        padding: 16px; box-sizing: border-box;
+    `;
+
+    const card = document.createElement('div');
+    card.style.cssText = `
+        background: #ffffff;
+        width: 100%; max-width: 360px;
+        border-radius: 24px; padding: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        text-align: center;
+        transform: scale(0.9); transition: transform 0.3s ease;
+        box-sizing: border-box;
+    `;
+
+    card.innerHTML = `
+        <div style="font-size:40px;color:#ef4444;margin-bottom:16px;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+        </div>
+        <h3 style="margin:0 0 8px;font-size:16px;font-weight:800;color:#0f172a;font-family:'Poppins',sans-serif;">Batalkan Pesanan?</h3>
+        <p style="margin:0 0 20px;font-size:12.5px;color:#64748b;font-family:'Poppins',sans-serif;line-height:1.5;">Apakah Anda yakin ingin membatalkan pesanan <strong>#${idPesanan}</strong>? Tindakan ini tidak dapat dibatalkan.</p>
+        
+        <div style="display:flex;gap:8px;">
+            <button id="btnCancelOrderNo" style="flex:1;padding:11px;font-weight:700;font-size:13px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.2s;">
+                Kembali
+            </button>
+            <button id="btnCancelOrderYes" style="flex:1;padding:11px;font-weight:800;font-size:13px;color:#fff;background:#ef4444;border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.2s;box-shadow:0 4px 12px rgba(239,68,68,0.2);">
+                Ya, Batalkan
+            </button>
+        </div>
+    `;
+
+    modal.appendChild(card);
+    document.body.appendChild(modal);
+
+    setTimeout(() => {
+        modal.style.opacity = '1';
+        card.style.transform = 'scale(1)';
+    }, 10);
+
+    function closeModal() {
+        modal.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => modal.remove(), 300);
+    }
+
+    modal.querySelector('#btnCancelOrderNo').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    modal.querySelector('#btnCancelOrderYes').addEventListener('click', function() {
+        const btnYes = modal.querySelector('#btnCancelOrderYes');
+        const btnNo = modal.querySelector('#btnCancelOrderNo');
+        
+        btnYes.disabled = true;
+        btnYes.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+        btnYes.style.pointerEvents = 'none';
+        btnYes.style.opacity = '0.7';
+        btnNo.disabled = true;
+        btnNo.style.pointerEvents = 'none';
+        btnNo.style.opacity = '0.5';
+
+        const fd = new FormData();
+        fd.append('id_pesanan', idPesanan);
+
+        fetch('actions/batalkan_pesanan.php', {
+            method: 'POST',
+            body: fd
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.status === 'success') {
+                btnYes.innerHTML = '<i class="fa-solid fa-circle-check"></i> Berhasil';
+                btnYes.style.background = '#16a34a';
+                btnYes.style.boxShadow = 'none';
+
+                if (typeof showToast === 'function') {
+                    showToast('🎉 ' + res.message, 'success');
+                } else {
+                    alert(res.message);
+                }
+
+                setTimeout(() => {
+                    closeModal();
+                    window.location.reload();
+                }, 1500);
+            } else {
+                btnYes.disabled = false;
+                btnYes.innerHTML = 'Ya, Batalkan';
+                btnYes.style.pointerEvents = 'auto';
+                btnYes.style.opacity = '1';
+                btnNo.disabled = false;
+                btnNo.style.pointerEvents = 'auto';
+                btnNo.style.opacity = '1';
+
+                if (typeof showToast === 'function') {
+                    showToast('Gagal: ' + res.message, 'error');
+                } else {
+                    alert('Gagal: ' + res.message);
+                }
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            btnYes.disabled = false;
+            btnYes.innerHTML = 'Ya, Batalkan';
+            btnYes.style.pointerEvents = 'auto';
+            btnYes.style.opacity = '1';
+            btnNo.disabled = false;
+            btnNo.style.pointerEvents = 'auto';
+            btnNo.style.opacity = '1';
+
+            if (typeof showToast === 'function') {
+                showToast('Koneksi gagal! Silakan coba lagi.', 'error');
+            } else {
+                alert('Koneksi gagal!');
+            }
+        });
+    });
 }
 </script>
