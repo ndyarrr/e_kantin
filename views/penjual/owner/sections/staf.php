@@ -130,7 +130,13 @@ if ($id_toko_owner > 0) {
         </div>
         <div class="form-staf-group">
             <label id="labelPasswordStaf">Password</label>
-            <input type="password" name="password" id="inputPasswordStaf" class="form-staf-control" placeholder="Minimal 6 karakter">
+            <div style="position:relative;">
+                <input type="password" name="password" id="inputPasswordStaf" class="form-staf-control" placeholder="Minimal 6 karakter" style="padding-right:42px;">
+                <button type="button" id="togglePwStaf" onclick="togglePasswordStaf()" title="Lihat password"
+                    style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;font-size:1.1rem;padding:4px;">
+                    <i class="fa-solid fa-eye" id="iconPwStaf"></i>
+                </button>
+            </div>
         </div>
         <div class="form-staf-group">
             <label>Jadwal Shift Kerja</label>
@@ -149,6 +155,20 @@ if ($id_toko_owner > 0) {
 </div>
 
 <script>
+function togglePasswordStaf() {
+    const inp = document.getElementById('inputPasswordStaf');
+    const icon = document.getElementById('iconPwStaf');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        inp.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
 function bukaFormTambahStaf() {
     // Reset status aktif baris tabel memakai class CSS
     document.querySelectorAll('.row-staf-clickable').forEach(tr => tr.classList.remove('active-edit'));
@@ -161,6 +181,9 @@ function bukaFormTambahStaf() {
     
     document.getElementById('inputPasswordStaf').required = true;
     document.getElementById('inputPasswordStaf').placeholder = "Minimal 6 karakter";
+    document.getElementById('inputPasswordStaf').value = "";
+    document.getElementById('inputPasswordStaf').type = "password";
+    document.getElementById('iconPwStaf').classList.replace('fa-eye-slash','fa-eye');
     document.getElementById('labelPasswordStaf').innerText = "Password Akun Baru";
 
     document.getElementById('inputActionStaf').value = "action_staf_tambah";
@@ -193,6 +216,9 @@ function bukaFormEditStaf(element) {
     
     document.getElementById('inputPasswordStaf').required = false;
     document.getElementById('inputPasswordStaf').placeholder = "Kosongkan jika tidak ingin diubah";
+    document.getElementById('inputPasswordStaf').value = "";
+    document.getElementById('inputPasswordStaf').type = "password";
+    document.getElementById('iconPwStaf').classList.replace('fa-eye-slash','fa-eye');
     document.getElementById('labelPasswordStaf').innerText = "Ganti Password (Opsional)";
 
     document.getElementById('inputActionStaf').value = "action_staf_edit";

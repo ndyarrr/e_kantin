@@ -214,7 +214,7 @@ $role_label = match (true) {
                         } else if (c.role === 'kantin' || c.role === 'penjual') {
                             pathFoto = `${BASE_URL_CHAT}assets/img/kantin/${c.foto_profil}`;
                         } else {
-                            pathFoto = `${BASE_URL_CHAT}assets/img/pembeli/${c.foto_profil}`;
+                            pathFoto = `${BASE_URL_CHAT}assets/img/${c.foto_profil}`;
                         }
                         isiAvatar = `<img src="${pathFoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.outerHTML='${inisialNama}'">`;
                     }

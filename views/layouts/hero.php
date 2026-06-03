@@ -1,7 +1,7 @@
 <?php
 $semuaMenu = mysqli_fetch_all(mysqli_query(
     $conn,
-    "SELECT m.nama_menu, m.deskripsi, m.harga, m.foto_menu, t.nama_toko, t.id_toko
+    "SELECT m.id_menu, m.nama_menu, m.deskripsi, m.harga, m.foto_menu, t.nama_toko, t.id_toko
     FROM menu m
     JOIN toko t ON t.id_toko = m.id_toko
     WHERE m.tersedia = 1 AND t.status = 'buka'
@@ -257,7 +257,7 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
             dropdown.innerHTML = `
             <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 12px;">
                 ${hasil.slice(0, 8).map(m => `
-                    <a class="search-item" href="./kantin/detail.php?id=${m.id_toko}" style="display: flex; flex-direction: column; align-items: flex-start; padding: 0; border-radius: 12px; border: 1.5px solid #eee; overflow: hidden; text-decoration: none; width: 220px; box-sizing: border-box;">
+                    <a class="search-item" href="javascript:void(0)" onclick="bukaModalMenu(${m.id_menu})" style="display: flex; flex-direction: column; align-items: flex-start; padding: 0; border-radius: 12px; border: 1.5px solid #eee; overflow: hidden; text-decoration: none; width: 220px; box-sizing: border-box;">
                         ${m.foto_menu
                     ? `<img style="width:100%;height:140px;object-fit:cover;display:block;" 
            src="./assets/img/menu/${m.foto_menu}" 

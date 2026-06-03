@@ -105,7 +105,7 @@
                     </p>
                 </div>
 
-                <div
+                <div id="modalKantinInfoPembayaran"
                     style="background:#fff3cd; border:1px solid #ffeeba; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:12px; color:#856404;">
                     ⚠️ <b>Perhatian:</b> Saat ini pembayaran hanya dapat dilakukan secara tunai di kasir.
                 </div>
@@ -119,6 +119,56 @@
                 <div id="modalIsiMenu" class="modal-menu-list"></div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Modal Detail Menu -->
+    <div id="modalMenu" class="modal-overlay" style="display:none;">
+        <div class="modal-content"
+            style="padding:0; overflow:hidden; max-height:85vh; overflow-y:auto; position:relative; overflow-x:hidden; word-break:break-word;">
+
+            <button class="modal-close" onclick="tutupModalMenu()"
+                style="position:absolute; top:12px; right:12px; z-index:10; width:32px; height:32px; border-radius:50%; background:rgba(0,0,0,0.35); border:none; color:#fff; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;">×</button>
+
+            <!-- Foto menu -->
+            <div id="modalMenuFotoWrap"
+                style="width:100%; background:#f3f4f6; display:flex; align-items:center; justify-content:center; height:260px; overflow:hidden; position:relative;">
+                <img id="modalMenuFoto" src="" alt=""
+                    style="width:100%; height:100%; object-fit:cover; display:none;">
+                <div id="modalMenuFallback" style="width:100%; height:100%; display:none;"></div>
+            </div>
+
+            <!-- Detail info menu -->
+            <div style="padding:20px;">
+                <span id="modalMenuKantinBadge" style="background:#e8f5e9; color:#79b775; font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px; display:inline-block; margin-bottom:10px; font-family:'Poppins', sans-serif;">
+                    Nama Kantin
+                </span>
+                
+                <h2 id="modalMenuNama" class="modal-title" style="margin:0 0 6px; font-family:'Poppins', sans-serif; font-weight:700; font-size:22px;">Nama Menu</h2>
+                
+                <div id="modalMenuHarga" style="font-size:20px; font-weight:700; color:#79b775; margin-bottom:16px; font-family:'Poppins', sans-serif;">
+                    Rp 0
+                </div>
+
+                <div style="border-top:1px solid #f0f0f0; padding-top:14px; margin-bottom:20px;">
+                    <h4 style="font-size:12px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em; margin:0 0 6px;">Deskripsi</h4>
+                    <p id="modalMenuDesc" style="margin:0; font-size:13px; color:#6b7280; line-height:1.6; font-family:'Poppins', sans-serif;">
+                        Deskripsi menu...
+                    </p>
+                </div>
+
+                <!-- Action buttons -->
+                <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+                    <button id="btnLihatKantin" onclick="" style="width:100%; background:#fff; color:#79b775; border:1.5px solid #79b775; font-size:14px; font-weight:600; padding:12px; border-radius:12px; cursor:pointer; font-family:'Poppins', sans-serif; transition:all 0.2s ease; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-store"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>
+                        Lihat Kantin Penjual
+                    </button>
+                    <button onclick="window.location.href='./auth/login.php'" style="width:100%; background:#79b775; color:#fff; border:none; font-size:14px; font-weight:600; padding:12px; border-radius:12px; cursor:pointer; font-family:'Poppins', sans-serif; transition:all 0.2s ease; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-in"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+                        Login untuk Memesan
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -177,6 +227,22 @@
                 document.getElementById('modalNama').textContent = data.toko.nama_toko;
                 document.getElementById('modalDesc').textContent = data.toko.deskripsi || '';
 
+                // Update info pembayaran
+                const infoPembayaran = document.getElementById('modalKantinInfoPembayaran');
+                if (infoPembayaran) {
+                    if (data.toko.qris_image && data.toko.qris_image.trim() !== '') {
+                        infoPembayaran.style.background = '#e8f5e9';
+                        infoPembayaran.style.border = '1px solid #c8e6c9';
+                        infoPembayaran.style.color = '#2e7d32';
+                        infoPembayaran.innerHTML = '✅ <b>QRIS Tersedia:</b> Kantin ini mendukung pembayaran cashless via QRIS & Tunai.';
+                    } else {
+                        infoPembayaran.style.background = '#fff3cd';
+                        infoPembayaran.style.border = '1px solid #ffeeba';
+                        infoPembayaran.style.color = '#856404';
+                        infoPembayaran.innerHTML = '⚠️ <b>Perhatian:</b> Saat ini pembayaran hanya dapat dilakukan secara tunai di kasir.';
+                    }
+                }
+
 
                 // Deskripsi panjang
                 const descPanjangWrap = document.getElementById('modalDescPanjangWrap');
@@ -224,11 +290,94 @@
             document.getElementById('modalKantin').style.display = 'none';
         }
 
+        // Fungsi membuka pop-up detail menu dari search
+        function bukaModalMenu(id_menu) {
+            // menuData didefinisikan di views/layouts/hero.php
+            const menu = menuData.find(m => parseInt(m.id_menu) === parseInt(id_menu));
+            if (!menu) return;
+
+            // Tutup search dropdown jika terbuka
+            const dropdown = document.getElementById('searchDropdown');
+            if (dropdown) dropdown.style.display = 'none';
+
+            const modal = document.getElementById('modalMenu');
+            const foto = document.getElementById('modalMenuFoto');
+            const fallback = document.getElementById('modalMenuFallback');
+
+            document.getElementById('modalMenuNama').textContent = menu.nama_menu;
+            document.getElementById('modalMenuKantinBadge').textContent = menu.nama_toko;
+            document.getElementById('modalMenuHarga').textContent = 'Rp ' + parseInt(menu.harga).toLocaleString('id-ID');
+            document.getElementById('modalMenuDesc').textContent = menu.deskripsi || 'Tidak ada deskripsi untuk menu ini.';
+
+            // Render photo or fallback
+            if (menu.foto_menu) {
+                foto.src = './assets/img/menu/' + menu.foto_menu;
+                foto.style.display = 'block';
+                fallback.style.display = 'none';
+                foto.onerror = () => {
+                    foto.style.display = 'none';
+                    if (typeof fallbackSVG === 'function') {
+                        fallback.innerHTML = fallbackSVG(menu.nama_menu);
+                        const innerDiv = fallback.querySelector('div');
+                        if (innerDiv) {
+                            innerDiv.style.height = '100%';
+                            innerDiv.style.borderBottom = 'none';
+                        }
+                        const svgEl = fallback.querySelector('svg');
+                        if (svgEl) {
+                            svgEl.style.width = '64px';
+                            svgEl.style.height = '64px';
+                        }
+                    } else {
+                        fallback.innerHTML = '<div style="width:100%;height:100%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:32px;">🍽️</div>';
+                    }
+                    fallback.style.display = 'block';
+                };
+            } else {
+                foto.style.display = 'none';
+                if (typeof fallbackSVG === 'function') {
+                    fallback.innerHTML = fallbackSVG(menu.nama_menu);
+                    const innerDiv = fallback.querySelector('div');
+                    if (innerDiv) {
+                        innerDiv.style.height = '100%';
+                        innerDiv.style.borderBottom = 'none';
+                    }
+                    const svgEl = fallback.querySelector('svg');
+                    if (svgEl) {
+                        svgEl.style.width = '64px';
+                        svgEl.style.height = '64px';
+                    }
+                } else {
+                    fallback.innerHTML = '<div style="width:100%;height:100%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:32px;">🍽️</div>';
+                }
+                fallback.style.display = 'block';
+            }
+
+            // Set button Lihat Kantin onclick action
+            const btnLihat = document.getElementById('btnLihatKantin');
+            if (btnLihat) {
+                btnLihat.onclick = () => {
+                    tutupModalMenu();
+                    bukaModal(menu.id_toko);
+                };
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function tutupModalMenu() {
+            document.getElementById('modalMenu').style.display = 'none';
+        }
+
         // Menutup pop-up kalau user ngeklik area luar kotak putih
         window.onclick = function (event) {
-            const modal = document.getElementById('modalKantin');
-            if (event.target == modal) {
-                modal.style.display = "none";
+            const modalKantin = document.getElementById('modalKantin');
+            const modalMenu = document.getElementById('modalMenu');
+            if (event.target == modalKantin) {
+                modalKantin.style.display = "none";
+            }
+            if (event.target == modalMenu) {
+                modalMenu.style.display = "none";
             }
         }
     </script>
