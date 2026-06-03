@@ -847,10 +847,10 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
             }
 
             // ── Save cart to localStorage ──
-            function saveCart(cart) {
+            function saveCart(cart, skipRender = false) {
                 localStorage.setItem(CART_KEY, JSON.stringify(cart));
                 updateBadges();
-                if (document.getElementById('cartDrawer').classList.contains('show')) {
+                if (!skipRender && document.getElementById('cartDrawer').classList.contains('show')) {
                     renderCartDrawer();
                 }
                 
@@ -1266,7 +1266,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                     const isSelected = item.selected !== false;
 
                     html += `
-                        <div class="dropdown-item cart-item-row" style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 8px;">
+                        <div class="dropdown-item cart-item-row" data-id="${item.id_menu}" data-harga="${item.harga}" style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
                                 <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                                     <div class="cart-item-checkbox-wrap">
@@ -1282,11 +1282,11 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                                     </div>
                                 </div>
                                 <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
-                                    <div style="font-size: 14px; font-weight: 800; color: #1e293b;">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
+                                    <div class="item-subtotal" style="font-size: 14px; font-weight: 800; color: #1e293b;">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
                                     <div class="item-qty" style="display: inline-flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc;">
-                                        <button onclick="updateCartQtyToko(${item.id_menu}, ${item.harga}, -1)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">−</button>
-                                        <input type="number" value="${item.jumlah}" min="0" max="${item.stok || 999}" onchange="manualUpdateCartQtyToko(${item.id_menu}, ${item.harga}, this.value, ${item.stok || 999})" onkeydown="if(event.key === 'Enter') this.blur();" onclick="event.stopPropagation()">
-                                        <button onclick="updateCartQtyToko(${item.id_menu}, ${item.harga}, 1)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">+</button>
+                                        <button onclick="updateCartQtyToko(${item.id_menu}, ${item.harga}, -1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">−</button>
+                                        <input type="number" class="item-qty-input" value="${item.jumlah}" min="0" max="${item.stok || 999}" onchange="manualUpdateCartQtyToko(${item.id_menu}, ${item.harga}, this.value, ${item.stok || 999})" onkeydown="if(event.key === 'Enter') this.blur();" onclick="event.stopPropagation()">
+                                        <button onclick="updateCartQtyToko(${item.id_menu}, ${item.harga}, 1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">+</button>
                                     </div>
                                 </div>
                             </div>

@@ -80,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if (!empty($kode_promo)) {
                 $q_promo = mysqli_query($conn, "SELECT diskon_persen FROM banner_promo 
                                                 WHERE kode_promo = '" . mysqli_real_escape_string($conn, $kode_promo) . "' 
+                                                AND id_toko = $id_toko
                                                 AND aktif = 1 
                                                 AND deleted_at IS NULL 
                                                 AND berlaku_hingga >= CURDATE() 
@@ -942,10 +943,23 @@ if ($q_toko_qris) {
 
         // Promo database data
         const activePromos = <?= json_encode($checkout_promos); ?>;
-        let appliedPromo = activePromos.length > 0 ? {
-            kode_promo: activePromos[0].kode_promo,
-            diskon_persen: parseInt(activePromos[0].diskon_persen)
-        } : null; // No promo pre-selected if none in database
+        
+        function getInitialPromo() {
+            const cart = getCart();
+            const selectedItems = cart.filter(item => item.selected !== false);
+            const checkoutTokoIds = selectedItems.map(item => parseInt(item.id_toko));
+            const matchedPromo = activePromos.find(p => checkoutTokoIds.includes(parseInt(p.id_toko)));
+            if (matchedPromo) {
+                return {
+                    kode_promo: matchedPromo.kode_promo,
+                    diskon_persen: parseInt(matchedPromo.diskon_persen),
+                    id_toko: parseInt(matchedPromo.id_toko)
+                };
+            }
+            return null;
+        }
+        
+        let appliedPromo = getInitialPromo();
 
         // ── Get cart from localStorage ──
         function getCart() {
@@ -1250,7 +1264,14 @@ if ($q_toko_qris) {
             const promoText = document.getElementById('promoApplyText');
 
             if (appliedPromo) {
-                diskon = Math.round(subtotal * (appliedPromo.diskon_persen / 100));
+                let subtotalPromo = 0;
+                if (appliedPromo.kode_promo === 'KANTINJOSS25') {
+                    subtotalPromo = subtotal;
+                } else {
+                    const promoItems = selectedItems.filter(item => parseInt(item.id_toko) === parseInt(appliedPromo.id_toko));
+                    subtotalPromo = promoItems.reduce((sum, item) => sum + (item.harga * item.jumlah), 0);
+                }
+                diskon = Math.round(subtotalPromo * (appliedPromo.diskon_persen / 100));
                 if (promoBox && promoText) {
                     promoText.textContent = `Kode Promo : ${appliedPromo.kode_promo} (${appliedPromo.diskon_persen}%)`;
                     promoBox.style.display = 'flex';
@@ -1474,16 +1495,21 @@ if ($q_toko_qris) {
                 box-sizing: border-box;
             `;
             
+            const cart = getCart();
+            const selectedItems = cart.filter(item => item.selected !== false);
+            const checkoutTokoIds = selectedItems.map(item => parseInt(item.id_toko));
+            const filteredPromos = activePromos.filter(p => checkoutTokoIds.includes(parseInt(p.id_toko)));
+
             let promosHTML = '';
-            if (activePromos.length === 0) {
+            if (filteredPromos.length === 0) {
                 promosHTML = `
                     <div style="text-align: center; padding: 30px 10px; color: #64748b;">
                         <i class="fa-solid fa-ticket-simple" style="font-size: 36px; color: #cbd5e1; margin-bottom: 12px; display: block; margin: 0 auto 12px auto;"></i>
-                        <span style="font-size: 13.5px; font-weight: 500; font-family: 'Poppins', sans-serif;">Tidak ada promo aktif saat ini.</span>
+                        <span style="font-size: 13.5px; font-weight: 500; font-family: 'Poppins', sans-serif;">Tidak ada promo untuk kantin yang Anda pilih.</span>
                     </div>
                 `;
             } else {
-                activePromos.forEach(p => {
+                filteredPromos.forEach(p => {
                     const isApplied = appliedPromo && appliedPromo.kode_promo === p.kode_promo;
                     promosHTML += renderPromoCardHTML(p, isApplied);
                 });
@@ -1552,17 +1578,18 @@ if ($q_toko_qris) {
                         </div>
                         <span style="font-size: 15px; font-weight: 850; color: #5cb85c; font-family: 'Poppins', sans-serif;">Diskon ${p.diskon_persen}%</span>
                     </div>
-                    <button onclick="applyPromoCode('${p.kode_promo}', ${p.diskon_persen})" ${isApplied ? 'disabled' : ''} style="width: 100%; padding: 10px; border-radius: 10px; border: none; background: ${isApplied ? '#cbd5e1' : '#5cb85c'}; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 12.5px; font-weight: 700; cursor: ${isApplied ? 'default' : 'pointer'}; transition: all 0.2s; box-shadow: ${isApplied ? 'none' : '0 4px 10px rgba(92, 184, 92, 0.2)'};">
+                    <button onclick="applyPromoCode('${p.kode_promo}', ${p.diskon_persen}, ${p.id_toko})" ${isApplied ? 'disabled' : ''} style="width: 100%; padding: 10px; border-radius: 10px; border: none; background: ${isApplied ? '#cbd5e1' : '#5cb85c'}; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 12.5px; font-weight: 700; cursor: ${isApplied ? 'default' : 'pointer'}; transition: all 0.2s; box-shadow: ${isApplied ? 'none' : '0 4px 10px rgba(92, 184, 92, 0.2)'};">
                         ${isApplied ? 'Sedang Digunakan' : 'Gunakan Promo'}
                     </button>
                 </div>
             `;
         }
         
-        function applyPromoCode(code, diskonPersen) {
+        function applyPromoCode(code, diskonPersen, idToko) {
             appliedPromo = {
                 kode_promo: code,
-                diskon_persen: parseInt(diskonPersen)
+                diskon_persen: parseInt(diskonPersen),
+                id_toko: parseInt(idToko)
             };
             updateCheckoutSummary();
             

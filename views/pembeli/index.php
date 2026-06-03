@@ -492,10 +492,10 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             catch { return []; }
         }
 
-        function saveCart(cart) {
+        function saveCart(cart, skipRender = false) {
             localStorage.setItem('ekantin_cart', JSON.stringify(cart));
             updateBadges();
-            if (document.getElementById('cartDrawer').classList.contains('show')) {
+            if (!skipRender && document.getElementById('cartDrawer').classList.contains('show')) {
                 renderCartDrawer();
             }
             
@@ -1170,7 +1170,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     return;
                 }
                 existing.jumlah++;
-                existing.selected = true; // Auto select if added again
+                existing.selected = true;
             } else {
                 if (stock <= 0) {
                     showToast('Stok habis!', 'error');
@@ -1182,13 +1182,48 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             showToast(nama + ' (Rp ' + activeHarga.toLocaleString('id-ID') + ')', 'success', { foto: foto, toko: toko });
         }
 
+        function updateCartSummaryUI() {
+            const cart = getCart();
+            const selectedItems = cart.filter(item => item.selected !== false);
+            const totalPrice = selectedItems.reduce((sum, item) => sum + (item.harga * item.jumlah), 0);
+            const allSelected = cart.every(item => item.selected !== false);
+
+            const totalEl = document.getElementById('cartDrawerTotal');
+            if (totalEl) totalEl.textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
+
+            const selectAllCheck = document.getElementById('cartSelectAll');
+            if (selectAllCheck) selectAllCheck.checked = allSelected;
+
+            const selectAllLabel = document.querySelector('.cart-select-all-label span');
+            if (selectAllLabel) {
+                selectAllLabel.textContent = `Pilih Semua (${selectedItems.length}/${cart.length})`;
+            }
+        }
+
+        function updateCartItemRowUI(id, harga, qty) {
+            const row = document.querySelector(`.cart-item-row[data-id="${id}"][data-harga="${harga}"]`);
+            if (row) {
+                const input = row.querySelector('.item-qty-input');
+                if (input) input.value = qty;
+
+                const subtotalEl = row.querySelector('.item-subtotal');
+                if (subtotalEl) {
+                    const cartItem = getCart().find(c => c.id_menu == id && c.harga == harga);
+                    if (cartItem) {
+                        subtotalEl.textContent = 'Rp ' + (cartItem.harga * qty).toLocaleString('id-ID');
+                    }
+                }
+            }
+            updateCartSummaryUI();
+        }
+
         function updateCartQty(id, harga, delta, event) {
             if(event) event.stopPropagation();
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id && c.harga === harga);
+            const item = cart.find(c => c.id_menu == id && c.harga == harga);
             if (item) {
                 if (delta > 0) {
-                    const menuItem = ALL_MENUS.find(m => m.id_menu === id);
+                    const menuItem = ALL_MENUS.find(m => m.id_menu == id);
                     const stock = menuItem ? menuItem.stok : (item.stok || 999);
                     if (item.jumlah >= stock) {
                         showToast('Stok tidak mencukupi! Maksimum stok: ' + stock, 'error');
@@ -1198,31 +1233,36 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 item.jumlah += delta;
                 if (item.jumlah <= 0) {
                     cart.splice(cart.indexOf(item), 1);
+                    saveCart(cart);
+                } else {
+                    saveCart(cart, true);
+                    updateCartItemRowUI(id, harga, item.jumlah);
                 }
             }
-            saveCart(cart);
         }
 
         function manualUpdateCartQty(id, harga, value, maxStock) {
             let qty = parseInt(value);
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id && c.harga === harga);
+            const item = cart.find(c => c.id_menu == id && c.harga == harga);
             if (!item) return;
 
             if (isNaN(qty) || qty < 0) {
-                qty = 1; // Default fallback for invalid or empty inputs
+                qty = 1;
             }
 
             if (qty === 0) {
                 cart.splice(cart.indexOf(item), 1);
+                saveCart(cart); // Full render since item was removed
             } else {
                 if (qty > maxStock) {
                     showToast('Stok tidak mencukupi! Maksimum stok: ' + maxStock, 'error');
                     qty = maxStock;
                 }
                 item.jumlah = qty;
+                saveCart(cart, true); // Skip full render
+                updateCartItemRowUI(id, harga, qty);
             }
-            saveCart(cart);
         }
 
         function toggleCartDrawer() {
@@ -1245,11 +1285,12 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
 
         function toggleCartItemSelection(id, harga) {
             const cart = getCart();
-            const item = cart.find(c => c.id_menu === id && c.harga === harga);
+            const item = cart.find(c => c.id_menu == id && c.harga == harga);
             if (item) {
-                item.selected = item.selected === false ? true : false;
+                item.selected = !item.selected;
             }
-            saveCart(cart);
+            saveCart(cart, true); // Skip full render
+            updateCartSummaryUI();
         }
 
         function toggleSelectAllCart(isChecked) {
@@ -1257,7 +1298,15 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             cart.forEach(item => {
                 item.selected = isChecked;
             });
-            saveCart(cart);
+            saveCart(cart, true); // Skip full render
+            
+            const checkboxes = document.querySelectorAll('.cart-item-checkbox');
+            checkboxes.forEach(cb => {
+                if (cb.id !== 'cartSelectAll') {
+                    cb.checked = isChecked;
+                }
+            });
+            updateCartSummaryUI();
         }
 
         function clearSelectedCart() {
@@ -1332,7 +1381,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 const isSelected = item.selected !== false;
 
                 html += `
-                    <div class="dropdown-item cart-item-row" style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 8px;">
+                    <div class="dropdown-item cart-item-row" data-id="${item.id_menu}" data-harga="${item.harga}" style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 8px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                                 <div class="cart-item-checkbox-wrap">
@@ -1348,10 +1397,10 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                                 </div>
                             </div>
                             <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
-                                <div style="font-size: 14px; font-weight: 800; color: #1e293b;">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
+                                <div class="item-subtotal" style="font-size: 14px; font-weight: 800; color: #1e293b;">Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</div>
                                 <div class="item-qty" style="display: inline-flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc;">
                                     <button onclick="updateCartQty(${item.id_menu}, ${item.harga}, -1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">−</button>
-                                    <input type="number" value="${item.jumlah}" min="0" max="${item.stok || 999}" onchange="manualUpdateCartQty(${item.id_menu}, ${item.harga}, this.value, ${item.stok || 999})" onkeydown="if(event.key === 'Enter') this.blur();" onclick="event.stopPropagation()">
+                                    <input type="number" class="item-qty-input" value="${item.jumlah}" min="0" max="${item.stok || 999}" onchange="manualUpdateCartQty(${item.id_menu}, ${item.harga}, this.value, ${item.stok || 999})" onkeydown="if(event.key === 'Enter') this.blur();" onclick="event.stopPropagation()">
                                     <button onclick="updateCartQty(${item.id_menu}, ${item.harga}, 1, event)" style="border: none; background: none; padding: 4px 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #64748b; transition: background 0.2s;">+</button>
                                 </div>
                             </div>
