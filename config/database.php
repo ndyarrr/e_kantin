@@ -72,6 +72,12 @@ if ($checkColKeranjang && mysqli_num_rows($checkColKeranjang) === 0) {
     mysqli_query($conn, "ALTER TABLE `keranjang` ADD UNIQUE KEY `unique_user_menu_harga` (user_id, user_role, id_menu, harga)");
 }
 
+// Migrasi kolom deleted_at ke tabel kelas jika belum ada
+$checkColKelasDel = mysqli_query($conn, "SHOW COLUMNS FROM `kelas` LIKE 'deleted_at'");
+if ($checkColKelasDel && mysqli_num_rows($checkColKelasDel) === 0) {
+    mysqli_query($conn, "ALTER TABLE `kelas` ADD `deleted_at` DATETIME NULL DEFAULT NULL");
+}
+
 /** Alias lama — beberapa file memakai $koneksi */
 $koneksi = $conn;
 

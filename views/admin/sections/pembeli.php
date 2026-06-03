@@ -423,6 +423,20 @@
         }
     }
 
+    function hapusKelasAlurKonfirmasi(id_kelas, nama_kelas, jumlah_murid) {
+        // Konfirmasi 1: Hapus kelas / jurusan
+        const conf1 = confirm('Apakah Anda yakin ingin menghapus kelas ' + nama_kelas + '?');
+        if (!conf1) return;
+        
+        // Konfirmasi 2: Hapus seluruh murid di kelas tersebut
+        const detailMurid = jumlah_murid > 0 ? ' (terdapat ' + jumlah_murid + ' murid aktif)' : ' (kelas kosong)';
+        const conf2 = confirm('Peringatan: Tindakan ini juga akan menghapus seluruh murid di kelas tersebut secara permanen' + detailMurid + '. Apakah Anda yakin ingin melanjutkan?');
+        if (!conf2) return;
+        
+        const form = document.getElementById('formHapusKelas_' + id_kelas);
+        if (form) form.submit();
+    }
+
     // Bind Escape key to close modals
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
@@ -519,10 +533,15 @@
                             <tr style="border-bottom:1px solid #f3f4f6;">
                                 <td style="padding:10px; font-size:13px; font-weight:600; color:var(--text);"><?= htmlspecialchars($k['nama_kelas']) ?></td>
                                 <td style="padding:10px; text-align:center;">
-                                    <form method="POST" style="display:inline; margin:0;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kelas <?= htmlspecialchars($k['nama_kelas'], ENT_QUOTES) ?>?')">
+                                    <?php
+                                    $q_count = mysqli_query($conn, "SELECT COUNT(*) as c FROM murid WHERE id_kelas=" . (int)$k['id_kelas'] . " AND deleted_at IS NULL");
+                                    $c_murid = $q_count ? (int)mysqli_fetch_assoc($q_count)['c'] : 0;
+                                    ?>
+                                    <form method="POST" style="display:inline; margin:0;" id="formHapusKelas_<?= $k['id_kelas'] ?>">
                                         <input type="hidden" name="action" value="pembeli_hapus_kelas">
                                         <input type="hidden" name="id_kelas" value="<?= $k['id_kelas'] ?>">
-                                        <button type="submit" class="btn-aksi danger" style="padding: 6px; border:none; background:none; cursor:pointer; color:var(--red);" title="Hapus Kelas">
+                                        <button type="button" class="btn-aksi danger" style="padding: 6px; border:none; background:none; cursor:pointer; color:var(--red);" title="Hapus Kelas"
+                                            onclick="hapusKelasAlurKonfirmasi(<?= $k['id_kelas'] ?>, '<?= htmlspecialchars($k['nama_kelas'], ENT_QUOTES) ?>', <?= $c_murid ?>)">
                                             <i class="fa-solid fa-trash" style="font-size:14px;"></i>
                                         </button>
                                     </form>

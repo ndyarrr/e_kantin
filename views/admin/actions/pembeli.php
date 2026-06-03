@@ -29,6 +29,7 @@ if ($action === 'pembeli_tambah_murid') {
             JOIN jurusan j ON j.id_jurusan = k.id_jurusan
             WHERE k.kelas = '$t' 
             AND CONCAT(j.nama_jurusan, ' ', k.rombel) = '$r'
+            AND k.deleted_at IS NULL
             LIMIT 1
         ");
 
@@ -229,9 +230,22 @@ if ($action === 'pembeli_tambah_kelas') {
         $feedback = ['type' => 'error', 'msg' => 'Semua field (tingkat, jurusan, rombel) wajib diisi.'];
     } else {
         $kls = mysqli_real_escape_string($conn, $kelas);
-        $cek = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id_kelas FROM kelas WHERE kelas='$kls' AND id_jurusan=$id_jurusan AND rombel=$rombel"));
+        $cek = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id_kelas, deleted_at FROM kelas WHERE kelas='$kls' AND id_jurusan=$id_jurusan AND rombel=$rombel"));
         if ($cek) {
-            $feedback = ['type' => 'error', 'msg' => 'Kombinasi kelas tersebut sudah terdaftar.'];
+            if ($cek['deleted_at'] !== null) {
+                // Pulihkan kelas yang sebelumnya di-softdelete
+                if (mysqli_query($conn, "UPDATE kelas SET deleted_at = NULL WHERE id_kelas=" . (int)$cek['id_kelas'])) {
+                    $jur = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama_jurusan FROM jurusan WHERE id_jurusan=$id_jurusan"));
+                    $nama_jur = $jur['nama_jurusan'] ?? '';
+                    $nama_kelas_lengkap = "$kelas $nama_jur $rombel";
+                    catatLog($conn, 'Tambah Kelas', "Memulihkan kelas (sebelumnya dihapus): $nama_kelas_lengkap");
+                    $feedback = ['type' => 'success', 'msg' => "Kelas <strong>$nama_kelas_lengkap</strong> berhasil dipulihkan/ditambahkan kembali."];
+                } else {
+                    $feedback = ['type' => 'error', 'msg' => 'Gagal memulihkan kelas: ' . mysqli_error($conn)];
+                }
+            } else {
+                $feedback = ['type' => 'error', 'msg' => 'Kombinasi kelas tersebut sudah terdaftar.'];
+            }
         } else {
             if (mysqli_query($conn, "INSERT INTO kelas (kelas, id_jurusan, rombel) VALUES ('$kls', $id_jurusan, $rombel)")) {
                 $jur = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama_jurusan FROM jurusan WHERE id_jurusan=$id_jurusan"));
@@ -254,19 +268,35 @@ if ($action === 'pembeli_tambah_kelas') {
 if ($action === 'pembeli_hapus_kelas') {
     $id_kelas = (int) ($_POST['id_kelas'] ?? 0);
     if ($id_kelas) {
-        $cek_murid = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM murid WHERE id_kelas=$id_kelas"));
-        if ($cek_murid['c'] > 0) {
-            $feedback = ['type' => 'error', 'msg' => 'Gagal menghapus kelas: Kelas ini masih dirujuk oleh ' . $cek_murid['c'] . ' data murid di database.'];
-        } else {
-            $k_info = mysqli_fetch_assoc(mysqli_query($conn, "SELECT k.kelas, k.rombel, j.nama_jurusan FROM kelas k JOIN jurusan j ON j.id_jurusan = k.id_jurusan WHERE k.id_kelas=$id_kelas"));
-            $nama_kelas = $k_info ? ($k_info['kelas'] . ' ' . $k_info['nama_jurusan'] . ' ' . $k_info['rombel']) : "ID $id_kelas";
+        $k_info = mysqli_fetch_assoc(mysqli_query($conn, "SELECT k.kelas, k.rombel, j.nama_jurusan FROM kelas k JOIN jurusan j ON j.id_jurusan = k.id_jurusan WHERE k.id_kelas=$id_kelas"));
+        $nama_kelas = $k_info ? ($k_info['kelas'] . ' ' . $k_info['nama_jurusan'] . ' ' . $k_info['rombel']) : "ID $id_kelas";
+        
+        $murid_count = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM murid WHERE id_kelas=$id_kelas AND deleted_at IS NULL"))['c'];
+        
+        mysqli_begin_transaction($conn);
+        try {
+            // Soft delete semua murid di kelas tersebut (yang belum di-softdelete)
+            mysqli_query($conn, "UPDATE murid SET deleted_at = NOW() WHERE id_kelas=$id_kelas AND deleted_at IS NULL");
             
-            if (mysqli_query($conn, "DELETE FROM kelas WHERE id_kelas=$id_kelas")) {
-                catatLog($conn, 'Hapus Kelas', "Menghapus kelas: $nama_kelas");
-                $feedback = ['type' => 'success', 'msg' => "Kelas <strong>$nama_kelas</strong> berhasil dihapus."];
-            } else {
-                $feedback = ['type' => 'error', 'msg' => 'Gagal menghapus kelas: ' . mysqli_error($conn)];
+            // Soft delete kelas
+            mysqli_query($conn, "UPDATE kelas SET deleted_at = NOW() WHERE id_kelas=$id_kelas");
+            
+            mysqli_commit($conn);
+            
+            $ket_log = "Menghapus kelas (soft delete): $nama_kelas";
+            if ($murid_count > 0) {
+                $ket_log .= " beserta $murid_count data murid di dalamnya.";
             }
+            catatLog($conn, 'Hapus Kelas', $ket_log);
+            
+            $msg_sukses = "Kelas <strong>$nama_kelas</strong> berhasil dihapus.";
+            if ($murid_count > 0) {
+                $msg_sukses .= " Sebanyak $murid_count murid di kelas tersebut juga telah dihapus (soft-delete).";
+            }
+            $feedback = ['type' => 'success', 'msg' => $msg_sukses];
+        } catch (Exception $e) {
+            mysqli_rollback($conn);
+            $feedback = ['type' => 'error', 'msg' => 'Gagal menghapus kelas: ' . mysqli_error($conn)];
         }
     }
     if ($feedback)
@@ -279,8 +309,8 @@ if ($action === 'pembeli_hapus_kelas') {
 if ($action === 'pembeli_hapus_jurusan') {
     $id_jurusan = (int) ($_POST['id_jurusan'] ?? 0);
     if ($id_jurusan) {
-        $cek_kelas = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM kelas WHERE id_jurusan=$id_jurusan"));
-        $cek_murid = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM murid WHERE id_jurusan=$id_jurusan"));
+        $cek_kelas = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM kelas WHERE id_jurusan=$id_jurusan AND deleted_at IS NULL"));
+        $cek_murid = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM murid WHERE id_jurusan=$id_jurusan AND deleted_at IS NULL"));
         
         if ($cek_kelas['c'] > 0 || $cek_murid['c'] > 0) {
             $feedback = ['type' => 'error', 'msg' => 'Gagal menghapus jurusan: Masih digunakan oleh ' . $cek_kelas['c'] . ' kelas atau ' . $cek_murid['c'] . ' data murid.'];

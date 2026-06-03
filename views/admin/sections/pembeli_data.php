@@ -95,10 +95,11 @@ $semuaKelas = mysqli_fetch_all(mysqli_query(
             CONCAT(k.kelas, ' ', j.nama_jurusan, ' ', k.rombel) AS nama_kelas
      FROM kelas k
      JOIN jurusan j ON j.id_jurusan = k.id_jurusan
+     WHERE k.deleted_at IS NULL
      ORDER BY k.kelas ASC, j.nama_jurusan ASC, k.rombel ASC"
 ), MYSQLI_ASSOC);
 
 $semuaTingkat = mysqli_fetch_all(mysqli_query(
     $conn,
-    "SELECT DISTINCT kelas FROM kelas ORDER BY kelas ASC"
+    "SELECT DISTINCT kelas FROM kelas WHERE deleted_at IS NULL ORDER BY kelas ASC"
 ), MYSQLI_ASSOC);

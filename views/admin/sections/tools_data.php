@@ -46,6 +46,15 @@ $deletedPenjual = mysqli_fetch_all(mysqli_query($conn, "SELECT id_penjual, nama,
 $deletedToko = mysqli_fetch_all(mysqli_query($conn, "SELECT id_toko, nama_toko as nama, deleted_at FROM toko WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"), MYSQLI_ASSOC);
 $deletedMenu = mysqli_fetch_all(mysqli_query($conn, "SELECT id_menu, nama_menu as nama, deleted_at FROM menu WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"), MYSQLI_ASSOC);
 $deletedAdmin = mysqli_fetch_all(mysqli_query($conn, "SELECT id_admin, nama, deleted_at FROM admin WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"), MYSQLI_ASSOC);
+$deletedKelas = mysqli_fetch_all(mysqli_query($conn, "
+    SELECT k.id_kelas, 
+           CONCAT(k.kelas, ' ', COALESCE(j.nama_jurusan, CONCAT('ID-JUR-', k.id_jurusan)), ' ', k.rombel) as nama, 
+           k.deleted_at 
+    FROM kelas k 
+    LEFT JOIN jurusan j ON j.id_jurusan = k.id_jurusan 
+    WHERE k.deleted_at IS NOT NULL 
+    ORDER BY k.deleted_at DESC
+"), MYSQLI_ASSOC);
 
 $allDeleted = [
     'Murid' => ['data' => $deletedMurid, 'tabel' => 'murid', 'id_col' => 'nisn'],
@@ -54,4 +63,5 @@ $allDeleted = [
     'Kantin' => ['data' => $deletedToko, 'tabel' => 'toko', 'id_col' => 'id_toko'],
     'Menu' => ['data' => $deletedMenu, 'tabel' => 'menu', 'id_col' => 'id_menu'],
     'Admin' => ['data' => $deletedAdmin, 'tabel' => 'admin', 'id_col' => 'id_admin'],
+    'Kelas' => ['data' => $deletedKelas, 'tabel' => 'kelas', 'id_col' => 'id_kelas'],
 ];

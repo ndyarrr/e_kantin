@@ -86,6 +86,7 @@ if ($action === 'tools_import_murid') {
     SELECT k.id_kelas, k.kelas, k.rombel, j.id_jurusan, j.nama_jurusan
     FROM kelas k
     JOIN jurusan j ON j.id_jurusan = k.id_jurusan
+    WHERE k.deleted_at IS NULL
 ");
                 while ($r = mysqli_fetch_assoc($res)) {
                     $id = (int) $r['id_kelas'];
@@ -294,21 +295,65 @@ if ($action === 'tools_restore') {
     $id_col = $_POST['id_col'] ?? '';
     $id_val = $_POST['id_val'] ?? '';
 
-    $allowedTabel = ['murid', 'guru', 'penjual', 'toko', 'menu', 'admin'];
-    $allowedCol = ['nisn', 'nuptk', 'id_penjual', 'id_toko', 'id_menu', 'id_admin'];
+    $allowedTabel = ['murid', 'guru', 'penjual', 'toko', 'menu', 'admin', 'kelas'];
+    $allowedCol = ['nisn', 'nuptk', 'id_penjual', 'id_toko', 'id_menu', 'id_admin', 'id_kelas'];
 
     if (in_array($tabel, $allowedTabel) && in_array($id_col, $allowedCol) && $id_val !== '') {
         $id = mysqli_real_escape_string($conn, $id_val);
-        mysqli_query($conn, "UPDATE `$tabel` SET deleted_at = NULL WHERE `$id_col` = '$id'");
+        $allowExecute = true;
 
-        if ($tabel === 'toko') {
-            mysqli_query($conn, "UPDATE menu SET deleted_at = NULL WHERE id_toko = '$id'");
-            catatLog($conn, 'Restore Kantin Bertingkat', "Toko ID $id + seluruh menu dipulihkan");
-        } else {
-            catatLog($conn, 'Restore Data', "Restore $tabel dengan $id_col: $id");
+        // --- VALIDASI SEBELUM RESTORE ---
+        if ($tabel === 'murid') {
+            $m_data = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id_kelas, id_jurusan FROM murid WHERE nisn = '$id'"));
+            if ($m_data) {
+                $id_k = (int) $m_data['id_kelas'];
+                $id_j = (int) $m_data['id_jurusan'];
+
+                // 1. Cek apakah Jurusan ada di database
+                $j_exists = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama_jurusan FROM jurusan WHERE id_jurusan = $id_j"));
+                if (!$j_exists) {
+                    $feedback = ['type' => 'error', 'msg' => 'Gagal memulihkan murid: Jurusan asal tidak ditemukan di database. Silakan buat jurusan tersebut terlebih dahulu.'];
+                    $allowExecute = false;
+                } else {
+                    // 2. Cek apakah Kelas ada dan aktif (tidak di-softdelete)
+                    $k_data = mysqli_fetch_assoc(mysqli_query($conn, "SELECT kelas, rombel, deleted_at FROM kelas WHERE id_kelas = $id_k"));
+                    if (!$k_data) {
+                        $feedback = ['type' => 'error', 'msg' => 'Gagal memulihkan murid: Kelas asal tidak ditemukan di database.'];
+                        $allowExecute = false;
+                    } elseif ($k_data['deleted_at'] !== null) {
+                        $nama_kelas_err = $k_data['kelas'] . ' ' . $j_exists['nama_jurusan'] . ' ' . $k_data['rombel'];
+                        $feedback = ['type' => 'error', 'msg' => "Gagal memulihkan murid: Kelas asal (<strong>$nama_kelas_err</strong>) sedang terhapus (soft-delete). Silakan pulihkan kelas tersebut terlebih dahulu."];
+                        $allowExecute = false;
+                    }
+                }
+            }
+        } elseif ($tabel === 'kelas') {
+            $k_data = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id_jurusan FROM kelas WHERE id_kelas = '$id'"));
+            if ($k_data) {
+                $id_j = (int) $k_data['id_jurusan'];
+                // Cek apakah Jurusan ada di database
+                $j_exists = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama_jurusan FROM jurusan WHERE id_jurusan = $id_j"));
+                if (!$j_exists) {
+                    $feedback = ['type' => 'error', 'msg' => 'Gagal memulihkan kelas: Jurusan asal tidak ditemukan di database. Silakan buat jurusan tersebut terlebih dahulu.'];
+                    $allowExecute = false;
+                }
+            }
         }
 
-        $feedback = ['type' => 'success', 'msg' => 'Data berhasil dipulihkan.'];
+        if ($allowExecute) {
+            mysqli_query($conn, "UPDATE `$tabel` SET deleted_at = NULL WHERE `$id_col` = '$id'");
+
+            if ($tabel === 'toko') {
+                mysqli_query($conn, "UPDATE menu SET deleted_at = NULL WHERE id_toko = '$id'");
+                catatLog($conn, 'Restore Kantin Bertingkat', "Toko ID $id + seluruh menu dipulihkan");
+            } elseif ($tabel === 'kelas') {
+                catatLog($conn, 'Restore Kelas', "Restore kelas ID $id");
+            } else {
+                catatLog($conn, 'Restore Data', "Restore $tabel dengan $id_col: $id");
+            }
+
+            $feedback = ['type' => 'success', 'msg' => 'Data berhasil dipulihkan.'];
+        }
     } else {
         $feedback = ['type' => 'error', 'msg' => 'Request tidak valid.'];
     }
@@ -323,8 +368,8 @@ if ($action === 'tools_permanent_delete') {
     $id_col = $_POST['id_col'] ?? '';
     $id_val = $_POST['id_val'] ?? '';
 
-    $allowedTabel = ['murid', 'guru', 'penjual', 'toko', 'menu', 'admin'];
-    $allowedCol = ['nisn', 'nuptk', 'id_penjual', 'id_toko', 'id_menu', 'id_admin'];
+    $allowedTabel = ['murid', 'guru', 'penjual', 'toko', 'menu', 'admin', 'kelas'];
+    $allowedCol = ['nisn', 'nuptk', 'id_penjual', 'id_toko', 'id_menu', 'id_admin', 'id_kelas'];
 
     if (in_array($tabel, $allowedTabel) && in_array($id_col, $allowedCol) && $id_val !== '') {
         $id = mysqli_real_escape_string($conn, $id_val);
@@ -337,6 +382,10 @@ if ($action === 'tools_permanent_delete') {
         }
         if ($tabel === 'penjual') {
             mysqli_query($conn, "DELETE FROM toko_penjual WHERE id_penjual = '$id'");
+        }
+        if ($tabel === 'kelas') {
+            // Hapus murid di kelas tersebut terlebih dahulu secara permanen agar FK terpenuhi
+            mysqli_query($conn, "DELETE FROM murid WHERE id_kelas = '$id'");
         }
 
         mysqli_query($conn, "DELETE FROM `$tabel` WHERE `$id_col` = '$id'");
