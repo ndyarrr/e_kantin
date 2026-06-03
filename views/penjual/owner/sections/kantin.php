@@ -393,7 +393,8 @@ $isLatarLimit = ($jumlahLatar >= 5);
 
                 <!-- Existing background photos grid with reordering -->
                 <div style="flex: 1.2; min-width: 320px;">
-                    <label style="font-weight: bold; margin-bottom: 12px; display: block; font-size: 14px;"><i class="fa-solid fa-list-ol"></i> Daftar & Urutan Slideshow (Drag untuk Reorder)</label>
+                    <label style="font-weight: bold; margin-bottom: 12px; display: block; font-size: 14px;"><i class="fa-solid fa-list-ol"></i> Daftar & Urutan Slideshow</label>
+                    <p style="font-size: 12px; color: #64748b; margin: -6px 0 12px 0;">Seret ikon <i class="fa-solid fa-grip-vertical"></i> atau pakai tombol <i class="fa-solid fa-chevron-up"></i>/<i class="fa-solid fa-chevron-down"></i> untuk mengubah urutan.</p>
                     
                     <div class="latar-grid" id="latarListGrid" style="display: flex; flex-direction: column; gap: 12px;">
                         <?php if (!$queryLatar || mysqli_num_rows($queryLatar) == 0): ?>
@@ -405,9 +406,17 @@ $isLatarLimit = ($jumlahLatar >= 5);
                             <?php while ($row = mysqli_fetch_assoc($queryLatar)): 
                                 $latarCanvasData = bannerCanvasDataAttrs($row['canvas_config'] ?? '');
                             ?>
-                                <div class="latar-item-row" data-id="<?= $row['id'] ?>" style="display: flex; align-items: center; gap: 15px; background: #ffffff; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); cursor: grab; position: relative;" draggable="true">
-                                    <div class="latar-handle" style="color: #94a3b8; font-size: 18px; padding: 0 5px; cursor: grab;">
-                                        <i class="fa-solid fa-grip-vertical"></i>
+                                <div class="latar-item-row" data-id="<?= $row['id'] ?>" style="display: flex; align-items: center; gap: 15px; background: #ffffff; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); position: relative;">
+                                    <div class="latar-reorder-actions" style="display: flex; flex-direction: column; gap: 2px;">
+                                        <button type="button" class="btn-latar-move" data-dir="up" title="Naikkan urutan" aria-label="Naikkan urutan">
+                                            <i class="fa-solid fa-chevron-up"></i>
+                                        </button>
+                                        <div class="latar-handle" draggable="true" title="Seret untuk mengubah urutan" style="color: #94a3b8; font-size: 18px; padding: 0 5px; cursor: grab;">
+                                            <i class="fa-solid fa-grip-vertical"></i>
+                                        </div>
+                                        <button type="button" class="btn-latar-move" data-dir="down" title="Turunkan urutan" aria-label="Turunkan urutan">
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </button>
                                     </div>
                                     <div class="latar-order-badge" style="width: 24px; height: 24px; border-radius: 50%; background: #e8f5e9; color: #2e7d32; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">
                                         <?= (int)$row['urutan'] + 1 ?>
@@ -417,6 +426,7 @@ $isLatarLimit = ($jumlahLatar >= 5);
                                         <img src="../../../assets/img/latar_belakang/<?= htmlspecialchars($row['gambar']) ?>?v=<?= time() ?>" 
                                              class="banner-thumbnail"
                                              alt="Foto Latar"
+                                             draggable="false"
                                              style="display: block;"
                                              onerror="this.onerror=null; this.src='../../../assets/img/promo_banner.png';">
                                     </div>
@@ -1172,73 +1182,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // -------------------------------------------------------------
-    // 4. DRAG AND DROP FOR BACKGROUND PHOTOS REORDERING
+    // 4. URUTAN SLIDESHOW (drag handle + tombol naik/turun, kompatibel Firefox/Chrome)
     // -------------------------------------------------------------
     const latarListGrid = document.getElementById('latarListGrid');
     if (latarListGrid) {
-        const rows = latarListGrid.querySelectorAll('.latar-item-row');
-        let dragSrcEl = null;
+        let dragSrcRow = null;
 
-        rows.forEach(function(row) {
-            row.addEventListener('dragstart', function(e) {
-                dragSrcEl = this;
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/html', this.innerHTML);
-                this.style.opacity = '0.4';
-                this.classList.add('dragging');
+        function getLatarRows() {
+            return Array.from(latarListGrid.querySelectorAll('.latar-item-row'));
+        }
+
+        function clearLatarDragState() {
+            getLatarRows().forEach(function(r) {
+                r.classList.remove('dragging', 'over');
+                r.style.opacity = '';
             });
-
-            row.addEventListener('dragover', function(e) {
-                if (e.preventDefault) {
-                    e.preventDefault();
-                }
-                e.dataTransfer.dropEffect = 'move';
-                return false;
-            });
-
-            row.addEventListener('dragenter', function(e) {
-                this.classList.add('over');
-            });
-
-            row.addEventListener('dragleave', function(e) {
-                this.classList.remove('over');
-            });
-
-            row.addEventListener('drop', function(e) {
-                if (e.stopPropagation) {
-                    e.stopPropagation();
-                }
-
-                if (dragSrcEl !== this) {
-                    const allItems = Array.from(latarListGrid.querySelectorAll('.latar-item-row'));
-                    const srcIndex = allItems.indexOf(dragSrcEl);
-                    const targetIndex = allItems.indexOf(this);
-
-                    if (srcIndex < targetIndex) {
-                        latarListGrid.insertBefore(dragSrcEl, this.nextSibling);
-                    } else {
-                        latarListGrid.insertBefore(dragSrcEl, this);
-                    }
-
-                    saveNewLatarOrder();
-                }
-                return false;
-            });
-
-            row.addEventListener('dragend', function() {
-                this.style.opacity = '1';
-                this.classList.remove('dragging');
-                rows.forEach(function(r) {
-                    r.classList.remove('over');
-                });
-            });
-        });
+            dragSrcRow = null;
+        }
 
         function saveNewLatarOrder() {
-            const allItems = Array.from(latarListGrid.querySelectorAll('.latar-item-row'));
-            const ids = allItems.map(item => item.getAttribute('data-id'));
-            
-            allItems.forEach((item, idx) => {
+            const allItems = getLatarRows();
+            const ids = allItems.map(function(item) { return item.getAttribute('data-id'); });
+
+            allItems.forEach(function(item, idx) {
                 const badge = item.querySelector('.latar-order-badge');
                 if (badge) badge.textContent = idx + 1;
             });
@@ -1252,19 +1218,102 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 body: formData
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('Order updated successfully');
-                } else {
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (!data.success) {
                     alert('Gagal memperbarui urutan: ' + (data.message || 'unknown'));
                 }
             })
-            .catch(err => {
+            .catch(function(err) {
                 console.error('Error updating order:', err);
                 alert('Koneksi terputus saat memperbarui urutan.');
             });
         }
+
+        function moveLatarRow(row, direction) {
+            const sibling = direction === 'up' ? row.previousElementSibling : row.nextElementSibling;
+            if (!sibling || !sibling.classList.contains('latar-item-row')) return;
+            if (direction === 'up') {
+                latarListGrid.insertBefore(row, sibling);
+            } else {
+                latarListGrid.insertBefore(sibling, row);
+            }
+            saveNewLatarOrder();
+        }
+
+        function reorderLatarRows(srcRow, targetRow) {
+            if (!srcRow || !targetRow || srcRow === targetRow) return;
+            const allItems = getLatarRows();
+            const srcIndex = allItems.indexOf(srcRow);
+            const targetIndex = allItems.indexOf(targetRow);
+            if (srcIndex < 0 || targetIndex < 0) return;
+
+            if (srcIndex < targetIndex) {
+                latarListGrid.insertBefore(srcRow, targetRow.nextSibling);
+            } else {
+                latarListGrid.insertBefore(srcRow, targetRow);
+            }
+            saveNewLatarOrder();
+        }
+
+        function bindLatarRow(row) {
+            const handle = row.querySelector('.latar-handle');
+            if (handle) {
+                handle.addEventListener('dragstart', function(e) {
+                    dragSrcRow = row;
+                    e.dataTransfer.effectAllowed = 'move';
+                    // Firefox wajib setData (text/plain); hindari drag gambar native
+                    e.dataTransfer.setData('text/plain', row.getAttribute('data-id') || '');
+                    row.classList.add('dragging');
+                    row.style.opacity = '0.55';
+                });
+            }
+
+            row.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+
+            row.addEventListener('dragenter', function(e) {
+                e.preventDefault();
+                if (dragSrcRow && dragSrcRow !== row) {
+                    row.classList.add('over');
+                }
+            });
+
+            row.addEventListener('dragleave', function() {
+                row.classList.remove('over');
+            });
+
+            row.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                row.classList.remove('over');
+                if (dragSrcRow && dragSrcRow !== row) {
+                    reorderLatarRows(dragSrcRow, row);
+                }
+                clearLatarDragState();
+            });
+
+            row.addEventListener('dragend', function() {
+                clearLatarDragState();
+            });
+
+            row.querySelectorAll('.btn-latar-move').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    moveLatarRow(row, btn.getAttribute('data-dir'));
+                });
+            });
+        }
+
+        latarListGrid.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        });
+
+        getLatarRows().forEach(bindLatarRow);
     }
 });
 </script>

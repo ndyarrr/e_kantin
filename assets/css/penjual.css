@@ -1976,12 +1976,23 @@ tbody tr:hover {
 
 
 
-    /* Override: foto profil di chat jangan ikut aturan di atas */
-    .chat-avatar img {
+    /* Override: foto profil di chat & daftar staf jangan ikut aturan menu di atas */
+    .chat-avatar img,
+    .staf-avatar-circle img {
         width: 100% !important;
         height: 100% !important;
         max-height: unset !important;
         object-fit: cover !important;
+        border-radius: 50% !important;
+    }
+
+    .staf-avatar-circle {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        flex-shrink: 0 !important;
+        aspect-ratio: 1 / 1 !important;
     }
 
     /* 4. Sesuaikan ukuran teks informasi menu di HP */
@@ -2818,6 +2829,10 @@ aside img {
 .staf-avatar-circle {
     width: 36px;
     height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    flex-shrink: 0;
+    aspect-ratio: 1 / 1;
     border-radius: 50%;
     background: #e2e8f0;
     color: #475569;
@@ -2833,6 +2848,8 @@ aside img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
+    display: block;
 }
 
 .staf-cell-name {
@@ -4615,7 +4632,7 @@ select.form-staf-control {
 }
 
 .latar-item-row.dragging {
-    opacity: 0.4;
+    opacity: 0.55;
     border-color: #27ae60 !important;
     background: #f0fdf4 !important;
     box-shadow: 0 4px 10px rgba(39, 174, 96, 0.15);
@@ -4626,8 +4643,49 @@ select.form-staf-control {
     margin-top: -2px;
 }
 
+.latar-handle {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 .latar-handle:hover {
     color: #27ae60 !important;
+}
+
+.latar-item-row img,
+.latar-item-row button,
+.latar-item-row form {
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+.btn-latar-move {
+    width: 26px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    background: #f8fafc;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 10px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-latar-move:hover {
+    background: #e8f5e9;
+    border-color: #a5d6a7;
+    color: #2e7d32;
+}
+
+.btn-latar-move:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
 }
 
 .latar-grid {

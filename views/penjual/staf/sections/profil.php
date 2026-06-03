@@ -19,9 +19,8 @@ if (!isset($profilPenjual['role']) || !in_array(strtolower($profilPenjual['role'
     <div class="profil-avatar-card">
         <div class="profil-avatar-big" id="previewWrap">
             <?php if (!empty($profilPenjual['foto_profil'])): ?>
-                <img id="previewImg"
-                     src="../../../assets/img/penjual/<?= htmlspecialchars($profilPenjual['foto_profil']) ?>?v=<?= time() ?>"
-                     style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                <img id="previewImg" class="avatar-img-render"
+                     src="../../../assets/img/penjual/<?= htmlspecialchars($profilPenjual['foto_profil']) ?>?v=<?= time() ?>">
             <?php else: ?>
                 <span id="previewInisial"><?= strtoupper(substr($penjualNama, 0, 1)) ?></span>
             <?php endif; ?>
@@ -144,7 +143,7 @@ function previewFoto(input) {
     const reader = new FileReader();
     reader.onload = e => {
         const wrap = document.getElementById('previewWrap');
-        wrap.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        wrap.innerHTML = `<img class="avatar-img-render" src="${e.target.result}" alt="Preview foto profil">`;
     };
     reader.readAsDataURL(input.files[0]);
     
