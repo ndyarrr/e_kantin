@@ -113,7 +113,7 @@ include __DIR__ . '/keuangan_data.php';
                             </td>
                             <td>
                                 <span class="<?= $classWarna ?>" style="text-transform: uppercase; font-size: 11px; background: <?= $isPemasukan ? '#e6f4ea':'#fce8e6' ?>; padding: 4px 8px; border-radius:4px; display:inline-block;">
-                                    <?= $isPemasukan ? '🟢 Pemasukan' : '🔴 Pengeluaran' ?>
+                                    <?= $isPemasukan ? 'Pemasukan' : 'Pengeluaran' ?>
                                 </span>
                             </td>
                             <td><?= htmlspecialchars($row['keterangan']) ?></td>

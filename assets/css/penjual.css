@@ -4384,7 +4384,7 @@ select.form-staf-control {
     background: #fff;
     border: 1px solid #eef2f5;
     border-radius: 12px;
-    overflow: hidden;
+    overflow-x: auto;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
 }
 

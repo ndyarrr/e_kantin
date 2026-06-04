@@ -242,7 +242,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                         <?php endif; ?>
                         <div class="toko-details">
                             <h1><?= htmlspecialchars($toko['nama_toko']); ?></h1>
-                            <p class="toko-desc"><?= htmlspecialchars($toko['deskripsi'] ?? 'Makanan, Snack, & Minuman'); ?>
+                            <p class="toko-desc"><?= htmlspecialchars($toko['deskripsi'] ?? 'Belum ada deskripsi.'); ?>
                             </p>
                             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                                 <span class="toko-status-badge <?= $is_buka ? 'buka' : 'tutup'; ?>">

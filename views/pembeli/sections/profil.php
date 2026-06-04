@@ -53,7 +53,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                 
                 <div class="profil-role-badge">
                     <i class="fa-solid fa-circle-check"></i>
-                    <?= $user_role === 'siswa' ? 'Siswa' : 'Guru / Staf' ?>
+                    <?= $user_role === 'siswa' ? 'Siswa' : 'Guru' ?>
                 </div>
 
                 <div class="profil-meta-info">
