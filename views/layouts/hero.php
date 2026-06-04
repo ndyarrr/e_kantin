@@ -4,7 +4,6 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
     "SELECT m.id_menu, m.nama_menu, m.deskripsi, m.harga, m.foto_menu, t.nama_toko, t.id_toko
     FROM menu m
     JOIN toko t ON t.id_toko = m.id_toko
-    WHERE m.tersedia = 1 AND t.status = 'buka'
     ORDER BY m.nama_menu ASC"
 ), MYSQLI_ASSOC);
 ?>
