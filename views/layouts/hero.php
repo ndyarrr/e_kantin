@@ -1,9 +1,10 @@
 <?php
 $semuaMenu = mysqli_fetch_all(mysqli_query(
     $conn,
-    "SELECT m.id_menu, m.nama_menu, m.deskripsi, m.harga, m.foto_menu, t.nama_toko, t.id_toko, m.is_fleksibel
+    "SELECT m.id_menu, m.nama_menu, m.deskripsi, m.harga, m.foto_menu, t.nama_toko, t.id_toko, m.deleted_at, m.is_fleksibel
     FROM menu m
     JOIN toko t ON t.id_toko = m.id_toko
+    WHERE m.deleted_at IS NULL
     ORDER BY m.nama_menu ASC"
 ), MYSQLI_ASSOC);
 ?>

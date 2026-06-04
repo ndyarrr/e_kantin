@@ -212,7 +212,7 @@
 <?php
 // Ambil data statistik dinamis dari Database
 $statKantin = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE deleted_at IS NULL"))['c'];
-$statMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM menu m JOIN toko t ON m.id_toko = t.id_toko WHERE m.tersedia=1 AND m.deleted_at IS NULL AND t.deleted_at IS NULL"))['c'];
+$statMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM menu m JOIN toko t ON m.id_toko = t.id_toko WHERE m.deleted_at IS NULL AND t.deleted_at IS NULL"))['c'];
 ?>
 
 <div class="ab-hero">
