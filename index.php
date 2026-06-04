@@ -268,10 +268,13 @@
                 let htmlMenu = '';
                 if (data.menus && data.menus.length > 0) {
                     data.menus.forEach(m => {
+                        const hargaHtml = parseInt(m.is_fleksibel) === 1 
+                            ? `<span style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 2px 6px; border-radius: 6px; font-weight: 750; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Harga Fleksibel</span>`
+                            : `Rp ${parseInt(m.harga).toLocaleString('id-ID')}`;
                         htmlMenu += `
                 <div class="menu-item-modal">
                     <div class="menu-item-nama">${m.nama_menu}</div>
-                    <div class="menu-item-harga">Rp ${parseInt(m.harga).toLocaleString('id-ID')}</div>
+                    <div class="menu-item-harga">${hargaHtml}</div>
                 </div>`;
                     });
                 } else {
@@ -306,7 +309,11 @@
 
             document.getElementById('modalMenuNama').textContent = menu.nama_menu;
             document.getElementById('modalMenuKantinBadge').textContent = menu.nama_toko;
-            document.getElementById('modalMenuHarga').textContent = 'Rp ' + parseInt(menu.harga).toLocaleString('id-ID');
+            if (parseInt(menu.is_fleksibel) === 1) {
+                document.getElementById('modalMenuHarga').innerHTML = `<span style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 4px 10px; border-radius: 6px; font-weight: 750; font-size: 14px; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Harga Fleksibel</span>`;
+            } else {
+                document.getElementById('modalMenuHarga').textContent = 'Rp ' + parseInt(menu.harga).toLocaleString('id-ID');
+            }
             document.getElementById('modalMenuDesc').textContent = menu.deskripsi || 'Tidak ada deskripsi untuk menu ini.';
 
             // Render photo or fallback

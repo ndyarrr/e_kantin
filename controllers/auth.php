@@ -42,6 +42,8 @@ function login()
 
                 if (!$user)
                     return "NISN tidak ditemukan.";
+                if ($user['status'] !== 'aktif')
+                    return "akun dinonaktifkan";
                 if ($user['password'] !== md5($pass))
                     return "Password salah.";
 
@@ -75,6 +77,8 @@ function login()
                 if (!$user) {
                     return ctype_digit($identifier) ? "NUPTK tidak ditemukan." : "Nama Guru tidak ditemukan.";
                 }
+                if ($user['status'] !== 'aktif')
+                    return "akun dinonaktifkan";
                 if ($user['password'] !== md5($pass))
                     return "Password salah.";
 
@@ -109,11 +113,10 @@ function login()
 
             $u = mysqli_real_escape_string($conn, $username);
 
-            // 1. CARI USER BERDASARKAN USERNAME, STATUS AKTIF, DAN ROLE (OWNER/STAF)
+            // 1. CARI USER BERDASARKAN USERNAME DAN ROLE (OWNER/STAF)
             $res = mysqli_query($conn, "
                 SELECT * FROM penjual 
                 WHERE username = '$u' 
-                  AND status = 'aktif' 
                   AND role = '$tipe_penjual' 
                 LIMIT 1
             ");
@@ -121,6 +124,8 @@ function login()
 
             if (!$user)
                 return "Username atau sub-role tidak cocok.";
+            if ($user['status'] !== 'aktif')
+                return "akun dinonaktifkan";
             if ($user['password'] !== md5($pass))
                 return "Password salah.";
 
@@ -178,13 +183,15 @@ function login()
             $k = mysqli_real_escape_string($conn, $kode);
             $res = mysqli_query($conn, "
                 SELECT * FROM admin
-                WHERE nama = '$u' AND kode_aktivasi = '$k' AND status = 'aktif'
+                WHERE nama = '$u' AND kode_aktivasi = '$k'
                 LIMIT 1
             ");
             $user = mysqli_fetch_assoc($res);
 
             if (!$user)
                 return "Username atau kode aktivasi tidak sesuai.";
+            if ($user['status'] !== 'aktif')
+                return "akun dinonaktifkan";
             if ($user['password'] !== md5($pass))
                 return "Password salah.";
 

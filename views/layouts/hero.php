@@ -1,7 +1,7 @@
 <?php
 $semuaMenu = mysqli_fetch_all(mysqli_query(
     $conn,
-    "SELECT m.id_menu, m.nama_menu, m.deskripsi, m.harga, m.foto_menu, t.nama_toko, t.id_toko
+    "SELECT m.id_menu, m.nama_menu, m.deskripsi, m.harga, m.foto_menu, t.nama_toko, t.id_toko, m.is_fleksibel
     FROM menu m
     JOIN toko t ON t.id_toko = m.id_toko
     ORDER BY m.nama_menu ASC"
@@ -267,7 +267,12 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
         
                         <div style="padding: 10px 12px 12px; width: 100%; box-sizing: border-box;">
                             <div class="search-item-nama">${m.nama_menu}</div>
-                            <div style="font-size: 12px; color: #555; font-family: Poppins, sans-serif; margin: 2px 0 6px;">Rp ${parseInt(m.harga).toLocaleString('id-ID')}</div>
+                            <div style="font-size: 12px; color: #555; font-family: Poppins, sans-serif; margin: 2px 0 6px;">
+                                ${parseInt(m.is_fleksibel) === 1 
+                                    ? `<span style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 2px 6px; border-radius: 6px; font-weight: 750; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Harga Fleksibel</span>` 
+                                    : 'Rp ' + parseInt(m.harga).toLocaleString('id-ID')
+                                }
+                            </div>
                             <span style="background: #e8f5e9; color: #79b775; font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 20px; font-family: Poppins, sans-serif;">
                                 ${m.nama_toko}
                             </span>

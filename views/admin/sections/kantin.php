@@ -304,8 +304,14 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                                     <td class="col-hide toko-desc">
                                         <?= htmlspecialchars($m['deskripsi'] ?? '-') ?>
                                     </td>
-                                    <td style="font-weight:600;">Rp
-                                        <?= number_format($m['harga'], 0, ',', '.') ?>
+                                    <td style="font-weight:600;">
+                                        <?php if (isset($m['is_fleksibel']) && $m['is_fleksibel'] == 1): ?>
+                                            <span style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 4px 8px; border-radius: 6px; font-weight: 750; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="fa-solid fa-arrows-left-right-to-line"></i> Harga Fleksibel
+                                            </span>
+                                        <?php else: ?>
+                                            Rp <?= number_format($m['harga'], 0, ',', '.') ?>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="center">
                                         <?= $m['stok'] ?>
