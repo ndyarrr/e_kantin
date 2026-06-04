@@ -786,7 +786,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     <div class="form-group" style="margin-bottom: 16px;">
                         <div style="position: relative; display: flex; align-items: center;">
                             <span style="position: absolute; left: 16px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 700; color: #64748b;">Rp</span>
-                            <input type="number" id="detailFlexPriceInput" placeholder="Masukkan harga..." min="1000" oninput="updateDetailFlexPriceFromInput(this)" style="
+                            <input type="number" id="detailFlexPriceInput" placeholder="Masukkan harga..." min="1000" max="50000" step="500" oninput="updateDetailFlexPriceFromInput(this)" style="
                                 width: 100%;
                                 padding: 14px 16px 14px 44px;
                                 border: 2px solid #cbd5e1;
@@ -992,10 +992,15 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             const errDiv = document.getElementById('detailPriceValidationError');
             if (errDiv) errDiv.style.display = 'none';
             
-            if (price >= 1000) {
+            if (price >= 1000 && price <= 50000 && price % 500 === 0) {
                 input.style.borderColor = '#16a34a';
-            } else {
-                input.style.borderColor = '#cbd5e1';
+            } else if (price > 50000) {
+                input.style.borderColor = '#ef4444';
+                const errDiv = document.getElementById('detailPriceValidationError');
+                if (errDiv) {
+                    errDiv.textContent = 'Maksimal harga Rp 50.000';
+                    errDiv.style.display = 'block';
+                }
             }
             
             updateDetailTotalText();
@@ -1085,7 +1090,36 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 const price = activeDetailPrice;
                 if (price < 1000) {
                     const errDiv = document.getElementById('detailPriceValidationError');
-                    if (errDiv) errDiv.style.display = 'block';
+                    if (errDiv) {
+                        errDiv.textContent = 'Minimal harga pembelian Rp 1.000';
+                        errDiv.style.display = 'block';
+                    }
+                    const input = document.getElementById('detailFlexPriceInput');
+                    if (input) {
+                        input.style.borderColor = '#ef4444';
+                        input.focus();
+                    }
+                    return;
+                }
+                if (price > 50000) {
+                    const errDiv = document.getElementById('detailPriceValidationError');
+                    if (errDiv) {
+                        errDiv.textContent = 'Maksimal harga Rp 50.000';
+                        errDiv.style.display = 'block';
+                    }
+                    const input = document.getElementById('detailFlexPriceInput');
+                    if (input) {
+                        input.style.borderColor = '#ef4444';
+                        input.focus();
+                    }
+                    return;
+                }
+                if (price % 500 !== 0) {
+                    const errDiv = document.getElementById('detailPriceValidationError');
+                    if (errDiv) {
+                        errDiv.textContent = 'Harga harus kelipatan Rp 500 (contoh: 1.000, 1.500)';
+                        errDiv.style.display = 'block';
+                    }
                     const input = document.getElementById('detailFlexPriceInput');
                     if (input) {
                         input.style.borderColor = '#ef4444';

@@ -142,17 +142,15 @@
                     </div>
                     <div class="form-note">Password akan di-hash untuk keamanan tambahan.</div>
                 </div>
-                <div style="margin-bottom:14px">
-                    <label
-                        style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Kode
-                        Aktivasi (otomatis)</label>
-                    <div class="kode-preview">
-                        <span id="kodePreview">—</span>
-                        <button type="button" class="btn-regen" onclick="regenKode()" title="Generate ulang"><i
-                                class="fa-solid fa-rotate"></i></button>
+                <div class="form-group" style="margin-bottom:14px">
+                    <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Kode Aktivasi</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" name="kode_aktivasi" id="inputKode" placeholder="Masukkan kode aktivasi (cth. EKXXXXXX)" required autocomplete="off" style="flex:1;">
+                        <button type="button" onclick="generateAutoKode()" style="background:#79b775; border:none; border-radius:10px; color:#fff; font-size:12px; font-weight:700; padding:10px 16px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s; font-family:'Poppins',sans-serif;" onmouseover="this.style.background='#65a561'" onmouseout="this.style.background='#79b775'">
+                            <i class="fa-solid fa-rotate"></i> Acak
+                        </button>
                     </div>
-                    <input type="hidden" name="kode_aktivasi" id="kodeHidden">
-                    <div class="form-note">Dibutuhkan admin saat login.</div>
+                    <div class="form-note">Dibutuhkan admin saat login. Bisa diisi kustom atau klik tombol Acak.</div>
                 </div>
                 <button type="submit" class="btn-submit"><i class="fa-solid fa-floppy-disk"
                         style="margin-right:6px"></i>Simpan Akun</button>

@@ -170,20 +170,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $nama = trim($_POST['nama'] ?? '');
         $pass = trim($_POST['password'] ?? '');
-        $kode = generateKodeAktivasi();
-        if ($nama === '' || $pass === '') {
-            $feedback = ['type' => 'error', 'msg' => 'Nama dan password wajib diisi.'];
+        $kode = trim($_POST['kode_aktivasi'] ?? '');
+        if ($kode === '') {
+            $kode = generateKodeAktivasi();
+        }
+
+        if ($nama === '' || $pass === '' || $kode === '') {
+            $feedback = ['type' => 'error', 'msg' => 'Nama, password, dan kode aktivasi wajib diisi.'];
         } else {
             $n = mysqli_real_escape_string($conn, $nama);
             $h = md5($pass);
             $k = mysqli_real_escape_string($conn, $kode);
 
-            // Kolom role_level dipaksa bernilai 2 (Admin Biasa)
-            if (mysqli_query($conn, "INSERT INTO admin (nama, password, role_level, kode_aktivasi) VALUES ('$n', '$h', 2, '$k')")) {
-                catatLog($conn, 'Tambah Admin', 'Menambahkan admin baru bernama: ' . $nama);
-                $feedback = ['type' => 'success', 'msg' => "Admin <strong>" . htmlspecialchars($nama) . "</strong> ditambahkan.", "extra" => "Kode Aktivasi: <code>$kode</code>"];
+            // Cek apakah kode aktivasi sudah pernah dipakai
+            $cek_kode = mysqli_query($conn, "SELECT id_admin FROM admin WHERE kode_aktivasi = '$k' AND deleted_at IS NULL LIMIT 1");
+            if (mysqli_num_rows($cek_kode) > 0) {
+                $feedback = ['type' => 'error', 'msg' => 'Kode aktivasi sudah digunakan oleh administrator lain!'];
             } else {
-                $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan admin.'];
+                // Kolom role_level dipaksa bernilai 2 (Admin Biasa)
+                if (mysqli_query($conn, "INSERT INTO admin (nama, password, role_level, kode_aktivasi) VALUES ('$n', '$h', 2, '$k')")) {
+                    catatLog($conn, 'Tambah Admin', 'Menambahkan admin baru bernama: ' . $nama);
+                    $feedback = ['type' => 'success', 'msg' => "Admin <strong>" . htmlspecialchars($nama) . "</strong> ditambahkan.", "extra" => "Kode Aktivasi: <code>$kode</code>"];
+                } else {
+                    $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan admin.'];
+                }
             }
         }
     }
@@ -767,6 +777,11 @@ require __DIR__ . '/sections/tools_data.php';
 
         // Jalankan switch otomatis ke halaman terakhir yang dibuka
         switchSection(initSection);
+
+        // Auto-generate activation code on load
+        if (typeof generateAutoKode === 'function') {
+            generateAutoKode();
+        }
     });
 
     // MODIFIKASI: Filter redirect toko agar tidak mengganggu section chat
@@ -825,6 +840,11 @@ require __DIR__ . '/sections/tools_data.php';
         const hidden = document.getElementById('kodeHidden');
         if (preview) preview.textContent = k;
         if (hidden) hidden.value = k;
+    }
+    function generateAutoKode() {
+        const k = randomKode();
+        const inp = document.getElementById('inputKode');
+        if (inp) inp.value = k;
     }
 
     /* ── toggle password (sidebar/tabel bawaan) ── */

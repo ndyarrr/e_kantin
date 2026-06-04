@@ -211,8 +211,8 @@
 
 <?php
 // Ambil data statistik dinamis dari Database
-$statKantin = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko"))['c'];
-$statMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM menu WHERE tersedia=1 AND deleted_at IS NULL"))['c'];
+$statKantin = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE deleted_at IS NULL"))['c'];
+$statMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM menu m JOIN toko t ON m.id_toko = t.id_toko WHERE m.tersedia=1 AND m.deleted_at IS NULL AND t.deleted_at IS NULL"))['c'];
 ?>
 
 <div class="ab-hero">
@@ -220,11 +220,11 @@ $statMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c F
     <p>Platform digital pemesanan kantin sekolah yang memudahkan siswa memesan makanan tanpa antri panjang. Dibuat oleh tim ERROR 404.</p>
     <div class="ab-stats">
         <div class="ab-stat">
-            <div class="ab-stat-num"><?= $statKantin ?>+</div>
+            <div class="ab-stat-num"><?= $statKantin ?></div>
             <div class="ab-stat-label">Kantin</div>
         </div>
         <div class="ab-stat">
-            <div class="ab-stat-num"><?= $statMenu ?>+</div>
+            <div class="ab-stat-num"><?= $statMenu ?></div>
             <div class="ab-stat-label">Menu</div>
         </div>
         <div class="ab-stat">
