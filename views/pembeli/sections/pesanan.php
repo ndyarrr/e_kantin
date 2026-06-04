@@ -440,7 +440,10 @@ function openPesananQrisModal(namaToko, qrisImage, idPesanan, existingBukti) {
     }
 
     card.innerHTML = `
-        <div style="overflow-y:auto; flex:1; padding-right:2px;">
+        <div style="overflow-y:auto; flex:1; padding-right:2px; position:relative;">
+            <button id="btnPesananQrisX" style="position:absolute;top:0;right:0;width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;z-index:1;" onmouseover="this.style.background='#fee2e2';this.style.color='#ef4444';" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b';">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
             <div style="font-size:26px;color:#16a34a;margin-bottom:10px;">
                 <i class="fa-solid fa-qrcode"></i>
             </div>
@@ -608,6 +611,7 @@ function openPesananQrisModal(namaToko, qrisImage, idPesanan, existingBukti) {
     });
 
     card.querySelector('#btnPesananQrisClose').addEventListener('click', closeModal);
+    card.querySelector('#btnPesananQrisX').addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 }
 

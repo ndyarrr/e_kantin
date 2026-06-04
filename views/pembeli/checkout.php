@@ -97,8 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $id_menu = (int) $item['id_menu'];
                 $jumlah = (int) $item['jumlah'];
                 
-                // Validasi ketersediaan stok
-                $cek_stok = mysqli_query($conn, "SELECT nama_menu, stok, tersedia FROM menu WHERE id_menu = $id_menu AND deleted_at IS NULL LIMIT 1");
+                // Validasi ketersediaan stok & harga fleksibel
+                $cek_stok = mysqli_query($conn, "SELECT nama_menu, stok, tersedia, is_fleksibel FROM menu WHERE id_menu = $id_menu AND deleted_at IS NULL LIMIT 1");
                 if (mysqli_num_rows($cek_stok) > 0) {
                     $r_menu = mysqli_fetch_assoc($cek_stok);
                     if (!$r_menu['tersedia']) {
@@ -107,11 +107,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     if ($jumlah > $r_menu['stok']) {
                         throw new Exception("Stok '" . $r_menu['nama_menu'] . "' tidak mencukupi (Tersedia: " . $r_menu['stok'] . ", Diminta: " . $jumlah . ").");
                     }
+                    
+                    $is_fleksibel = isset($r_menu['is_fleksibel']) ? (int)$r_menu['is_fleksibel'] : 0;
+                    $harga_satuan = (int) $item['harga'];
+                    if ($is_fleksibel === 1) {
+                        if ($harga_satuan < 1000 || $harga_satuan > 50000 || $harga_satuan % 500 !== 0) {
+                            throw new Exception("Harga untuk menu '" . $r_menu['nama_menu'] . "' tidak valid. Harus minimal Rp 1.000, maksimal Rp 50.000, dan kelipatan Rp 500.");
+                        }
+                    }
                 } else {
                     throw new Exception("Menu tidak ditemukan.");
                 }
 
-                $harga_satuan = (int) $item['harga'];
                 $catatan = isset($item['catatan']) ? trim($item['catatan']) : '';
                 
                 $stmt_detail = mysqli_prepare($conn, "INSERT INTO detail_pesanan (id_pesanan, id_menu, jumlah, harga_satuan, catatan) VALUES (?, ?, ?, ?, ?)");
@@ -840,12 +847,16 @@ if ($q_toko_qris) {
                             <?php else: ?>
                                 <i class="fa-solid fa-utensils" style="color: #cbd5e1; font-size: 20px;"></i>
                             <?php endif; ?>
-                            <button class="btn-add-reco" onclick="addRecommendationToCart(<?= $item['id_menu']; ?>, '<?= htmlspecialchars(addslashes($item['nama_menu']), ENT_QUOTES); ?>', <?= $item['harga']; ?>, '<?= htmlspecialchars(addslashes($foto), ENT_QUOTES); ?>', '<?= htmlspecialchars(addslashes($item['nama_toko']), ENT_QUOTES); ?>', <?= $item['id_toko']; ?>, <?= (int)$item['stok']; ?>)">
+                            <button class="btn-add-reco" onclick="addRecommendationToCart(<?= $item['id_menu']; ?>, '<?= htmlspecialchars(addslashes($item['nama_menu']), ENT_QUOTES); ?>', <?= $item['harga']; ?>, '<?= htmlspecialchars(addslashes($foto), ENT_QUOTES); ?>', '<?= htmlspecialchars(addslashes($item['nama_toko']), ENT_QUOTES); ?>', <?= $item['id_toko']; ?>, <?= (int)$item['stok']; ?>, <?= (int)($item['is_fleksibel'] ?? 0); ?>)">
                                 <i class="fa-solid fa-plus"></i>
                             </button>
                         </div>
                         <div class="reco-name"><?= htmlspecialchars($item['nama_menu']); ?></div>
-                        <div class="reco-price">Rp.<?= number_format($item['harga'], 0, ',', '.'); ?></div>
+                        <div class="reco-price"><?php if (!empty($item['is_fleksibel']) && $item['is_fleksibel'] == 1): ?>
+                            <span style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 2px 6px; border-radius: 6px; font-weight: 750; font-size: 10px; display: inline-flex; align-items: center; gap: 3px;"><i class="fa-solid fa-arrows-left-right-to-line" style="font-size:8px;"></i> Fleksibel</span>
+                        <?php else: ?>
+                            Rp.<?= number_format($item['harga'], 0, ',', '.'); ?>
+                        <?php endif; ?></div>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -994,6 +1005,36 @@ if ($q_toko_qris) {
                     imgHTML = `<div class="toast-img-fallback"><i class="fa-solid fa-utensils" style="color: #5cb85c; font-size:24px;"></i></div>`;
                 }
                 
+                let priceHTML = '';
+                if (parseInt(item.is_fleksibel) === 1) {
+                    priceHTML = `
+                        <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+                            <span style="font-size: 11px; font-weight: 700; color: #0ea5e9; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fa-solid fa-arrows-left-right-to-line"></i> Harga Fleksibel
+                            </span>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 13px; font-weight: 750; color: #0ea5e9;">Rp</span>
+                                <input type="number" 
+                                       class="checkout-harga-input" 
+                                       id="price-input-${item.id_menu}-${item.harga}" 
+                                       value="${item.harga}" 
+                                       min="1000" 
+                                       max="50000" 
+                                       step="500" 
+                                       oninput="validatePriceInput(${item.id_menu}, ${item.harga}, this.value)" 
+                                       onchange="updateItemHarga(${item.id_menu}, ${item.harga}, this.value)" 
+                                       onkeydown="if(event.key === 'Enter') this.blur();"
+                                       style="width: 100px; border: 1.5px solid #0ea5e9; border-radius: 10px; padding: 4px 8px; font-size: 13px; font-weight: 750; color: #0ea5e9; outline: none; background: #f0f9ff; transition: all 0.2s;" 
+                                       onfocus="this.style.borderColor='#0284c7'; this.style.background='#ffffff'" 
+                                       onblur="this.style.borderColor='#0ea5e9'; this.style.background='#f0f9ff'">
+                            </div>
+                            <div class="flex-price-error" id="price-error-${item.id_menu}-${item.harga}" style="color: #ef4444; font-size: 10.5px; font-weight: 600; margin-top: 2px; display: none;"></div>
+                        </div>
+                    `;
+                } else {
+                    priceHTML = `<div class="checkout-item-price">Rp. ${(item.harga).toLocaleString('id-ID')}</div>`;
+                }
+
                 html += `
                     <div class="checkout-item-row" style="align-items: flex-start;">
                         <div class="checkout-item-info" style="justify-content: flex-start; gap: 4px;">
@@ -1001,7 +1042,7 @@ if ($q_toko_qris) {
                                 <h4 class="checkout-item-title">${item.nama_menu}</h4>
                                 <div class="checkout-item-meta">Kantin : ${item.nama_toko} <span style="color:#eab308; font-weight:800; margin-left:8px;">(Stok: ${item.stok !== undefined ? item.stok : '?'})</span></div>
                             </div>
-                            <div class="checkout-item-price">Rp. ${(item.harga).toLocaleString('id-ID')}</div>
+                            ${priceHTML}
                             
                             <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
                                 <i class="fa-regular fa-comment-dots" style="color: #64748b; font-size: 13px;"></i>
@@ -1028,6 +1069,9 @@ if ($q_toko_qris) {
 
             // Real-time update payment method selection (QRIS availability)
             initPaymentMethodSelection();
+
+            // Check price validations and adjust submit button state
+            checkSubmitButtonState();
         }
 
         function updateItemNote(id, harga, val) {
@@ -1213,10 +1257,104 @@ if ($q_toko_qris) {
             }
         }
 
+        function validatePriceInput(id, oldHarga, value) {
+            const price = parseInt(value);
+            const errorEl = document.getElementById(`price-error-${id}-${oldHarga}`);
+            const inputEl = document.getElementById(`price-input-${id}-${oldHarga}`);
+
+            let isValid = true;
+            let errorMsg = '';
+
+            if (isNaN(price) || price < 1000) {
+                isValid = false;
+                errorMsg = 'Minimal harga Rp 1.000';
+            } else if (price > 50000) {
+                isValid = false;
+                errorMsg = 'Maksimal harga Rp 50.000';
+            } else if (price % 500 !== 0) {
+                isValid = false;
+                errorMsg = 'Kelipatan Rp 500';
+            }
+
+            if (!isValid) {
+                if (errorEl) {
+                    errorEl.textContent = errorMsg;
+                    errorEl.style.display = 'block';
+                }
+                if (inputEl) {
+                    inputEl.style.borderColor = '#ef4444';
+                    inputEl.style.background = '#fef2f2';
+                    inputEl.style.color = '#ef4444';
+                }
+            } else {
+                if (errorEl) {
+                    errorEl.style.display = 'none';
+                }
+                if (inputEl) {
+                    inputEl.style.borderColor = '#0ea5e9';
+                    inputEl.style.background = '#f0f9ff';
+                    inputEl.style.color = '#0ea5e9';
+                }
+            }
+
+            checkSubmitButtonState();
+        }
+
+        function updateItemHarga(id, oldHarga, value) {
+            let price = parseInt(value);
+            const cart = getCart();
+            const item = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(oldHarga));
+            if (!item) return;
+
+            // If invalid, revert to old price or show toast
+            if (isNaN(price) || price < 1000 || price > 50000 || price % 500 !== 0) {
+                showToast('Harga tidak valid! Harus antara Rp 1.000 - Rp 50.000 dan kelipatan 500.', 'error');
+                renderCheckoutPage(); // Re-render will revert to original valid value
+                return;
+            }
+
+            // Update in cart
+            const existing = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(price) && c !== item);
+            if (existing) {
+                existing.jumlah += item.jumlah;
+                cart.splice(cart.indexOf(item), 1);
+            } else {
+                item.harga = price;
+            }
+            saveCart(cart);
+            renderCheckoutPage();
+        }
+
+        function checkSubmitButtonState() {
+            const btnSubmit = document.getElementById('btnSubmitOrder');
+            if (!btnSubmit) return;
+
+            let allValid = true;
+            const priceInputs = document.querySelectorAll('.checkout-harga-input');
+            priceInputs.forEach(input => {
+                const val = parseInt(input.value) || 0;
+                if (val < 1000 || val > 50000 || val % 500 !== 0) {
+                    allValid = false;
+                }
+            });
+
+            if (allValid) {
+                btnSubmit.disabled = false;
+                btnSubmit.style.background = '#5cb85c';
+                btnSubmit.style.cursor = 'pointer';
+                btnSubmit.style.boxShadow = '0 4px 12px rgba(92, 184, 92, 0.2)';
+            } else {
+                btnSubmit.disabled = true;
+                btnSubmit.style.background = '#cbd5e1';
+                btnSubmit.style.cursor = 'not-allowed';
+                btnSubmit.style.boxShadow = 'none';
+            }
+        }
+
         // ── Add recommended menu item to current order selection ──
-        function addRecommendationToCart(id, nama, harga, foto, toko, idToko, stok) {
+        function addRecommendationToCart(id, nama, harga, foto, toko, idToko, stok, is_fleksibel = 0) {
             let cart = getCart();
-            const existing = cart.find(c => c.id_menu === id);
+            const existing = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
             if (existing) {
                 if (existing.jumlah >= stok) {
                     showToast('Stok tidak mencukupi! Maksimum stok: ' + stok, 'error');
@@ -1239,7 +1377,8 @@ if ($q_toko_qris) {
                     id_toko: idToko,
                     selected: true,
                     catatan: '',
-                    stok: stok
+                    stok: stok,
+                    is_fleksibel: is_fleksibel
                 });
             }
             saveCart(cart);
@@ -1610,10 +1749,15 @@ if ($q_toko_qris) {
                 max-height: 90vh;
                 display: flex;
                 flex-direction: column;
+                position: relative;
             `;
 
             card.innerHTML = `
-                <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+                <button type="button" id="btnCloseQrisModal" aria-label="Tutup" title="Tutup"
+                    style="position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; border: none; border-radius: 50%; background: #f1f5f9; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; z-index: 2; transition: all 0.2s;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div style="overflow-y: auto; flex: 1; padding-right: 4px; padding-top: 8px;">
                     <div style="font-size: 24px; color: #16a34a; margin-bottom: 10px;">
                         <i class="fa-solid fa-circle-check"></i>
                     </div>
@@ -1665,6 +1809,32 @@ if ($q_toko_qris) {
                 modal.style.opacity = '1';
                 card.style.transform = 'scale(1)';
             }, 10);
+
+            function closeQrisModal(goToOrders) {
+                modal.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    modal.remove();
+                    if (goToOrders) {
+                        window.location.href = 'index.php?tab=pesanan&t=' + new Date().getTime();
+                    }
+                }, 300);
+            }
+
+            const closeBtn = card.querySelector('#btnCloseQrisModal');
+            closeBtn.addEventListener('click', () => closeQrisModal(true));
+            closeBtn.addEventListener('mouseenter', () => {
+                closeBtn.style.background = '#e2e8f0';
+                closeBtn.style.color = '#1e293b';
+            });
+            closeBtn.addEventListener('mouseleave', () => {
+                closeBtn.style.background = '#f1f5f9';
+                closeBtn.style.color = '#64748b';
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeQrisModal(true);
+            });
 
             // Listener pilih berkas
             const fileInput = card.querySelector('#qrisFileInput');
@@ -1757,12 +1927,7 @@ if ($q_toko_qris) {
             });
 
             function redirectToOrders() {
-                modal.style.opacity = '0';
-                card.style.transform = 'scale(0.9)';
-                setTimeout(() => {
-                    modal.remove();
-                    window.location.href = 'index.php?tab=pesanan&t=' + new Date().getTime();
-                }, 300);
+                closeQrisModal(true);
             }
         }
 
