@@ -4441,6 +4441,26 @@ select.form-staf-control {
     color: #fff;
 }
 
+.btn-detail-kas {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11.5px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-detail-kas:hover {
+    background: #0369a1;
+    color: #fff;
+}
+
 @media (max-width: 768px) {
     .kas-filter-bar {
         flex-direction: column;

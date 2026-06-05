@@ -147,3 +147,81 @@ if ($conn && php_sapi_name() !== 'cli') {
         }
     }
 }
+
+// Otomatisasi pembatalan pesanan yang melewati pukul 15:30 WIB (Asia/Jakarta)
+if ($conn && php_sapi_name() !== 'cli') {
+    $currentTime = date('H:i');
+    $currentDate = date('Y-m-d');
+    
+    // Tentukan batas waktu pemesanan
+    $isPastCancelTime = ($currentTime >= '15:30');
+    $limitTimestamp = $isPastCancelTime ? $currentDate . ' 23:59:59' : $currentDate . ' 00:00:00';
+    
+    // Ambil pesanan berstatus 'menunggu' atau 'dikonfirmasi' yang melewati batas waktu
+    $sqlCek = "SELECT id_pesanan FROM pesanan 
+               WHERE status IN ('menunggu', 'dikonfirmasi') 
+                 AND waktu_pesan < '$limitTimestamp'";
+                 
+    $resCek = mysqli_query($conn, $sqlCek);
+    if ($resCek && mysqli_num_rows($resCek) > 0) {
+        while ($row = mysqli_fetch_assoc($resCek)) {
+            $id_pes = (int)$row['id_pesanan'];
+            
+            mysqli_begin_transaction($conn);
+            try {
+                // 1. Kembalikan stok menu
+                $resItems = mysqli_query($conn, "SELECT id_menu, jumlah FROM detail_pesanan WHERE id_pesanan = $id_pes");
+                if ($resItems) {
+                    while ($item = mysqli_fetch_assoc($resItems)) {
+                        $id_menu = (int)$item['id_menu'];
+                        $jumlah = (int)$item['jumlah'];
+                        mysqli_query($conn, "UPDATE menu SET stok = stok + $jumlah WHERE id_menu = $id_menu");
+                    }
+                }
+                
+                // 2. Ubah status pesanan menjadi dibatalkan
+                mysqli_query($conn, "UPDATE pesanan SET status = 'dibatalkan' WHERE id_pesanan = $id_pes");
+                
+                // 3. Kirim pesan chat otomatis pembatalan ke pembeli
+                $q_pesanan_info = mysqli_query($conn, "SELECT nisn_pembeli, nuptk_pembeli, id_toko FROM pesanan WHERE id_pesanan = $id_pes LIMIT 1");
+                if ($q_pesanan_info && mysqli_num_rows($q_pesanan_info) > 0) {
+                    $r_p = mysqli_fetch_assoc($q_pesanan_info);
+                    $id_tok = (int)$r_p['id_toko'];
+                    $penerima_chat = '';
+                    if (!empty($r_p['nisn_pembeli'])) {
+                        $penerima_chat = 'murid_' . $r_p['nisn_pembeli'];
+                    } elseif (!empty($r_p['nuptk_pembeli'])) {
+                        $penerima_chat = 'guru_' . $r_p['nuptk_pembeli'];
+                    }
+
+                    if (!empty($penerima_chat)) {
+                        $pengirim_chat = 'toko_' . $id_tok;
+                        $auto_status_msg = '[AUTO_REPLY_STATUS]
+                        <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;padding:4px;">
+                            <div style="font-weight:800;font-size:14px;color:#f43f5e;margin-bottom:6px;">Pesanan #' . $id_pes . ' Dibatalkan Otomatis</div>
+                            <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Pesanan Anda dibatalkan otomatis oleh sistem karena telah melewati batas waktu operasional (pukul 15:30 WIB).</div>
+                            <div style="padding:10px 12px;background:#fff1f2;border-radius:10px;border:1px solid #fecaca;display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:12px;font-weight:600;color:#f43f5e;">Status Terbaru</span>
+                                <span style="font-size:12px;font-weight:800;color:#e11d48;">Dibatalkan ❌</span>
+                            </div>
+                        </div>';
+
+                        $msg_escaped = mysqli_real_escape_string($conn, $auto_status_msg);
+                        mysqli_query($conn, "INSERT INTO pesan_chat (id_pengirim, id_penerima, isi_pesan, waktu_kirim, sudah_dibaca)
+                                             VALUES ('$pengirim_chat', '$penerima_chat', '$msg_escaped', NOW(), 0)");
+                    }
+                }
+                
+                // 4. Catat ke log sistem
+                $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+                mysqli_query($conn, "INSERT INTO log_sistem (user_role, user_id, user_nama, aksi, keterangan, ip_address)
+                                     VALUES ('admin','0','Auto-Cancel System','Batal Otomatis','Pesanan #$id_pes dibatalkan otomatis karena melewati pukul 15:30 WIB.','$ip')");
+                
+                mysqli_commit($conn);
+            } catch (Exception $e) {
+                mysqli_rollback($conn);
+            }
+        }
+    }
+}
+

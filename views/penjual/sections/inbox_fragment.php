@@ -57,23 +57,22 @@
             }
 
             // Tentukan kasir & shift yang memproses pesanan ini secara dinamis
-            if (($_SESSION['user_sub_role'] ?? '') === 'owner') {
-                $kasirNama = '-';
-                $kasirShift = '';
-                $q_log = mysqli_query($conn, "
-                    SELECT l.user_id, l.user_nama, tp.shift
-                    FROM log_sistem l
-                    LEFT JOIN toko_penjual tp ON tp.id_penjual = l.user_id AND tp.status = 'aktif'
-                    WHERE l.keterangan LIKE '%pesanan #{$ps['id_pesanan']}%' 
-                      AND l.user_role = 'penjual' 
-                    ORDER BY l.dibuat_pada DESC 
-                    LIMIT 1
-                ");
-                if ($q_log && $r_log = mysqli_fetch_assoc($q_log)) {
-                    $kasirNama = $r_log['user_nama'];
-                    $kasirShift = $r_log['shift'] ?? '';
-                }
-            } else {
+            $kasirNama = '';
+            $kasirShift = '';
+            $q_log = mysqli_query($conn, "
+                SELECT l.user_id, l.user_nama, tp.shift
+                FROM log_sistem l
+                LEFT JOIN toko_penjual tp ON tp.id_penjual = l.user_id AND tp.status = 'aktif'
+                WHERE l.keterangan LIKE '%pesanan #{$ps['id_pesanan']}%' 
+                  AND l.user_role = 'penjual' 
+                ORDER BY l.dibuat_pada DESC 
+                LIMIT 1
+            ");
+            if ($q_log && $r_log = mysqli_fetch_assoc($q_log)) {
+                $kasirNama = $r_log['user_nama'];
+                $kasirShift = $r_log['shift'] ?? '';
+            }
+            if (empty($kasirNama)) {
                 $kasirNama = $profilPenjual['nama'] ?? $_SESSION['user_nama'] ?? 'Kasir';
                 $kasirShift = $profilPenjual['shift'] ?? 'Bebas';
             }
@@ -184,64 +183,64 @@
                         </div>
                     </div>
                     <div class="pcard-actions">
-                        <?php if (($_SESSION['user_sub_role'] ?? '') === 'owner'): ?>
-                            <!-- Owner only monitors but can view details -->
+                        <!-- Semua role (owner & staf) bisa melihat detail pesanan -->
+                        <?php if ($ps['status'] !== 'siap_diambil'): ?>
                             <button type="button" class="pcard-btn" 
                                 style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-family: 'Poppins', sans-serif;"
                                 data-action="cetak_nota" data-nota='<?= $notaData ?>' data-id="<?= (int) $ps['id_pesanan'] ?>">
                                 <i class="fa-solid fa-eye" style="color: #475569; font-size: 11px;"></i> Lihat Pesanan
                             </button>
-                        <?php else: ?>
-                            <?php if ($ps['metode_pembayaran'] === 'transfer' && $ps['status_pembayaran'] === 'belum_bayar' && $ps['status'] !== 'dibatalkan' && $ps['status'] !== 'selesai'): ?>
-                                <?php if (!empty($bukti_foto_penjual)): ?>
-                                    <button type="button" class="pcard-btn" 
-                                        style="background: #16a34a; color: #ffffff; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);"
-                                        onclick="lihatBuktiQris('<?= htmlspecialchars($bukti_foto_penjual, ENT_QUOTES) ?>', <?= (int)$ps['id_pesanan'] ?>)">
-                                        <i class="fa-solid fa-check-double"></i> Konfirmasi QRIS
-                                    </button>
-                                <?php else: ?>
-                                    <button type="button" class="pcard-btn" 
-                                        style="background: #cbd5e1; color: #64748b; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px;"
-                                        disabled title="Pembeli belum mengunggah bukti transfer">
-                                        <i class="fa-solid fa-ban"></i> Konfirmasi QRIS
-                                    </button>
-                                <?php endif; ?>
-                            <?php endif; ?>
+                        <?php endif; ?>
 
-                            <?php if ($ps['metode_pembayaran'] === 'tunai' && $ps['status_pembayaran'] === 'belum_bayar' && $ps['status'] !== 'dibatalkan' && $ps['status'] !== 'selesai'): ?>
-                                 <button type="button" class="pcard-btn" 
-                                     style="background: #16a34a; color: #ffffff; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);"
-                                     onclick="konfirmasiPembayaranTunai(<?= (int)$ps['id_pesanan'] ?>)">
-                                     <i class="fa-solid fa-money-bill-wave"></i> Konfirmasi Tunai
-                                 </button>
-                             <?php endif; ?>
-
-                            <?php if ($ps['status'] === 'menunggu'): ?>
-                                <button type="button" class="pcard-btn pcard-btn-proses"
-                                    data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="dikonfirmasi">
-                                    <i class="fa-solid fa-check"></i> Proses
+                        <!-- Tombol aksi pemrosesan untuk owner & staf -->
+                        <?php if ($ps['metode_pembayaran'] === 'transfer' && $ps['status_pembayaran'] === 'belum_bayar' && $ps['status'] !== 'dibatalkan' && $ps['status'] !== 'selesai'): ?>
+                            <?php if (!empty($bukti_foto_penjual)): ?>
+                                <button type="button" class="pcard-btn" 
+                                    style="background: #16a34a; color: #ffffff; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);"
+                                    onclick="lihatBuktiQris('<?= htmlspecialchars($bukti_foto_penjual, ENT_QUOTES) ?>', <?= (int)$ps['id_pesanan'] ?>)">
+                                    <i class="fa-solid fa-check-double"></i> Konfirmasi QRIS
                                 </button>
-                                <button type="button" class="pcard-btn pcard-btn-batal"
-                                    data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="dibatalkan" data-confirm="Batalkan pesanan ini?">
-                                    <i class="fa-solid fa-xmark"></i> Tolak
-                                </button>
-                            <?php elseif ($ps['status'] === 'dikonfirmasi'): ?>
-                                <button type="button" class="pcard-btn pcard-btn-siap"
-                                    data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="siap_diambil">
-                                    <i class="fa-solid fa-bell-concierge"></i> Siap Diambil
-                                </button>
-                            <?php elseif ($ps['status'] === 'siap_diambil'): ?>
-                                <button type="button" class="pcard-btn pcard-btn-print"
-                                    data-action="cetak_nota" data-nota='<?= $notaData ?>' data-id="<?= (int) $ps['id_pesanan'] ?>">
-                                    <i class="fa-solid fa-receipt"></i> Cetak Nota
-                                </button>
-                                <button type="button" class="pcard-btn pcard-btn-selesai pcard-btn-selesai-locked"
-                                    id="btnSelesai-<?= (int) $ps['id_pesanan'] ?>"
-                                    data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="selesai"
-                                    disabled title="Cetak nota terlebih dahulu">
-                                    <i class="fa-solid fa-circle-check"></i> Selesai
+                            <?php else: ?>
+                                <button type="button" class="pcard-btn" 
+                                    style="background: #cbd5e1; color: #64748b; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px;"
+                                    disabled title="Pembeli belum mengunggah bukti transfer">
+                                    <i class="fa-solid fa-ban"></i> Konfirmasi QRIS
                                 </button>
                             <?php endif; ?>
+                        <?php endif; ?>
+
+                        <?php if ($ps['metode_pembayaran'] === 'tunai' && $ps['status_pembayaran'] === 'belum_bayar' && $ps['status'] !== 'dibatalkan' && $ps['status'] !== 'selesai'): ?>
+                             <button type="button" class="pcard-btn" 
+                                 style="background: #16a34a; color: #ffffff; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);"
+                                 onclick="konfirmasiPembayaranTunai(<?= (int)$ps['id_pesanan'] ?>)">
+                                 <i class="fa-solid fa-money-bill-wave"></i> Konfirmasi Tunai
+                             </button>
+                        <?php endif; ?>
+
+                        <?php if ($ps['status'] === 'menunggu'): ?>
+                            <button type="button" class="pcard-btn pcard-btn-proses"
+                                data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="dikonfirmasi">
+                                <i class="fa-solid fa-check"></i> Proses
+                            </button>
+                            <button type="button" class="pcard-btn pcard-btn-batal"
+                                data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="dibatalkan" data-confirm="Batalkan pesanan ini?">
+                                <i class="fa-solid fa-xmark"></i> Tolak
+                            </button>
+                        <?php elseif ($ps['status'] === 'dikonfirmasi'): ?>
+                            <button type="button" class="pcard-btn pcard-btn-siap"
+                                data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="siap_diambil">
+                                <i class="fa-solid fa-bell-concierge"></i> Siap Diambil
+                            </button>
+                        <?php elseif ($ps['status'] === 'siap_diambil'): ?>
+                            <button type="button" class="pcard-btn pcard-btn-print"
+                                data-action="cetak_nota" data-nota='<?= $notaData ?>' data-id="<?= (int) $ps['id_pesanan'] ?>">
+                                <i class="fa-solid fa-receipt"></i> Cetak Nota
+                            </button>
+                            <button type="button" class="pcard-btn pcard-btn-selesai"
+                                id="btnSelesai-<?= (int) $ps['id_pesanan'] ?>"
+                                data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="selesai">
+                                <i class="fa-solid fa-circle-check"></i> Selesai
+                            </button>
                         <?php endif; ?>
                     </div>
                 </div>

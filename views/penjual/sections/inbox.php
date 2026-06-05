@@ -75,11 +75,9 @@ $fotoBase = $inbox_base . '/assets/img/kantin/';
             <button type="button" class="pcard-btn pcard-btn-batal" onclick="tutupNota()">
                 <i class="fa-solid fa-xmark"></i> Tutup
             </button>
-            <?php if (($_SESSION['user_sub_role'] ?? '') !== 'owner'): ?>
             <button type="button" class="pcard-btn pcard-btn-print" onclick="cetakNota()">
                 <i class="fa-solid fa-print"></i> Cetak
             </button>
-            <?php endif; ?>
         </div>
     </div>
 </div>

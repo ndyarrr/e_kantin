@@ -99,7 +99,7 @@
         <h2>Pesanan Terbaru</h2>
         <button onclick="switchSection('inbox')"
             style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1.5px solid var(--green);background:transparent;color:var(--green);font-size:12px;font-weight:700;cursor:pointer">
-            <i class="fa-solid fa-inbox"></i> Lihat Inbox
+            <i class="fa-solid fa-receipt"></i> Lihat Pesanan
         </button>
     </div>
     <div class="table-scroll">
@@ -155,7 +155,7 @@
                         </span>
                     </td>
                     <td class="center">
-                        <button class="btn-aksi" title="Inbox" onclick="switchSection('inbox')">
+                        <button class="btn-aksi" title="Pesanan" onclick="switchSection('inbox')">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </td>

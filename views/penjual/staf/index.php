@@ -100,7 +100,7 @@ require __DIR__ . '/sections/inbox_data.php';
                 <i class="fa-solid fa-utensils"></i> Menu
             </button>
             <button class="nav-link" data-section="inbox" onclick="switchSection('inbox')">
-                <i class="fa-solid fa-inbox"></i> Inbox
+                <i class="fa-solid fa-receipt"></i> Pesanan
                 <?php if ($totalPesananBaru > 0): ?>
                     <span class="nav-badge"><?= $totalPesananBaru ?></span>
                 <?php endif; ?>
@@ -218,7 +218,7 @@ require __DIR__ . '/sections/inbox_data.php';
         const pageMeta = {
             dashboard: { title: 'Dashboard', sub: 'Monitor semua penjualan dan keuangan E-Kantin' },
             menu: { title: 'Menu', sub: 'Kelola menu dan stok kantin' },
-            inbox: { title: 'Inbox', sub: 'Pesanan masuk dan riwayat transaksi' },
+            inbox: { title: 'Pesanan', sub: 'Pesanan masuk dan riwayat transaksi' },
             chat: { title: 'Chat', sub: 'Komunikasi dengan pembeli' },
             profil: { title: 'Profil', sub: 'Kelola data akun penjual' },
             report: { title: 'Laporan Kendala', sub: 'Kirim laporan masalah ke admin' },

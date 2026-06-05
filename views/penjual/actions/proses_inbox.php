@@ -39,20 +39,6 @@ $isAjax = !empty($_POST['ajax'])
 $ajaxResponse = ['success' => false, 'message' => 'Aksi tidak dikenali.'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Owner hanya diizinkan memantau (read-only)
-    if (($_SESSION['user_sub_role'] ?? '') === 'owner') {
-        $ajaxResponse = ['success' => false, 'message' => 'Owner hanya diperbolehkan memantau pesanan (read-only).'];
-        if ($isAjax) {
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode($ajaxResponse);
-            exit;
-        } else {
-            $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
-            header('Location: ' . $base_url . '/views/penjual/owner/index.php?section=inbox&t=' . time());
-            exit;
-        }
-    }
-
     $action = $_POST['action'] ?? '';
     
     if ($action === 'konfirmasi_pembayaran_qris') {
@@ -303,11 +289,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
 
                         // 3. Otomatis catat pemasukan ke keuangan berdasarkan total_harga pesanan
-                        $q_total = mysqli_query($conn, "SELECT total_harga FROM pesanan WHERE id_pesanan = $id_pesanan LIMIT 1");
-                        if ($q_total && $r_total = mysqli_fetch_assoc($q_total)) {
-                            $total_pesanan = (float)$r_total['total_harga'];
-                            $ket_auto      = mysqli_real_escape_string($conn, "Pemasukan otomatis dari Pesanan #$id_pesanan yang telah selesai");
+                        $q_detail_kas = mysqli_query($conn,
+                            "SELECT p.total_harga, p.nisn_pembeli, p.nuptk_pembeli,
+                                    GROUP_CONCAT(m.nama_menu, ' (', dp.jumlah, 'x @ Rp ', FORMAT(m.harga,0), ')' ORDER BY m.nama_menu SEPARATOR '\n') AS item_list
+                             FROM pesanan p
+                             JOIN detail_pesanan dp ON dp.id_pesanan = p.id_pesanan
+                             JOIN menu m ON m.id_menu = dp.id_menu
+                             WHERE p.id_pesanan = $id_pesanan
+                             GROUP BY p.id_pesanan LIMIT 1"
+                        );
+                        if ($q_detail_kas && $r_detail_kas = mysqli_fetch_assoc($q_detail_kas)) {
+                            $total_pesanan = (float)$r_detail_kas['total_harga'];
                             $tgl_selesai   = date('Y-m-d');
+
+                            // Resolve nama pembeli
+                            $nama_pembeli = 'Pembeli';
+                            if (!empty($r_detail_kas['nisn_pembeli'])) {
+                                $nisn_esc = mysqli_real_escape_string($conn, $r_detail_kas['nisn_pembeli']);
+                                $q_nama   = mysqli_query($conn, "SELECT nama FROM murid WHERE nisn = '$nisn_esc' LIMIT 1");
+                                if ($q_nama && $r_nama = mysqli_fetch_assoc($q_nama)) {
+                                    $nama_pembeli = $r_nama['nama'];
+                                }
+                            } elseif (!empty($r_detail_kas['nuptk_pembeli'])) {
+                                $nuptk_esc = mysqli_real_escape_string($conn, $r_detail_kas['nuptk_pembeli']);
+                                $q_nama    = mysqli_query($conn, "SELECT nama FROM guru WHERE nuptk = '$nuptk_esc' LIMIT 1");
+                                if ($q_nama && $r_nama = mysqli_fetch_assoc($q_nama)) {
+                                    $nama_pembeli = $r_nama['nama'];
+                                }
+                            }
+
+                            $item_list   = $r_detail_kas['item_list'] ?? '-';
+                            $total_fmt   = 'Rp ' . number_format($total_pesanan, 0, ',', '.');
+                            $ket_panjang = "Pemasukan otomatis dari pesanan #$id_pesanan yang telah selesai.\n\nPembeli   : $nama_pembeli\n\nItem yang dibeli:\n$item_list\n\nTotal     : $total_fmt";
+
+                            $ket_auto  = mysqli_real_escape_string($conn, $ket_panjang);
                             mysqli_query($conn, "INSERT INTO keuangan (id_toko, tipe, jumlah, keterangan, tanggal)
                                                  VALUES ($idToko, 'masuk', $total_pesanan, '$ket_auto', '$tgl_selesai')");
                         }

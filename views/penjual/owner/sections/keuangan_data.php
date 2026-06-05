@@ -9,8 +9,9 @@ if (!isset($conn) || !isset($idToko)) {
 // AKSI POST 1: Simpan Transaksi Manual Pengeluaran
 // =========================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'tambah_keuangan') {
-    // Tipe dikunci 'keluar' (pengeluaran) — tidak boleh dari input user
-    $tipe_input    = 'keluar';
+    // Validasi tipe — hanya 'masuk' atau 'keluar' yang diizinkan
+    $tipe_post     = $_POST['tipe'] ?? 'keluar';
+    $tipe_input    = in_array($tipe_post, ['masuk', 'keluar']) ? $tipe_post : 'keluar';
     // Tanggal otomatis dari server (hari ini)
     $tanggal_input = date('Y-m-d');
     $jumlah_input  = floatval($_POST['jumlah']);
@@ -20,9 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $query_insert = "INSERT INTO `keuangan` (`id_toko`, `tipe`, `jumlah`, `keterangan`, `tanggal`) 
                          VALUES ($idToko, '$tipe_input', $jumlah_input, '$keterangan', '$tanggal_input')";
         if (mysqli_query($conn, $query_insert)) {
-            $_SESSION['feedback_kas'] = ['type' => 'success', 'msg' => 'Catatan pengeluaran berhasil disimpan!'];
+            $label = $tipe_input === 'masuk' ? 'pemasukan' : 'pengeluaran';
+            $_SESSION['feedback_kas'] = ['type' => 'success', 'msg' => "Catatan $label berhasil disimpan!"];
         } else {
-            $_SESSION['feedback_kas'] = ['type' => 'danger', 'msg' => 'Gagal menyimpan pengeluaran ke database.'];
+            $_SESSION['feedback_kas'] = ['type' => 'danger', 'msg' => 'Gagal menyimpan data ke database.'];
         }
     } else {
         $_SESSION['feedback_kas'] = ['type' => 'danger', 'msg' => 'Formulir tidak valid. Nominal dan keterangan wajib diisi.'];

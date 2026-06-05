@@ -160,7 +160,7 @@ require __DIR__ . '/sections/inbox_data.php';
                 <i class="fa-solid fa-store"></i> Pengaturan Kantin
             </button>
             <button class="nav-link" data-section="inbox" onclick="switchSection('inbox')">
-                <i class="fa-solid fa-inbox"></i> Inbox
+                <i class="fa-solid fa-receipt"></i> Pesanan
             </button>
             <button class="nav-link" data-section="profil" onclick="switchSection('profil')">
                 <i class="fa-solid fa-user"></i> Profil
@@ -311,7 +311,7 @@ require __DIR__ . '/sections/inbox_data.php';
             menu: { title: 'Menu', sub: 'Kelola menu dan stok kantin' },
             staf: { title: 'Staf & Shift', sub: 'Kelola jadwal kerja dan petugas kasir' },
             kantin: { title: 'Pengaturan Kantin', sub: 'Kelola informasi toko, deskripsi, dan banner promo' },
-            inbox: { title: 'Inbox', sub: 'Pesanan masuk dan riwayat transaksi' },
+            inbox: { title: 'Pesanan', sub: 'Pesanan masuk dan riwayat transaksi' },
             profil: { title: 'Profil', sub: 'Kelola data akun penjual' },
             chat: { title: 'Chat', sub: 'Balas pesan pembeli atas nama kantin kamu' },
             keuangan: { title: 'Keuangan', sub: 'Catatan pemasukan dan keuangan toko' },
