@@ -369,6 +369,11 @@
             max-width: 480px
         }
 
+        .stats-grid.col3 {
+            grid-template-columns: repeat(3, 1fr);
+            max-width: 720px;
+        }
+
         .stat-card {
             background: var(--white);
             border-radius: var(--radius);
@@ -1049,10 +1054,12 @@
                 display: none
             }
 
-            .stats-grid {
+            .stats-grid,
+            .stats-grid.col3 {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
-                margin-bottom: 14px
+                margin-bottom: 14px;
+                max-width: 100%;
             }
 
             .chart-wrap {
@@ -1068,6 +1075,9 @@
         @media(max-width:480px) {
             .col-hide {
                 display: none
+            }
+            .stats-grid.col3 {
+                grid-template-columns: 1fr;
             }
         }
 

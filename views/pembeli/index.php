@@ -79,7 +79,7 @@ if (!empty($user_id)) {
 
 // ── Ambil SEMUA toko ──
 $all_tokos = [];
-$q_all_toko = mysqli_query($koneksi, "SELECT * FROM toko WHERE deleted_at IS NULL ORDER BY FIELD(status, 'buka', 'tutup'), nama_toko ASC");
+$q_all_toko = mysqli_query($koneksi, "SELECT * FROM toko WHERE deleted_at IS NULL ORDER BY FIELD(status, 'buka', 'tutup'), urutan ASC, nama_toko ASC");
 if ($q_all_toko) {
     while ($r = mysqli_fetch_assoc($q_all_toko))
         $all_tokos[] = $r;

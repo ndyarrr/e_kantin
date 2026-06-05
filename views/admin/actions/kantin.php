@@ -12,7 +12,17 @@ if ($action === 'kantin_tambah') {
     $nama = trim($_POST['nama_toko'] ?? '');
     $desk = trim($_POST['deskripsi'] ?? '');
 
-    if ($nama !== '') {
+    // Cek slot kantin
+    $slotKantin = 10;
+    $qSlot = mysqli_query($conn, "SELECT nilai FROM pengaturan WHERE kunci = 'slot_kantin' LIMIT 1");
+    if ($qSlot && mysqli_num_rows($qSlot) > 0) {
+        $slotKantin = (int) mysqli_fetch_assoc($qSlot)['nilai'];
+    }
+    $totalTokoActive = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE deleted_at IS NULL"))['c'];
+
+    if ($totalTokoActive >= $slotKantin) {
+        $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan kantin: Slot stand kantin sudah penuh!'];
+    } elseif ($nama !== '') {
         $n = mysqli_real_escape_string($conn, $nama);
         $d = mysqli_real_escape_string($conn, $desk);
         mysqli_query($conn, "INSERT INTO toko (nama_toko, deskripsi, foto_toko) VALUES ('$n','$d',NULL)");
@@ -99,6 +109,21 @@ if ($action === 'kantin_hapus') {
         mysqli_query($conn, "UPDATE toko SET deleted_at = NOW() WHERE id_toko=$id");
         mysqli_query($conn, "UPDATE menu SET deleted_at = NOW() WHERE id_toko=$id");
         
+        // Deactivate and soft delete all owners associated with this canteen
+        $owner_res = mysqli_query($conn, "
+            SELECT p.id_penjual FROM penjual p
+            JOIN toko_penjual tp ON tp.id_penjual = p.id_penjual
+            WHERE tp.id_toko = $id AND p.role = 'owner' AND p.deleted_at IS NULL
+        ");
+        if ($owner_res) {
+            while ($owner_row = mysqli_fetch_assoc($owner_res)) {
+                $owner_id = (int)$owner_row['id_penjual'];
+                mysqli_query($conn, "UPDATE penjual SET deleted_at = NOW() WHERE id_penjual = $owner_id");
+                mysqli_query($conn, "UPDATE toko_penjual SET status = 'nonaktif' WHERE id_penjual = $owner_id");
+                catatLog($conn, 'Hapus Owner Otomatis', 'Owner ID: ' . $owner_id . ' dihapus otomatis karena kantin ID ' . $id . ' dihapus');
+            }
+        }
+
         // Deactivate all seller relationships associated with this canteen
         mysqli_query($conn, "UPDATE toko_penjual SET status = 'nonaktif' WHERE id_toko = $id");
         

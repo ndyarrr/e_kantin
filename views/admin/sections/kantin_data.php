@@ -16,7 +16,7 @@ $tokos = mysqli_fetch_all(mysqli_query(
          AND tp2.status = 'aktif' AND p2.deleted_at IS NULL LIMIT 1) as nama_owner
      FROM toko t
      WHERE t.deleted_at IS NULL
-     ORDER BY t.nama_toko ASC"
+     ORDER BY t.urutan ASC, t.id_toko ASC"
 ), MYSQLI_ASSOC);
 
 $detailToko = null;

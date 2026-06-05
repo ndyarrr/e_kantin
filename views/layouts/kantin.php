@@ -8,7 +8,7 @@ $kantins = mysqli_fetch_all(mysqli_query(
     LEFT JOIN toko_penjual tp ON tp.id_toko = t.id_toko AND tp.status = 'aktif'
     WHERE t.deleted_at IS NULL
     GROUP BY t.id_toko
-    ORDER BY t.dibuat_pada ASC"
+    ORDER BY t.urutan ASC, t.dibuat_pada ASC"
 ), MYSQLI_ASSOC);
 ?>
 

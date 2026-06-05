@@ -101,6 +101,26 @@ if ($checkLatarTable && mysqli_num_rows($checkLatarTable) === 0) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
 }
 
+// Migrasi tabel pengaturan jika belum ada
+$checkPengaturanTable = mysqli_query($conn, "SHOW TABLES LIKE 'pengaturan'");
+if ($checkPengaturanTable && mysqli_num_rows($checkPengaturanTable) === 0) {
+    mysqli_query($conn, "CREATE TABLE `pengaturan` (
+        `kunci` VARCHAR(50) PRIMARY KEY,
+        `nilai` VARCHAR(255) NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+    
+    // Seed default slot kantin
+    mysqli_query($conn, "INSERT INTO `pengaturan` (`kunci`, `nilai`) VALUES ('slot_kantin', '10')");
+}
+
+// Migrasi kolom urutan ke tabel toko jika belum ada
+$checkColTokoUrutan = mysqli_query($conn, "SHOW COLUMNS FROM `toko` LIKE 'urutan'");
+if ($checkColTokoUrutan && mysqli_num_rows($checkColTokoUrutan) === 0) {
+    mysqli_query($conn, "ALTER TABLE `toko` ADD `urutan` INT NOT NULL DEFAULT 0");
+    // Seed default values: set urutan = id_toko to preserve chronological order initially
+    mysqli_query($conn, "UPDATE `toko` SET `urutan` = `id_toko` WHERE `deleted_at` IS NULL");
+}
+
 /** Alias lama — beberapa file memakai $koneksi */
 $koneksi = $conn;
 

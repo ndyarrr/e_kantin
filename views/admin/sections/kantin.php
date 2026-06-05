@@ -2,12 +2,14 @@
 require_once __DIR__ . '/../../../config/toko_foto.php';
 ?>
 
-<div class="stats-grid col2">
+<div class="stats-grid col3">
     <div class="stat-card">
         <div class="stat-label">Total Kantin</div>
         <div class="stat-row">
             <div class="stat-value">
-                <?= $totalToko ?>
+                <?= $totalToko ?><span class="sub"> /
+                    <?= $slotKantin ?>
+                </span>
             </div>
             <i class="fa-solid fa-store stat-icon"></i>
         </div>
@@ -21,6 +23,33 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                 </span>
             </div>
             <i class="fa-solid fa-circle-check stat-icon"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Slot Stand Kantin</div>
+        <div class="stat-row" style="justify-content: space-between; align-items: center;">
+            <div class="stat-value" style="display: flex; align-items: center; gap: 12px; line-height: 1;">
+                <span><?= $slotKantin ?></span>
+                <?php if ($isAdminSuper): ?>
+                    <div style="display: flex; flex-direction: column; gap: 3px;">
+                        <form method="POST" style="margin: 0; line-height: 0;">
+                            <input type="hidden" name="action" value="kantin_ubah_slot">
+                            <input type="hidden" name="tipe" value="tambah">
+                            <button type="submit" style="background: var(--green-pale); border: 1px solid var(--green-muted); color: var(--green-dark); width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; transition: 0.2s;" title="Tambah Slot">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </form>
+                        <form method="POST" style="margin: 0; line-height: 0;">
+                            <input type="hidden" name="action" value="kantin_ubah_slot">
+                            <input type="hidden" name="tipe" value="kurang">
+                            <button type="submit" <?= ($slotKantin <= $totalToko) ? 'disabled style="opacity: 0.5; cursor: not-allowed; background: #f3f4f6; border: 1px solid #ddd; color: #9ca3af; width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px;"' : 'style="background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; transition: 0.2s;"' ?> title="Kurang Slot">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                        </form>
+                    </div>
+                <?php endif; ?>
+            </div>
+            <i class="fa-solid fa-cubes stat-icon"></i>
         </div>
     </div>
 </div>
@@ -58,8 +87,40 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                             ?>
                             <tr class="toko-row <?= $selectedToko == $t['id_toko'] ? 'toko-row-active' : '' ?>"
                                 onclick="selectToko(<?= $t['id_toko'] ?>)">
-                                <td class="center" style="font-weight:700;">
-                                    <?= $idx + 1 ?>
+                                <td class="center">
+                                    <?php if ($isAdminSuper): ?>
+                                        <div style="display:flex; flex-direction:column; align-items:center; gap:2px;" onclick="event.stopPropagation();">
+                                            <?php if ($idx > 0): ?>
+                                                <form method="POST" action="?section=kantin" style="margin: 0; line-height: 0;">
+                                                    <input type="hidden" name="action" value="kantin_geser_urutan">
+                                                    <input type="hidden" name="id_toko" value="<?= $t['id_toko'] ?>">
+                                                    <input type="hidden" name="arah" value="up">
+                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Naikkan Urutan">
+                                                        <i class="fa-solid fa-chevron-up"></i>
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <div style="height: 14px;"></div>
+                                            <?php endif; ?>
+                                            
+                                            <span style="font-weight:700; font-size:12px;"><?= $idx + 1 ?></span>
+                                            
+                                            <?php if ($idx < count($tokos) - 1): ?>
+                                                <form method="POST" action="?section=kantin" style="margin: 0; line-height: 0;">
+                                                    <input type="hidden" name="action" value="kantin_geser_urutan">
+                                                    <input type="hidden" name="id_toko" value="<?= $t['id_toko'] ?>">
+                                                    <input type="hidden" name="arah" value="down">
+                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Turunkan Urutan">
+                                                        <i class="fa-solid fa-chevron-down"></i>
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <div style="height: 14px;"></div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span style="font-weight:700;"><?= $idx + 1 ?></span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <div class="toko-name-cell">

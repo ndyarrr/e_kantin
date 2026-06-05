@@ -375,6 +375,9 @@ if ($action === 'tools_permanent_delete') {
         $id = mysqli_real_escape_string($conn, $id_val);
 
         if ($tabel === 'toko') {
+            // Delete owner(s) permanently
+            mysqli_query($conn, "DELETE FROM penjual WHERE role = 'owner' AND id_penjual IN (SELECT id_penjual FROM toko_penjual WHERE id_toko = '$id')");
+            
             mysqli_query($conn, "DELETE FROM pembayaran WHERE id_pesanan IN (SELECT id_pesanan FROM pesanan WHERE id_toko = '$id')");
             mysqli_query($conn, "DELETE dp FROM detail_pesanan dp JOIN pesanan p ON p.id_pesanan = dp.id_pesanan WHERE p.id_toko = '$id'");
             mysqli_query($conn, "DELETE FROM pesanan WHERE id_toko = '$id'");
