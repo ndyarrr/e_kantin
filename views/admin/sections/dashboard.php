@@ -1,11 +1,4 @@
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-label">Total Transaksi Harian</div>
-        <div class="stat-row">
-            <div class="stat-value"><?= number_format($totalTransaksi) ?></div>
-            <i class="fa-solid fa-cart-shopping stat-icon"></i>
-        </div>
-    </div>
+<div class="stats-grid col3">
     <div class="stat-card">
         <div class="stat-label">Total Pembeli Terdaftar</div>
         <div class="stat-row">

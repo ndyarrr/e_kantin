@@ -220,6 +220,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // ── 4. UPDATE STOK QUICK ACTION ──────────────────────────────────────────
+    if ($action === 'update_stok') {
+        $id_menu = (int) ($_POST['id_menu'] ?? 0);
+        $stok = (int) ($_POST['stok'] ?? 0);
+        $tersedia = $stok > 0 ? 1 : 0;
+
+        $ok = mysqli_query(
+            $conn,
+            "UPDATE menu SET stok = $stok, tersedia = $tersedia WHERE id_menu = $id_menu AND id_toko = $idToko"
+        );
+
+        if ($ok && function_exists('catatLog')) {
+            $nama_menu = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama_menu FROM menu WHERE id_menu = $id_menu"))['nama_menu'] ?? '';
+            catatLog($conn, 'Update Stok', "$roleLabel memperbarui stok menu: $nama_menu menjadi $stok");
+        }
+
+        if (isset($_POST['_ajax'])) {
+            header('Content-Type: application/json');
+            if ($ok) {
+                echo json_encode(['status' => 'success', 'msg' => 'Stok berhasil diperbarui!', 'stok' => $stok, 'tersedia' => $tersedia]);
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Gagal memperbarui stok: ' . mysqli_error($conn)]);
+            }
+            exit;
+        }
+
+        $feedback = $ok
+            ? ['type' => 'success', 'msg' => 'Stok berhasil diperbarui!']
+            : ['type' => 'danger', 'msg' => 'Gagal memperbarui stok: ' . mysqli_error($conn)];
+    }
+
     if (isset($feedback)) {
         $_SESSION['feedback'] = $feedback;
     }

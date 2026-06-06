@@ -41,7 +41,7 @@ $penjualId = (int) ($_SESSION['user_id'] ?? 0);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'tambah_menu' || $action === 'edit_menu' || $action === 'hapus_menu') {
+    if ($action === 'tambah_menu' || $action === 'edit_menu' || $action === 'hapus_menu' || $action === 'update_stok') {
         require_once __DIR__ . '/../actions/proses_menu.php';
         exit;
     } elseif ($action === 'edit_profil' || $action === 'ganti_password' || $action === 'hapus_foto_profil') {
@@ -171,6 +171,9 @@ require __DIR__ . '/sections/inbox_data.php';
             <button class="nav-link" data-section="keuangan" onclick="switchSection('keuangan')">
                 <i class="fa-solid fa-book"></i> Keuangan
             </button>
+            <button class="nav-link" data-section="laporan_stok" onclick="switchSection('laporan_stok')">
+                <i class="fa-solid fa-boxes-stacked"></i> Laporan Stok
+            </button>
         </nav>
         <div class="sidebar-bottom">
             <button class="nav-link" data-section="report" onclick="switchSection('report')">
@@ -260,6 +263,10 @@ require __DIR__ . '/sections/inbox_data.php';
                 <?php require __DIR__ . '/sections/keuangan.php'; ?>
             </div>
 
+            <div class="section" id="section-laporan_stok">
+                <?php require __DIR__ . '/sections/laporan_stok.php'; ?>
+            </div>
+
             <div class="section" id="section-report">
                 <?php require __DIR__ . '/../../../views/report.php'; ?>
             </div>
@@ -315,6 +322,7 @@ require __DIR__ . '/sections/inbox_data.php';
             profil: { title: 'Profil', sub: 'Kelola data akun penjual' },
             chat: { title: 'Chat', sub: 'Balas pesan pembeli atas nama kantin kamu' },
             keuangan: { title: 'Keuangan', sub: 'Catatan pemasukan dan keuangan toko' },
+            laporan_stok: { title: 'Laporan Stok', sub: 'Monitor dan cetak status stok menu kantin' },
             report: { title: 'Laporan Kendala', sub: 'Laporkan kendala atau sampaikan masukan' },
         };
 

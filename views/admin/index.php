@@ -489,7 +489,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 /* ══ DATA ══ */
 // Dashboard
-$totalTransaksi = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM pesanan WHERE DATE(waktu_pesan)=CURDATE()"))['c'];
 $totalPembeli = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT (SELECT COUNT(*) FROM murid WHERE deleted_at IS NULL)+(SELECT COUNT(*) FROM guru WHERE deleted_at IS NULL) as c"))['c'];
 $tokoAktif = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE status='buka' AND deleted_at IS NULL"))['c'];
 $totalToko = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE deleted_at IS NULL"))['c'];
