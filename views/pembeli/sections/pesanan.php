@@ -604,7 +604,7 @@ if ($q_pesanan) {
                                     </button>
                                 <?php endif; ?>
 
-                                <button class="btn-nota" onclick="bukaNotaPembeli(<?= json_encode([
+                                <button class="btn-nota" onclick="bukaNotaPembeli(<?= htmlspecialchars(json_encode([
                                     'id'      => $pesanan['id_pesanan'],
                                     'toko'    => $pesanan['nama_toko'],
                                     'foto'    => $pesanan['foto_toko_url'],
@@ -618,7 +618,7 @@ if ($q_pesanan) {
                                     'items'   => array_map(function($it) {
                                         return ['nama' => $it['nama_menu'], 'jumlah' => $it['jumlah'], 'harga' => $it['harga_satuan'] * $it['jumlah']];
                                     }, $pesanan['items']),
-                                ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)">
+                                ]), ENT_QUOTES, 'UTF-8') ?>)">
                                     <i class="fa-solid fa-receipt"></i> Nota
                                 </button>
 
@@ -636,6 +636,11 @@ if ($q_pesanan) {
 
 <script>
 function bukaNotaPembeli(data) {
+    const modal = document.getElementById('notaModalPembeli');
+    if (modal && modal.parentNode !== document.body) {
+        document.body.appendChild(modal);
+    }
+
     // Update header toko
     document.getElementById('notaTokoNamaPembeli').textContent = data.toko;
 

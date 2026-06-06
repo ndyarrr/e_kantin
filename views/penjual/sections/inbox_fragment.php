@@ -183,14 +183,7 @@
                         </div>
                     </div>
                     <div class="pcard-actions">
-                        <!-- Semua role (owner & staf) bisa melihat detail pesanan -->
-                        <?php if ($ps['status'] !== 'siap_diambil'): ?>
-                            <button type="button" class="pcard-btn" 
-                                style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-family: 'Poppins', sans-serif;"
-                                data-action="cetak_nota" data-nota='<?= $notaData ?>' data-id="<?= (int) $ps['id_pesanan'] ?>">
-                                <i class="fa-solid fa-eye" style="color: #475569; font-size: 11px;"></i> Lihat Pesanan
-                            </button>
-                        <?php endif; ?>
+
 
                         <!-- Tombol aksi pemrosesan untuk owner & staf -->
                         <?php if ($ps['metode_pembayaran'] === 'transfer' && $ps['status_pembayaran'] === 'belum_bayar' && $ps['status'] !== 'dibatalkan' && $ps['status'] !== 'selesai'): ?>
@@ -232,10 +225,7 @@
                                 <i class="fa-solid fa-bell-concierge"></i> Siap Diambil
                             </button>
                         <?php elseif ($ps['status'] === 'siap_diambil'): ?>
-                            <button type="button" class="pcard-btn pcard-btn-print"
-                                data-action="cetak_nota" data-nota='<?= $notaData ?>' data-id="<?= (int) $ps['id_pesanan'] ?>">
-                                <i class="fa-solid fa-receipt"></i> Cetak Nota
-                            </button>
+
                             <button type="button" class="pcard-btn pcard-btn-selesai"
                                 id="btnSelesai-<?= (int) $ps['id_pesanan'] ?>"
                                 data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="selesai">

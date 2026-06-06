@@ -1693,7 +1693,11 @@ if ($q_toko_qris) {
                 if (qrisContainer) qrisContainer.style.display = 'flex';
                 
                 const methodTextEl = document.querySelector('.checkout-payment-method');
-             function openCheckoutQrisModal(cart, createdIds) {
+                if (methodTextEl) methodTextEl.textContent = 'QRIS';
+            }
+        }
+
+        function openCheckoutQrisModal(cart, createdIds) {
             const selectedItems = cart.filter(item => item.selected !== false);
             const canteenIds = [...new Set(selectedItems.map(item => item.id_toko))];
 
