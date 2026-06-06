@@ -78,7 +78,7 @@
                     $kat = strtolower($menu['kategori'] ?? 'makanan');
                     $has_stock = ((int)($menu['stok'] ?? 0) > 0);
                     ?>
-                    <div class="menu-card" onclick="bukaDetailMenu(<?= (int) $menu['id_menu'] ?>)" style="cursor:pointer">
+                    <div class="menu-card" onclick="handleMenuCardClick(<?= (int) $menu['id_menu'] ?>)" style="cursor:pointer">
                         <div class="menu-img-wrap-beranda" style="<?= !$has_stock ? 'position: relative; opacity: 0.65;' : '' ?>">
                             <?php if (!$has_stock): ?>
                                 <div style="position: absolute; top: 8px; right: 8px; background: #dc2626; color: #ffffff; font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 9999px; text-transform: uppercase; z-index: 2; box-shadow: 0 2px 4px rgba(220,38,38,0.2);">Habis</div>
@@ -138,12 +138,12 @@
                             if ($is_toko_buka && $has_stock): 
                             ?>
                                 <button class="btn-tambah-keranjang"
-                                    style="width:100%;margin-top:8px;font-size:12px;padding:7px 10px" onclick="event.stopPropagation(); bukaDetailMenu(<?= (int) $menu['id_menu'] ?>)">
+                                    style="width:100%;margin-top:8px;font-size:12px;padding:7px 10px" onclick="event.stopPropagation(); addToCart(<?= (int)$menu['id_menu'] ?>, <?= json_encode($menu['nama_menu'], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>, <?= (int)$menu['harga'] ?>, <?= json_encode($menu['foto_menu'] ?? '', JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>, <?= json_encode($menu['nama_toko'], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>, <?= (int)$menu['id_toko'] ?>)">
                                     <i class="fa-solid fa-cart-plus"></i> Tambah
                                 </button>
                             <?php elseif (!$has_stock): ?>
                                 <button class="btn-tambah-keranjang"
-                                    style="width:100%;margin-top:8px;font-size:12px;padding:7px 10px;background-color:#ef4444;color:#ffffff;cursor:pointer;box-shadow:none" onclick="event.stopPropagation(); bukaDetailMenu(<?= (int) $menu['id_menu'] ?>)">
+                                    style="width:100%;margin-top:8px;font-size:12px;padding:7px 10px;background-color:#ef4444;color:#ffffff;cursor:pointer;box-shadow:none" onclick="event.stopPropagation(); handleMenuCardClick(<?= (int) $menu['id_menu'] ?>)">
                                     Stok Habis
                                 </button>
                             <?php else: ?>

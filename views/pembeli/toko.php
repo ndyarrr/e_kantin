@@ -297,7 +297,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                             ?>
                             <div class="menu-grid-item" data-kategori="<?= htmlspecialchars($kategori); ?>"
                                  data-nama="<?= htmlspecialchars(strtolower($menu['nama_menu'])); ?>"
-                                 onclick="bukaDetailMenu(<?= (int) $menu['id_menu'] ?>)" style="cursor: pointer;">
+                                 onclick="handleMenuCardClick(<?= (int) $menu['id_menu'] ?>)" style="cursor: pointer;">
                                 <div class="menu-item-img-wrap">
                                     <button class="btn-favorite-toko" data-id="<?= $menu['id_menu']; ?>" 
                                             onclick="toggleFavoriteToko(<?= $menu['id_menu']; ?>, this); event.stopPropagation();" title="Tambah ke Favorit">
@@ -355,7 +355,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                                              </button>
                                          <?php else: ?>
                                              <button class="btn-tambah"
-                                                 onclick="bukaDetailMenu(<?= $menu['id_menu']; ?>); event.stopPropagation();">
+                                                 onclick="tambahKeKeranjang(<?= (int)$menu['id_menu']; ?>, <?= json_encode($menu['nama_menu']); ?>, <?= (int)$menu['harga']; ?>, <?= json_encode($menu['foto_menu'] ?? ''); ?>, <?= json_encode($toko['nama_toko']); ?>, <?= (int)$toko['id_toko']; ?>, <?= (int)$menu['stok']; ?>, <?= (int)($menu['is_fleksibel'] ?? 0); ?>); event.stopPropagation();">
                                                  <i class="fa-solid fa-plus"></i> Tambah
                                              </button>
                                          <?php endif; ?>
@@ -446,6 +446,29 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 
             let activeDetailMenu = null;
             let activeDetailPrice = 0;
+
+            function handleMenuCardClick(id) {
+                const menuItem = ALL_MENUS.find(m => Number(m.id_menu) === Number(id));
+                if (!menuItem) { bukaDetailMenu(id); return; }
+                
+                // If it is flexible price, out-of-stock, or shop is closed: open detail
+                if (menuItem.is_fleksibel === 1 || menuItem.stok <= 0 || menuItem.status_toko !== 'buka') {
+                    bukaDetailMenu(id);
+                    return;
+                }
+                
+                // Direct add to cart
+                tambahKeKeranjang(
+                    menuItem.id_menu, 
+                    menuItem.nama_menu, 
+                    menuItem.harga, 
+                    menuItem.foto_menu || '', 
+                    menuItem.nama_toko, 
+                    menuItem.id_toko, 
+                    menuItem.stok, 
+                    menuItem.is_fleksibel
+                );
+            }
 
             function bukaDetailMenu(id) {
                 const menu = ALL_MENUS.find(m => m.id_menu === id);
@@ -1539,7 +1562,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                     if (val.length >= 2) {
                         const menu = ALL_MENUS.find(m => m.nama_menu.toLowerCase().includes(val));
                         if (menu) {
-                            bukaDetailMenu(menu.id_menu);
+                            handleMenuCardClick(menu.id_menu);
                             e.target.blur();
                         }
                     }

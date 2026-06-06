@@ -17,7 +17,7 @@ $col_pembeli = ($s_role === 'siswa') ? 'nisn_pembeli' : 'nuptk_pembeli';
 // Query pesanan pembeli
 $pesanan_list = [];
 $q_pesanan = mysqli_query($db, "
-    SELECT p.*, t.nama_toko, t.id_toko, t.qris_image
+    SELECT p.*, t.nama_toko, t.id_toko, t.qris_image, t.foto_toko
     FROM pesanan p
     JOIN toko t ON p.id_toko = t.id_toko
     WHERE p.$col_pembeli = '$s_id'
@@ -49,6 +49,43 @@ if ($q_pesanan) {
         $pay = mysqli_fetch_assoc($q_pay) ?? ['status' => 'belum_bayar', 'metode' => 'tunai', 'bukti_foto' => ''];
         $r['pembayaran'] = $pay;
 
+        // Ambil nama dan kelas pembeli
+        $col_nama = ($s_role === 'siswa') ? 'nama_siswa' : 'nama_guru';
+        $tbl_pembeli = ($s_role === 'siswa') ? 'siswa' : 'guru';
+        $col_kelas = ($s_role === 'siswa') ? 'kelas' : 'nuptk';
+        $col_id_tbl = ($s_role === 'siswa') ? 'nisn' : 'nuptk';
+        $q_nama = mysqli_query($db, "SELECT $col_nama, $col_kelas FROM $tbl_pembeli WHERE $col_id_tbl = '$s_id' LIMIT 1");
+        $data_pembeli = $q_nama ? mysqli_fetch_assoc($q_nama) : [];
+        $r['nama_pembeli'] = $data_pembeli[$col_nama] ?? $s_id;
+        $r['kelas_pembeli'] = $data_pembeli[$col_kelas] ?? '-';
+
+        // Cari kasir dan shift dari log_sistem
+        $kasirNama = '';
+        $kasirShift = '';
+        $q_log = mysqli_query($db, "
+            SELECT l.user_nama, tp.shift
+            FROM log_sistem l
+            LEFT JOIN toko_penjual tp ON tp.id_penjual = l.user_id AND tp.status = 'aktif'
+            WHERE l.keterangan LIKE '%pesanan #$id_pesanan%'
+              AND l.user_role = 'penjual'
+            ORDER BY l.dibuat_pada DESC
+            LIMIT 1
+        ");
+        if ($q_log && $r_log = mysqli_fetch_assoc($q_log)) {
+            $kasirNama  = $r_log['user_nama'];
+            $kasirShift = $r_log['shift'] ?? 'Bebas';
+        }
+        $r['kasir_nama']  = $kasirNama;
+        $r['kasir_shift'] = $kasirShift;
+
+        // Resolve foto_toko URL
+        $foto_toko_file = $r['foto_toko'] ?? '';
+        $foto_toko_url  = '';
+        if (!empty($foto_toko_file)) {
+            $foto_toko_url = '../../assets/img/kantin/' . $foto_toko_file;
+        }
+        $r['foto_toko_url'] = $foto_toko_url;
+
         $pesanan_list[] = $r;
     }
 }
@@ -68,6 +105,53 @@ if ($q_pesanan) {
                     style="font-size:13px;padding:10px 28px">Jelajahi Kantin</button>
             </div>
         <?php else: ?>
+            <!-- ══ MODAL NOTA PEMBELI ══ -->
+            <div id="notaModalPembeli" class="nota-overlay-pembeli" onclick="tutupNotaPembeli(event)">
+                <div class="nota-box-pembeli" id="notaBoxPembeli">
+                    <div id="notaKontenPembeli">
+                        <div class="nota-jagged-top-pembeli"></div>
+                        <div class="nota-header-pembeli">
+                            <div class="nota-logo-pembeli" id="notaLogoPembeli">🏪</div>
+                            <div class="nota-toko-nama-pembeli" id="notaTokoNamaPembeli"></div>
+                            <div class="nota-sub-pembeli">E-Kantin SMKN 1</div>
+                        </div>
+                        <div class="nota-garis-pembeli"></div>
+                        <div class="nota-info-pembeli">
+                            <div class="nota-info-row-pembeli"><span>No. Pesanan</span><span id="notaIdPembeli"></span></div>
+                            <div class="nota-info-row-pembeli"><span>Pembeli</span><span id="notaNamaPembeli"></span></div>
+                            <div class="nota-info-row-pembeli"><span>Kelas</span><span id="notaKelasPembeli"></span></div>
+                            <div class="nota-info-row-pembeli"><span>Waktu</span><span id="notaWaktuPembeli"></span></div>
+                            <div class="nota-info-row-pembeli"><span>Kasir</span><span id="notaKasirPembeli"></span></div>
+                            <div class="nota-info-row-pembeli"><span>Shift</span><span id="notaShiftPembeli"></span></div>
+                            <div class="nota-info-row-pembeli"><span>Pembayaran</span><span id="notaMetodePembeli"></span></div>
+                        </div>
+                        <div class="nota-garis-pembeli"></div>
+                        <table class="nota-table-pembeli" id="notaTablePembeli">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th class="center">Qty</th>
+                                    <th class="right">Harga</th>
+                                </tr>
+                            </thead>
+                            <tbody id="notaItemsPembeli"></tbody>
+                        </table>
+                        <div class="nota-garis-pembeli"></div>
+                        <div class="nota-total-row-pembeli"><span>TOTAL</span><span id="notaTotalPembeli"></span></div>
+                        <div class="nota-garis-pembeli"></div>
+                        <div class="nota-footer-pembeli">
+                            <div class="nota-footer-bold-pembeli">Terima kasih atas pesanan Anda!</div>
+                            <div class="nota-footer-sub-pembeli">Semoga hari Anda menyenangkan</div>
+                        </div>
+                        <div class="nota-jagged-bottom-pembeli"></div>
+                    </div>
+                    <div class="nota-actions-pembeli no-print-pembeli">
+                        <button type="button" class="btn-nota-tutup" onclick="tutupNotaPembeli()">&#x2715; Tutup</button>
+                        <button type="button" class="btn-nota-cetak" onclick="cetakNotaPembeli()">&#x1F5A8; Cetak Nota</button>
+                    </div>
+                </div>
+            </div>
+
             <style>
                 .pesanan-container {
                     display: flex;
@@ -273,6 +357,158 @@ if ($q_pesanan) {
                     color: #b91c1c !important;
                     border-color: #f87171 !important;
                 }
+                .btn-nota {
+                    background: #1e293b;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 8px 14px;
+                    font-size: 11.5px;
+                    font-weight: 700;
+                    color: #ffffff;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    transition: all 0.2s;
+                }
+                .btn-nota:hover {
+                    background: #0f172a;
+                    transform: translateY(-1px);
+                }
+
+                /* ══ Nota Modal Pembeli ══ */
+                .nota-overlay-pembeli {
+                    display: none;
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.65);
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                    z-index: 99999;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                }
+                .nota-overlay-pembeli.show { display: flex; }
+                .nota-box-pembeli {
+                    background: #ffffff;
+                    border-radius: 8px;
+                    width: 100%;
+                    max-width: 320px;
+                    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+                    overflow: hidden;
+                    border: 1px solid rgba(0,0,0,0.08);
+                }
+                #notaKontenPembeli {
+                    background: #fdfdf9;
+                    color: #1e293b;
+                    padding: 36px 20px 30px;
+                    position: relative;
+                    font-family: 'Courier New', Courier, monospace;
+                    font-size: 12.5px;
+                    line-height: 1.4;
+                }
+                .nota-jagged-top-pembeli, .nota-jagged-bottom-pembeli {
+                    position: absolute;
+                    left: 0; right: 0;
+                    height: 6px;
+                    background-image: radial-gradient(circle, transparent 3px, #fdfdf9 3.5px);
+                    background-size: 8px 12px;
+                    background-repeat: repeat-x;
+                    z-index: 5;
+                }
+                .nota-jagged-top-pembeli { top: 0; background-position: 0 -6px; }
+                .nota-jagged-bottom-pembeli { bottom: 0; background-position: 0 6px; }
+                .nota-header-pembeli { text-align: center; margin-bottom: 14px; }
+                .nota-logo-pembeli {
+                    display: flex; justify-content: center; align-items: center;
+                    margin-bottom: 8px; font-size: 26px;
+                }
+                .nota-toko-nama-pembeli {
+                    font-size: 15px; font-weight: 800; color: #0f172a;
+                    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;
+                }
+                .nota-sub-pembeli { font-size: 11px; color: #64748b; font-weight: 500; }
+                .nota-garis-pembeli {
+                    display: block; width: 100%; height: 0;
+                    border: none; border-top: 2px dashed #94a3b8; margin: 12px 0;
+                }
+                .nota-info-pembeli { margin-bottom: 4px; }
+                .nota-info-row-pembeli {
+                    display: flex; justify-content: space-between;
+                    font-size: 12px; padding: 3px 0;
+                }
+                .nota-info-row-pembeli span:first-child { color: #64748b; flex-shrink: 0; }
+                .nota-info-row-pembeli span:last-child {
+                    font-weight: 700; color: #0f172a; text-align: right;
+                    max-width: 60%; word-break: break-word;
+                }
+                .nota-table-pembeli {
+                    width: 100%; border-collapse: collapse;
+                    font-size: 12px; color: #1e293b;
+                }
+                .nota-table-pembeli th {
+                    font-size: 10px; font-weight: 700; text-transform: uppercase;
+                    color: #64748b; padding: 5px 0; letter-spacing: 0.5px;
+                    border-bottom: 1.5px dashed #cbd5e1; text-align: left;
+                }
+                .nota-table-pembeli th.center, .nota-table-pembeli td.center { text-align: center; }
+                .nota-table-pembeli th.right, .nota-table-pembeli td.right { text-align: right; }
+                .nota-table-pembeli td { padding: 6px 0; vertical-align: top; color: #334155; }
+                .nota-total-row-pembeli {
+                    display: flex; justify-content: space-between;
+                    font-size: 15px; font-weight: 800; color: #0f172a;
+                    padding: 5px 0; letter-spacing: 0.2px;
+                }
+                .nota-footer-pembeli { text-align: center; margin-top: 12px; padding-bottom: 4px; }
+                .nota-footer-bold-pembeli { font-weight: 700; font-size: 12px; color: #334155; margin-bottom: 2px; }
+                .nota-footer-sub-pembeli { font-size: 10.5px; color: #64748b; font-style: italic; }
+                .nota-actions-pembeli {
+                    display: flex; gap: 12px;
+                    padding: 16px 20px;
+                    border-top: 1px solid #f1f5f9;
+                    background: #f8fafc;
+                }
+                .btn-nota-tutup {
+                    flex: 1; padding: 10px; font-size: 13px; font-weight: 700;
+                    color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0;
+                    border-radius: 10px; cursor: pointer;
+                    font-family: 'Poppins', sans-serif;
+                }
+                .btn-nota-cetak {
+                    flex: 1.5; padding: 10px; font-size: 13px; font-weight: 700;
+                    color: #ffffff; background: #1e293b; border: none;
+                    border-radius: 10px; cursor: pointer;
+                    font-family: 'Poppins', sans-serif;
+                }
+
+                /* ── Print thermal pembeli ── */
+                @media print {
+                    @page { size: 80mm auto; margin: 4mm; }
+                    body * { visibility: hidden; }
+                    #notaKontenPembeli, #notaKontenPembeli * { visibility: visible; }
+                    #notaKontenPembeli {
+                        position: fixed !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        width: 100% !important;
+                        background: #fff !important;
+                        color: #000 !important;
+                        font-family: 'Courier New', Courier, monospace !important;
+                        font-size: 22px !important;
+                        padding: 8px 4px !important;
+                        line-height: 1.5 !important;
+                    }
+                    .nota-toko-nama-pembeli { font-size: 28px !important; }
+                    .nota-info-row-pembeli { font-size: 22px !important; }
+                    .nota-table-pembeli, .nota-table-pembeli th, .nota-table-pembeli td { font-size: 22px !important; }
+                    .nota-total-row-pembeli { font-size: 26px !important; }
+                    .nota-footer-bold-pembeli { font-size: 22px !important; }
+                    .nota-footer-sub-pembeli { font-size: 18px !important; }
+                    .nota-garis-pembeli { border-top: 2px dashed #000 !important; margin: 14px 0 !important; }
+                    .nota-actions-pembeli { display: none !important; }
+                    .nota-logo-pembeli img { max-width: 60px !important; height: auto !important; }
+                }
             </style>
             
             <div class="pesanan-container">
@@ -356,14 +592,9 @@ if ($q_pesanan) {
                                     </span>
                                 <?php endif; ?>
                                 
-                                <?php if ($is_transfer && !$is_lunas && !empty($pesanan['qris_image'])): 
-                                    $has_uploaded_proof = !empty($pesanan['pembayaran']['bukti_foto']);
-                                    $btn_text = $has_uploaded_proof ? 'Lihat/Kirim Ulang Bukti' : 'Bayar QRIS';
-                                    $btn_icon = $has_uploaded_proof ? 'fa-file-invoice' : 'fa-qrcode';
-                                    $btn_bg = $has_uploaded_proof ? '#0284c7' : '#16a34a'; // Sky blue for uploaded, green for not uploaded
-                                ?>
-                                    <button class="btn-bayar-qris" id="btn-qris-pay-<?= $pesanan['id_pesanan'] ?>" onclick="openPesananQrisModal('<?= htmlspecialchars(addslashes($pesanan['nama_toko']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($pesanan['qris_image']), ENT_QUOTES) ?>', <?= $pesanan['id_pesanan'] ?>, '<?= htmlspecialchars(addslashes($pesanan['pembayaran']['bukti_foto'] ?? ''), ENT_QUOTES) ?>')" style="background: <?= $btn_bg ?>; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
-                                        <i class="fa-solid <?= $btn_icon ?>"></i> <?= $btn_text ?>
+                                <?php if ($is_transfer && !$is_lunas && !empty($pesanan['qris_image'])): ?>
+                                    <button class="btn-bayar-qris" id="btn-qris-pay-<?= $pesanan['id_pesanan'] ?>" onclick="openPesananQrisModal('<?= htmlspecialchars(addslashes($pesanan['nama_toko']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($pesanan['qris_image']), ENT_QUOTES) ?>', <?= $pesanan['id_pesanan'] ?>)" style="background: #16a34a; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                        <i class="fa-solid fa-qrcode"></i> Bayar QRIS
                                     </button>
                                 <?php endif; ?>
 
@@ -372,6 +603,24 @@ if ($q_pesanan) {
                                         <i class="fa-solid fa-ban"></i> Batalkan Pesanan
                                     </button>
                                 <?php endif; ?>
+
+                                <button class="btn-nota" onclick="bukaNotaPembeli(<?= json_encode([
+                                    'id'      => $pesanan['id_pesanan'],
+                                    'toko'    => $pesanan['nama_toko'],
+                                    'foto'    => $pesanan['foto_toko_url'],
+                                    'pembeli' => $pesanan['nama_pembeli'],
+                                    'kelas'   => $pesanan['kelas_pembeli'],
+                                    'waktu'   => date('d/m/Y H:i', strtotime($pesanan['waktu_pesan'])),
+                                    'kasir'   => $pesanan['kasir_nama'],
+                                    'shift'   => $pesanan['kasir_shift'],
+                                    'metode'  => ($pesanan['pembayaran']['metode'] === 'transfer') ? 'QRIS' : 'Tunai',
+                                    'total'   => $pesanan['total_harga'],
+                                    'items'   => array_map(function($it) {
+                                        return ['nama' => $it['nama_menu'], 'jumlah' => $it['jumlah'], 'harga' => $it['harga_satuan'] * $it['jumlah']];
+                                    }, $pesanan['items']),
+                                ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)">
+                                    <i class="fa-solid fa-receipt"></i> Nota
+                                </button>
 
                                 <button class="btn-chat-kantin" onclick="switchNav('chat'); setTimeout(() => { bukaRoomChat('toko_<?= $pesanan['id_toko'] ?>', '<?= htmlspecialchars(addslashes($pesanan['nama_toko']), ENT_QUOTES) ?>'); }, 200);">
                                     <i class="fa-solid fa-comment-dots"></i> Hubungi Kantin
@@ -386,11 +635,61 @@ if ($q_pesanan) {
 </div>
 
 <script>
-function openPesananQrisModal(namaToko, qrisImage, idPesanan, existingBukti) {
+function bukaNotaPembeli(data) {
+    // Update header toko
+    document.getElementById('notaTokoNamaPembeli').textContent = data.toko;
+
+    // Logo kantin (foto atau emoji fallback)
+    const logoEl = document.getElementById('notaLogoPembeli');
+    if (data.foto && data.foto.trim() !== '') {
+        logoEl.innerHTML = `<img src="${data.foto}" alt="Logo" style="width:50px;height:50px;object-fit:cover;border-radius:50%;border:2px solid #e2e8f0;">`;
+    } else {
+        logoEl.innerHTML = '🏪';
+    }
+
+    document.getElementById('notaIdPembeli').textContent = '#' + data.id;
+    document.getElementById('notaNamaPembeli').textContent = data.pembeli;
+    document.getElementById('notaKelasPembeli').textContent = data.kelas;
+    document.getElementById('notaWaktuPembeli').textContent = data.waktu;
+    document.getElementById('notaKasirPembeli').textContent = data.kasir || '-';
+    document.getElementById('notaShiftPembeli').textContent = data.shift || 'Bebas';
+    document.getElementById('notaMetodePembeli').textContent = data.metode || 'Tunai';
+    document.getElementById('notaTotalPembeli').textContent = 'Rp ' + Number(data.total).toLocaleString('id-ID');
+
+    const tbody = document.getElementById('notaItemsPembeli');
+    tbody.innerHTML = '';
+    data.items.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.nama}</td>
+            <td class="center">${item.jumlah}&times;</td>
+            <td class="right">Rp ${Number(item.harga).toLocaleString('id-ID')}</td>`;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('notaModalPembeli').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function tutupNotaPembeli(e) {
+    if (e && e.target !== document.getElementById('notaModalPembeli')) return;
+    document.getElementById('notaModalPembeli').classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+function cetakNotaPembeli() {
+    window.print();
+    setTimeout(() => {
+        document.getElementById('notaModalPembeli').classList.remove('show');
+        document.body.style.overflow = '';
+    }, 400);
+}
+
+</script>
+<script>
+function openPesananQrisModal(namaToko, qrisImage, idPesanan) {
     let oldModal = document.getElementById('qrisPaymentModal');
     if (oldModal) oldModal.remove();
-
-    const hasExisting = existingBukti && existingBukti.trim() !== '';
 
     const modal = document.createElement('div');
     modal.id = 'qrisPaymentModal';
@@ -419,26 +718,6 @@ function openPesananQrisModal(namaToko, qrisImage, idPesanan, existingBukti) {
         box-sizing: border-box;
     `;
 
-    // Uploader area HTML
-    let uploaderHtml = '';
-    if (hasExisting) {
-        uploaderHtml = `
-        <div style="margin-bottom:16px; text-align:left;">
-            <div style="font-size:12px;font-weight:700;color:#0f172a;font-family:'Poppins',sans-serif;margin-bottom:8px;">
-                <i class="fa-solid fa-file-image" style="color:#0284c7;margin-right:4px;"></i> Bukti Yang Sudah Diunggah
-            </div>
-            <div style="border-radius:12px;overflow:hidden;border:2px solid #0284c7;position:relative;background:#f8fafc;">
-                <a href="../../assets/img/bukti_bayar/${existingBukti}" target="_blank">
-                    <img src="../../assets/img/bukti_bayar/${existingBukti}" style="width:100%;max-height:140px;object-fit:cover;display:block;" alt="Bukti Bayar">
-                </a>
-                <div style="position:absolute;top:6px;right:6px;background:rgba(2,132,199,0.9);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;">
-                    <i class="fa-solid fa-circle-check" style="margin-right:3px;"></i>Terkirim
-                </div>
-            </div>
-            <p style="font-size:11px;color:#64748b;margin:6px 0 0;font-family:'Poppins',sans-serif;">Anda sudah mengirim bukti. Bisa kirim ulang jika ada perubahan.</p>
-        </div>`;
-    }
-
     card.innerHTML = `
         <div style="overflow-y:auto; flex:1; padding-right:2px; position:relative;">
             <button id="btnPesananQrisX" style="position:absolute;top:0;right:0;width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;z-index:1;" onmouseover="this.style.background='#fee2e2';this.style.color='#ef4444';" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b';">
@@ -448,55 +727,20 @@ function openPesananQrisModal(namaToko, qrisImage, idPesanan, existingBukti) {
                 <i class="fa-solid fa-qrcode"></i>
             </div>
             <h3 style="margin:0 0 4px;font-size:16px;font-weight:800;color:#0f172a;font-family:'Poppins',sans-serif;">QRIS - ${namaToko}</h3>
-            <p style="margin:0 0 14px;font-size:12px;color:#64748b;font-family:'Poppins',sans-serif;">Scan QR lalu unggah bukti pembayaran Anda.</p>
+            <p style="margin:0 0 14px;font-size:12px;color:#64748b;font-family:'Poppins',sans-serif;">Scan QR di bawah ini untuk melakukan pembayaran.</p>
 
-            <div style="background:#fff;padding:10px;border-radius:14px;border:1.5px solid #e2e8f0;display:inline-block;margin-bottom:14px;">
+            <div style="background:#fff;padding:10px;border-radius:14px;border:1.5px solid #e2e8f0;display:inline-block;margin-bottom:20px;">
                 <img src="../../assets/img/qris/${qrisImage}" alt="QRIS" style="max-width:200px;width:100%;height:auto;display:block;border-radius:6px;">
             </div>
-
-            ${uploaderHtml}
-
-            <!-- Upload Area -->
-            <div style="background:#f8fafc;border:1.5px dashed #cbd5e1;padding:16px;border-radius:14px;margin-bottom:16px;cursor:pointer;transition:all 0.2s;text-align:center;position:relative;" id="pesananUploaderArea" onclick="document.getElementById('pesananFileInput').click()">
-                <input type="file" id="pesananFileInput" accept="image/*" style="display:none;">
-                <div id="pesananUploadPrompt">
-                    <i class="fa-solid fa-cloud-arrow-up" style="font-size:26px;color:#64748b;margin-bottom:6px;display:block;"></i>
-                    <span style="font-size:13px;font-weight:700;color:#475569;display:block;">${hasExisting ? 'Kirim Ulang Bukti' : 'Unggah Bukti Transfer'}</span>
-                    <span style="font-size:11px;color:#94a3b8;display:block;margin-top:2px;">Ketuk untuk memilih foto struk/bukti bayar</span>
-                </div>
-                <div id="pesananUploadPreviewWrap" style="display:none;flex-direction:column;align-items:center;gap:8px;">
-                    <div style="width:72px;height:72px;border-radius:10px;overflow:hidden;border:1.5px solid #16a34a;background:#fff;padding:2px;">
-                        <img id="pesananUploadPreview" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">
-                    </div>
-                    <span id="pesananFileName" style="font-size:11px;font-weight:600;color:#475569;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-                    <button type="button" onclick="clearPesananFile(event)" style="border:none;cursor:pointer;font-size:11px;padding:4px 10px;color:#ef4444;border:1px solid #fee2e2;background:#fef2f2;border-radius:8px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">
-                        <i class="fa-solid fa-trash-can"></i> Hapus Foto
-                    </button>
-                </div>
-            </div>
-
-            <div style="background:#eff6ff;border:1px solid #bfdbfe;padding:12px;border-radius:14px;margin-bottom:16px;text-align:left;display:flex;align-items:flex-start;gap:10px;">
-                <i class="fa-solid fa-circle-info" style="color:#3b82f6;font-size:15px;margin-top:2px;flex-shrink:0;"></i>
-                <span style="font-size:11.5px;color:#1e3a8a;line-height:1.4;font-family:'Poppins',sans-serif;">
-                    Unggah struk pembayaran Anda. Bukti akan otomatis dikirim ke chat kantin dan penjual akan memverifikasi.
-                </span>
-            </div>
         </div>
 
-        <div style="display:flex;gap:8px;flex-shrink:0;margin-top:4px;">
-            <button id="btnPesananQrisClose" style="flex:1;padding:11px;font-weight:700;font-size:13px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.2s;">
-                Tutup
-            </button>
-            <button id="btnPesananQrisKirim" disabled style="flex:2;padding:11px;font-weight:800;font-size:13px;color:#fff;background:#94a3b8;border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.2s;pointer-events:none;opacity:0.7;">
-                <i class="fa-solid fa-paper-plane"></i> Kirim Bukti
-            </button>
-        </div>
+        <button id="btnPesananQrisClose" style="width:100%;padding:11px;font-weight:800;font-size:13px;color:#fff;background:#16a34a;border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.2s;box-shadow:0 4px 12px rgba(22,163,74,0.2);">
+            <i class="fa-solid fa-check"></i> Selesai
+        </button>
     `;
 
     modal.appendChild(card);
     document.body.appendChild(modal);
-
-    let selectedFile = null;
 
     setTimeout(() => {
         modal.style.opacity = '1';
@@ -508,107 +752,6 @@ function openPesananQrisModal(namaToko, qrisImage, idPesanan, existingBukti) {
         card.style.transform = 'scale(0.9)';
         setTimeout(() => modal.remove(), 300);
     }
-
-    // File input change listener
-    const fileInput = card.querySelector('#pesananFileInput');
-    fileInput.addEventListener('change', function(e) {
-        if (e.target.files && e.target.files[0]) {
-            selectedFile = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                card.querySelector('#pesananUploadPreview').src = ev.target.result;
-                card.querySelector('#pesananUploadPrompt').style.display = 'none';
-                card.querySelector('#pesananUploadPreviewWrap').style.display = 'flex';
-
-                const kirimBtn = card.querySelector('#btnPesananQrisKirim');
-                kirimBtn.disabled = false;
-                kirimBtn.style.background = '#16a34a';
-                kirimBtn.style.pointerEvents = 'auto';
-                kirimBtn.style.opacity = '1';
-                kirimBtn.style.boxShadow = '0 4px 12px rgba(22,163,74,0.25)';
-            };
-            reader.readAsDataURL(selectedFile);
-            card.querySelector('#pesananFileName').textContent = selectedFile.name;
-        }
-    });
-
-    window.clearPesananFile = function(event) {
-        if (event) event.stopPropagation();
-        fileInput.value = '';
-        selectedFile = null;
-        card.querySelector('#pesananUploadPrompt').style.display = 'block';
-        card.querySelector('#pesananUploadPreviewWrap').style.display = 'none';
-        const kirimBtn = card.querySelector('#btnPesananQrisKirim');
-        kirimBtn.disabled = true;
-        kirimBtn.style.background = '#94a3b8';
-        kirimBtn.style.pointerEvents = 'none';
-        kirimBtn.style.opacity = '0.7';
-        kirimBtn.style.boxShadow = 'none';
-    };
-
-    // Kirim button listener
-    const kirimBtn = card.querySelector('#btnPesananQrisKirim');
-    kirimBtn.addEventListener('click', function() {
-        if (!selectedFile) return;
-
-        kirimBtn.disabled = true;
-        kirimBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
-        kirimBtn.style.background = '#15803d';
-        kirimBtn.style.pointerEvents = 'none';
-
-        const fd = new FormData();
-        fd.append('ids', JSON.stringify([idPesanan]));
-        fd.append('bukti_foto', selectedFile);
-
-        fetch('actions/upload_bukti.php', { method: 'POST', body: fd })
-            .then(res => res.json())
-            .then(res => {
-                if (res.status === 'success') {
-                    // Success state
-                    kirimBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Terkirim!';
-                    kirimBtn.style.background = '#16a34a';
-                    kirimBtn.style.pointerEvents = 'none';
-
-                    // Lock uploader
-                    const uploaderArea = card.querySelector('#pesananUploaderArea');
-                    uploaderArea.style.pointerEvents = 'none';
-                    uploaderArea.style.borderColor = '#16a34a';
-                    uploaderArea.style.background = '#f0fdf4';
-                    const removeBtn = card.querySelector('#pesananUploadPreviewWrap button');
-                    if (removeBtn) removeBtn.remove();
-
-                    // Show toast if function exists
-                    if (typeof showToast === 'function') showToast('🎉 Bukti pembayaran berhasil terkirim ke kantin!', 'success');
-                    else alert('Bukti pembayaran berhasil terkirim!');
-
-                    // Update button in pesanan list
-                    const btnQris = document.getElementById('btn-qris-pay-' + idPesanan);
-                    if (btnQris) {
-                        btnQris.style.background = '#0284c7';
-                        btnQris.innerHTML = '<i class="fa-solid fa-file-invoice"></i> Lihat/Kirim Ulang Bukti';
-                    }
-
-                    // Auto close after 2s
-                    setTimeout(closeModal, 2000);
-                } else {
-                    kirimBtn.disabled = false;
-                    kirimBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Bukti';
-                    kirimBtn.style.background = '#16a34a';
-                    kirimBtn.style.pointerEvents = 'auto';
-                    if (typeof showToast === 'function') showToast('Gagal: ' + res.message, 'error');
-                    else alert('Gagal: ' + res.message);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                kirimBtn.disabled = false;
-                kirimBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Bukti';
-                kirimBtn.style.background = '#16a34a';
-                kirimBtn.style.pointerEvents = 'auto';
-                if (typeof showToast === 'function') showToast('Koneksi gagal! Coba lagi.', 'error');
-                else alert('Koneksi gagal!');
-            });
-    });
 
     card.querySelector('#btnPesananQrisClose').addEventListener('click', closeModal);
     card.querySelector('#btnPesananQrisX').addEventListener('click', closeModal);

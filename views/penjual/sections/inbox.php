@@ -323,6 +323,38 @@ function konfirmasiPembayaranQris() {
         });
 }
 
+function konfirmasiLunasQrisDirect(idPesanan) {
+    if (!idPesanan) return;
+    if (!confirm('Konfirmasi pembayaran QRIS untuk pesanan #' + idPesanan + '?\n\nPastikan pembayaran sudah diterima sebelum mengkonfirmasi.')) {
+        return;
+    }
+
+    const fd = new FormData();
+    fd.append('action', 'konfirmasi_pembayaran_qris');
+    fd.append('id_pesanan', idPesanan);
+    fd.append('ajax', '1');
+
+    const prosesUrl = (window.INBOX_RT_CONFIG && window.INBOX_RT_CONFIG.prosesUrl)
+        ? window.INBOX_RT_CONFIG.prosesUrl
+        : '../actions/proses_inbox.php';
+
+    fetch(prosesUrl, { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                if (typeof muatInbox === 'function') muatInbox();
+                else if (typeof reloadInboxFragment === 'function') reloadInboxFragment();
+                else location.reload();
+            } else {
+                alert(res.message || 'Konfirmasi gagal. Coba lagi.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Koneksi gagal!');
+        });
+}
+
 function konfirmasiPembayaranTunai(idPesanan) {
     if (!idPesanan) return;
     if (!confirm('Apakah Anda yakin sudah menerima pembayaran tunai untuk pesanan #' + idPesanan + '?')) {

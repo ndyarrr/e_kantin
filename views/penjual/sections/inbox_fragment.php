@@ -202,9 +202,9 @@
                                 </button>
                             <?php else: ?>
                                 <button type="button" class="pcard-btn" 
-                                    style="background: #cbd5e1; color: #64748b; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px;"
-                                    disabled title="Pembeli belum mengunggah bukti transfer">
-                                    <i class="fa-solid fa-ban"></i> Konfirmasi QRIS
+                                    style="background: #16a34a; color: #ffffff; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);"
+                                    onclick="konfirmasiLunasQrisDirect(<?= (int)$ps['id_pesanan'] ?>)">
+                                    <i class="fa-solid fa-qrcode"></i> Konfirmasi QRIS
                                 </button>
                             <?php endif; ?>
                         <?php endif; ?>

@@ -558,7 +558,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 </button>`;
             }
             const styleAttr = styleExtra ? `style="${styleExtra}"` : '';
-            return `<button class="btn-tambah-keranjang" ${styleAttr} onclick="event.stopPropagation(); bukaDetailMenu(${m.id_menu})">
+            return `<button class="btn-tambah-keranjang" ${styleAttr} onclick="event.stopPropagation(); addToCart(${m.id_menu}, \`${m.nama_menu.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, ${m.harga}, \`${m.foto_menu || ''}\`, \`${m.nama_toko.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, ${m.id_toko})">
                 <i class="fa-solid fa-cart-plus"></i> Tambah
             </button>`;
         }
@@ -1216,6 +1216,18 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             showToast(nama + ' (Rp ' + activeHarga.toLocaleString('id-ID') + ')', 'success', { foto: foto, toko: toko });
         }
 
+        function handleMenuCardClick(id) {
+            const menuItem = ALL_MENUS.find(m => Number(m.id_menu) === Number(id));
+            if (!menuItem) { bukaDetailMenu(id); return; }
+            // Flexible price, out-of-stock, or shop is closed: open detail
+            if (menuItem.is_fleksibel === 1 || menuItem.stok <= 0 || menuItem.status_toko !== 'buka') {
+                bukaDetailMenu(id);
+                return;
+            }
+            // Direct add to cart
+            addToCart(id, menuItem.nama_menu, menuItem.harga, menuItem.foto_menu || '', menuItem.nama_toko, menuItem.id_toko);
+        }
+
         function updateCartSummaryUI() {
             const cart = getCart();
             const selectedItems = cart.filter(item => item.selected !== false);
@@ -1619,7 +1631,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, null, m.stok);
                 const btnHTML = renderAddToCartButton(m, 'flex:1');
                 return `
-            <div class="menu-card-full" data-kategori="${(m.kategori || '').toLowerCase()}" onclick="bukaDetailMenu(${m.id_menu})" style="cursor: pointer;">
+            <div class="menu-card-full" data-kategori="${(m.kategori || '').toLowerCase()}" onclick="handleMenuCardClick(${m.id_menu})" style="cursor: pointer;">
                 ${imgWrapHTML}
                 <div class="mc-info">
                     <h4>${m.nama_menu}</h4>
@@ -1722,7 +1734,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                         m.kategori.toLowerCase().includes(val)
                     );
                     if (results.length > 0) {
-                        bukaDetailMenu(results[0].id_menu);
+                        handleMenuCardClick(results[0].id_menu);
                         e.target.blur();
                     }
                 }
@@ -1773,7 +1785,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                         const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, m.id_menu, m.stok);
                         const btnHTML = renderAddToCartButton(m);
                         return `
-                    <div class="menu-card-full" onclick="bukaDetailMenu(${m.id_menu})" style="cursor: pointer;">
+                    <div class="menu-card-full" onclick="handleMenuCardClick(${m.id_menu})" style="cursor: pointer;">
                         ${imgWrapHTML}
                         <div class="mc-info">
                             <h4>${m.nama_menu}</h4>
@@ -1857,7 +1869,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, m.id_menu, m.stok);
                     const btnHTML = renderAddToCartButton(m);
                     return `
-                    <div class="menu-card-full" onclick="bukaDetailMenu(${m.id_menu})" style="cursor: pointer;">
+                    <div class="menu-card-full" onclick="handleMenuCardClick(${m.id_menu})" style="cursor: pointer;">
                         ${imgWrapHTML}
                         <div class="mc-info">
                             <h4>${m.nama_menu}</h4>
