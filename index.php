@@ -1,5 +1,7 @@
 <?php require_once 'config/database.php';
-
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -80,7 +82,7 @@
             <div id="modalFotoWrap"
                 style="width:100%; background:#f3f4f6; display:flex; align-items:center; justify-content:center; min-height:160px; max-height:300px; overflow:hidden; position:relative;">
                 <img id="modalFoto" src="" alt=""
-                    style="width:100%; max-height:300px; object-fit:contain; background:#1a1a1a; display:none; border-radius:0;">
+                    style="width:100%; max-height:300px; object-fit:contain; background:none; display:none; border-radius:0;">
                 <svg id="modalFotoPlaceholder" xmlns="http://www.w3.org/2000/svg" width="80" height="80"
                     viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.2" stroke-linecap="round"
                     stroke-linejoin="round">
