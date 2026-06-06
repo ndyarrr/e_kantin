@@ -26,14 +26,14 @@ $roles = [
     [
         'key' => 'pembeli',
         'label' => 'Pembeli',
-        'field_label' => 'NISN',
+        'field_label' => 'NISN / NUPTK',
         'field_name' => 'identifier',
-        'placeholder' => 'Masukkan NISN (10 digit)',
+        'placeholder' => 'Masukkan NISN (10 digit) atau NUPTK (16 digit)',
         'img' => '../../assets/img/role_pembeli.png',
         'color' => '#4CAF50',
         'has_activation' => false,
         'has_toko' => false,
-        'has_toggle' => true,
+        'has_toggle' => false,
         'has_toko_toggle' => false, // Tambahan
     ],
     [

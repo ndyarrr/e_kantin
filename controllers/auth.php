@@ -21,22 +21,20 @@ function login()
         // ----------------------------------------
         case 'pembeli':
             $identifier = trim($_POST['identifier'] ?? '');
-            $tipe_pembeli = $_POST['tipe_pembeli'] ?? 'siswa';
-
-            $_SESSION['last_tipe_pembeli'] = $tipe_pembeli;
 
             if (empty($identifier)) {
-                return $tipe_pembeli === 'siswa' ? "NISN wajib diisi." : "NUPTK atau Nama Guru wajib diisi.";
+                return "NISN atau NUPTK wajib diisi.";
+            }
+
+            if (!ctype_digit($identifier)) {
+                return "NISN atau NUPTK harus berupa angka.";
             }
 
             $id = mysqli_real_escape_string($conn, $identifier);
+            $len = strlen($identifier);
 
-            // ════ ALUR LOGIN SISWA ════
-            if ($tipe_pembeli === 'siswa') {
-                if (!ctype_digit($identifier) || strlen($identifier) !== 10) {
-                    return "NISN siswa harus berupa 10 digit angka.";
-                }
-
+            if ($len === 10) {
+                // ════ ALUR LOGIN SISWA ════
                 $res = mysqli_query($conn, "SELECT * FROM murid WHERE nisn = '$id' AND deleted_at IS NULL LIMIT 1");
                 $user = mysqli_fetch_assoc($res);
 
@@ -49,7 +47,7 @@ function login()
 
                 mysqli_query($conn, "UPDATE murid SET terakhir_login = NOW() WHERE nisn = '$id'");
 
-                                $_SESSION['user_id'] = $user['nisn'];
+                $_SESSION['user_id'] = $user['nisn'];
                 $_SESSION['user_nama'] = $user['nama'];
                 $_SESSION['user_role'] = 'siswa';
                 $_SESSION['user_foto'] = $user['foto_profil'];
@@ -60,32 +58,22 @@ function login()
                 header('Location: ../views/pembeli/index.php');
                 exit;
 
+            } elseif ($len === 16) {
                 // ════ ALUR LOGIN GURU ════
-            } else {
-                if (ctype_digit($identifier)) {
-                    if (strlen($identifier) !== 16) {
-                        return "NUPTK guru harus tepat 16 digit angka.";
-                    }
-                    $query = "SELECT * FROM guru WHERE nuptk = '$id' AND deleted_at IS NULL LIMIT 1";
-                } else {
-                    $query = "SELECT * FROM guru WHERE nama = '$id' AND deleted_at IS NULL LIMIT 1";
-                }
-
-                $res = mysqli_query($conn, $query);
+                $res = mysqli_query($conn, "SELECT * FROM guru WHERE nuptk = '$id' AND deleted_at IS NULL LIMIT 1");
                 $user = mysqli_fetch_assoc($res);
 
                 if (!$user) {
-                    return ctype_digit($identifier) ? "NUPTK tidak ditemukan." : "Nama Guru tidak ditemukan.";
+                    return "NUPTK tidak ditemukan.";
                 }
                 if ($user['status'] !== 'aktif')
                     return "akun dinonaktifkan";
                 if ($user['password'] !== md5($pass))
                     return "Password salah.";
 
-                $nuptk_guru = $user['nuptk'];
-                mysqli_query($conn, "UPDATE guru SET terakhir_login = NOW() WHERE nuptk = '$nuptk_guru'");
+                mysqli_query($conn, "UPDATE guru SET terakhir_login = NOW() WHERE nuptk = '$id'");
 
-                                $_SESSION['user_id'] = $user['nuptk'];
+                $_SESSION['user_id'] = $user['nuptk'];
                 $_SESSION['user_nama'] = $user['nama'];
                 $_SESSION['user_role'] = 'guru';
                 $_SESSION['user_foto'] = $user['foto_profil'];
@@ -95,6 +83,8 @@ function login()
                 // REDIRECT DISAMAKAN: Ikut masuk ke folder siswa
                 header('Location: ../views/pembeli/index.php');
                 exit;
+            } else {
+                return "Masukkan 10 digit NISN atau 16 digit NUPTK.";
             }
             break;
 
