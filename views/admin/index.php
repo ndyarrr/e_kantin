@@ -229,12 +229,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $activeSection = $_POST['_section'] ?? 'dashboard';
     }
 
-    /* Tambah admin - PROTEKSI SUPER ADMIN ONLY */
+    /* Tambah admin - Semua Admin (level 2 dipaksa, kode aktivasi wajib) */
     if ($action === 'admin_tambah') {
-        if (!$isAdminSuper) {
-            die("Akses Ilegal: Hanya Super Admin yang berhak menambahkan Admin baru!");
-        }
-
         $nama = trim($_POST['nama'] ?? '');
         $pass = trim($_POST['password'] ?? '');
         $kode = trim($_POST['kode_aktivasi'] ?? '');
@@ -263,6 +259,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
+        // Redirect ke section yang sesuai
+        $_SESSION['feedback'] = $feedback;
+        $redirSection = $isAdminSuper ? 'admin' : 'tambah_akun';
+        header("Location: ?section=$redirSection");
+        exit;
     }
 
     /* Toggle status admin - PROTEKSI SUPER ADMIN ONLY & ANTI SENGGOL SUPER ADMIN */
