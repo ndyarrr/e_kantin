@@ -226,4 +226,53 @@ if (!function_exists('kantinSlotMigrate')) {
             "SELECT nomor FROM slot_stand_kantin WHERE id_toko IS NULL ORDER BY nomor ASC"
         ), MYSQLI_ASSOC);
     }
+
+    /**
+     * Pulihkan kantin terhapus ke slot kosong pertama yang tersedia.
+     *
+     * @return array{ok: bool, msg: string, nomor?: int, nama?: string}
+     */
+    function kantinReviveToSlot($conn, int $idToko, ?int $nomor = null): array
+    {
+        if ($idToko < 1) {
+            return ['ok' => false, 'msg' => 'Kantin tidak valid.'];
+        }
+
+        $row = mysqli_fetch_assoc(mysqli_query(
+            $conn,
+            "SELECT id_toko, nama_toko FROM toko WHERE id_toko = $idToko AND deleted_at IS NOT NULL LIMIT 1"
+        ));
+        if (!$row) {
+            return ['ok' => false, 'msg' => 'Kantin tidak ditemukan atau tidak dalam status terhapus.'];
+        }
+
+        if ($nomor === null || $nomor < 1) {
+            $nomor = kantinSlotFirstEmpty($conn);
+        }
+        if (!$nomor) {
+            return ['ok' => false, 'msg' => 'Tidak ada slot kosong yang tersedia. Pulihkan kantin hanya bisa mengisi slot kosong pertama — kosongkan atau tambah slot terlebih dahulu.'];
+        }
+
+        $slotRow = mysqli_fetch_assoc(mysqli_query(
+            $conn,
+            "SELECT id_toko FROM slot_stand_kantin WHERE nomor = $nomor LIMIT 1"
+        ));
+        if (!$slotRow) {
+            return ['ok' => false, 'msg' => 'Slot stand tidak ditemukan.'];
+        }
+        if ($slotRow['id_toko'] !== null) {
+            return ['ok' => false, 'msg' => 'Slot ' . $nomor . ' sudah terisi kantin lain.'];
+        }
+
+        mysqli_query($conn, "UPDATE toko SET deleted_at = NULL WHERE id_toko = $idToko");
+        mysqli_query($conn, "UPDATE menu SET deleted_at = NULL WHERE id_toko = $idToko");
+        kantinSlotAssign($conn, $nomor, $idToko);
+
+        return [
+            'ok' => true,
+            'msg' => 'Kantin dipulihkan ke slot ' . $nomor . '.',
+            'nomor' => $nomor,
+            'nama' => $row['nama_toko'],
+        ];
+    }
 }

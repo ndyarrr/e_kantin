@@ -341,26 +341,29 @@ if ($action === 'tools_restore') {
         }
 
         if ($allowExecute) {
-            mysqli_query($conn, "UPDATE `$tabel` SET deleted_at = NULL WHERE `$id_col` = '$id'");
-
             if ($tabel === 'toko') {
-                mysqli_query($conn, "UPDATE menu SET deleted_at = NULL WHERE id_toko = '$id'");
                 require_once __DIR__ . '/../../../config/kantin_slot.php';
-                $idToko = (int) $id;
-                $slotKosong = kantinSlotFirstEmpty($conn);
-                if ($slotKosong) {
-                    kantinSlotAssign($conn, $slotKosong, $idToko);
-                    catatLog($conn, 'Restore Kantin Bertingkat', "Toko ID $id + menu dipulihkan ke slot $slotKosong");
+                $revive = kantinReviveToSlot($conn, (int) $id);
+                if ($revive['ok']) {
+                    catatLog($conn, 'Restore Kantin Bertingkat', 'Toko ID ' . $id . ' dipulihkan ke slot ' . (int) $revive['nomor']);
+                    $feedback = ['type' => 'success', 'msg' => 'Kantin <strong>' . htmlspecialchars($revive['nama'] ?? '') . '</strong> dipulihkan dan mengisi <strong>slot kosong ' . (int) $revive['nomor'] . '</strong> (slot kosong pertama yang tersedia, bukan slot lamanya). Assign owner ulang jika perlu.'];
                 } else {
-                    catatLog($conn, 'Restore Kantin Bertingkat', "Toko ID $id + menu dipulihkan (tanpa slot — semua slot penuh)");
+                    mysqli_query($conn, "UPDATE toko SET deleted_at = NULL WHERE id_toko = '$id'");
+                    mysqli_query($conn, "UPDATE menu SET deleted_at = NULL WHERE id_toko = '$id'");
+                    catatLog($conn, 'Restore Kantin Bertingkat', 'Toko ID ' . $id . ' dipulihkan tanpa slot');
+                    $feedback = ['type' => 'warning', 'msg' => $revive['msg'] . ' Kantin aktif kembali tetapi belum terhubung ke slot stand.'];
                 }
-            } elseif ($tabel === 'kelas') {
-                catatLog($conn, 'Restore Kelas', "Restore kelas ID $id");
             } else {
-                catatLog($conn, 'Restore Data', "Restore $tabel dengan $id_col: $id");
-            }
+                mysqli_query($conn, "UPDATE `$tabel` SET deleted_at = NULL WHERE `$id_col` = '$id'");
 
-            $feedback = ['type' => 'success', 'msg' => 'Data berhasil dipulihkan.'];
+                if ($tabel === 'kelas') {
+                    catatLog($conn, 'Restore Kelas', "Restore kelas ID $id");
+                } else {
+                    catatLog($conn, 'Restore Data', "Restore $tabel dengan $id_col: $id");
+                }
+
+                $feedback = ['type' => 'success', 'msg' => 'Data berhasil dipulihkan.'];
+            }
         }
     } else {
         $feedback = ['type' => 'error', 'msg' => 'Request tidak valid.'];
