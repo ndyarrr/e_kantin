@@ -598,7 +598,7 @@ if ($q_pesanan) {
                                     </button>
                                 <?php endif; ?>
 
-                                <?php if ($pesanan['status'] === 'menunggu'): ?>
+                                <?php if ($pesanan['status'] === 'menunggu' && !$is_lunas): ?>
                                     <button class="btn-batalkan-pesanan" onclick="batalkanPesanan(<?= $pesanan['id_pesanan'] ?>)" style="background: #fee2e2; border: 1px solid #fca5a5; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; color: #dc2626; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
                                         <i class="fa-solid fa-ban"></i> Batalkan Pesanan
                                     </button>

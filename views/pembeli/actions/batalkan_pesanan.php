@@ -33,8 +33,14 @@ if ($id_pesanan <= 0) {
 // Tentukan kolom pembeli berdasarkan role
 $col_pembeli = ($user_role === 'siswa') ? 'nisn_pembeli' : 'nuptk_pembeli';
 
-// Cek keberadaan dan status pesanan milik user ini
-$query_check = "SELECT status, id_toko FROM pesanan WHERE id_pesanan = $id_pesanan AND $col_pembeli = '$user_id' LIMIT 1";
+// Cek keberadaan, status pesanan, dan status pembayaran milik user ini
+$query_check = "
+    SELECT p.status, p.id_toko, py.status AS status_pembayaran, py.metode AS metode_pembayaran
+    FROM pesanan p
+    LEFT JOIN pembayaran py ON py.id_pesanan = p.id_pesanan
+    WHERE p.id_pesanan = $id_pesanan AND p.$col_pembeli = '$user_id'
+    LIMIT 1
+";
 $res_check = mysqli_query($db, $query_check);
 
 if (!$res_check || mysqli_num_rows($res_check) === 0) {
@@ -45,6 +51,18 @@ if (!$res_check || mysqli_num_rows($res_check) === 0) {
 $pesanan = mysqli_fetch_assoc($res_check);
 $status_saat_ini = $pesanan['status'];
 $id_toko = (int)$pesanan['id_toko'];
+$status_pembayaran = $pesanan['status_pembayaran'] ?? 'belum_bayar';
+$metode_pembayaran = $pesanan['metode_pembayaran'] ?? 'tunai';
+
+// Pembatalan tidak diperbolehkan jika pembayaran sudah dikonfirmasi (lunas)
+if ($status_pembayaran === 'lunas') {
+    $metode_label = ($metode_pembayaran === 'transfer') ? 'QRIS' : 'Tunai';
+    echo json_encode([
+        "status" => "error",
+        "message" => "Pesanan tidak dapat dibatalkan karena pembayaran " . $metode_label . " sudah dikonfirmasi oleh penjual."
+    ]);
+    exit;
+}
 
 // Pembatalan hanya diperbolehkan jika status masih 'menunggu'
 if ($status_saat_ini !== 'menunggu') {

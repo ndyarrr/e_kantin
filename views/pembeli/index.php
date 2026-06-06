@@ -1217,15 +1217,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
         }
 
         function handleMenuCardClick(id) {
-            const menuItem = ALL_MENUS.find(m => Number(m.id_menu) === Number(id));
-            if (!menuItem) { bukaDetailMenu(id); return; }
-            // Flexible price, out-of-stock, or shop is closed: open detail
-            if (menuItem.is_fleksibel === 1 || menuItem.stok <= 0 || menuItem.status_toko !== 'buka') {
-                bukaDetailMenu(id);
-                return;
-            }
-            // Direct add to cart
-            addToCart(id, menuItem.nama_menu, menuItem.harga, menuItem.foto_menu || '', menuItem.nama_toko, menuItem.id_toko);
+            bukaDetailMenu(id);
         }
 
         function updateCartSummaryUI() {

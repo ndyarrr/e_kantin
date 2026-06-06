@@ -227,11 +227,72 @@ function cetakNota() {
     </div>
 </div>
 
+<!-- Modal Konfirmasi QRIS (Penjual) -->
+<div id="modalKonfirmasiQrisPenjual" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0);backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);z-index:9999999;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;transition:all 0.25s ease-out;">
+    <div id="qrisConfirmModalBox" style="background:#ffffff;width:100%;max-width:380px;border-radius:24px;padding:28px 24px;box-shadow:0 20px 40px rgba(15,23,42,0.15);text-align:center;box-sizing:border-box;transform:scale(0.8);opacity:0;transition:all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);">
+        <!-- Success/QRIS Icon -->
+        <div style="width: 64px; height: 64px; background: #e0f2fe; color: #0284c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 20px; border: 4px solid #bae6fd; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.15); animation: pulseQris 2s infinite;">
+            <i class="fa-solid fa-qrcode"></i>
+        </div>
+        
+        <h3 style="margin:0 0 10px;font-size:18px;font-weight:800;color:#0f172a;font-family:'Poppins',sans-serif;">Konfirmasi QRIS?</h3>
+        
+        <p style="margin:0 0 24px;font-size:14px;color:#475569;font-family:'Poppins',sans-serif;line-height:1.6;">
+            Konfirmasi pembayaran QRIS untuk pesanan <strong style="color: #0f172a;">#<span id="qrisConfirmModalId"></span></strong>?<br>
+            <span style="font-size: 12px; color: #64748b;">Pastikan dana pembayaran sudah masuk sebelum konfirmasi.</span>
+        </p>
+
+        <div style="display:flex;gap:12px;">
+            <button onclick="tutupModalKonfirmasiQris()" style="flex:1;padding:12px;font-weight:700;font-size:14px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                Kembali
+            </button>
+            <button id="btnConfirmQrisSubmit" onclick="prosesKonfirmasiQris()" style="flex:1.2;padding:12px;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(135deg, #16a34a, #15803d);border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 12px rgba(22,163,74,0.25);transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(22,163,74,0.35)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(22,163,74,0.25)';">
+                <i class="fa-solid fa-check-double"></i> Ya, Konfirmasi
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Tunai (Penjual) -->
+<div id="modalKonfirmasiTunaiPenjual" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0);backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);z-index:9999999;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;transition:all 0.25s ease-out;">
+    <div id="tunaiConfirmModalBox" style="background:#ffffff;width:100%;max-width:380px;border-radius:24px;padding:28px 24px;box-shadow:0 20px 40px rgba(15,23,42,0.15);text-align:center;box-sizing:border-box;transform:scale(0.8);opacity:0;transition:all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);">
+        <!-- Cash Icon -->
+        <div style="width: 64px; height: 64px; background: #ecfdf5; color: #059669; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 20px; border: 4px solid #a7f3d0; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.15); animation: pulseTunai 2s infinite;">
+            <i class="fa-solid fa-money-bill-wave"></i>
+        </div>
+        
+        <h3 style="margin:0 0 10px;font-size:18px;font-weight:800;color:#0f172a;font-family:'Poppins',sans-serif;">Konfirmasi Tunai?</h3>
+        
+        <p style="margin:0 0 24px;font-size:14px;color:#475569;font-family:'Poppins',sans-serif;line-height:1.6;">
+            Apakah Anda yakin sudah menerima pembayaran tunai untuk pesanan <strong style="color: #0f172a;">#<span id="tunaiConfirmModalId"></span></strong>?
+        </p>
+
+        <div style="display:flex;gap:12px;">
+            <button onclick="tutupModalKonfirmasiTunai()" style="flex:1;padding:12px;font-weight:700;font-size:14px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                Kembali
+            </button>
+            <button id="btnConfirmTunaiSubmit" onclick="prosesKonfirmasiTunai()" style="flex:1.2;padding:12px;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(135deg, #10b981, #047857);border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 12px rgba(16,185,129,0.25);transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(16,185,129,0.35)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(16,185,129,0.25)';">
+                <i class="fa-solid fa-hand-holding-dollar"></i> Ya, Sudah Diterima
+            </button>
+        </div>
+    </div>
+</div>
+
 <style>
 @keyframes pulseWarning {
     0% { transform: scale(1); box-shadow: 0 4px 14px rgba(244, 63, 94, 0.15); }
     50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(244, 63, 94, 0.3); }
     100% { transform: scale(1); box-shadow: 0 4px 14px rgba(244, 63, 94, 0.15); }
+}
+@keyframes pulseQris {
+    0% { transform: scale(1); box-shadow: 0 4px 14px rgba(2, 132, 199, 0.15); }
+    50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(2, 132, 199, 0.3); }
+    100% { transform: scale(1); box-shadow: 0 4px 14px rgba(2, 132, 199, 0.15); }
+}
+@keyframes pulseTunai {
+    0% { transform: scale(1); box-shadow: 0 4px 14px rgba(5, 150, 105, 0.15); }
+    50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(5, 150, 105, 0.3); }
+    100% { transform: scale(1); box-shadow: 0 4px 14px rgba(5, 150, 105, 0.15); }
 }
 #modalBatalPesananPenjual.show {
     background: rgba(15, 23, 42, 0.6) !important;
@@ -239,6 +300,24 @@ function cetakNota() {
     -webkit-backdrop-filter: blur(8px) !important;
 }
 #modalBatalPesananPenjual.show #batalModalBox {
+    transform: scale(1) !important;
+    opacity: 1 !important;
+}
+#modalKonfirmasiQrisPenjual.show {
+    background: rgba(15, 23, 42, 0.6) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+#modalKonfirmasiQrisPenjual.show #qrisConfirmModalBox {
+    transform: scale(1) !important;
+    opacity: 1 !important;
+}
+#modalKonfirmasiTunaiPenjual.show {
+    background: rgba(15, 23, 42, 0.6) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+#modalKonfirmasiTunaiPenjual.show #tunaiConfirmModalBox {
     transform: scale(1) !important;
     opacity: 1 !important;
 }
@@ -323,15 +402,38 @@ function konfirmasiPembayaranQris() {
         });
 }
 
+let _qrisActiveConfirmPesananId = null;
+
 function konfirmasiLunasQrisDirect(idPesanan) {
     if (!idPesanan) return;
-    if (!confirm('Konfirmasi pembayaran QRIS untuk pesanan #' + idPesanan + '?\n\nPastikan pembayaran sudah diterima sebelum mengkonfirmasi.')) {
-        return;
-    }
+    _qrisActiveConfirmPesananId = idPesanan;
+    document.getElementById('qrisConfirmModalId').textContent = idPesanan;
+    const modal = document.getElementById('modalKonfirmasiQrisPenjual');
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+}
+
+function tutupModalKonfirmasiQris() {
+    const modal = document.getElementById('modalKonfirmasiQrisPenjual');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        _qrisActiveConfirmPesananId = null;
+    }, 250);
+}
+
+function prosesKonfirmasiQris() {
+    if (!_qrisActiveConfirmPesananId) return;
+    const btn = document.getElementById('btnConfirmQrisSubmit');
+    btn.disabled = true;
+    const oldContent = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
 
     const fd = new FormData();
     fd.append('action', 'konfirmasi_pembayaran_qris');
-    fd.append('id_pesanan', idPesanan);
+    fd.append('id_pesanan', _qrisActiveConfirmPesananId);
     fd.append('ajax', '1');
 
     const prosesUrl = (window.INBOX_RT_CONFIG && window.INBOX_RT_CONFIG.prosesUrl)
@@ -341,29 +443,58 @@ function konfirmasiLunasQrisDirect(idPesanan) {
     fetch(prosesUrl, { method: 'POST', body: fd })
         .then(r => r.json())
         .then(res => {
+            tutupModalKonfirmasiQris();
             if (res.success) {
                 if (typeof muatInbox === 'function') muatInbox();
                 else if (typeof reloadInboxFragment === 'function') reloadInboxFragment();
                 else location.reload();
             } else {
                 alert(res.message || 'Konfirmasi gagal. Coba lagi.');
+                btn.disabled = false;
+                btn.innerHTML = oldContent;
             }
         })
         .catch(err => {
             console.error(err);
+            tutupModalKonfirmasiQris();
             alert('Koneksi gagal!');
+            btn.disabled = false;
+            btn.innerHTML = oldContent;
         });
 }
 
+let _tunaiActiveConfirmPesananId = null;
+
 function konfirmasiPembayaranTunai(idPesanan) {
     if (!idPesanan) return;
-    if (!confirm('Apakah Anda yakin sudah menerima pembayaran tunai untuk pesanan #' + idPesanan + '?')) {
-        return;
-    }
+    _tunaiActiveConfirmPesananId = idPesanan;
+    document.getElementById('tunaiConfirmModalId').textContent = idPesanan;
+    const modal = document.getElementById('modalKonfirmasiTunaiPenjual');
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+}
+
+function tutupModalKonfirmasiTunai() {
+    const modal = document.getElementById('modalKonfirmasiTunaiPenjual');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        _tunaiActiveConfirmPesananId = null;
+    }, 250);
+}
+
+function prosesKonfirmasiTunai() {
+    if (!_tunaiActiveConfirmPesananId) return;
+    const btn = document.getElementById('btnConfirmTunaiSubmit');
+    btn.disabled = true;
+    const oldContent = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
 
     const fd = new FormData();
     fd.append('action', 'konfirmasi_pembayaran_tunai');
-    fd.append('id_pesanan', idPesanan);
+    fd.append('id_pesanan', _tunaiActiveConfirmPesananId);
     fd.append('ajax', '1');
 
     const prosesUrl = (window.INBOX_RT_CONFIG && window.INBOX_RT_CONFIG.prosesUrl)
@@ -373,17 +504,23 @@ function konfirmasiPembayaranTunai(idPesanan) {
     fetch(prosesUrl, { method: 'POST', body: fd })
         .then(r => r.json())
         .then(res => {
+            tutupModalKonfirmasiTunai();
             if (res.success) {
                 if (typeof muatInbox === 'function') muatInbox();
                 else if (typeof reloadInboxFragment === 'function') reloadInboxFragment();
                 else location.reload();
             } else {
                 alert(res.message || 'Konfirmasi gagal. Coba lagi.');
+                btn.disabled = false;
+                btn.innerHTML = oldContent;
             }
         })
         .catch(err => {
             console.error(err);
+            tutupModalKonfirmasiTunai();
             alert('Koneksi gagal!');
+            btn.disabled = false;
+            btn.innerHTML = oldContent;
         });
 }
 
@@ -463,5 +600,15 @@ document.getElementById('fullscreenBuktiViewer').addEventListener('click', funct
 // Tutup modal batal jika klik backdrop
 document.getElementById('modalBatalPesananPenjual').addEventListener('click', function(e) {
     if (e.target === this) tutupModalBatal();
+});
+
+// Tutup modal qris jika klik backdrop
+document.getElementById('modalKonfirmasiQrisPenjual').addEventListener('click', function(e) {
+    if (e.target === this) tutupModalKonfirmasiQris();
+});
+
+// Tutup modal tunai jika klik backdrop
+document.getElementById('modalKonfirmasiTunaiPenjual').addEventListener('click', function(e) {
+    if (e.target === this) tutupModalKonfirmasiTunai();
 });
 </script>

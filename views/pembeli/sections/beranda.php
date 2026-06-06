@@ -138,7 +138,7 @@
                             if ($is_toko_buka && $has_stock): 
                             ?>
                                 <button class="btn-tambah-keranjang"
-                                    style="width:100%;margin-top:8px;font-size:12px;padding:7px 10px" onclick="event.stopPropagation(); addToCart(<?= (int)$menu['id_menu'] ?>, <?= json_encode($menu['nama_menu'], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>, <?= (int)$menu['harga'] ?>, <?= json_encode($menu['foto_menu'] ?? '', JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>, <?= json_encode($menu['nama_toko'], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>, <?= (int)$menu['id_toko'] ?>)">
+                                    style="width:100%;margin-top:8px;font-size:12px;padding:7px 10px" onclick="event.stopPropagation(); addToCart(<?= (int)$menu['id_menu'] ?>, <?= htmlspecialchars(json_encode($menu['nama_menu']), ENT_QUOTES, 'UTF-8') ?>, <?= (int)$menu['harga'] ?>, <?= htmlspecialchars(json_encode($menu['foto_menu'] ?? ''), ENT_QUOTES, 'UTF-8') ?>, <?= htmlspecialchars(json_encode($menu['nama_toko']), ENT_QUOTES, 'UTF-8') ?>, <?= (int)$menu['id_toko'] ?>)">
                                     <i class="fa-solid fa-cart-plus"></i> Tambah
                                 </button>
                             <?php elseif (!$has_stock): ?>
