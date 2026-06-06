@@ -94,7 +94,6 @@ function login()
         case 'penjual':
             $username = trim($_POST['username'] ?? '');
             $id_toko = (int) ($_POST['id_toko'] ?? 0);
-            $tipe_penjual = trim($_POST['tipe_penjual'] ?? 'staf'); // 'owner' atau 'staf'
 
             if (empty($username))
                 return "Username wajib diisi.";
@@ -103,17 +102,16 @@ function login()
 
             $u = mysqli_real_escape_string($conn, $username);
 
-            // 1. CARI USER BERDASARKAN USERNAME DAN ROLE (OWNER/STAF)
+            // 1. CARI USER BERDASARKAN USERNAME
             $res = mysqli_query($conn, "
                 SELECT * FROM penjual 
                 WHERE username = '$u' 
-                  AND role = '$tipe_penjual' 
                 LIMIT 1
             ");
             $user = mysqli_fetch_assoc($res);
 
             if (!$user)
-                return "Username atau sub-role tidak cocok.";
+                return "Username tidak ditemukan.";
             if ($user['status'] !== 'aktif')
                 return "akun dinonaktifkan";
             if ($user['password'] !== md5($pass))

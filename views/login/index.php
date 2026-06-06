@@ -47,7 +47,7 @@ $roles = [
         'has_activation' => false,
         'has_toko' => true,
         'has_toggle' => false,
-        'has_toko_toggle' => true, // AKTIFKAN TOGEL DI SINI
+        'has_toko_toggle' => false,
     ],
     [
         'key' => 'admin',
