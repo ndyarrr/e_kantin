@@ -121,6 +121,9 @@ if ($checkColTokoUrutan && mysqli_num_rows($checkColTokoUrutan) === 0) {
     mysqli_query($conn, "UPDATE `toko` SET `urutan` = `id_toko` WHERE `deleted_at` IS NULL");
 }
 
+require_once __DIR__ . '/kantin_slot.php';
+kantinSlotMigrate($conn);
+
 /** Alias lama — beberapa file memakai $koneksi */
 $koneksi = $conn;
 

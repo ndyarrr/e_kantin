@@ -4,6 +4,7 @@
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../config/toko_foto.php';
+require_once __DIR__ . '/../../../config/kantin_slot.php';
 
 $selectedToko = (int) ($_POST['_selected_toko'] ?? 0);
 
@@ -12,21 +13,27 @@ if ($action === 'kantin_tambah') {
     $nama = trim($_POST['nama_toko'] ?? '');
     $desk = trim($_POST['deskripsi'] ?? '');
 
-    // Cek slot kantin
-    $slotKantin = 10;
-    $qSlot = mysqli_query($conn, "SELECT nilai FROM pengaturan WHERE kunci = 'slot_kantin' LIMIT 1");
-    if ($qSlot && mysqli_num_rows($qSlot) > 0) {
-        $slotKantin = (int) mysqli_fetch_assoc($qSlot)['nilai'];
+    $slotKosong = kantinSlotCountEmpty($conn);
+    $nomorSlot = (int) ($_POST['nomor_slot'] ?? 0);
+    if ($nomorSlot < 1) {
+        $nomorSlot = (int) (kantinSlotFirstEmpty($conn) ?? 0);
     }
-    $totalTokoActive = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE deleted_at IS NULL"))['c'];
 
-    if ($totalTokoActive >= $slotKantin) {
-        $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan kantin: Slot stand kantin sudah penuh!'];
+    if ($slotKosong <= 0) {
+        $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan kantin: Semua slot stand sudah terisi!'];
+    } elseif ($nomorSlot < 1) {
+        $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan kantin: Tidak ada slot kosong yang tersedia.'];
     } elseif ($nama !== '') {
         $n = mysqli_real_escape_string($conn, $nama);
         $d = mysqli_real_escape_string($conn, $desk);
         mysqli_query($conn, "INSERT INTO toko (nama_toko, deskripsi, foto_toko) VALUES ('$n','$d',NULL)");
         $idBaru = (int) mysqli_insert_id($conn);
+
+        if ($idBaru > 0 && !kantinSlotAssign($conn, $nomorSlot, $idBaru)) {
+            mysqli_query($conn, "UPDATE toko SET deleted_at = NOW() WHERE id_toko = $idBaru");
+            $feedback = ['type' => 'error', 'msg' => 'Gagal menambahkan kantin: Slot stand yang dipilih sudah terisi.'];
+            $idBaru = 0;
+        }
 
         if ($idBaru > 0) {
             // Cek apakah ada file yang dikirim (bukan hanya no-file)
@@ -45,12 +52,12 @@ if ($action === 'kantin_tambah') {
         }
 
         if (!isset($feedback) || $feedback['type'] !== 'error') {
-            catatLog($conn, 'Tambah Kantin', 'Menambahkan data kantin baru bernama: ' . $nama);
+            catatLog($conn, 'Tambah Kantin', 'Menambahkan data kantin baru bernama: ' . $nama . ' di slot ' . $nomorSlot);
             $msgFoto = '';
             if (!empty($fileFoto) && isset($fileFoto['error']) && $fileFoto['error'] === UPLOAD_ERR_OK) {
                 $msgFoto = ' (dengan foto)';
             }
-            $feedback = ['type' => 'success', 'msg' => "Kantin <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan{$msgFoto}."];
+            $feedback = ['type' => 'success', 'msg' => "Kantin <strong>" . htmlspecialchars($nama) . "</strong> berhasil ditambahkan di slot <strong>$nomorSlot</strong>{$msgFoto}."];
             $selectedToko = $idBaru;
         }
     } else {
@@ -133,8 +140,10 @@ if ($action === 'kantin_hapus') {
         // Cancel all ongoing orders for this canteen
         mysqli_query($conn, "UPDATE pesanan SET status = 'dibatalkan' WHERE id_toko = $id AND status NOT IN ('selesai', 'dibatalkan')");
         
-        catatLog($conn, 'Hapus Kantin', 'Menghapus kantin ID: ' . $id . ' (' . $nama_target . ')');
-        $feedback = ['type' => 'success', 'msg' => "Kantin <strong>" . htmlspecialchars($nama_target) . "</strong> berhasil dihapus."];
+        kantinSlotClearByToko($conn, $id);
+
+        catatLog($conn, 'Hapus Kantin', 'Menghapus kantin ID: ' . $id . ' (' . $nama_target . ') — slot tetap kosong');
+        $feedback = ['type' => 'success', 'msg' => "Kantin <strong>" . htmlspecialchars($nama_target) . "</strong> berhasil dihapus. Posisi slot stand tetap tersedia."];
         $selectedToko = 0;
     }
 }

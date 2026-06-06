@@ -154,31 +154,50 @@
         <!-- Form Tambah Kantin -->
         <div class="form-card">
             <h2><i class="fa-solid fa-store" style="color:var(--green); margin-right:8px"></i>Tambah Stand Kantin</h2>
-            <?php if ($totalToko >= $slotKantin): ?>
+            <?php
+            $slotPenuh = ($slotKosong ?? 0) <= 0;
+            $preselectSlot = (int) ($_GET['slot_nomor'] ?? 0);
+            ?>
+            <?php if ($slotPenuh): ?>
                 <div style="background: var(--red-pale); color: #991b1b; border: 1.5px solid #fecaca; padding: 12px; border-radius: 10px; margin-bottom: 14px; font-size: 13px;">
                     <i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px; font-size: 14px;"></i>
-                    <strong>Slot Stand Kantin Penuh!</strong><br>
-                    Jumlah stand kantin saat ini (<?= $totalToko ?>) telah mencapai batas slot maksimal (<?= $slotKantin ?>).
+                    <strong>Semua Slot Stand Penuh!</strong><br>
+                    Semua <?= $slotKantin ?> slot stand sudah terisi. Hapus kantin atau tambah slot baru untuk menambah stand.
                 </div>
             <?php endif; ?>
             <form method="POST" enctype="multipart/form-data" action="?section=tambah_akun">
                 <input type="hidden" name="action" value="kantin_tambah">
                 <input type="hidden" name="_section" value="tambah_akun">
                 <div class="form-group">
+                    <label>Slot Stand</label>
+                    <select name="nomor_slot" class="form-select" required <?= $slotPenuh ? 'disabled' : '' ?>>
+                        <?php if (empty($slotKosongList)): ?>
+                            <option value="">Tidak ada slot kosong</option>
+                        <?php else:
+                            foreach ($slotKosongList as $s):
+                                $nomor = (int) $s['nomor'];
+                        ?>
+                            <option value="<?= $nomor ?>" <?= ($preselectSlot === $nomor || ($preselectSlot === 0 && $nomor === (int) $slotKosongList[0]['nomor'])) ? 'selected' : '' ?>>
+                                Slot <?= $nomor ?> (kosong)
+                            </option>
+                        <?php endforeach; endif; ?>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Nama Kantin / Stand</label>
-                    <input type="text" name="nama_toko" placeholder="cth. Warung Bu Sari" required autocomplete="off" <?= ($totalToko >= $slotKantin) ? 'disabled style="background:#e5e7eb; cursor:not-allowed;"' : '' ?>>
+                    <input type="text" name="nama_toko" placeholder="cth. Warung Bu Sari" required autocomplete="off" <?= $slotPenuh ? 'disabled style="background:#e5e7eb; cursor:not-allowed;"' : '' ?>>
                 </div>
                 <div class="form-group">
                     <label>Deskripsi</label>
-                    <input type="text" name="deskripsi" placeholder="cth. Nasi, lauk, dan minuman" <?= ($totalToko >= $slotKantin) ? 'disabled style="background:#e5e7eb; cursor:not-allowed;"' : '' ?>>
+                    <input type="text" name="deskripsi" placeholder="cth. Nasi, lauk, dan minuman" <?= $slotPenuh ? 'disabled style="background:#e5e7eb; cursor:not-allowed;"' : '' ?>>
                 </div>
                 <div class="form-group">
                     <label>Foto Profil Kantin <span style="color:var(--text-light);font-weight:400">(opsional)</span></label>
 
                     <!-- Preview sebelum upload -->
                     <div id="previewTambahKantin"
-                        style="width:100%; height:140px; background:#f3f4f6; border:2px dashed #ddd; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; overflow:hidden; <?= ($totalToko >= $slotKantin) ? 'cursor:not-allowed; opacity: 0.6;' : 'cursor:pointer;' ?>"
-                        <?= ($totalToko >= $slotKantin) ? '' : 'onclick="document.getElementById(\'inputFotoTambahKantin\').click()"' ?>>
+                        style="width:100%; height:140px; background:#f3f4f6; border:2px dashed #ddd; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; overflow:hidden; <?= $slotPenuh ? 'cursor:not-allowed; opacity: 0.6;' : 'cursor:pointer;' ?>"
+                        <?= $slotPenuh ? '' : 'onclick="document.getElementById(\'inputFotoTambahKantin\').click()"' ?>>
                         <div id="previewTambahKantinPlaceholder" style="text-align:center; color:#9ca3af;">
                             <i class="fa-solid fa-cloud-arrow-up" style="font-size:28px; display:block; margin-bottom:6px;"></i>
                             <span style="font-size:12px;">Klik untuk pilih foto</span>
@@ -189,11 +208,11 @@
 
                     <input type="file" name="foto_toko" id="inputFotoTambahKantin"
                         accept="image/jpeg, image/jpg, image/png, image/webp"
-                        style="display:block; width:100%; font-size:12px; <?= ($totalToko >= $slotKantin) ? 'cursor:not-allowed;' : '' ?>"
-                        onchange="previewFotoKantinTambah(this)" <?= ($totalToko >= $slotKantin) ? 'disabled' : '' ?>>
+                        style="display:block; width:100%; font-size:12px; <?= $slotPenuh ? 'cursor:not-allowed;' : '' ?>"
+                        onchange="previewFotoKantinTambah(this)" <?= $slotPenuh ? 'disabled' : '' ?>>
                     <small style="color:var(--text-light);font-size:11px;display:block;margin-top:4px;">Format: JPG, JPEG, PNG, WEBP (Max 2MB)</small>
                 </div>
-                <button type="submit" class="btn-submit" <?= ($totalToko >= $slotKantin) ? 'disabled style="background:#cbd5e1; color:#9ca3af; cursor:not-allowed; transform:none;"' : '' ?>>
+                <button type="submit" class="btn-submit" <?= $slotPenuh ? 'disabled style="background:#cbd5e1; color:#9ca3af; cursor:not-allowed; transform:none;"' : '' ?>>
                     <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Daftarkan Stand
                 </button>
             </form>

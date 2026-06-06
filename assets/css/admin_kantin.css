@@ -1,5 +1,74 @@
 /* ── KANTIN SECTION ── */
 
+.slot-row-kosong td {
+    background: #fafafa;
+}
+
+.slot-kosong-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0;
+}
+
+.slot-kosong-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 2px dashed #d1d5db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    flex-shrink: 0;
+    font-size: 14px;
+}
+
+.slot-kosong-label {
+    display: block;
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.slot-kosong-hint {
+    display: block;
+    font-size: 11px;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.slot-pagination {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.slot-page-btn {
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--text-muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    transition: .2s;
+}
+
+.slot-page-btn.active {
+    background: var(--green);
+    color: #fff;
+    border-color: var(--green);
+}
+
+.slot-page-btn:hover:not(.active) {
+    background: var(--green-light);
+}
+
 /* tabel toko */
 .toko-row {
     cursor: pointer;

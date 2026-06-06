@@ -345,7 +345,15 @@ if ($action === 'tools_restore') {
 
             if ($tabel === 'toko') {
                 mysqli_query($conn, "UPDATE menu SET deleted_at = NULL WHERE id_toko = '$id'");
-                catatLog($conn, 'Restore Kantin Bertingkat', "Toko ID $id + seluruh menu dipulihkan");
+                require_once __DIR__ . '/../../../config/kantin_slot.php';
+                $idToko = (int) $id;
+                $slotKosong = kantinSlotFirstEmpty($conn);
+                if ($slotKosong) {
+                    kantinSlotAssign($conn, $slotKosong, $idToko);
+                    catatLog($conn, 'Restore Kantin Bertingkat', "Toko ID $id + menu dipulihkan ke slot $slotKosong");
+                } else {
+                    catatLog($conn, 'Restore Kantin Bertingkat', "Toko ID $id + menu dipulihkan (tanpa slot — semua slot penuh)");
+                }
             } elseif ($tabel === 'kelas') {
                 catatLog($conn, 'Restore Kelas', "Restore kelas ID $id");
             } else {

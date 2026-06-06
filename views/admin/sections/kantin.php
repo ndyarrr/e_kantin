@@ -42,7 +42,7 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                         <form method="POST" style="margin: 0; line-height: 0;">
                             <input type="hidden" name="action" value="kantin_ubah_slot">
                             <input type="hidden" name="tipe" value="kurang">
-                            <button type="submit" <?= ($slotKantin <= $totalToko) ? 'disabled style="opacity: 0.5; cursor: not-allowed; background: #f3f4f6; border: 1px solid #ddd; color: #9ca3af; width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px;"' : 'style="background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; transition: 0.2s;"' ?> title="Kurang Slot">
+                            <button type="submit" <?= empty($canKurangSlot) ? 'disabled style="opacity: 0.5; cursor: not-allowed; background: #f3f4f6; border: 1px solid #ddd; color: #9ca3af; width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px;"' : 'style="background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; transition: 0.2s;"' ?> title="Kurang Slot (slot terakhir harus kosong)">
                                 <i class="fa-solid fa-minus"></i>
                             </button>
                         </form>
@@ -57,7 +57,7 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
 <div id="panelDaftarKantin" style="width: 100%;">
     <div class="table-card" style="width: 100%;">
         <div class="table-card-header">
-            <h2>Daftar Kantin</h2>
+            <h2>Daftar Slot Stand Kantin</h2>
         </div>
         <div class="table-scroll">
             <table>
@@ -73,44 +73,39 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (empty($tokos)): ?>
-                        <tr class="empty-row">
-                            <td colspan="7">
-                                <i class="fa-solid fa-store"
-                                    style="color:var(--green-muted);font-size:22px;display:block;margin-bottom:8px"></i>
-                                Belum ada kantin
-                            </td>
-                        </tr>
-                    <?php else:
-                        foreach ($tokos as $idx => $t):
-                            $ownerNama = $t['nama_owner'] ?? 'Belum ada owner';
-                            ?>
-                            <tr class="toko-row <?= $selectedToko == $t['id_toko'] ? 'toko-row-active' : '' ?>"
-                                onclick="selectToko(<?= $t['id_toko'] ?>)">
+                    <?php
+                    foreach ($slotRowsPage as $slot):
+                        $nomor = (int) $slot['nomor'];
+                        $isKosong = empty($slot['id_toko']);
+                        if ($isKosong):
+                    ?>
+                            <tr class="slot-row slot-row-kosong">
                                 <td class="center">
                                     <?php if ($isAdminSuper): ?>
-                                        <div style="display:flex; flex-direction:column; align-items:center; gap:2px;" onclick="event.stopPropagation();">
-                                            <?php if ($idx > 0): ?>
-                                                <form method="POST" action="?section=kantin" style="margin: 0; line-height: 0;">
+                                        <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                            <?php if ($nomor > 1): ?>
+                                                <form method="POST" action="?section=kantin<?= $slotPageQuery ?>" style="margin: 0; line-height: 0;">
                                                     <input type="hidden" name="action" value="kantin_geser_urutan">
-                                                    <input type="hidden" name="id_toko" value="<?= $t['id_toko'] ?>">
+                                                    <input type="hidden" name="nomor_slot" value="<?= $nomor ?>">
+                                                    <input type="hidden" name="slot_page" value="<?= $slotPage ?>">
                                                     <input type="hidden" name="arah" value="up">
-                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Naikkan Urutan">
+                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Naikkan Posisi Slot">
                                                         <i class="fa-solid fa-chevron-up"></i>
                                                     </button>
                                                 </form>
                                             <?php else: ?>
                                                 <div style="height: 14px;"></div>
                                             <?php endif; ?>
-                                            
-                                            <span style="font-weight:700; font-size:12px;"><?= $idx + 1 ?></span>
-                                            
-                                            <?php if ($idx < count($tokos) - 1): ?>
-                                                <form method="POST" action="?section=kantin" style="margin: 0; line-height: 0;">
+
+                                            <span style="font-weight:700; font-size:12px;"><?= $nomor ?></span>
+
+                                            <?php if ($nomor < $slotKantin): ?>
+                                                <form method="POST" action="?section=kantin<?= $slotPageQuery ?>" style="margin: 0; line-height: 0;">
                                                     <input type="hidden" name="action" value="kantin_geser_urutan">
-                                                    <input type="hidden" name="id_toko" value="<?= $t['id_toko'] ?>">
+                                                    <input type="hidden" name="nomor_slot" value="<?= $nomor ?>">
+                                                    <input type="hidden" name="slot_page" value="<?= $slotPage ?>">
                                                     <input type="hidden" name="arah" value="down">
-                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Turunkan Urutan">
+                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Turunkan Posisi Slot">
                                                         <i class="fa-solid fa-chevron-down"></i>
                                                     </button>
                                                 </form>
@@ -119,7 +114,66 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                                             <?php endif; ?>
                                         </div>
                                     <?php else: ?>
-                                        <span style="font-weight:700;"><?= $idx + 1 ?></span>
+                                        <span style="font-weight:700;"><?= $nomor ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td colspan="5">
+                                    <div class="slot-kosong-cell">
+                                        <div class="slot-kosong-icon"><i class="fa-solid fa-cube"></i></div>
+                                        <div>
+                                            <span class="slot-kosong-label">Slot Kosong</span>
+                                            <span class="slot-kosong-hint">Posisi stand ini belum terisi kantin</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="center">
+                                    <a href="?section=tambah_akun&slot_nomor=<?= $nomor ?>" class="btn-aksi" title="Isi Slot" style="text-decoration:none;">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                    <?php
+                        else:
+                            $t = $slot;
+                            $ownerNama = $t['nama_owner'] ?? 'Belum ada owner';
+                    ?>
+                            <tr class="toko-row <?= $selectedToko == $t['id_toko'] ? 'toko-row-active' : '' ?>"
+                                onclick="selectToko(<?= $t['id_toko'] ?>)">
+                                <td class="center">
+                                    <?php if ($isAdminSuper): ?>
+                                        <div style="display:flex; flex-direction:column; align-items:center; gap:2px;" onclick="event.stopPropagation();">
+                                            <?php if ($nomor > 1): ?>
+                                                <form method="POST" action="?section=kantin<?= $slotPageQuery ?>" style="margin: 0; line-height: 0;">
+                                                    <input type="hidden" name="action" value="kantin_geser_urutan">
+                                                    <input type="hidden" name="nomor_slot" value="<?= $nomor ?>">
+                                                    <input type="hidden" name="slot_page" value="<?= $slotPage ?>">
+                                                    <input type="hidden" name="arah" value="up">
+                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Naikkan Posisi Slot">
+                                                        <i class="fa-solid fa-chevron-up"></i>
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <div style="height: 14px;"></div>
+                                            <?php endif; ?>
+
+                                            <span style="font-weight:700; font-size:12px;"><?= $nomor ?></span>
+
+                                            <?php if ($nomor < $slotKantin): ?>
+                                                <form method="POST" action="?section=kantin<?= $slotPageQuery ?>" style="margin: 0; line-height: 0;">
+                                                    <input type="hidden" name="action" value="kantin_geser_urutan">
+                                                    <input type="hidden" name="nomor_slot" value="<?= $nomor ?>">
+                                                    <input type="hidden" name="slot_page" value="<?= $slotPage ?>">
+                                                    <input type="hidden" name="arah" value="down">
+                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Turunkan Posisi Slot">
+                                                        <i class="fa-solid fa-chevron-down"></i>
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <div style="height: 14px;"></div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span style="font-weight:700;"><?= $nomor ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -162,22 +216,35 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                                     </span>
                                 </td>
                                 <td class="center" style="white-space:nowrap">
-                                    <form method="POST" action="?section=kantin" style="display:inline"
+                                    <form method="POST" action="?section=kantin<?= $slotPageQuery ?>" style="display:inline"
                                         id="form-hapus-<?= $t['id_toko'] ?>">
                                         <input type="hidden" name="action" value="kantin_hapus">
                                         <input type="hidden" name="id_toko" value="<?= $t['id_toko'] ?>">
                                         <input type="hidden" name="_section" value="kantin">
-                                        <button type="button" class="btn-aksi danger" title="Hapus"
-                                            onclick="event.stopPropagation(); if(confirm('Hapus toko <?= htmlspecialchars($t['nama_toko']) ?>?')) document.getElementById('form-hapus-<?= $t['id_toko'] ?>').submit()">
+                                        <input type="hidden" name="slot_page" value="<?= $slotPage ?>">
+                                        <button type="button" class="btn-aksi danger" title="Hapus (slot tetap kosong)"
+                                            onclick="event.stopPropagation(); if(confirm('Hapus kantin <?= htmlspecialchars($t['nama_toko']) ?>? Slot stand akan tetap ada dan kosong.')) document.getElementById('form-hapus-<?= $t['id_toko'] ?>').submit()">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </form>
                                 </td>
                             </tr>
-                        <?php endforeach; endif; ?>
+                    <?php endif; endforeach; ?>
                 </tbody>
             </table>
         </div>
+
+        <?php if ($showSlotPagination): ?>
+            <div class="slot-pagination">
+                <?php for ($i = 1; $i <= $slotTotalPages; $i++):
+                    $pageHref = '?section=kantin&slot_page=' . $i . ($selectedToko ? '&toko=' . (int) $selectedToko : '');
+                ?>
+                    <a href="<?= $pageHref ?>" class="slot-page-btn <?= $slotPage === $i ? 'active' : '' ?>">
+                        <?= $i ?>
+                    </a>
+                <?php endfor; ?>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -212,12 +279,13 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
             <div class="form-card">
                 <h2><i class="fa-solid fa-circle-info" style="color:var(--green);margin-right:8px"></i>Profil Kantin
                 </h2>
-                <form method="POST" enctype="multipart/form-data" action="?section=kantin&toko=<?= (int) $selectedToko ?>"
+                <form method="POST" enctype="multipart/form-data" action="?section=kantin&toko=<?= (int) $selectedToko ?><?= $slotPageQuery ?>"
                     style="display:flex; flex-direction:column; gap:14px; margin-top:12px;">
                     <input type="hidden" name="action" value="kantin_edit">
                     <input type="hidden" name="_section" value="kantin">
                     <input type="hidden" name="_selected_toko" value="<?= (int) $selectedToko ?>">
                     <input type="hidden" name="id_toko" value="<?= (int) $selectedToko ?>">
+                    <input type="hidden" name="slot_page" value="<?= $slotPage ?>">
 
                     <div class="profile-preview-wrapper">
                         <div class="profile-avatar-circle" id="editKantinAvatarCircle">
@@ -414,11 +482,23 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
 
     function selectToko(id) {
         sessionStorage.setItem('adminScrollPos', window.scrollY);
-        window.location.href = '?section=kantin&toko=' + id;
+        const params = new URLSearchParams(window.location.search);
+        let url = '?section=kantin&toko=' + id;
+        const slotPage = params.get('slot_page');
+        if (slotPage && parseInt(slotPage, 10) > 1) {
+            url += '&slot_page=' + slotPage;
+        }
+        window.location.href = url;
     }
 
     function tutupDetailToko() {
-        window.location.href = '?section=kantin';
+        const params = new URLSearchParams(window.location.search);
+        let url = '?section=kantin';
+        const slotPage = params.get('slot_page');
+        if (slotPage && parseInt(slotPage, 10) > 1) {
+            url += '&slot_page=' + slotPage;
+        }
+        window.location.href = url;
     }
 
     // Live preview foto kantin saat edit

@@ -91,18 +91,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['_ajax'])) {
             exit;
         }
         $nilaiBaru = (int) ($_POST['nilai'] ?? 0);
-        $currentTokoCount = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE deleted_at IS NULL"))['c'];
+        $currentTokoCount = kantinSlotCountOccupied($conn);
+        $currentSlotCount = kantinSlotCount($conn);
 
         if ($nilaiBaru < 1) {
             echo json_encode(['status' => 'error', 'msg' => 'Slot minimal harus 1.']);
             exit;
         }
         if ($nilaiBaru < $currentTokoCount) {
-            echo json_encode(['status' => 'error', 'msg' => 'Gagal: Slot tidak boleh kurang dari jumlah stand aktif (' . $currentTokoCount . ').']);
+            echo json_encode(['status' => 'error', 'msg' => 'Gagal: Slot tidak boleh kurang dari jumlah stand terisi (' . $currentTokoCount . ').']);
             exit;
         }
-        $nilaiBaru = (int) $nilaiBaru;
-        mysqli_query($conn, "UPDATE pengaturan SET nilai = '$nilaiBaru' WHERE kunci = 'slot_kantin'");
+
+        if ($nilaiBaru > $currentSlotCount) {
+            for ($i = $currentSlotCount; $i < $nilaiBaru; $i++) {
+                kantinSlotAdd($conn);
+            }
+        } elseif ($nilaiBaru < $currentSlotCount) {
+            for ($i = $currentSlotCount; $i > $nilaiBaru; $i--) {
+                if (!kantinSlotRemoveLast($conn)) {
+                    echo json_encode(['status' => 'error', 'msg' => 'Gagal: Kurangi slot dari yang paling akhir dan pastikan slot terakhir kosong.']);
+                    exit;
+                }
+            }
+        }
+
         catatLog($conn, 'Ubah Slot Kantin', 'Super Admin mengubah slot kantin menjadi: ' . $nilaiBaru);
         echo json_encode(['status' => 'success', 'msg' => 'Slot kantin berhasil diubah menjadi ' . $nilaiBaru . '.', 'slot' => $nilaiBaru, 'totalToko' => $currentTokoCount]);
         exit;
@@ -113,41 +126,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['_ajax'])) {
             echo json_encode(['status' => 'error', 'msg' => 'Akses Ilegal!']);
             exit;
         }
-        $id = (int) ($_POST['id_toko'] ?? 0);
+        $nomor = (int) ($_POST['nomor_slot'] ?? 0);
         $arah = $_POST['arah'] ?? '';
 
-        if ($id && ($arah === 'up' || $arah === 'down')) {
-            $res = mysqli_query($conn, "SELECT id_toko, urutan FROM toko WHERE deleted_at IS NULL ORDER BY urutan ASC, id_toko ASC");
-            $canteens = mysqli_fetch_all($res, MYSQLI_ASSOC);
-
-            foreach ($canteens as $idx => $c) {
-                $canteens[$idx]['urutan'] = $idx;
-                mysqli_query($conn, "UPDATE toko SET urutan = $idx WHERE id_toko = " . $c['id_toko']);
+        if ($nomor && ($arah === 'up' || $arah === 'down')) {
+            $swapNomor = ($arah === 'up') ? $nomor - 1 : $nomor + 1;
+            if ($swapNomor >= 1 && kantinSlotSwap($conn, $nomor, $swapNomor)) {
+                catatLog($conn, 'Geser Urutan Kantin', 'Menukar posisi slot ' . $nomor . ' dengan slot ' . $swapNomor);
+                echo json_encode(['status' => 'success', 'msg' => 'Posisi slot berhasil diperbarui.', 'swappedWith' => $swapNomor]);
+                exit;
             }
-
-            $targetIdx = -1;
-            foreach ($canteens as $idx => $c) {
-                if ((int) $c['id_toko'] === $id) {
-                    $targetIdx = $idx;
-                    break;
-                }
-            }
-
-            if ($targetIdx !== -1) {
-                $swapIdx = ($arah === 'up') ? $targetIdx - 1 : $targetIdx + 1;
-                if ($swapIdx >= 0 && $swapIdx < count($canteens)) {
-                    $targetId = $canteens[$targetIdx]['id_toko'];
-                    $swapId = $canteens[$swapIdx]['id_toko'];
-
-                    mysqli_query($conn, "UPDATE toko SET urutan = $swapIdx WHERE id_toko = $targetId");
-                    mysqli_query($conn, "UPDATE toko SET urutan = $targetIdx WHERE id_toko = $swapId");
-
-                    catatLog($conn, 'Geser Urutan Kantin', 'Menggeser kantin ID ' . $targetId . ' ke arah ' . $arah);
-                    echo json_encode(['status' => 'success', 'msg' => 'Urutan kantin berhasil diperbarui.', 'swappedWith' => (int) $swapId]);
-                    exit;
-                }
-            }
-            echo json_encode(['status' => 'error', 'msg' => 'Gagal memindahkan urutan.']);
+            echo json_encode(['status' => 'error', 'msg' => 'Gagal memindahkan posisi slot.']);
             exit;
         }
         echo json_encode(['status' => 'error', 'msg' => 'Parameter tidak valid.']);
@@ -357,28 +346,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $tipe = $_POST['tipe'] ?? '';
         if ($tipe === 'tambah') {
-            mysqli_query($conn, "UPDATE pengaturan SET nilai = nilai + 1 WHERE kunci = 'slot_kantin'");
-            catatLog($conn, 'Ubah Slot Kantin', 'Super Admin menambah slot kantin');
-            $feedback = ['type' => 'success', 'msg' => 'Slot kantin berhasil ditambah.'];
-        } elseif ($tipe === 'kurang') {
-            $currSlot = 10;
-            $qSlot = mysqli_query($conn, "SELECT nilai FROM pengaturan WHERE kunci = 'slot_kantin' LIMIT 1");
-            if ($qSlot && mysqli_num_rows($qSlot) > 0) {
-                $currSlot = (int) mysqli_fetch_assoc($qSlot)['nilai'];
-            }
-            $currentTokoCount = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE deleted_at IS NULL"))['c'];
-            if ($currSlot > $currentTokoCount) {
-                mysqli_query($conn, "UPDATE pengaturan SET nilai = nilai - 1 WHERE kunci = 'slot_kantin'");
-                catatLog($conn, 'Ubah Slot Kantin', 'Super Admin mengurangi slot kantin');
-                $feedback = ['type' => 'success', 'msg' => 'Slot kantin berhasil dikurangi.'];
+            if (kantinSlotAdd($conn)) {
+                catatLog($conn, 'Ubah Slot Kantin', 'Super Admin menambah slot kantin');
+                $feedback = ['type' => 'success', 'msg' => 'Slot stand kantin berhasil ditambah.'];
             } else {
-                $feedback = ['type' => 'error', 'msg' => 'Gagal: Jumlah slot tidak boleh kurang dari jumlah stand kantin yang tersedia (' . $currentTokoCount . ').'];
+                $feedback = ['type' => 'error', 'msg' => 'Gagal menambah slot kantin.'];
+            }
+        } elseif ($tipe === 'kurang') {
+            if (kantinSlotRemoveLast($conn)) {
+                catatLog($conn, 'Ubah Slot Kantin', 'Super Admin mengurangi slot kantin');
+                $feedback = ['type' => 'success', 'msg' => 'Slot stand kantin berhasil dikurangi.'];
+            } else {
+                $feedback = ['type' => 'error', 'msg' => 'Gagal: Slot terakhir harus kosong sebelum bisa dikurangi.'];
             }
         }
         if ($feedback) {
             $_SESSION['feedback'] = $feedback;
         }
-        header("Location: ?section=kantin");
+        $slotPageBack = max(1, (int) ($_POST['slot_page'] ?? 1));
+        $slotRedirect = '?section=kantin' . ($slotPageBack > 1 ? '&slot_page=' . $slotPageBack : '');
+        header('Location: ' . $slotRedirect);
         exit;
     }
 
@@ -386,45 +373,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$isAdminSuper) {
             die("Akses Ilegal: Hanya Super Admin yang berhak memindahkan urutan kantin!");
         }
-        $id = (int) ($_POST['id_toko'] ?? 0);
+        $nomor = (int) ($_POST['nomor_slot'] ?? 0);
         $arah = $_POST['arah'] ?? '';
-        
-        if ($id && ($arah === 'up' || $arah === 'down')) {
-            $res = mysqli_query($conn, "SELECT id_toko, urutan FROM toko WHERE deleted_at IS NULL ORDER BY urutan ASC, id_toko ASC");
-            $canteens = mysqli_fetch_all($res, MYSQLI_ASSOC);
-            
-            // Normalize/re-index urutan to be 0, 1, 2, ...
-            foreach ($canteens as $idx => $c) {
-                $canteens[$idx]['urutan'] = $idx;
-                mysqli_query($conn, "UPDATE toko SET urutan = $idx WHERE id_toko = " . $c['id_toko']);
-            }
-            
-            $targetIdx = -1;
-            foreach ($canteens as $idx => $c) {
-                if ((int)$c['id_toko'] === $id) {
-                    $targetIdx = $idx;
-                    break;
-                }
-            }
-            
-            if ($targetIdx !== -1) {
-                $swapIdx = ($arah === 'up') ? $targetIdx - 1 : $targetIdx + 1;
-                if ($swapIdx >= 0 && $swapIdx < count($canteens)) {
-                    $targetId = $canteens[$targetIdx]['id_toko'];
-                    $swapId = $canteens[$swapIdx]['id_toko'];
-                    
-                    mysqli_query($conn, "UPDATE toko SET urutan = $swapIdx WHERE id_toko = $targetId");
-                    mysqli_query($conn, "UPDATE toko SET urutan = $targetIdx WHERE id_toko = $swapId");
-                    
-                    catatLog($conn, 'Geser Urutan Kantin', 'Menggeser kantin ID ' . $targetId . ' ke arah ' . $arah);
-                    $feedback = ['type' => 'success', 'msg' => 'Urutan kantin berhasil diperbarui.'];
-                }
+
+        if ($nomor && ($arah === 'up' || $arah === 'down')) {
+            $swapNomor = ($arah === 'up') ? $nomor - 1 : $nomor + 1;
+            if ($swapNomor >= 1 && kantinSlotSwap($conn, $nomor, $swapNomor)) {
+                catatLog($conn, 'Geser Urutan Kantin', 'Menukar posisi slot ' . $nomor . ' dengan slot ' . $swapNomor);
+                $feedback = ['type' => 'success', 'msg' => 'Posisi slot berhasil diperbarui.'];
             }
         }
         if ($feedback) {
             $_SESSION['feedback'] = $feedback;
         }
-        header("Location: ?section=kantin");
+        $slotPageBack = max(1, (int) ($_POST['slot_page'] ?? 1));
+        $slotRedirect = '?section=kantin' . ($slotPageBack > 1 ? '&slot_page=' . $slotPageBack : '');
+        header('Location: ' . $slotRedirect);
         exit;
     }
 
@@ -455,7 +419,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($backSection === 'tambah_akun') {
             header('Location: ?section=tambah_akun');
         } else {
-            header('Location: ?section=kantin' . ($selToko ? "&toko=$selToko" : ''));
+            $slotPageBack = max(1, (int) ($_POST['slot_page'] ?? 1));
+            $slotQs = $slotPageBack > 1 ? "&slot_page=$slotPageBack" : '';
+            header('Location: ?section=kantin' . ($selToko ? "&toko=$selToko" : '') . $slotQs);
         }
         exit;
     }
@@ -525,11 +491,9 @@ $tokoAktif = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c 
 $totalToko = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM toko WHERE deleted_at IS NULL"))['c'];
 $totalMenu = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM menu WHERE tersedia=1 AND deleted_at IS NULL"))['c'];
 
-$slotKantin = 10;
-$qSlot = mysqli_query($conn, "SELECT nilai FROM pengaturan WHERE kunci = 'slot_kantin' LIMIT 1");
-if ($qSlot && mysqli_num_rows($qSlot) > 0) {
-    $slotKantin = (int) mysqli_fetch_assoc($qSlot)['nilai'];
-}
+$slotKantin = kantinSlotCount($conn);
+$slotKosong = kantinSlotCountEmpty($conn);
+$slotKosongList = kantinSlotGetEmptyList($conn);
 
 $grafikLabels = [];
 $grafikValues = [];
