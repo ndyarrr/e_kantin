@@ -1,9 +1,9 @@
 <?php // sections/tambah_akun.php ?>
 
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;">
+<div id="tambahAkunGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;">
 
     <!-- ══ KOLOM KIRI: MURID & GURU ══ -->
-    <div class="form-card">
+    <div class="form-card tambah-col-pembeli">
         <div style="display:flex; gap:8px; margin-bottom:18px">
             <button id="tabMuridAkun" type="button" onclick="switchTabAkun('murid')"
                 style="flex:1; padding:9px; border-radius:8px; border:1.5px solid var(--green); background:var(--green); color:#fff; font-weight:600; font-size:13px; cursor:pointer; transition:.2s">
@@ -105,10 +105,10 @@
     </div>
 
     <!-- ══ KOLOM KANAN: PENJUAL & KANTIN ══ -->
-    <div style="display:flex; flex-direction:column; gap:20px;">
+    <div class="tambah-col-kantin" style="display:flex; flex-direction:column; gap:20px;">
 
         <!-- Form Tambah Owner Penjual -->
-        <div class="form-card">
+        <div class="form-card" id="cardTambahOwner">
             <h2><i class="fa-solid fa-user-tie" style="color:var(--green); margin-right:8px"></i>Tambah Owner Kantin
             </h2>
             <form method="POST" action="?section=tambah_akun">
@@ -152,7 +152,7 @@
         </div>
 
         <!-- Form Tambah Kantin -->
-        <div class="form-card">
+        <div class="form-card" id="cardTambahKantin">
             <h2><i class="fa-solid fa-store" style="color:var(--green); margin-right:8px"></i>Tambah Stand Kantin</h2>
             <?php
             $slotPenuh = ($slotKosong ?? 0) <= 0;

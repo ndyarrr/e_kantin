@@ -417,7 +417,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $selToko = (int) ($_POST['_selected_toko'] ?? 0);
         if ($backSection === 'tambah_akun') {
-            header('Location: ?section=tambah_akun');
+            header('Location: ?section=tambah_akun&tab=kantin');
         } else {
             $slotPageBack = max(1, (int) ($_POST['slot_page'] ?? 1));
             $slotQs = $slotPageBack > 1 ? "&slot_page=$slotPageBack" : '';
@@ -426,7 +426,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // ── ACTION PEMBELI ──
     // ── ACTION PEMBELI ──
     if (str_starts_with($action, 'pembeli_')) {
         require __DIR__ . '/actions/pembeli.php';
@@ -437,7 +436,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $allowedSections = ['pembeli', 'tambah_akun'];
         if (!in_array($backSection, $allowedSections))
             $backSection = 'pembeli';
-        header("Location: ?section=$backSection");
+        if ($backSection === 'tambah_akun') {
+            header("Location: ?section=tambah_akun&tab=pembeli");
+        } else {
+            header("Location: ?section=$backSection");
+        }
         exit;
     }
 
@@ -541,7 +544,7 @@ require __DIR__ . '/sections/tools_data.php';
             kantin: { title: 'Kelola Kantin', sub: 'Manajemen toko dan menu kantin' },
             penjual: { title: 'Kelola Penjual', sub: 'Manajemen akun penjual' },
             pembeli: { title: 'Kelola Pembeli', sub: 'Data murid dan guru terdaftar' },
-            tambah_akun: { title: 'Tambah Akun Pembeli', sub: 'Tambah akun murid atau guru baru' },
+            tambah_akun: { title: 'Tambah Akun', sub: 'Tambah akun pembeli, penjual, atau kantin baru' },
             tools: { title: 'Tools & Log', sub: 'Import data dan log aktivitas sistem' },
             chat: { title: 'Chat', sub: 'Hubungi dan balas pesan dari murid atau toko kantin' },
         };
@@ -561,6 +564,24 @@ require __DIR__ . '/sections/tools_data.php';
             const targetLink = document.querySelector('.nav-link[data-section="' + name + '"]');
             if (targetLink) targetLink.classList.add('active');
 
+            // Jika yang aktif adalah sub-menu tambah_akun, highlight parent-nya juga
+            if (name === 'tambah_akun') {
+                const parentToggle = document.getElementById('navTambahAkunToggle');
+                if (parentToggle) parentToggle.classList.add('active');
+            } else {
+                // Collapse dropdown if navigating to another section
+                const dropdown = document.getElementById('tambahAkunSubMenu');
+                const icon = document.getElementById('tambahAkunChevron');
+                if (dropdown && dropdown.style.maxHeight && dropdown.style.maxHeight !== '0px') {
+                    dropdown.style.maxHeight = '0px';
+                    dropdown.style.opacity = '0';
+                    if (icon) icon.style.transform = 'rotate(0deg)';
+                }
+                const parentToggle = document.getElementById('navTambahAkunToggle');
+                if (parentToggle) parentToggle.classList.remove('active');
+                document.querySelectorAll('.nav-sub-link').forEach(l => l.classList.remove('active'));
+            }
+
             const meta = pageMeta[name] || pageMeta['dashboard'];
             const titleEl = document.getElementById('pageTitle');
             const subEl = document.getElementById('pageSubtitle');
@@ -572,8 +593,96 @@ require __DIR__ . '/sections/tools_data.php';
                 const currentParams = new URLSearchParams(window.location.search);
                 currentParams.set('section', name);
                 if (name !== 'chat') currentParams.delete('lawan');
+                if (name !== 'tambah_akun') currentParams.delete('tab');
                 history.replaceState(null, '', '?' + currentParams.toString());
             } catch (e) { }
+        }
+
+        function toggleTambahAkunDropdown() {
+            const dropdown = document.getElementById('tambahAkunSubMenu');
+            const icon = document.getElementById('tambahAkunChevron');
+            if (dropdown) {
+                const isOpen = dropdown.style.maxHeight && dropdown.style.maxHeight !== '0px';
+                if (isOpen) {
+                    dropdown.style.maxHeight = '0px';
+                    dropdown.style.opacity = '0';
+                    if (icon) icon.style.transform = 'rotate(0deg)';
+                } else {
+                    dropdown.style.maxHeight = '200px';
+                    dropdown.style.opacity = '1';
+                    if (icon) icon.style.transform = 'rotate(180deg)';
+                }
+            }
+        }
+
+        function switchSectionTambah(tab) {
+            switchSection('tambah_akun');
+            // Sub-menu highlight
+            document.querySelectorAll('.nav-sub-link').forEach(l => l.classList.remove('active'));
+            const activeSubLink = document.querySelector('.nav-sub-link[data-tab="' + tab + '"]');
+            if (activeSubLink) activeSubLink.classList.add('active');
+            // Highlight parent toggle
+            const parentToggle = document.getElementById('navTambahAkunToggle');
+            if (parentToggle) parentToggle.classList.add('active');
+
+            // Update page title
+            const titles = {
+                pembeli: { title: 'Tambah Akun Pembeli', sub: 'Tambah akun murid atau guru baru' },
+                penjual: { title: 'Tambah Owner Kantin', sub: 'Daftarkan pemilik kantin baru' },
+                kantin: { title: 'Tambah Stand Kantin', sub: 'Daftarkan stand kantin baru ke dalam slot' },
+            };
+            const meta = titles[tab] || titles['pembeli'];
+            const titleEl = document.getElementById('pageTitle');
+            const subEl = document.getElementById('pageSubtitle');
+            if (titleEl) titleEl.textContent = meta.title;
+            if (subEl) subEl.textContent = meta.sub;
+
+            // Update URL browser
+            try {
+                const currentParams = new URLSearchParams(window.location.search);
+                currentParams.set('section', 'tambah_akun');
+                currentParams.set('tab', tab);
+                history.replaceState(null, '', '?' + currentParams.toString());
+            } catch (e) { }
+
+            // Show the correct tab content inside tambah_akun section
+            setTimeout(() => {
+                const formMurid = document.getElementById('formAkunMurid');
+                const formGuru = document.getElementById('formAkunGuru');
+                const colKiri = document.querySelector('#section-tambah_akun .tambah-col-pembeli');
+                const colKanan = document.querySelector('#section-tambah_akun .tambah-col-kantin');
+                const grid = document.getElementById('tambahAkunGrid');
+
+                if (grid) {
+                    grid.style.gridTemplateColumns = '1fr';
+                    grid.style.maxWidth = '600px';
+                    grid.style.margin = '0 auto';
+                }
+
+                if (tab === 'pembeli') {
+                    if (colKiri) colKiri.style.display = '';
+                    if (colKanan) colKanan.style.display = 'none';
+                    if (formMurid) formMurid.style.display = '';
+                    if (formGuru) formGuru.style.display = 'none';
+                    if (typeof switchTabAkun === 'function') switchTabAkun('murid');
+                } else if (tab === 'penjual') {
+                    if (colKiri) colKiri.style.display = 'none';
+                    if (colKanan) colKanan.style.display = '';
+                    // Show only owner form, hide kantin form
+                    const ownerCard = document.getElementById('cardTambahOwner');
+                    const kantinCard = document.getElementById('cardTambahKantin');
+                    if (ownerCard) ownerCard.style.display = '';
+                    if (kantinCard) kantinCard.style.display = 'none';
+                } else if (tab === 'kantin') {
+                    if (colKiri) colKiri.style.display = 'none';
+                    if (colKanan) colKanan.style.display = '';
+                    // Show only kantin form, hide owner form
+                    const ownerCard = document.getElementById('cardTambahOwner');
+                    const kantinCard = document.getElementById('cardTambahKantin');
+                    if (ownerCard) ownerCard.style.display = 'none';
+                    if (kantinCard) kantinCard.style.display = '';
+                }
+            }, 50);
         }
     </script>
 
@@ -667,9 +776,23 @@ require __DIR__ . '/sections/tools_data.php';
                     class="fa-solid fa-user-tag"></i> Penjual</button>
             <button class="nav-link" data-section="pembeli" onclick="switchSection('pembeli')"><i
                     class="fa-solid fa-users"></i> Pembeli</button>
-            <button class="nav-link" data-section="tambah_akun" onclick="switchSection('tambah_akun')">
-                <i class="fa-solid fa-user-plus"></i> Tambah Akun
-            </button>
+            <div class="nav-dropdown-wrap">
+                <button class="nav-link" id="navTambahAkunToggle" onclick="toggleTambahAkunDropdown()">
+                    <i class="fa-solid fa-user-plus"></i> Tambah Akun
+                    <i class="fa-solid fa-chevron-down nav-dropdown-chevron" id="tambahAkunChevron" style="margin-left:auto; font-size:10px; transition:transform .25s ease;"></i>
+                </button>
+                <div class="nav-sub-menu" id="tambahAkunSubMenu" style="max-height:0; opacity:0; overflow:hidden; transition: max-height .3s ease, opacity .25s ease;">
+                    <button class="nav-sub-link" data-tab="pembeli" data-section="tambah_akun" onclick="switchSectionTambah('pembeli')">
+                        <i class="fa-solid fa-users" style="width:16px; text-align:center; font-size:12px;"></i> Pembeli
+                    </button>
+                    <button class="nav-sub-link" data-tab="penjual" data-section="tambah_akun" onclick="switchSectionTambah('penjual')">
+                        <i class="fa-solid fa-user-tie" style="width:16px; text-align:center; font-size:12px;"></i> Penjual / Owner
+                    </button>
+                    <button class="nav-sub-link" data-tab="kantin" data-section="tambah_akun" onclick="switchSectionTambah('kantin')">
+                        <i class="fa-solid fa-store" style="width:16px; text-align:center; font-size:12px;"></i> Kantin
+                    </button>
+                </div>
+            </div>
             <button class="nav-link" data-section="chat" onclick="switchSection('chat')"><i
                     class="fa-solid fa-comments"></i> Chat
             </button>
@@ -905,7 +1028,23 @@ require __DIR__ . '/sections/tools_data.php';
         initSection = initSection.split('&')[0];
 
         // Jalankan switch otomatis ke halaman terakhir yang dibuka
-        switchSection(initSection);
+        if (initSection === 'tambah_akun') {
+            let initTab = urlParams.get('tab');
+            if (!initTab) {
+                if (urlParams.get('slot_nomor')) {
+                    initTab = 'kantin';
+                } else {
+                    initTab = 'pembeli';
+                }
+            }
+            const dropdown = document.getElementById('tambahAkunSubMenu');
+            if (dropdown && (!dropdown.style.maxHeight || dropdown.style.maxHeight === '0px')) {
+                toggleTambahAkunDropdown();
+            }
+            switchSectionTambah(initTab);
+        } else {
+            switchSection(initSection);
+        }
 
         // Auto-generate activation code on load
         if (typeof generateAutoKode === 'function') {
@@ -921,7 +1060,24 @@ require __DIR__ . '/sections/tools_data.php';
     /* aktifkan section dari URL / POST */
     const initSection = '<?= htmlspecialchars($activeSection ?? "dashboard") ?>';
     if (initSection !== 'dashboard' && document.getElementById('section-' + initSection)) {
-        switchSection(initSection);
+        if (initSection === 'tambah_akun') {
+            const urlParams = new URLSearchParams(window.location.search);
+            let initTab = urlParams.get('tab');
+            if (!initTab) {
+                if (urlParams.get('slot_nomor')) {
+                    initTab = 'kantin';
+                } else {
+                    initTab = 'pembeli';
+                }
+            }
+            const dropdown = document.getElementById('tambahAkunSubMenu');
+            if (dropdown && (!dropdown.style.maxHeight || dropdown.style.maxHeight === '0px')) {
+                toggleTambahAkunDropdown();
+            }
+            switchSectionTambah(initTab);
+        } else {
+            switchSection(initSection);
+        }
     }
 
     /* ── charts ── */

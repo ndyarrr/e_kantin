@@ -159,6 +159,11 @@ if (
     if ($feedback)
         $_SESSION['feedback'] = $feedback;
     $sel = $selectedPenjual ?: (int) ($_POST['_selected_penjual'] ?? 0);
-    header("Location: ?section=penjual" . ($sel ? "&penjual=$sel" : ""));
+    $backSec = $_POST['_section'] ?? 'penjual';
+    if ($backSec === 'tambah_akun') {
+        header("Location: ?section=tambah_akun&tab=penjual");
+    } else {
+        header("Location: ?section=penjual" . ($sel ? "&penjual=$sel" : ""));
+    }
     exit;
 }

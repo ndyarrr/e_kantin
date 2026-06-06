@@ -7,9 +7,7 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
         <div class="stat-label">Total Kantin</div>
         <div class="stat-row">
             <div class="stat-value">
-                <?= $totalToko ?><span class="sub"> /
-                    <?= $slotKantin ?>
-                </span>
+                <span id="statTotalKantinVal"><?= $totalToko ?></span><span class="sub"> / <span id="statTotalKantinLimitVal"><?= $slotKantin ?></span></span>
             </div>
             <i class="fa-solid fa-store stat-icon"></i>
         </div>
@@ -29,24 +27,11 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
         <div class="stat-label">Slot Stand Kantin</div>
         <div class="stat-row" style="justify-content: space-between; align-items: center;">
             <div class="stat-value" style="display: flex; align-items: center; gap: 12px; line-height: 1;">
-                <span><?= $slotKantin ?></span>
+                <span id="statSlotKantinVal"><?= $slotKantin ?></span>
                 <?php if ($isAdminSuper): ?>
-                    <div style="display: flex; flex-direction: column; gap: 3px;">
-                        <form method="POST" style="margin: 0; line-height: 0;">
-                            <input type="hidden" name="action" value="kantin_ubah_slot">
-                            <input type="hidden" name="tipe" value="tambah">
-                            <button type="submit" style="background: var(--green-pale); border: 1px solid var(--green-muted); color: var(--green-dark); width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; transition: 0.2s;" title="Tambah Slot">
-                                <i class="fa-solid fa-plus"></i>
-                            </button>
-                        </form>
-                        <form method="POST" style="margin: 0; line-height: 0;">
-                            <input type="hidden" name="action" value="kantin_ubah_slot">
-                            <input type="hidden" name="tipe" value="kurang">
-                            <button type="submit" <?= empty($canKurangSlot) ? 'disabled style="opacity: 0.5; cursor: not-allowed; background: #f3f4f6; border: 1px solid #ddd; color: #9ca3af; width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px;"' : 'style="background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; transition: 0.2s;"' ?> title="Kurang Slot (slot terakhir harus kosong)">
-                                <i class="fa-solid fa-minus"></i>
-                            </button>
-                        </form>
-                    </div>
+                    <button type="button" onclick="openModalEditSlot()" style="background: var(--green-pale); border: 1px solid var(--green-muted); color: var(--green-dark); width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: 0.2s;" title="Edit Limit Slot">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
                 <?php endif; ?>
             </div>
             <i class="fa-solid fa-cubes stat-icon"></i>
@@ -79,42 +64,22 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                         $isKosong = empty($slot['id_toko']);
                         if ($isKosong):
                     ?>
-                            <tr class="slot-row slot-row-kosong">
+                            <tr class="slot-row slot-row-kosong" data-nomor="<?= $nomor ?>">
                                 <td class="center">
                                     <?php if ($isAdminSuper): ?>
                                         <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
-                                            <?php if ($nomor > 1): ?>
-                                                <form method="POST" action="?section=kantin<?= $slotPageQuery ?>" style="margin: 0; line-height: 0;">
-                                                    <input type="hidden" name="action" value="kantin_geser_urutan">
-                                                    <input type="hidden" name="nomor_slot" value="<?= $nomor ?>">
-                                                    <input type="hidden" name="slot_page" value="<?= $slotPage ?>">
-                                                    <input type="hidden" name="arah" value="up">
-                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Naikkan Posisi Slot">
-                                                        <i class="fa-solid fa-chevron-up"></i>
-                                                    </button>
-                                                </form>
-                                            <?php else: ?>
-                                                <div style="height: 14px;"></div>
-                                            <?php endif; ?>
+                                            <button type="button" class="btn-aksi btn-swap-up" onclick="geserUrutanKantin(this, 'up')" style="padding: 2px 4px; font-size: 10px; color: var(--green); visibility: <?= ($nomor > 1) ? 'visible' : 'hidden' ?>;" title="Naikkan Posisi Slot">
+                                                <i class="fa-solid fa-chevron-up"></i>
+                                            </button>
 
-                                            <span style="font-weight:700; font-size:12px;"><?= $nomor ?></span>
+                                            <span class="slot-number-span" style="font-weight:700; font-size:12px;"><?= $nomor ?></span>
 
-                                            <?php if ($nomor < $slotKantin): ?>
-                                                <form method="POST" action="?section=kantin<?= $slotPageQuery ?>" style="margin: 0; line-height: 0;">
-                                                    <input type="hidden" name="action" value="kantin_geser_urutan">
-                                                    <input type="hidden" name="nomor_slot" value="<?= $nomor ?>">
-                                                    <input type="hidden" name="slot_page" value="<?= $slotPage ?>">
-                                                    <input type="hidden" name="arah" value="down">
-                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Turunkan Posisi Slot">
-                                                        <i class="fa-solid fa-chevron-down"></i>
-                                                    </button>
-                                                </form>
-                                            <?php else: ?>
-                                                <div style="height: 14px;"></div>
-                                            <?php endif; ?>
+                                            <button type="button" class="btn-aksi btn-swap-down" onclick="geserUrutanKantin(this, 'down')" style="padding: 2px 4px; font-size: 10px; color: var(--green); visibility: <?= ($nomor < $slotKantin) ? 'visible' : 'hidden' ?>;" title="Turunkan Posisi Slot">
+                                                <i class="fa-solid fa-chevron-down"></i>
+                                            </button>
                                         </div>
                                     <?php else: ?>
-                                        <span style="font-weight:700;"><?= $nomor ?></span>
+                                        <span class="slot-number-span" style="font-weight:700;"><?= $nomor ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td colspan="5">
@@ -138,42 +103,23 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                             $ownerNama = $t['nama_owner'] ?? 'Belum ada owner';
                     ?>
                             <tr class="toko-row <?= $selectedToko == $t['id_toko'] ? 'toko-row-active' : '' ?>"
+                                data-nomor="<?= $nomor ?>" data-toko-id="<?= $t['id_toko'] ?>"
                                 onclick="selectToko(<?= $t['id_toko'] ?>)">
                                 <td class="center">
                                     <?php if ($isAdminSuper): ?>
                                         <div style="display:flex; flex-direction:column; align-items:center; gap:2px;" onclick="event.stopPropagation();">
-                                            <?php if ($nomor > 1): ?>
-                                                <form method="POST" action="?section=kantin<?= $slotPageQuery ?>" style="margin: 0; line-height: 0;">
-                                                    <input type="hidden" name="action" value="kantin_geser_urutan">
-                                                    <input type="hidden" name="nomor_slot" value="<?= $nomor ?>">
-                                                    <input type="hidden" name="slot_page" value="<?= $slotPage ?>">
-                                                    <input type="hidden" name="arah" value="up">
-                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Naikkan Posisi Slot">
-                                                        <i class="fa-solid fa-chevron-up"></i>
-                                                    </button>
-                                                </form>
-                                            <?php else: ?>
-                                                <div style="height: 14px;"></div>
-                                            <?php endif; ?>
+                                            <button type="button" class="btn-aksi btn-swap-up" onclick="geserUrutanKantin(this, 'up')" style="padding: 2px 4px; font-size: 10px; color: var(--green); visibility: <?= ($nomor > 1) ? 'visible' : 'hidden' ?>;" title="Naikkan Posisi Slot">
+                                                <i class="fa-solid fa-chevron-up"></i>
+                                            </button>
 
-                                            <span style="font-weight:700; font-size:12px;"><?= $nomor ?></span>
+                                            <span class="slot-number-span" style="font-weight:700; font-size:12px;"><?= $nomor ?></span>
 
-                                            <?php if ($nomor < $slotKantin): ?>
-                                                <form method="POST" action="?section=kantin<?= $slotPageQuery ?>" style="margin: 0; line-height: 0;">
-                                                    <input type="hidden" name="action" value="kantin_geser_urutan">
-                                                    <input type="hidden" name="nomor_slot" value="<?= $nomor ?>">
-                                                    <input type="hidden" name="slot_page" value="<?= $slotPage ?>">
-                                                    <input type="hidden" name="arah" value="down">
-                                                    <button type="submit" class="btn-aksi" style="padding: 2px 4px; font-size: 10px; color: var(--green);" title="Turunkan Posisi Slot">
-                                                        <i class="fa-solid fa-chevron-down"></i>
-                                                    </button>
-                                                </form>
-                                            <?php else: ?>
-                                                <div style="height: 14px;"></div>
-                                            <?php endif; ?>
+                                            <button type="button" class="btn-aksi btn-swap-down" onclick="geserUrutanKantin(this, 'down')" style="padding: 2px 4px; font-size: 10px; color: var(--green); visibility: <?= ($nomor < $slotKantin) ? 'visible' : 'hidden' ?>;" title="Turunkan Posisi Slot">
+                                                <i class="fa-solid fa-chevron-down"></i>
+                                            </button>
                                         </div>
                                     <?php else: ?>
-                                        <span style="font-weight:700;"><?= $nomor ?></span>
+                                        <span class="slot-number-span" style="font-weight:700;"><?= $nomor ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -465,6 +411,34 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
     <img id="modalFotoImg" src="" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain">
 </div>
 
+<!-- Toast Notification Container -->
+<div id="toastContainerAdmin"></div>
+
+<!-- Modal Edit Slot Kantin -->
+<div id="modalEditSlot">
+    <div class="modal-backdrop" onclick="closeModalEditSlot()"></div>
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Kelola Slot Stand Kantin</h2>
+            <button type="button" class="modal-close" onclick="closeModalEditSlot()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="formEditSlot" onsubmit="event.preventDefault(); simpanSlotKantin();" style="display:flex; flex-direction:column; gap:16px;">
+            <div class="form-group" style="margin-bottom:0;">
+                <label for="inputSlotKantin">Limit Jumlah Slot Stand</label>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" onclick="adjustSlotInput(-1)" style="padding:10px 14px; background:#f3f4f6; border:1px solid var(--border); border-radius:8px; cursor:pointer; font-weight:700;"><i class="fa-solid fa-minus"></i></button>
+                    <input type="number" id="inputSlotKantin" name="nilai" value="<?= $slotKantin ?>" min="1" required style="text-align:center; font-size:16px; font-weight:700; flex-grow:1;">
+                    <button type="button" onclick="adjustSlotInput(1)" style="padding:10px 14px; background:#f3f4f6; border:1px solid var(--border); border-radius:8px; cursor:pointer; font-weight:700;"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <small class="form-note">Gagal jika limit slot dikurangi di bawah jumlah stand yang sedang aktif terisi.</small>
+            </div>
+            <button type="submit" class="modal-btn-submit">
+                <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Simpan Perubahan
+            </button>
+        </form>
+    </div>
+</div>
+
 <script>
     function bukaFotoKantin(src) {
         const modal = document.getElementById('modalFotoKantin');
@@ -477,7 +451,10 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
     }
 
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') tutupFotoKantin();
+        if (e.key === 'Escape') {
+            tutupFotoKantin();
+            closeModalEditSlot();
+        }
     });
 
     function selectToko(id) {
@@ -536,5 +513,213 @@ require_once __DIR__ . '/../../../config/toko_foto.php';
                 if (imgEl) { imgEl.style.opacity = '1'; }
             }
         }
+    }
+
+    // ── REAL-TIME AJAX SCRIPTS ──
+    function showToastAdmin(title, message, type = 'success') {
+        const container = document.getElementById('toastContainerAdmin');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `admin-toast ${type}`;
+
+        const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+
+        toast.innerHTML = `
+            <i class="fa-solid ${icon} admin-toast-icon"></i>
+            <div class="admin-toast-body">
+                <div class="admin-toast-title">${title}</div>
+                <div class="admin-toast-message">${message}</div>
+            </div>
+            <button type="button" class="admin-toast-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+        `;
+
+        container.appendChild(toast);
+
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            toast.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards';
+            toast.addEventListener('animationend', () => {
+                toast.remove();
+            });
+        }, 4000);
+    }
+
+    function openModalEditSlot() {
+        const modal = document.getElementById('modalEditSlot');
+        if (modal) {
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            const input = document.getElementById('inputSlotKantin');
+            if (input) input.focus();
+        }
+    }
+
+    function closeModalEditSlot() {
+        const modal = document.getElementById('modalEditSlot');
+        if (modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function adjustSlotInput(amount) {
+        const input = document.getElementById('inputSlotKantin');
+        if (input) {
+            let val = parseInt(input.value) || 0;
+            val = Math.max(1, val + amount);
+            input.value = val;
+        }
+    }
+
+    function simpanSlotKantin() {
+        const input = document.getElementById('inputSlotKantin');
+        if (!input) return;
+
+        const val = parseInt(input.value) || 0;
+        const btnSubmit = document.querySelector('#modalEditSlot .modal-btn-submit');
+        const originalText = btnSubmit.innerHTML;
+
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+        btnSubmit.disabled = true;
+
+        const formData = new FormData();
+        formData.append('_ajax', '1');
+        formData.append('action', 'kantin_ubah_slot_ajax');
+        formData.append('nilai', val);
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            btnSubmit.innerHTML = originalText;
+            btnSubmit.disabled = false;
+
+            if (data.status === 'success') {
+                showToastAdmin('Sukses', data.msg, 'success');
+                
+                // Update stats cards in UI
+                const statSlotKantinVal = document.getElementById('statSlotKantinVal');
+                const statTotalKantinLimitVal = document.getElementById('statTotalKantinLimitVal');
+                const inputEditSlot = document.getElementById('inputSlotKantin');
+
+                if (statSlotKantinVal) statSlotKantinVal.textContent = val;
+                if (statTotalKantinLimitVal) statTotalKantinLimitVal.textContent = val;
+                if (inputEditSlot) inputEditSlot.value = val;
+
+                closeModalEditSlot();
+
+                // Reload page after brief delay to refresh empty slots grid correctly
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showToastAdmin('Gagal', data.msg, 'error');
+            }
+        })
+        .catch(err => {
+            btnSubmit.innerHTML = originalText;
+            btnSubmit.disabled = false;
+            showToastAdmin('Error', 'Gagal memproses request. Hubungi administrator.', 'error');
+        });
+    }
+
+    function geserUrutanKantin(btn, arah) {
+        const rowEl = btn.closest('tr');
+        if (!rowEl) return;
+
+        const nomor = parseInt(rowEl.getAttribute('data-nomor'));
+        const swapNomor = (arah === 'up') ? (nomor - 1) : (nomor + 1);
+        const targetRowEl = document.querySelector('tr[data-nomor="' + swapNomor + '"]');
+
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('_ajax', '1');
+        formData.append('action', 'kantin_geser_urutan_ajax');
+        formData.append('nomor_slot', nomor);
+        formData.append('arah', arah);
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+
+            if (data.status === 'success') {
+                showToastAdmin('Sukses', data.msg, 'success');
+                
+                if (targetRowEl) {
+                    // Highlight rows
+                    rowEl.classList.add('row-swap-active');
+                    targetRowEl.classList.add('row-swap-active');
+
+                    setTimeout(() => {
+                        rowEl.classList.remove('row-swap-active');
+                        targetRowEl.classList.remove('row-swap-active');
+                    }, 1000);
+
+                    // Swap data-nomor attributes
+                    rowEl.setAttribute('data-nomor', swapNomor);
+                    targetRowEl.setAttribute('data-nomor', nomor);
+
+                    // Swap the actual numbers shown in the cells
+                    const numSpan = rowEl.querySelector('.slot-number-span');
+                    const targetNumSpan = targetRowEl.querySelector('.slot-number-span');
+                    if (numSpan && targetNumSpan) {
+                        numSpan.textContent = swapNomor;
+                        targetNumSpan.textContent = nomor;
+                    }
+
+                    // Swap DOM nodes
+                    if (arah === 'up') {
+                        rowEl.parentNode.insertBefore(rowEl, targetRowEl);
+                    } else {
+                        rowEl.parentNode.insertBefore(targetRowEl, rowEl);
+                    }
+
+                    // Update Chevrons visibility
+                    updateSwapArrows();
+                } else {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            } else {
+                showToastAdmin('Gagal', data.msg, 'error');
+            }
+        })
+        .catch(err => {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            showToastAdmin('Error', 'Gagal memproses request. Hubungi administrator.', 'error');
+        });
+    }
+
+    function updateSwapArrows() {
+        const rows = document.querySelectorAll('tbody tr[data-nomor]');
+        const limitEl = document.getElementById('statSlotKantinVal');
+        if (!limitEl) return;
+        const limit = parseInt(limitEl.textContent);
+
+        rows.forEach(row => {
+            const nomor = parseInt(row.getAttribute('data-nomor'));
+            const btnUp = row.querySelector('.btn-swap-up');
+            const btnDown = row.querySelector('.btn-swap-down');
+
+            if (btnUp) {
+                btnUp.style.visibility = (nomor > 1) ? 'visible' : 'hidden';
+            }
+            if (btnDown) {
+                btnDown.style.visibility = (nomor < limit) ? 'visible' : 'hidden';
+            }
+        });
     }
 </script>
