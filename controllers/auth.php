@@ -106,6 +106,7 @@ function login()
             $res = mysqli_query($conn, "
                 SELECT * FROM penjual 
                 WHERE username = '$u' 
+                  AND deleted_at IS NULL
                 LIMIT 1
             ");
             $user = mysqli_fetch_assoc($res);

@@ -16,7 +16,7 @@ if ($action === 'penjual_tambah') {
     if ($nama === '' || $username === '' || $password === '') {
         $feedback = ['type' => 'error', 'msg' => 'Nama, username, dan password wajib diisi.'];
     } else {
-        $cek = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id_penjual FROM penjual WHERE username='" . mysqli_real_escape_string($conn, $username) . "'"));
+        $cek = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id_penjual FROM penjual WHERE username='" . mysqli_real_escape_string($conn, $username) . "' AND deleted_at IS NULL"));
         if ($cek) {
             $feedback = ['type' => 'error', 'msg' => 'Username sudah digunakan.'];
         } else {

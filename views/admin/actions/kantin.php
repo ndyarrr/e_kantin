@@ -116,18 +116,20 @@ if ($action === 'kantin_hapus') {
         mysqli_query($conn, "UPDATE toko SET deleted_at = NOW() WHERE id_toko=$id");
         mysqli_query($conn, "UPDATE menu SET deleted_at = NOW() WHERE id_toko=$id");
         
-        // Deactivate and soft delete all owners associated with this canteen
+        // Deactivate and soft delete all owners and staff associated with this canteen
         $owner_res = mysqli_query($conn, "
-            SELECT p.id_penjual FROM penjual p
+            SELECT p.id_penjual, p.role FROM penjual p
             JOIN toko_penjual tp ON tp.id_penjual = p.id_penjual
-            WHERE tp.id_toko = $id AND p.role = 'owner' AND p.deleted_at IS NULL
+            WHERE tp.id_toko = $id AND p.deleted_at IS NULL
         ");
         if ($owner_res) {
             while ($owner_row = mysqli_fetch_assoc($owner_res)) {
                 $owner_id = (int)$owner_row['id_penjual'];
+                $owner_role = $owner_row['role'];
                 mysqli_query($conn, "UPDATE penjual SET deleted_at = NOW() WHERE id_penjual = $owner_id");
                 mysqli_query($conn, "UPDATE toko_penjual SET status = 'nonaktif' WHERE id_penjual = $owner_id");
-                catatLog($conn, 'Hapus Owner Otomatis', 'Owner ID: ' . $owner_id . ' dihapus otomatis karena kantin ID ' . $id . ' dihapus');
+                $label_role = ($owner_role === 'owner') ? 'Owner' : 'Staf';
+                catatLog($conn, 'Hapus ' . $label_role . ' Otomatis', $label_role . ' ID: ' . $owner_id . ' dihapus otomatis karena kantin ID ' . $id . ' dihapus');
             }
         }
 

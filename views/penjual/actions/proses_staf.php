@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Cek username ganda
-        $cek_user = mysqli_query($conn, "SELECT id_penjual FROM penjual WHERE username = '$username'");
+        $cek_user = mysqli_query($conn, "SELECT id_penjual FROM penjual WHERE username = '$username' AND deleted_at IS NULL");
         if (mysqli_num_rows($cek_user) > 0) {
             $_SESSION['feedback'] = ['type' => 'error', 'msg' => 'Username sudah terpakai!'];
             echo "<script>window.location.href='../owner/index.php?section=staf&action=tambah';</script>";
@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $shift = mysqli_real_escape_string($conn, $_POST['shift'] ?? 'Pagi');
 
         // Cek apakah username ganda dipakai orang lain selain staf itu sendiri
-        $cek_user = mysqli_query($conn, "SELECT id_penjual FROM penjual WHERE username = '$username' AND id_penjual != '$id_staf'");
+        $cek_user = mysqli_query($conn, "SELECT id_penjual FROM penjual WHERE username = '$username' AND id_penjual != '$id_staf' AND deleted_at IS NULL");
         if (mysqli_num_rows($cek_user) > 0) {
             $_SESSION['feedback'] = ['type' => 'error', 'msg' => 'Username tersebut sudah dipakai orang lain!'];
             echo "<script>window.location.href='../owner/index.php?section=staf';</script>";

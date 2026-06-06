@@ -47,7 +47,7 @@ if ($action === 'pembeli_tambah_murid') {
             $n = mysqli_real_escape_string($conn, $nama);
             $ni = mysqli_real_escape_string($conn, $nisn);
 
-            $cek = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nisn FROM murid WHERE nisn='$ni'"));
+            $cek = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nisn FROM murid WHERE nisn='$ni' AND deleted_at IS NULL"));
             if ($cek) {
                 $feedback = ['type' => 'error', 'msg' => "NISN <strong>$ni</strong> sudah terdaftar."];
             } else {
@@ -86,7 +86,7 @@ if ($action === 'pembeli_tambah_guru') {
         $n = mysqli_real_escape_string($conn, $nama);
         $nu = mysqli_real_escape_string($conn, $nuptk);
 
-        $cek = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nuptk FROM guru WHERE nuptk='$nu'"));
+        $cek = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nuptk FROM guru WHERE nuptk='$nu' AND deleted_at IS NULL"));
         if ($cek) {
             $feedback = ['type' => 'error', 'msg' => "NUPTK <strong>$nu</strong> sudah terdaftar."];
         } else {
