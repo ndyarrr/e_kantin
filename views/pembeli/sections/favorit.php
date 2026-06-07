@@ -1,5 +1,5 @@
 <!-- ═══════ SECTION: FAVORIT ═══════ -->
-<div class="page-section" id="section-favorit">
+<div class="page-section <?= $active_tab === 'favorit' ? 'active' : '' ?>" id="section-favorit">
     <section class="section-block">
         <h2 class="section-title">Menu Favorit</h2>
         

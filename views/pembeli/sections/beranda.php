@@ -1,5 +1,5 @@
 <!-- ═══════ SECTION: BERANDA ═══════ -->
-<div class="page-section active" id="section-beranda">
+<div class="page-section <?= $active_tab === 'beranda' ? 'active' : '' ?>" id="section-beranda">
 
     <!-- Search Results (hidden by default) -->
     <section class="section-block search-results-section" id="searchResultsSection" style="display:none">

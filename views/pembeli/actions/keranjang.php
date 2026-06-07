@@ -125,7 +125,7 @@ if ($action === 'sync' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             
             if ($stmt) {
-                mysqli_stmt_bind_param($stmt, 'ssiiiisi', $user_id, $user_role, $id_menu, $id_toko, $jumlah, $catatan, $selected, $harga);
+                mysqli_stmt_bind_param($stmt, 'ssiiisii', $user_id, $user_role, $id_menu, $id_toko, $jumlah, $catatan, $selected, $harga);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
             }

@@ -91,7 +91,7 @@ if ($q_pesanan) {
 }
 ?>
 <!-- ═══════ SECTION: PESANAN ═══════ -->
-<div class="page-section" id="section-pesanan">
+<div class="page-section <?= $active_tab === 'pesanan' ? 'active' : '' ?>" id="section-pesanan">
     <section class="section-block">
         <h2 class="section-title">Pesanan Saya</h2>
         

@@ -33,7 +33,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 ?>
 
 <!-- ═══════ SECTION: PROFIL ═══════ -->
-<div class="page-section" id="section-profil">
+<div class="page-section <?= $active_tab === 'profil' ? 'active' : '' ?>" id="section-profil">
     <section class="section-block">
         <h2 class="section-title">Profil Saya</h2>
         

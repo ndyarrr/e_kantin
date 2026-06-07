@@ -16,6 +16,12 @@ $user_nama = $_SESSION['user_nama'] ?? 'Pembeli';
 $user_role = $_SESSION['user_role'] ?? 'siswa';
 $user_id = $_SESSION['user_id'] ?? '';
 
+$active_tab = $_GET['tab'] ?? 'beranda';
+$allowed_tabs = ['beranda', 'pesanan', 'favorit', 'kantin', 'chat', 'profil'];
+if (!in_array($active_tab, $allowed_tabs)) {
+    $active_tab = 'beranda';
+}
+
 // ── Ambil 5 pesanan terbaru untuk notifikasi ──
 $notifications = [];
 $unread_notif_count = 0;
@@ -284,19 +290,19 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
 
         <nav class="nav-menu-wrapper">
             <div class="nav-menu-container">
-                <a href="#" class="nav-item active" data-nav="beranda" onclick="switchNav('beranda')">
+                <a href="#" class="nav-item <?= $active_tab === 'beranda' ? 'active' : '' ?>" data-nav="beranda" onclick="switchNav('beranda')">
                     <i class="fa-solid fa-house"></i> <span>Beranda</span>
                 </a>
-                <a href="#" class="nav-item" data-nav="pesanan" onclick="switchNav('pesanan')">
+                <a href="#" class="nav-item <?= $active_tab === 'pesanan' ? 'active' : '' ?>" data-nav="pesanan" onclick="switchNav('pesanan')">
                     <i class="fa-solid fa-receipt"></i> <span>Pesanan</span>
                 </a>
-                <a href="#" class="nav-item" data-nav="favorit" onclick="switchNav('favorit')">
+                <a href="#" class="nav-item <?= $active_tab === 'favorit' ? 'active' : '' ?>" data-nav="favorit" onclick="switchNav('favorit')">
                     <i class="fa-solid fa-heart"></i> <span>Favorit</span>
                 </a>
-                <a href="#" class="nav-item" data-nav="kantin" onclick="switchNav('kantin')">
+                <a href="#" class="nav-item <?= $active_tab === 'kantin' ? 'active' : '' ?>" data-nav="kantin" onclick="switchNav('kantin')">
                     <i class="fa-solid fa-store"></i> <span>Kantin</span>
                 </a>
-                <a href="#" class="nav-item" data-nav="chat" onclick="switchNav('chat')">
+                <a href="#" class="nav-item <?= $active_tab === 'chat' ? 'active' : '' ?>" data-nav="chat" onclick="switchNav('chat')">
                     <i class="fa-solid fa-comment-dots"></i> <span>Chat</span>
                     <span class="badge" id="chatNotifBadge" style="display: none;"></span>
                 </a>
@@ -449,6 +455,17 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             if (typeof checkUnreadChats === 'function') {
                 checkUnreadChats();
             }
+
+            // Update URL search parameters to keep the active tab state
+            const url = new URL(window.location.href);
+            if (section === 'beranda') {
+                url.searchParams.delete('tab');
+            } else {
+                url.searchParams.set('tab', section);
+            }
+            // Remove the hash if present to avoid dual-state URL confusion
+            url.hash = '';
+            window.history.replaceState({}, '', url.pathname + url.search);
 
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1362,12 +1379,54 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
 
         function checkoutCart() {
             const cart = getCart();
+            
+            // Ambil semua input catatan di keranjang untuk memastikan catatan terbaru tersimpan
+            document.querySelectorAll('.cart-item-note-input').forEach(input => {
+                const row = input.closest('.cart-item-row');
+                if (row) {
+                    const id = Number(row.getAttribute('data-id'));
+                    const harga = Number(row.getAttribute('data-harga'));
+                    const val = input.value.trim();
+                    
+                    const item = cart.find(c => Number(c.id_menu) === id && Number(c.harga) === harga);
+                    if (item) {
+                        item.catatan = val;
+                    }
+                }
+            });
+            
+            // Simpan ke localStorage
+            localStorage.setItem('ekantin_cart', JSON.stringify(cart));
+            updateBadges();
+
             const selectedItems = cart.filter(item => item.selected !== false);
             if (selectedItems.length === 0) {
                 showToast('Silakan pilih item yang ingin dibeli!', 'error');
                 return;
             }
-            window.location.href = 'checkout.php';
+
+            const btn = document.querySelector('.cart-drawer-btn');
+            let originalHTML = '';
+            if (btn) {
+                originalHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan...';
+            }
+
+            // Sinkronisasi ke database dulu baru redirect
+            fetch('actions/keranjang.php?action=sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cart)
+            })
+            .then(res => res.json())
+            .then(data => {
+                window.location.href = 'checkout.php';
+            })
+            .catch(err => {
+                console.error('Koneksi sinkronisasi gagal:', err);
+                window.location.href = 'checkout.php';
+            });
         }
 
         function renderCartDrawer() {
@@ -2616,16 +2675,10 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             const tabParam = urlParams.get('tab');
             if (tabParam) {
                 switchNav(tabParam);
-                // Bersihkan query parameter dari URL agar jika di-refresh kembali ke beranda
-                const newUrl = window.location.pathname;
-                window.history.replaceState({}, document.title, newUrl);
             } else if (window.location.hash) {
                 const hashTab = window.location.hash.substring(1);
                 if (document.getElementById('section-' + hashTab)) {
                     switchNav(hashTab);
-                    // Bersihkan hash dari URL
-                    const newUrl = window.location.pathname + window.location.search;
-                    window.history.replaceState({}, document.title, newUrl);
                 }
             }
         });

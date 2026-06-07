@@ -1425,12 +1425,54 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
             // ── Mock Checkout ──
             function checkoutCart() {
                 const cart = getCart();
+                
+                // Ambil semua input catatan di keranjang untuk memastikan catatan terbaru tersimpan
+                document.querySelectorAll('.cart-item-note-input').forEach(input => {
+                    const row = input.closest('.cart-item-row');
+                    if (row) {
+                        const id = Number(row.getAttribute('data-id'));
+                        const harga = Number(row.getAttribute('data-harga'));
+                        const val = input.value.trim();
+                        
+                        const item = cart.find(c => Number(c.id_menu) === id && Number(c.harga) === harga);
+                        if (item) {
+                            item.catatan = val;
+                        }
+                    }
+                });
+                
+                // Simpan ke localStorage
+                localStorage.setItem('ekantin_cart', JSON.stringify(cart));
+                updateBadges();
+
                 const selectedItems = cart.filter(item => item.selected !== false);
                 if (selectedItems.length === 0) {
                     showToast('Silakan pilih item yang ingin dibeli!', 'error');
                     return;
                 }
-                window.location.href = 'checkout.php';
+
+                const btn = document.querySelector('.cart-drawer-btn');
+                let originalHTML = '';
+                if (btn) {
+                    originalHTML = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan...';
+                }
+
+                // Sinkronisasi ke database dulu baru redirect
+                fetch('actions/keranjang.php?action=sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cart)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    window.location.href = 'checkout.php';
+                })
+                .catch(err => {
+                    console.error('Koneksi sinkronisasi gagal:', err);
+                    window.location.href = 'checkout.php';
+                });
             }
 
             // ── Favorites (DB-backed) ──

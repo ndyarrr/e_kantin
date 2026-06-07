@@ -1,4 +1,4 @@
-<div id="section-kantin" class="page-section">
+<div id="section-kantin" class="page-section <?= $active_tab === 'kantin' ? 'active' : '' ?>">
     <div class="section-block">
         <h2 class="section-title">Daftar Kantin Esemkita</h2>
         
