@@ -328,6 +328,19 @@
                 }
                 return;
             }
+            if (statusBaru === 'selesai') {
+                if (btn.disabled) return;
+                const card = btn.closest('.pcard');
+                const namaPembeli = card ? card.querySelector('.pcard-nama')?.textContent : 'Pembeli';
+                if (typeof window.bukaModalSelesai === 'function') {
+                    window.bukaModalSelesai(idPesanan, namaPembeli);
+                } else {
+                    const confirmMsg = btn.dataset.confirm || 'Tandai pesanan ini sebagai selesai?';
+                    if (!confirm(confirmMsg)) return;
+                    updateStatus(idPesanan, statusBaru);
+                }
+                return;
+            }
             const confirmMsg = btn.dataset.confirm;
             if (confirmMsg && !confirm(confirmMsg)) return;
             if (btn.disabled) return;

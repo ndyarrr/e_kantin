@@ -269,6 +269,31 @@ window.cetakNota = cetakNota;
     </div>
 </div>
 
+<!-- Modal Konfirmasi Selesai (Penjual) -->
+<div id="modalKonfirmasiSelesaiPenjual" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0);backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);z-index:9999999;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;transition:all 0.25s ease-out;">
+    <div id="selesaiConfirmModalBox" style="background:#ffffff;width:100%;max-width:380px;border-radius:24px;padding:28px 24px;box-shadow:0 20px 40px rgba(15,23,42,0.15);text-align:center;box-sizing:border-box;transform:scale(0.8);opacity:0;transition:all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);">
+        <div style="width: 64px; height: 64px; background: #ecfdf5; color: #059669; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 20px; border: 4px solid #a7f3d0; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.15); animation: pulseSelesai 2s infinite;">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <h3 style="margin:0 0 10px;font-size:18px;font-weight:800;color:#0f172a;font-family:'Poppins',sans-serif;">Tandai Selesai?</h3>
+
+        <p style="margin:0 0 24px;font-size:14px;color:#475569;font-family:'Poppins',sans-serif;line-height:1.6;">
+            Apakah Anda yakin pesanan <strong style="color: #0f172a;">#<span id="selesaiConfirmModalId"></span></strong> dari <strong id="selesaiConfirmModalNamaPembeli" style="color: #0f172a;"></strong> sudah diambil?<br>
+            <span style="font-size: 12px; color: #64748b;">Pesanan akan ditandai selesai dan tidak dapat diubah kembali.</span>
+        </p>
+
+        <div style="display:flex;gap:12px;">
+            <button onclick="tutupModalKonfirmasiSelesai()" style="flex:1;padding:12px;font-weight:700;font-size:14px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                Kembali
+            </button>
+            <button id="btnConfirmSelesaiSubmit" onclick="prosesKonfirmasiSelesai()" style="flex:1.2;padding:12px;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(135deg, #10b981, #047857);border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 12px rgba(16,185,129,0.25);transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(16,185,129,0.35)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(16,185,129,0.25)';">
+                <i class="fa-solid fa-circle-check"></i> Ya, Selesai
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Konfirmasi Tunai (Penjual) -->
 <div id="modalKonfirmasiTunaiPenjual" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0);backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);z-index:9999999;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;transition:all 0.25s ease-out;">
     <div id="tunaiConfirmModalBox" style="background:#ffffff;width:100%;max-width:380px;border-radius:24px;padding:28px 24px;box-shadow:0 20px 40px rgba(15,23,42,0.15);text-align:center;box-sizing:border-box;transform:scale(0.8);opacity:0;transition:all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);">
@@ -310,6 +335,11 @@ window.cetakNota = cetakNota;
     50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(5, 150, 105, 0.3); }
     100% { transform: scale(1); box-shadow: 0 4px 14px rgba(5, 150, 105, 0.15); }
 }
+@keyframes pulseSelesai {
+    0% { transform: scale(1); box-shadow: 0 4px 14px rgba(5, 150, 105, 0.15); }
+    50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(5, 150, 105, 0.3); }
+    100% { transform: scale(1); box-shadow: 0 4px 14px rgba(5, 150, 105, 0.15); }
+}
 #modalBatalPesananPenjual.show {
     background: rgba(15, 23, 42, 0.6) !important;
     backdrop-filter: blur(8px) !important;
@@ -337,6 +367,15 @@ window.cetakNota = cetakNota;
     transform: scale(1) !important;
     opacity: 1 !important;
 }
+#modalKonfirmasiSelesaiPenjual.show {
+    background: rgba(15, 23, 42, 0.6) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+#modalKonfirmasiSelesaiPenjual.show #selesaiConfirmModalBox {
+    transform: scale(1) !important;
+    opacity: 1 !important;
+}
 </style>
 
 <!-- Fullscreen Image Viewer (shared: inbox + chat) -->
@@ -353,6 +392,7 @@ const QRIS_CONFIRM_BTN_HTML = '<i class="fa-solid fa-check-double"></i> Ya, Konf
 const TUNAI_CONFIRM_BTN_HTML = '<i class="fa-solid fa-hand-holding-dollar"></i> Ya, Sudah Diterima';
 const BUKTI_CONFIRM_BTN_HTML = '<i class="fa-solid fa-check-double"></i> Konfirmasi Lunas';
 const BATAL_CONFIRM_BTN_HTML = '<i class="fa-solid fa-ban"></i> Ya, Batalkan';
+const SELESAI_CONFIRM_BTN_HTML = '<i class="fa-solid fa-circle-check"></i> Ya, Selesai';
 
 function resetQrisConfirmModalButton() {
     const btn = document.getElementById('btnConfirmQrisSubmit');
@@ -380,6 +420,13 @@ function resetBatalModalButton() {
     if (!btn) return;
     btn.disabled = false;
     btn.innerHTML = BATAL_CONFIRM_BTN_HTML;
+}
+
+function resetSelesaiModalButton() {
+    const btn = document.getElementById('btnConfirmSelesaiSubmit');
+    if (!btn) return;
+    btn.disabled = false;
+    btn.innerHTML = SELESAI_CONFIRM_BTN_HTML;
 }
 
 function lihatBuktiQris(fileName, idPesanan) {
@@ -582,6 +629,77 @@ function prosesKonfirmasiTunai() {
         });
 }
 
+let _selesaiActiveConfirmPesananId = null;
+let _selesaiConfirmProcessing = false;
+
+function bukaModalSelesai(idPesanan, namaPembeli) {
+    if (!idPesanan || _selesaiConfirmProcessing) return;
+    resetSelesaiModalButton();
+    _selesaiActiveConfirmPesananId = idPesanan;
+    document.getElementById('selesaiConfirmModalId').textContent = idPesanan;
+    document.getElementById('selesaiConfirmModalNamaPembeli').textContent = namaPembeli || 'Pembeli';
+    const modal = document.getElementById('modalKonfirmasiSelesaiPenjual');
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+}
+
+function tutupModalKonfirmasiSelesai() {
+    const modal = document.getElementById('modalKonfirmasiSelesaiPenjual');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        _selesaiActiveConfirmPesananId = null;
+        _selesaiConfirmProcessing = false;
+        resetSelesaiModalButton();
+    }, 250);
+}
+
+function prosesKonfirmasiSelesai() {
+    if (!_selesaiActiveConfirmPesananId || _selesaiConfirmProcessing) return;
+    _selesaiConfirmProcessing = true;
+    const btn = document.getElementById('btnConfirmSelesaiSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+
+    const fd = new FormData();
+    fd.append('action', 'update_status');
+    fd.append('id_pesanan', _selesaiActiveConfirmPesananId);
+    fd.append('status_baru', 'selesai');
+    fd.append('ajax', '1');
+
+    const prosesUrl = (window.INBOX_RT_CONFIG && window.INBOX_RT_CONFIG.prosesUrl)
+        ? window.INBOX_RT_CONFIG.prosesUrl
+        : '../actions/proses_inbox.php';
+
+    fetch(prosesUrl, { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                localStorage.removeItem('printed_order_' + _selesaiActiveConfirmPesananId);
+                tutupModalKonfirmasiSelesai();
+                if (typeof muatInbox === 'function') muatInbox();
+                else if (typeof reloadInboxFragment === 'function') reloadInboxFragment();
+                else location.reload();
+            } else {
+                alert(res.message || 'Gagal menandai pesanan selesai. Coba lagi.');
+                _selesaiConfirmProcessing = false;
+                resetSelesaiModalButton();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Koneksi gagal!');
+            _selesaiConfirmProcessing = false;
+            resetSelesaiModalButton();
+        });
+}
+
+window.bukaModalSelesai = bukaModalSelesai;
+window.tutupModalKonfirmasiSelesai = tutupModalKonfirmasiSelesai;
+window.prosesKonfirmasiSelesai = prosesKonfirmasiSelesai;
+
 let _batalActivePesananId = null;
 let _batalConfirmProcessing = false;
 
@@ -672,5 +790,10 @@ document.getElementById('modalKonfirmasiQrisPenjual').addEventListener('click', 
 // Tutup modal tunai jika klik backdrop
 document.getElementById('modalKonfirmasiTunaiPenjual').addEventListener('click', function(e) {
     if (e.target === this) tutupModalKonfirmasiTunai();
+});
+
+// Tutup modal selesai jika klik backdrop
+document.getElementById('modalKonfirmasiSelesaiPenjual').addEventListener('click', function(e) {
+    if (e.target === this) tutupModalKonfirmasiSelesai();
 });
 </script>
