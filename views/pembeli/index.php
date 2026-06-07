@@ -15,98 +15,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 $user_nama = $_SESSION['user_nama'] ?? 'Pembeli';
 $user_role = $_SESSION['user_role'] ?? 'siswa';
 $user_id = $_SESSION['user_id'] ?? '';
-
-// Cek pelanggaran no-show (tidak diambil & belum bayar)
-$has_no_show_penalty = false;
-$unpaid_no_shows = [];
-if (!empty($user_id)) {
-    $col_pembeli = ($user_role === 'siswa') ? 'nisn_pembeli' : 'nuptk_pembeli';
-    $q_check_no_show = mysqli_query($koneksi, "
-        SELECT p.id_pesanan, p.total_harga, p.waktu_pesan, t.nama_toko, t.foto_toko, pb.metode 
-        FROM pesanan p
-        JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
-        JOIN toko t ON p.id_toko = t.id_toko
-        WHERE p.$col_pembeli = '$user_id'
-          AND p.status = 'tidak_diambil'
-          AND pb.status = 'belum_bayar'
-    ");
-    if ($q_check_no_show && mysqli_num_rows($q_check_no_show) > 0) {
-        $has_no_show_penalty = true;
-        while ($r = mysqli_fetch_assoc($q_check_no_show)) {
-            $id_pes = (int)$r['id_pesanan'];
-            
-            // Ambil detail item
-            $items_list = [];
-            $q_items = mysqli_query($koneksi, "
-                SELECT dp.jumlah, dp.harga, m.nama_menu 
-                FROM detail_pesanan dp
-                JOIN menu m ON dp.id_menu = m.id_menu
-                WHERE dp.id_pesanan = $id_pes
-            ");
-            if ($q_items) {
-                while ($it = mysqli_fetch_assoc($q_items)) {
-                    $items_list[] = [
-                        'nama' => $it['nama_menu'],
-                        'jumlah' => (int)$it['jumlah'],
-                        'harga' => (int)$it['harga']
-                    ];
-                }
-            }
-            
-            // Resolve info pembeli
-            $col_nama = ($user_role === 'siswa') ? 'nama_siswa' : 'nama_guru';
-            $tbl_pembeli = ($user_role === 'siswa') ? 'siswa' : 'guru';
-            $col_kelas = ($user_role === 'siswa') ? 'kelas' : 'nuptk';
-            $col_id_tbl = ($user_role === 'siswa') ? 'nisn' : 'nuptk';
-            $q_nama = mysqli_query($koneksi, "SELECT $col_nama, $col_kelas FROM $tbl_pembeli WHERE $col_id_tbl = '$user_id' LIMIT 1");
-            $data_pembeli = $q_nama ? mysqli_fetch_assoc($q_nama) : [];
-            $nama_pembeli = $data_pembeli[$col_nama] ?? $user_nama;
-            $kelas_pembeli = $data_pembeli[$col_kelas] ?? '-';
-            
-            // Resolve kasir & shift dari log
-            $kasirNama = '';
-            $kasirShift = '';
-            $q_log = mysqli_query($koneksi, "
-                SELECT l.user_nama, tp.shift
-                FROM log_sistem l
-                LEFT JOIN toko_penjual tp ON tp.id_penjual = l.user_id AND tp.status = 'aktif'
-                WHERE l.keterangan LIKE '%pesanan #$id_pes%'
-                  AND l.user_role = 'penjual'
-                ORDER BY l.dibuat_pada DESC
-                LIMIT 1
-            ");
-            if ($q_log && $r_log = mysqli_fetch_assoc($q_log)) {
-                $kasirNama  = $r_log['user_nama'];
-                $kasirShift = $r_log['shift'] ?? 'Bebas';
-            }
-            
-            $foto_toko_url = '';
-            if (!empty($r['foto_toko'])) {
-                $foto_toko_url = '../../assets/img/kantin/' . $r['foto_toko'];
-            }
-            
-            $unpaid_no_shows[] = [
-                'id' => $id_pes,
-                'toko' => $r['nama_toko'],
-                'foto' => $foto_toko_url,
-                'pembeli' => $nama_pembeli,
-                'kelas' => $kelas_pembeli,
-                'waktu' => $r['waktu_pesan'],
-                'kasir' => $kasirNama,
-                'shift' => $kasirShift,
-                'metode' => ucfirst($r['metode']),
-                'total' => (int)$r['total_harga'],
-                'items' => $items_list
-            ];
-        }
-    }
-}
-
 $active_tab = $_GET['tab'] ?? 'beranda';
-$allowed_tabs = ['beranda', 'pesanan', 'favorit', 'kantin', 'chat', 'profil'];
-if (!in_array($active_tab, $allowed_tabs)) {
-    $active_tab = 'beranda';
-}
 
 // ── Ambil 5 pesanan terbaru untuk notifikasi ──
 $notifications = [];
@@ -145,11 +54,11 @@ if ($q_all_menu) {
 
 // ── Ambil 6 menu terlaris untuk section Beranda ──
 $terlaris_menus = [];
-$q_terlaris = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko, toko.id_toko, toko.status AS status_toko FROM menu 
-                                      JOIN toko ON menu.id_toko = toko.id_toko 
-                                      WHERE menu.tersedia = 1 
+$q_terlaris = mysqli_query($koneksi, "SELECT menu.*, toko.nama_toko, toko.id_toko, toko.status AS status_toko FROM menu
+                                      JOIN toko ON menu.id_toko = toko.id_toko
+                                      WHERE menu.tersedia = 1 AND menu.stok > 0
                                       AND menu.deleted_at IS NULL AND toko.deleted_at IS NULL
-                                      ORDER BY menu.terjual DESC, menu.id_menu DESC 
+                                      ORDER BY menu.terjual DESC, menu.id_menu DESC
                                       LIMIT 6");
 if ($q_terlaris) {
     while ($r = mysqli_fetch_assoc($q_terlaris)) {
@@ -171,13 +80,7 @@ if (!empty($user_id)) {
 
 // ── Ambil SEMUA toko ──
 $all_tokos = [];
-$q_all_toko = mysqli_query($koneksi, "
-    SELECT t.*, s.nomor AS nomor_lapak
-    FROM toko t
-    LEFT JOIN slot_stand_kantin s ON s.id_toko = t.id_toko
-    WHERE t.deleted_at IS NULL
-    ORDER BY FIELD(t.status, 'buka', 'tutup'), COALESCE(s.nomor, t.urutan + 1) ASC, t.nama_toko ASC
-");
+$q_all_toko = mysqli_query($koneksi, "SELECT * FROM toko WHERE deleted_at IS NULL ORDER BY FIELD(status, 'buka', 'tutup'), nama_toko ASC");
 if ($q_all_toko) {
     while ($r = mysqli_fetch_assoc($q_all_toko))
         $all_tokos[] = $r;
@@ -323,11 +226,6 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                                         $bg_color = 'bg-red';
                                         $title = 'Pesanan Dibatalkan';
                                         $desc = "Maaf, pesananmu #$id_pesanan di $toko dibatalkan oleh kantin.";
-                                    } elseif ($status === 'tidak_diambil') {
-                                        $icon = 'fa-triangle-exclamation';
-                                        $bg_color = 'bg-red';
-                                        $title = 'Pesanan Tidak Diambil';
-                                        $desc = "Pesananmu #$id_pesanan di $toko ditandai tidak diambil (No-Show). Metode pembayaran tunai Anda dibatasi.";
                                     }
                                     
                                     // Hitung waktu relatif sederhana
@@ -495,17 +393,12 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
         }, $all_menus)); ?>;
 
         const ALL_TOKOS = <?= json_encode(array_map(function ($t) {
-            $nomor_lapak = (int) ($t['nomor_lapak'] ?? 0);
-            if ($nomor_lapak < 1) {
-                $nomor_lapak = (int) ($t['urutan'] ?? 0) + 1;
-            }
             return [
                 'id_toko' => (int) $t['id_toko'],
                 'nama_toko' => $t['nama_toko'],
                 'deskripsi' => $t['deskripsi'] ?? '',
                 'status' => strtolower($t['status'] ?? 'tutup'),
                 'foto_toko' => resolveTokoImg($t['foto_toko'] ?? ''),
-                'nomor_lapak' => $nomor_lapak,
             ];
         }, $all_tokos)); ?>;
 
@@ -557,17 +450,6 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             if (typeof checkUnreadChats === 'function') {
                 checkUnreadChats();
             }
-
-            // Update URL search parameters to keep the active tab state
-            const url = new URL(window.location.href);
-            if (section === 'beranda') {
-                url.searchParams.delete('tab');
-            } else {
-                url.searchParams.set('tab', section);
-            }
-            // Remove the hash if present to avoid dual-state URL confusion
-            url.hash = '';
-            window.history.replaceState({}, '', url.pathname + url.search);
 
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -677,7 +559,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 </button>`;
             }
             const styleAttr = styleExtra ? `style="${styleExtra}"` : '';
-            return `<button class="btn-tambah-keranjang" ${styleAttr} onclick="event.stopPropagation(); addToCart(${m.id_menu}, \`${m.nama_menu.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, ${m.harga}, \`${m.foto_menu || ''}\`, \`${m.nama_toko.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, ${m.id_toko})">
+            return `<button class="btn-tambah-keranjang" ${styleAttr} onclick="event.stopPropagation(); bukaDetailMenu(${m.id_menu})">
                 <i class="fa-solid fa-cart-plus"></i> Tambah
             </button>`;
         }
@@ -905,7 +787,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     <div class="form-group" style="margin-bottom: 16px;">
                         <div style="position: relative; display: flex; align-items: center;">
                             <span style="position: absolute; left: 16px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 700; color: #64748b;">Rp</span>
-                            <input type="number" id="detailFlexPriceInput" placeholder="Masukkan harga..." min="1000" max="50000" step="500" oninput="updateDetailFlexPriceFromInput(this)" style="
+                            <input type="number" id="detailFlexPriceInput" placeholder="Masukkan harga..." min="1000" oninput="updateDetailFlexPriceFromInput(this)" style="
                                 width: 100%;
                                 padding: 14px 16px 14px 44px;
                                 border: 2px solid #cbd5e1;
@@ -1111,15 +993,10 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             const errDiv = document.getElementById('detailPriceValidationError');
             if (errDiv) errDiv.style.display = 'none';
             
-            if (price >= 1000 && price <= 50000 && price % 500 === 0) {
+            if (price >= 1000) {
                 input.style.borderColor = '#16a34a';
-            } else if (price > 50000) {
-                input.style.borderColor = '#ef4444';
-                const errDiv = document.getElementById('detailPriceValidationError');
-                if (errDiv) {
-                    errDiv.textContent = 'Maksimal harga Rp 50.000';
-                    errDiv.style.display = 'block';
-                }
+            } else {
+                input.style.borderColor = '#cbd5e1';
             }
             
             updateDetailTotalText();
@@ -1209,36 +1086,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 const price = activeDetailPrice;
                 if (price < 1000) {
                     const errDiv = document.getElementById('detailPriceValidationError');
-                    if (errDiv) {
-                        errDiv.textContent = 'Minimal harga pembelian Rp 1.000';
-                        errDiv.style.display = 'block';
-                    }
-                    const input = document.getElementById('detailFlexPriceInput');
-                    if (input) {
-                        input.style.borderColor = '#ef4444';
-                        input.focus();
-                    }
-                    return;
-                }
-                if (price > 50000) {
-                    const errDiv = document.getElementById('detailPriceValidationError');
-                    if (errDiv) {
-                        errDiv.textContent = 'Maksimal harga Rp 50.000';
-                        errDiv.style.display = 'block';
-                    }
-                    const input = document.getElementById('detailFlexPriceInput');
-                    if (input) {
-                        input.style.borderColor = '#ef4444';
-                        input.focus();
-                    }
-                    return;
-                }
-                if (price % 500 !== 0) {
-                    const errDiv = document.getElementById('detailPriceValidationError');
-                    if (errDiv) {
-                        errDiv.textContent = 'Harga harus kelipatan Rp 500 (contoh: 1.000, 1.500)';
-                        errDiv.style.display = 'block';
-                    }
+                    if (errDiv) errDiv.style.display = 'block';
                     const input = document.getElementById('detailFlexPriceInput');
                     if (input) {
                         input.style.borderColor = '#ef4444';
@@ -1333,10 +1181,6 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             }
             saveCart(cart);
             showToast(nama + ' (Rp ' + activeHarga.toLocaleString('id-ID') + ')', 'success', { foto: foto, toko: toko });
-        }
-
-        function handleMenuCardClick(id) {
-            bukaDetailMenu(id);
         }
 
         function updateCartSummaryUI() {
@@ -1481,54 +1325,12 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
 
         function checkoutCart() {
             const cart = getCart();
-            
-            // Ambil semua input catatan di keranjang untuk memastikan catatan terbaru tersimpan
-            document.querySelectorAll('.cart-item-note-input').forEach(input => {
-                const row = input.closest('.cart-item-row');
-                if (row) {
-                    const id = Number(row.getAttribute('data-id'));
-                    const harga = Number(row.getAttribute('data-harga'));
-                    const val = input.value.trim();
-                    
-                    const item = cart.find(c => Number(c.id_menu) === id && Number(c.harga) === harga);
-                    if (item) {
-                        item.catatan = val;
-                    }
-                }
-            });
-            
-            // Simpan ke localStorage
-            localStorage.setItem('ekantin_cart', JSON.stringify(cart));
-            updateBadges();
-
             const selectedItems = cart.filter(item => item.selected !== false);
             if (selectedItems.length === 0) {
                 showToast('Silakan pilih item yang ingin dibeli!', 'error');
                 return;
             }
-
-            const btn = document.querySelector('.cart-drawer-btn');
-            let originalHTML = '';
-            if (btn) {
-                originalHTML = btn.innerHTML;
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan...';
-            }
-
-            // Sinkronisasi ke database dulu baru redirect
-            fetch('actions/keranjang.php?action=sync', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(cart)
-            })
-            .then(res => res.json())
-            .then(data => {
-                window.location.href = 'checkout.php';
-            })
-            .catch(err => {
-                console.error('Koneksi sinkronisasi gagal:', err);
-                window.location.href = 'checkout.php';
-            });
+            window.location.href = 'checkout.php';
         }
 
         function renderCartDrawer() {
@@ -1784,7 +1586,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, null, m.stok);
                 const btnHTML = renderAddToCartButton(m, 'flex:1');
                 return `
-            <div class="menu-card-full" data-kategori="${(m.kategori || '').toLowerCase()}" onclick="handleMenuCardClick(${m.id_menu})" style="cursor: pointer;">
+            <div class="menu-card-full" data-kategori="${(m.kategori || '').toLowerCase()}" onclick="bukaDetailMenu(${m.id_menu})" style="cursor: pointer;">
                 ${imgWrapHTML}
                 <div class="mc-info">
                     <h4>${m.nama_menu}</h4>
@@ -1830,7 +1632,6 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 <div class="kantin-info">
                     <h3>${t.nama_toko}</h3>
                     <p>${desk}</p>
-                    <span class="lapak-badge">lapak no.${t.nomor_lapak}</span>
                     <span class="status-indicator ${statusClass}">${statusText}</span>
                     <a href="toko.php?id=${t.id_toko}" class="btn-lihat-menu" ${btnDisabled}>
                         ${btnText}
@@ -1888,7 +1689,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                         m.kategori.toLowerCase().includes(val)
                     );
                     if (results.length > 0) {
-                        handleMenuCardClick(results[0].id_menu);
+                        bukaDetailMenu(results[0].id_menu);
                         e.target.blur();
                     }
                 }
@@ -1939,7 +1740,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                         const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, m.id_menu, m.stok);
                         const btnHTML = renderAddToCartButton(m);
                         return `
-                    <div class="menu-card-full" onclick="handleMenuCardClick(${m.id_menu})" style="cursor: pointer;">
+                    <div class="menu-card-full" onclick="bukaDetailMenu(${m.id_menu})" style="cursor: pointer;">
                         ${imgWrapHTML}
                         <div class="mc-info">
                             <h4>${m.nama_menu}</h4>
@@ -2023,7 +1824,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                     const imgWrapHTML = renderMenuImageHTML(m.foto_menu, m.kategori, m.nama_menu, m.id_menu, m.stok);
                     const btnHTML = renderAddToCartButton(m);
                     return `
-                    <div class="menu-card-full" onclick="handleMenuCardClick(${m.id_menu})" style="cursor: pointer;">
+                    <div class="menu-card-full" onclick="bukaDetailMenu(${m.id_menu})" style="cursor: pointer;">
                         ${imgWrapHTML}
                         <div class="mc-info">
                             <h4>${m.nama_menu}</h4>
@@ -2778,11 +2579,19 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
             const tabParam = urlParams.get('tab');
             if (tabParam) {
                 switchNav(tabParam);
+                // Bersihkan query parameter dari URL agar jika di-refresh kembali ke beranda
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
             } else if (window.location.hash) {
                 const hashTab = window.location.hash.substring(1);
                 if (document.getElementById('section-' + hashTab)) {
                     switchNav(hashTab);
+                    // Bersihkan hash dari URL
+                    const newUrl = window.location.pathname + window.location.search;
+                    window.history.replaceState({}, document.title, newUrl);
                 }
+            } else {
+                switchNav('<?= $active_tab ?>');
             }
         });
     </script>

@@ -202,7 +202,11 @@
                         </div>
                     </div>
                     <div class="pcard-actions">
-
+                        <button type="button" class="pcard-btn"
+                            style="background: #0ea5e9; color: #ffffff; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);"
+                            onclick="bukaNotaModal(<?= htmlspecialchars($notaData, ENT_QUOTES, 'UTF-8') ?>, <?= (int)$ps['id_pesanan'] ?>)">
+                            <i class="fa-solid fa-receipt"></i> Nota
+                        </button>
 
                         <!-- Tombol aksi pemrosesan untuk owner & staf -->
                         <?php if ($ps['metode_pembayaran'] === 'transfer' && $ps['status_pembayaran'] === 'belum_bayar' && $ps['status'] !== 'dibatalkan' && $ps['status'] !== 'selesai'): ?>

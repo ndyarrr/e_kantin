@@ -66,19 +66,15 @@ $fotoBase = $inbox_base . '/assets/img/kantin/';
             <div class="nota-total-row"><span>TOTAL</span><span id="notaTotal"></span></div>
             <div class="nota-garis"></div>
             <div class="nota-footer">
-                <div class="nota-footer-bold">Terima kasih atas kunjungan Anda!</div>
+                <div class="nota-footer-bold">Terima kasih atas pesanan Anda!</div>
                 <div class="nota-footer-sub">Semoga hari Anda menyenangkan</div>
             </div>
             <!-- Jagged Edge Bottom -->
             <div class="nota-jagged-bottom"></div>
         </div>
         <div class="nota-actions no-print">
-            <button type="button" class="pcard-btn pcard-btn-batal" onclick="tutupNota()">
-                <i class="fa-solid fa-xmark"></i> Tutup
-            </button>
-            <button type="button" class="pcard-btn pcard-btn-print" onclick="cetakNota()">
-                <i class="fa-solid fa-print"></i> Cetak
-            </button>
+            <button type="button" class="nota-btn-tutup" onclick="tutupNota()"><i class="fa-solid fa-xmark"></i> Tutup</button>
+            <button type="button" class="nota-btn-cetak" onclick="cetakNota()"><i class="fa-solid fa-print"></i> Cetak Nota</button>
         </div>
     </div>
 </div>
@@ -116,44 +112,53 @@ window.INBOX_RT_CONFIG = {
 let _notaIdPesanan = null;
 
 function bukaNotaModal(data, idPesanan) {
+    if (!data || typeof data !== 'object') return;
+
     _notaIdPesanan = idPesanan;
-    document.getElementById('notaTokoNama').textContent = data.toko;
+
+    const modal = document.getElementById('notaModal');
+    if (!modal) return;
+    if (modal.parentNode !== document.body) {
+        document.body.appendChild(modal);
+    }
+
+    document.getElementById('notaTokoNama').textContent = data.toko || 'Kantin';
     const logoEl = document.getElementById('notaLogo');
-    if (data.foto) {
-        logoEl.innerHTML = `<img src="${data.foto}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px;border:2px solid #ddd;" onerror="this.onerror=null; this.outerHTML='🏪';">`;
+    const foto = typeof data.foto === 'string' ? data.foto.trim() : '';
+    if (foto !== '') {
+        logoEl.innerHTML = `<div class="nota-logo-container"><img src="${foto}" alt="Logo"></div>`;
     } else {
-        logoEl.innerHTML = '🏪';
+        logoEl.innerHTML = `<div class="nota-logo-container"><i class="fa-solid fa-store" style="font-size: 24px; color: #475569;"></i></div>`;
     }
     document.getElementById('notaId').textContent = '#' + data.id;
-    document.getElementById('notaPembeli').textContent = data.pembeli;
-    document.getElementById('notaKelas').textContent = data.kelas;
-    document.getElementById('notaWaktu').textContent = data.waktu;
-
-    // Set new fields
-    document.getElementById('notaKasir').textContent = data.kasir || 'Kasir';
-    document.getElementById('notaShift').textContent = data.shift ? 'Shift ' + data.shift : '-';
+    document.getElementById('notaPembeli').textContent = data.pembeli || '-';
+    document.getElementById('notaKelas').textContent = data.kelas || '-';
+    document.getElementById('notaWaktu').textContent = data.waktu || '-';
+    document.getElementById('notaKasir').textContent = data.kasir || '-';
+    document.getElementById('notaShift').textContent = data.shift || 'Bebas';
     document.getElementById('notaMetode').textContent = data.metode || 'Tunai';
 
-    document.getElementById('notaTotal').textContent = 'Rp ' + Number(data.total).toLocaleString('id-ID');
+    document.getElementById('notaTotal').textContent = 'Rp ' + Number(data.total || 0).toLocaleString('id-ID');
 
     const tbody = document.getElementById('notaItems');
     tbody.innerHTML = '';
-    data.items.forEach(item => {
+    (Array.isArray(data.items) ? data.items : []).forEach(item => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${item.nama}</td>
-            <td class="center">${item.jumlah}×</td>
-            <td class="right">Rp ${Number(item.harga).toLocaleString('id-ID')}</td>`;
+            <td>${item.nama || ''}</td>
+            <td class="center">${item.jumlah || 0}x</td>
+            <td class="right">Rp ${Number(item.harga || 0).toLocaleString('id-ID')}</td>`;
         tbody.appendChild(tr);
     });
 
-    document.getElementById('notaModal').classList.add('show');
+    modal.classList.add('show');
     document.body.style.overflow = 'hidden';
 }
 
 function tutupNota(e) {
     if (e && e.target !== document.getElementById('notaModal')) return;
-    document.getElementById('notaModal').classList.remove('show');
+    const modal = document.getElementById('notaModal');
+    if (modal) modal.classList.remove('show');
     document.body.style.overflow = '';
 }
 
@@ -169,10 +174,20 @@ function cetakNota() {
         }
     }
     setTimeout(() => {
-        document.getElementById('notaModal').classList.remove('show');
-        document.body.style.overflow = '';
+        tutupNota();
     }, 400);
 }
+
+window.bukaNotaModal = bukaNotaModal;
+window.tutupNota = tutupNota;
+window.cetakNota = cetakNota;
+
+(function initNotaModal() {
+    const modal = document.getElementById('notaModal');
+    if (modal && modal.parentNode !== document.body) {
+        document.body.appendChild(modal);
+    }
+})();
 </script>
 
 <!-- Modal Lihat Bukti QRIS (Penjual) -->

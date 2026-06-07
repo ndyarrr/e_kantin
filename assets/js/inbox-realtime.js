@@ -292,9 +292,11 @@
         if (action === 'cetak_nota') {
             try {
                 const notaData = JSON.parse(btn.dataset.nota || '{}');
-                bukaNotaModal(notaData, parseInt(idPesanan, 10));
+                if (typeof window.bukaNotaModal === 'function') {
+                    window.bukaNotaModal(notaData, parseInt(idPesanan, 10));
+                }
             } catch (err) {
-                console.error(err);
+                console.error('Gagal membuka nota:', err);
             }
             return;
         }
