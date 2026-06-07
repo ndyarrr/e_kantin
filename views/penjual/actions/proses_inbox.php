@@ -135,10 +135,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             if ($cekPesanan && mysqli_num_rows($cekPesanan) > 0) {
                 $rowPesanan = mysqli_fetch_assoc($cekPesanan);
-                if ($rowPesanan['status'] !== 'menunggu' && $rowPesanan['status'] !== 'tidak_diambil') {
+                if ($rowPesanan['status'] !== 'siap_diambil' && $rowPesanan['status'] !== 'tidak_diambil') {
                     $ajaxResponse = [
                         'success' => false,
-                        'message' => 'Konfirmasi tunai hanya dapat dilakukan saat pesanan masih menunggu atau tidak diambil.'
+                        'message' => 'Konfirmasi tunai hanya dapat dilakukan saat pesanan siap diambil atau tidak diambil.'
                     ];
                     if (!$isAjax) {
                         $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
@@ -259,6 +259,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $r_pesanan = mysqli_fetch_assoc($cekPesanan);
                 $status_lama = $r_pesanan['status'];
 
+                if ($status_baru === 'dibatalkan'
+                    && $status_lama === 'menunggu'
+                    && ($r_pesanan['status_bayar'] ?? '') === 'lunas') {
+                    $ajaxResponse = [
+                        'success' => false,
+                        'message' => 'Pesanan yang sudah lunas tidak dapat ditolak.'
+                    ];
+                    if (!$isAjax) {
+                        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+                    }
+                } elseif ($status_baru === 'selesai'
+                    && ($r_pesanan['metode'] ?? '') === 'tunai'
+                    && ($r_pesanan['status_bayar'] ?? '') !== 'lunas') {
+                    $ajaxResponse = [
+                        'success' => false,
+                        'message' => 'Konfirmasi pembayaran tunai terlebih dahulu sebelum menandai pesanan selesai.'
+                    ];
+                    if (!$isAjax) {
+                        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+                    }
+                } else {
+
                 // Mulai transaksi untuk integritas data
                 mysqli_begin_transaction($conn);
                 try {
@@ -301,7 +323,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             } elseif ($status_baru === 'tidak_diambil') {
                                 $status_teks_chat = 'Pesanan #' . $id_pesanan . ' Tidak Diambil!';
                                 if (($r_pesanan['status_bayar'] ?? '') === 'lunas') {
-                                    $status_sub = 'Pesanan Anda tidak diambil di kantin. Karena pembayaran sudah lunas (QRIS/Transfer), Anda tidak dikenakan sanksi pembatasan metode tunai.';
+                                    $status_sub = 'Pesanan Anda tidak diambil di kantin. Karena pembayaran sudah lunas (QRIS/Transfer) dan menu sudah jadi/diproses, uang mu tidak bisa di refund.';
                                 } else {
                                     $status_sub = 'Pesanan Anda tidak diambil di kantin. Akun Anda dicatat melakukan pelanggaran no-show dan fitur pembayaran tunai akan dibatasi sampai pesanan ini dilunasi.';
                                 }
@@ -328,8 +350,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // KUNCI PERBAIKAN: Jika status berubah menjadi 'selesai' dan sebelumnya bukan selesai
                     if ($status_baru === 'selesai' && $status_lama !== 'selesai') {
-                        // 1. Ubah status pembayaran
-                        mysqli_query($conn, "UPDATE pembayaran SET status = 'lunas' WHERE id_pesanan = $id_pesanan");
+                        // 1. Untuk non-tunai, pastikan pembayaran lunas (fallback). Tunai wajib lunas via konfirmasi terpisah.
+                        if (($r_pesanan['metode'] ?? '') !== 'tunai') {
+                            mysqli_query($conn, "UPDATE pembayaran SET status = 'lunas' WHERE id_pesanan = $id_pesanan");
+                        }
                         
                         // 2. Ambil barang-barang yang dibeli, lalu tambahkan ke kolom 'terjual' di tabel menu
                         $items = mysqli_query($conn, "SELECT id_menu, jumlah FROM detail_pesanan WHERE id_pesanan = $id_pesanan");
@@ -415,6 +439,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!$isAjax) {
                         $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
                     }
+                }
                 }
             } else {
                 $ajaxResponse = ['success' => false, 'message' => 'Akses ditolak atau pesanan tidak ditemukan.'];

@@ -159,30 +159,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             catatLog($conn, 'Buat Pesanan', "Pembeli $user_nama membuat pesanan #$id_pesanan senilai Rp $total_pembayaran");
 
             // ── AUTO-REPLY CHAT dari kantin ke pembeli ──
-            // Hanya dikirim langsung jika metodenya bukan transfer/QRIS. 
-            // Jika transfer/QRIS, chat akan dikirim setelah pembeli mengunggah bukti pembayaran.
-            if ($metode_pembayaran !== 'transfer') {
-                // Kumpulkan detail item pesanan lengkap (dengan foto + kategori)
-                $chat_items = [];
-                foreach ($items as $item) {
-                    $mid = (int) $item['id_menu'];
-                    $r_detail = mysqli_fetch_assoc(mysqli_query($conn,
-                        "SELECT nama_menu, foto_menu, kategori, harga FROM menu WHERE id_menu = $mid AND deleted_at IS NULL LIMIT 1"
-                    ));
-                    if ($r_detail) {
-                        $chat_items[] = [
-                            'nama'     => $r_detail['nama_menu'],
-                            'foto'     => $r_detail['foto_menu'],
-                            'kategori' => strtolower($r_detail['kategori'] ?? 'makanan'),
-                            'jumlah'   => (int) $item['jumlah'],
-                            'harga'    => (int) $item['harga'],
-                        ];
-                    }
+            // Kumpulkan detail item pesanan lengkap (dengan foto + kategori)
+            $chat_items = [];
+            foreach ($items as $item) {
+                $mid = (int) $item['id_menu'];
+                $r_detail = mysqli_fetch_assoc(mysqli_query($conn,
+                    "SELECT nama_menu, foto_menu, kategori, harga FROM menu WHERE id_menu = $mid AND deleted_at IS NULL LIMIT 1"
+                ));
+                if ($r_detail) {
+                    $chat_items[] = [
+                        'nama'     => $r_detail['nama_menu'],
+                        'foto'     => $r_detail['foto_menu'],
+                        'kategori' => strtolower($r_detail['kategori'] ?? 'makanan'),
+                        'jumlah'   => (int) $item['jumlah'],
+                        'harga'    => (int) $item['harga'],
+                    ];
                 }
+            }
 
-                // Bangun HTML kartu order untuk dikirim ke chat
-                $items_html = '';
-                foreach ($chat_items as $ci) {
+            // Bangun HTML kartu order untuk dikirim ke chat
+            $items_html = '';
+            foreach ($chat_items as $ci) {
                     $subtotal_item = number_format($ci['harga'] * $ci['jumlah'], 0, ',', '.');
                     $harga_fmt     = number_format($ci['harga'], 0, ',', '.');
 
@@ -227,15 +224,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
 
                 $total_fmt = number_format($total_pembayaran, 0, ',', '.');
+                $is_qris = ($metode_pembayaran === 'transfer');
+                $icon_bg = $is_qris
+                    ? 'background:linear-gradient(135deg,#0284c7,#0369a1);'
+                    : 'background:linear-gradient(135deg,#ff9900,#ff5500);';
+                $icon_svg = $is_qris
+                    ? '<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'18\' height=\'18\' fill=\'white\'><path d=\'M3 11h8V3H3v8zm2-6h4v4H5V5zm-3 8h8v8H3v-8zm2 2v4h4v-4H5zm13-2h-2v2h2v-2zm-4 0h-2v2h2v-2zm-4 0H8v2h2v-2zm-4 0H4v2h2v-2zm8 4h-2v2h2v-2zm4 0h-2v2h2v-2zm4-4h-2v2h2v-2zm0 4h-2v2h2v-2z\'/></svg>'
+                    : '<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'18\' height=\'18\' fill=\'white\'><path d=\'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z\'/></svg>';
+                $footer_note = $is_qris
+                    ? 'Silakan lakukan pembayaran QRIS di halaman Pesanan Saya. Pesanan akan diproses setelah pembayaran dikonfirmasi penjual.'
+                    : 'Mohon bersabar menunggu konfirmasi kantin.';
                 $auto_msg  = '[AUTO_REPLY_ORDER]
                 <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                        <div style="background:linear-gradient(135deg,#ff9900,#ff5500);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                            <svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'18\' height=\'18\' fill=\'white\'><path d=\'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z\'/></svg>
+                        <div style="' . $icon_bg . 'border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            ' . $icon_svg . '
                         </div>
                         <div>
                             <div style="font-weight:800;font-size:13px;color:#0f172a;">Pesanan #' . $id_pesanan . ' Berhasil Dikirim!</div>
-                            <div style="font-size:11px;color:#64748b;">Terima kasih telah memesan</div>
+                            <div style="font-size:11px;color:#64748b;">' . ($is_qris ? 'Menunggu pembayaran QRIS' : 'Terima kasih telah memesan') . '</div>
                         </div>
                     </div>
                     <div>' . $items_html . '</div>
@@ -243,18 +250,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         <span style="font-size:12px;font-weight:600;color:#374151;">Total Pembayaran</span>
                         <span style="font-size:14px;font-weight:800;color:#16a34a;">Rp ' . $total_fmt . '</span>
                     </div>
-                    <div style="margin-top:10px;font-size:11px;color:#94a3b8;text-align:center;">Mohon bersabar</div>
+                    <div style="margin-top:10px;font-size:11px;color:#64748b;text-align:center;line-height:1.5;">' . $footer_note . '</div>
                 </div>';
 
-                // Tentukan prefix ID pembeli
-                $prefix_pembeli = ($user_role === 'siswa') ? 'murid_' : 'guru_';
-                $id_pembeli_chat = $prefix_pembeli . $user_id;
-                $id_toko_chat    = 'toko_' . $id_toko;
+            // Tentukan prefix ID pembeli
+            $prefix_pembeli = ($user_role === 'siswa') ? 'murid_' : 'guru_';
+            $id_pembeli_chat = $prefix_pembeli . $user_id;
+            $id_toko_chat    = 'toko_' . $id_toko;
 
-                $msg_escaped = mysqli_real_escape_string($conn, $auto_msg);
-                mysqli_query($conn, "INSERT INTO pesan_chat (id_pengirim, id_penerima, isi_pesan, waktu_kirim, sudah_dibaca)
-                                     VALUES ('$id_toko_chat', '$id_pembeli_chat', '$msg_escaped', NOW(), 0)");
-            }
+            $msg_escaped = mysqli_real_escape_string($conn, $auto_msg);
+            mysqli_query($conn, "INSERT INTO pesan_chat (id_pengirim, id_penerima, isi_pesan, waktu_kirim, sudah_dibaca)
+                                 VALUES ('$id_toko_chat', '$id_pembeli_chat', '$msg_escaped', NOW(), 0)");
 
         }
         mysqli_commit($conn);

@@ -334,6 +334,38 @@ function cetakNota() {
 
 <script>
 let _buktiActivePesananId = 0;
+const QRIS_CONFIRM_BTN_HTML = '<i class="fa-solid fa-check-double"></i> Ya, Konfirmasi';
+const TUNAI_CONFIRM_BTN_HTML = '<i class="fa-solid fa-hand-holding-dollar"></i> Ya, Sudah Diterima';
+const BUKTI_CONFIRM_BTN_HTML = '<i class="fa-solid fa-check-double"></i> Konfirmasi Lunas';
+const BATAL_CONFIRM_BTN_HTML = '<i class="fa-solid fa-ban"></i> Ya, Batalkan';
+
+function resetQrisConfirmModalButton() {
+    const btn = document.getElementById('btnConfirmQrisSubmit');
+    if (!btn) return;
+    btn.disabled = false;
+    btn.innerHTML = QRIS_CONFIRM_BTN_HTML;
+}
+
+function resetTunaiConfirmModalButton() {
+    const btn = document.getElementById('btnConfirmTunaiSubmit');
+    if (!btn) return;
+    btn.disabled = false;
+    btn.innerHTML = TUNAI_CONFIRM_BTN_HTML;
+}
+
+function resetBuktiQrisModalButton() {
+    const btn = document.getElementById('btnKonfirmasiBayarQris');
+    if (!btn) return;
+    btn.disabled = false;
+    btn.innerHTML = BUKTI_CONFIRM_BTN_HTML;
+}
+
+function resetBatalModalButton() {
+    const btn = document.getElementById('btnConfirmBatalSubmit');
+    if (!btn) return;
+    btn.disabled = false;
+    btn.innerHTML = BATAL_CONFIRM_BTN_HTML;
+}
 
 function lihatBuktiQris(fileName, idPesanan) {
     _buktiActivePesananId = idPesanan;
@@ -344,10 +376,7 @@ function lihatBuktiQris(fileName, idPesanan) {
 
     document.getElementById('buktiModalIdPesanan').textContent = idPesanan;
 
-    // Reset konfirmasi button
-    const btn = document.getElementById('btnKonfirmasiBayarQris');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Konfirmasi Lunas';
+    resetBuktiQrisModalButton();
 
     const modal = document.getElementById('modalBuktiQrisPenjual');
     modal.style.display = 'flex';
@@ -355,6 +384,8 @@ function lihatBuktiQris(fileName, idPesanan) {
 
 function tutupModalBuktiQris() {
     document.getElementById('modalBuktiQrisPenjual').style.display = 'none';
+    _buktiActivePesananId = 0;
+    resetBuktiQrisModalButton();
 }
 
 function bukaFullscreenBukti() {
@@ -367,8 +398,11 @@ function tutupFullscreenBukti() {
     document.getElementById('fullscreenBuktiViewer').style.display = 'none';
 }
 
+let _qrisConfirmProcessing = false;
+
 function konfirmasiPembayaranQris() {
-    if (!_buktiActivePesananId) return;
+    if (!_buktiActivePesananId || _qrisConfirmProcessing) return;
+    _qrisConfirmProcessing = true;
     const btn = document.getElementById('btnKonfirmasiBayarQris');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
@@ -392,21 +426,25 @@ function konfirmasiPembayaranQris() {
                 else location.reload();
             } else {
                 alert(res.message || 'Konfirmasi gagal. Coba lagi.');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Konfirmasi Lunas';
             }
         })
         .catch(err => {
             console.error(err);
             tutupModalBuktiQris();
             alert('Koneksi gagal!');
+        })
+        .finally(() => {
+            _qrisConfirmProcessing = false;
+            resetBuktiQrisModalButton();
         });
 }
 
 let _qrisActiveConfirmPesananId = null;
+let _qrisDirectConfirmProcessing = false;
 
 function konfirmasiLunasQrisDirect(idPesanan) {
-    if (!idPesanan) return;
+    if (!idPesanan || _qrisDirectConfirmProcessing) return;
+    resetQrisConfirmModalButton();
     _qrisActiveConfirmPesananId = idPesanan;
     document.getElementById('qrisConfirmModalId').textContent = idPesanan;
     const modal = document.getElementById('modalKonfirmasiQrisPenjual');
@@ -422,14 +460,16 @@ function tutupModalKonfirmasiQris() {
     setTimeout(() => {
         modal.style.display = 'none';
         _qrisActiveConfirmPesananId = null;
+        _qrisDirectConfirmProcessing = false;
+        resetQrisConfirmModalButton();
     }, 250);
 }
 
 function prosesKonfirmasiQris() {
-    if (!_qrisActiveConfirmPesananId) return;
+    if (!_qrisActiveConfirmPesananId || _qrisDirectConfirmProcessing) return;
+    _qrisDirectConfirmProcessing = true;
     const btn = document.getElementById('btnConfirmQrisSubmit');
     btn.disabled = true;
-    const oldContent = btn.innerHTML;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
 
     const fd = new FormData();
@@ -444,30 +484,31 @@ function prosesKonfirmasiQris() {
     fetch(prosesUrl, { method: 'POST', body: fd })
         .then(r => r.json())
         .then(res => {
-            tutupModalKonfirmasiQris();
             if (res.success) {
+                tutupModalKonfirmasiQris();
                 if (typeof muatInbox === 'function') muatInbox();
                 else if (typeof reloadInboxFragment === 'function') reloadInboxFragment();
                 else location.reload();
             } else {
                 alert(res.message || 'Konfirmasi gagal. Coba lagi.');
-                btn.disabled = false;
-                btn.innerHTML = oldContent;
+                _qrisDirectConfirmProcessing = false;
+                resetQrisConfirmModalButton();
             }
         })
         .catch(err => {
             console.error(err);
-            tutupModalKonfirmasiQris();
             alert('Koneksi gagal!');
-            btn.disabled = false;
-            btn.innerHTML = oldContent;
+            _qrisDirectConfirmProcessing = false;
+            resetQrisConfirmModalButton();
         });
 }
 
 let _tunaiActiveConfirmPesananId = null;
+let _tunaiConfirmProcessing = false;
 
 function konfirmasiPembayaranTunai(idPesanan) {
-    if (!idPesanan) return;
+    if (!idPesanan || _tunaiConfirmProcessing) return;
+    resetTunaiConfirmModalButton();
     _tunaiActiveConfirmPesananId = idPesanan;
     document.getElementById('tunaiConfirmModalId').textContent = idPesanan;
     const modal = document.getElementById('modalKonfirmasiTunaiPenjual');
@@ -483,14 +524,16 @@ function tutupModalKonfirmasiTunai() {
     setTimeout(() => {
         modal.style.display = 'none';
         _tunaiActiveConfirmPesananId = null;
+        _tunaiConfirmProcessing = false;
+        resetTunaiConfirmModalButton();
     }, 250);
 }
 
 function prosesKonfirmasiTunai() {
-    if (!_tunaiActiveConfirmPesananId) return;
+    if (!_tunaiActiveConfirmPesananId || _tunaiConfirmProcessing) return;
+    _tunaiConfirmProcessing = true;
     const btn = document.getElementById('btnConfirmTunaiSubmit');
     btn.disabled = true;
-    const oldContent = btn.innerHTML;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
 
     const fd = new FormData();
@@ -505,29 +548,31 @@ function prosesKonfirmasiTunai() {
     fetch(prosesUrl, { method: 'POST', body: fd })
         .then(r => r.json())
         .then(res => {
-            tutupModalKonfirmasiTunai();
             if (res.success) {
+                tutupModalKonfirmasiTunai();
                 if (typeof muatInbox === 'function') muatInbox();
                 else if (typeof reloadInboxFragment === 'function') reloadInboxFragment();
                 else location.reload();
             } else {
                 alert(res.message || 'Konfirmasi gagal. Coba lagi.');
-                btn.disabled = false;
-                btn.innerHTML = oldContent;
+                _tunaiConfirmProcessing = false;
+                resetTunaiConfirmModalButton();
             }
         })
         .catch(err => {
             console.error(err);
-            tutupModalKonfirmasiTunai();
             alert('Koneksi gagal!');
-            btn.disabled = false;
-            btn.innerHTML = oldContent;
+            _tunaiConfirmProcessing = false;
+            resetTunaiConfirmModalButton();
         });
 }
 
 let _batalActivePesananId = null;
+let _batalConfirmProcessing = false;
 
 function bukaModalBatal(idPesanan, namaPembeli) {
+    if (_batalConfirmProcessing) return;
+    resetBatalModalButton();
     _batalActivePesananId = idPesanan;
     document.getElementById('batalModalNamaPembeli').textContent = namaPembeli || 'Pembeli';
     const modal = document.getElementById('modalBatalPesananPenjual');
@@ -544,14 +589,16 @@ function tutupModalBatal() {
     setTimeout(() => {
         modal.style.display = 'none';
         _batalActivePesananId = null;
+        _batalConfirmProcessing = false;
+        resetBatalModalButton();
     }, 250);
 }
 
 function prosesBatalPesanan() {
-    if (!_batalActivePesananId) return;
+    if (!_batalActivePesananId || _batalConfirmProcessing) return;
+    _batalConfirmProcessing = true;
     const btn = document.getElementById('btnConfirmBatalSubmit');
     btn.disabled = true;
-    const oldContent = btn.innerHTML;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
 
     const fd = new FormData();
@@ -567,24 +614,23 @@ function prosesBatalPesanan() {
     fetch(prosesUrl, { method: 'POST', body: fd })
         .then(r => r.json())
         .then(res => {
-            tutupModalBatal();
             if (res.success) {
                 localStorage.removeItem('printed_order_' + _batalActivePesananId);
+                tutupModalBatal();
                 if (typeof muatInbox === 'function') muatInbox();
                 else if (typeof reloadInboxFragment === 'function') reloadInboxFragment();
                 else location.reload();
             } else {
                 alert(res.message || 'Pembatalan gagal. Coba lagi.');
-                btn.disabled = false;
-                btn.innerHTML = oldContent;
+                _batalConfirmProcessing = false;
+                resetBatalModalButton();
             }
         })
         .catch(err => {
             console.error(err);
-            tutupModalBatal();
             alert('Koneksi gagal!');
-            btn.disabled = false;
-            btn.innerHTML = oldContent;
+            _batalConfirmProcessing = false;
+            resetBatalModalButton();
         });
 }
 

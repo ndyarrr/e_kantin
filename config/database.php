@@ -195,12 +195,14 @@ if ($conn && php_sapi_name() !== 'cli') {
     if ($currentTime >= '15:00') {
         $limitTimestamp = $currentDate . ' 23:59:59';
         
-        // A. Proses pesanan yang masih 'menunggu' -> Dibatalkan (dan refund jika QRIS sudah upload bukti)
+        // A. Proses pesanan 'menunggu' yang belum lunas -> Dibatalkan (dan refund jika QRIS sudah upload bukti)
+        // Pesanan sudah lunas tidak di-cancel agar pembeli yang sudah bayar tidak kehilangan pesanan.
         $sqlMenunggu = "SELECT p.id_pesanan, pb.metode, pb.bukti_foto, pb.status AS status_pembayaran
                         FROM pesanan p
                         LEFT JOIN pembayaran pb ON pb.id_pesanan = p.id_pesanan
                         WHERE p.status = 'menunggu' 
-                          AND p.waktu_pesan < '$limitTimestamp'";
+                          AND p.waktu_pesan < '$limitTimestamp'
+                          AND (pb.status IS NULL OR pb.status != 'lunas')";
         $resMenunggu = mysqli_query($conn, $sqlMenunggu);
         if ($resMenunggu && mysqli_num_rows($resMenunggu) > 0) {
             while ($row = mysqli_fetch_assoc($resMenunggu)) {
@@ -221,9 +223,9 @@ if ($conn && php_sapi_name() !== 'cli') {
                     // Ubah status pesanan menjadi dibatalkan
                     mysqli_query($conn, "UPDATE pesanan SET status = 'dibatalkan' WHERE id_pesanan = $id_pes");
                     
-                    // Jika QRIS (transfer) dan ada bukti upload atau sudah lunas -> Tandai sebagai 'dikembalikan' (Refunded)
+                    // Jika QRIS (transfer) dan ada bukti upload -> Tandai sebagai 'dikembalikan' (Refunded)
                     $refund_info = "";
-                    if ($row['metode'] === 'transfer' && (!empty($row['bukti_foto']) || $row['status_pembayaran'] === 'lunas')) {
+                    if ($row['metode'] === 'transfer' && !empty($row['bukti_foto'])) {
                         mysqli_query($conn, "UPDATE pembayaran SET status = 'dikembalikan' WHERE id_pesanan = $id_pes");
                         $refund_info = " Uang QRIS akan dikembalikan (refund).";
                     }
