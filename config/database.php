@@ -187,12 +187,12 @@ if ($conn && php_sapi_name() !== 'cli') {
     }
 }
 
-// Otomatisasi pembatalan dan penyesuaian pesanan yang melewati pukul 15:30 WIB (Asia/Jakarta)
+// Otomatisasi pembatalan dan penyesuaian pesanan yang melewati pukul 15:00 WIB (Asia/Jakarta)
 if ($conn && php_sapi_name() !== 'cli') {
     $currentTime = date('H:i');
     $currentDate = date('Y-m-d');
     
-    if ($currentTime >= '15:30') {
+    if ($currentTime >= '15:00') {
         $limitTimestamp = $currentDate . ' 23:59:59';
         
         // A. Proses pesanan yang masih 'menunggu' -> Dibatalkan (dan refund jika QRIS sudah upload bukti)
@@ -245,7 +245,7 @@ if ($conn && php_sapi_name() !== 'cli') {
                             $auto_status_msg = '[AUTO_REPLY_STATUS]
                             <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;padding:4px;">
                                 <div style="font-weight:800;font-size:14px;color:#f43f5e;margin-bottom:6px;">Pesanan #' . $id_pes . ' Dibatalkan Otomatis</div>
-                                <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Pesanan Anda dibatalkan otomatis oleh sistem karena telah melewati batas waktu operasional (pukul 15:30 WIB) dan belum diproses.' . $refund_info . '</div>
+                                <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Pesanan Anda dibatalkan otomatis oleh sistem karena telah melewati batas waktu operasional (pukul 15:00 WIB) dan belum diproses.' . $refund_info . '</div>
                                 <div style="padding:10px 12px;background:#fff1f2;border-radius:10px;border:1px solid #fecaca;display:flex;justify-content:space-between;align-items:center;">
                                     <span style="font-size:12px;font-weight:600;color:#f43f5e;">Status Terbaru</span>
                                     <span style="font-size:12px;font-weight:800;color:#e11d48;">Dibatalkan ❌</span>
@@ -261,7 +261,7 @@ if ($conn && php_sapi_name() !== 'cli') {
                     // Catat ke log sistem
                     $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
                     mysqli_query($conn, "INSERT INTO log_sistem (user_role, user_id, user_nama, aksi, keterangan, ip_address)
-                                         VALUES ('admin','0','Auto-Cancel System','Batal Otomatis','Pesanan #$id_pes dibatalkan otomatis (Menunggu) karena melewati pukul 15:30 WIB.','$ip')");
+                                         VALUES ('admin','0','Auto-Cancel System','Batal Otomatis','Pesanan #$id_pes dibatalkan otomatis (Menunggu) karena melewati pukul 15:00 WIB.','$ip')");
                     
                     mysqli_commit($conn);
                 } catch (Exception $e) {
@@ -324,7 +324,7 @@ if ($conn && php_sapi_name() !== 'cli') {
                     // Catat ke log sistem
                     $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
                     mysqli_query($conn, "INSERT INTO log_sistem (user_role, user_id, user_nama, aksi, keterangan, ip_address)
-                                         VALUES ('admin','0','Auto-Cancel System','Tidak Diambil','Pesanan #$id_pes ditandai Tidak Diambil (No-Show) karena melewati pukul 15:30 WIB.','$ip')");
+                                         VALUES ('admin','0','Auto-Cancel System','Tidak Diambil','Pesanan #$id_pes ditandai Tidak Diambil (No-Show) karena melewati pukul 15:00 WIB.','$ip')");
                     
                     mysqli_commit($conn);
                 } catch (Exception $e) {
