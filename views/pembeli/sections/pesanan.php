@@ -542,7 +542,7 @@ if ($q_pesanan) {
                     .nota-footer-sub-pembeli { font-size: 18px !important; }
                     .nota-garis-pembeli { border-top: 2px dashed #000 !important; margin: 14px 0 !important; }
                     .nota-actions-pembeli { display: none !important; }
-                    .nota-logo-pembeli img { max-width: 60px !important; height: auto !important; }
+                    .nota-logo-pembeli img { max-width: 120px !important; height: auto !important; }
                 }
             </style>
             
@@ -689,7 +689,7 @@ function bukaNotaPembeli(data) {
     // Logo kantin (foto atau emoji fallback)
     const logoEl = document.getElementById('notaLogoPembeli');
     if (data.foto && data.foto.trim() !== '') {
-        logoEl.innerHTML = `<img src="${data.foto}" alt="Logo" style="width:50px;height:50px;object-fit:cover;border-radius:50%;border:2px solid #e2e8f0;">`;
+        logoEl.innerHTML = `<img src="${data.foto}" alt="Logo" style="width:100px;height:100px;object-fit:cover;border-radius:50%;border:2px solid #e2e8f0;">`;
     } else {
         logoEl.innerHTML = '🏪';
     }
