@@ -59,7 +59,7 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
         font-weight: 700;
         color: #fff;
         margin: 0 0 4px;
-        font-family: sans-serif;
+        font-family: 'Poppins', sans-serif;
         position: relative;
         z-index: 2;
     }
@@ -69,7 +69,7 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
         font-weight: 600;
         color: rgba(255, 255, 255, 0.9);
         margin: 0 0 6px;
-        font-family: sans-serif;
+        font-family: 'Poppins', sans-serif;
         position: relative;
         z-index: 2;
     }
@@ -78,9 +78,37 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
         font-size: 14px;
         color: rgba(255, 255, 255, 0.8);
         margin: 0 0 20px;
-        font-family: sans-serif;
+        font-family: 'Poppins', sans-serif;
         position: relative;
         z-index: 2;
+    }
+
+    .hero-cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #ffffff;
+        color: #79b775;
+        font-weight: 700;
+        font-size: 13.5px;
+        padding: 9px 24px;
+        border-radius: 100px;
+        text-decoration: none;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+        transition: all 0.25s ease;
+        font-family: 'Poppins', sans-serif;
+        position: relative;
+        z-index: 2;
+        margin-bottom: 20px;
+        cursor: pointer;
+        border: none;
+    }
+
+    .hero-cta-btn:hover {
+        background: #f8fafc;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        color: #16a34a;
     }
 
     .hero-search {
@@ -109,7 +137,7 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
         font-size: 14px;
         width: 100%;
         color: #333;
-        font-family: sans-serif;
+        font-family: 'Poppins', sans-serif;
         background: transparent;
     }
 
@@ -215,6 +243,9 @@ $semuaMenu = mysqli_fetch_all(mysqli_query(
         <h1 class="hero-title">Welcome To</h1>
         <p class="hero-subtitle">E-Kantin</p>
         <p class="hero-desc">Buat pesananmu di kantin jadi lebih cepat</p>
+        <a href="#kantin" class="hero-cta-btn" onclick="document.getElementById('kantin').scrollIntoView({behavior: 'smooth'}); return false;">
+            <i class="fa-solid fa-store"></i> Jelajahi Kantin
+        </a>
 
         <!-- TAMBAH BALIK INI -->
         <div class="hero-search">

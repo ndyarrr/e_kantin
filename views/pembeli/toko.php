@@ -1349,54 +1349,94 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                 body.innerHTML = html;
             }
 
+            function updateCartSummaryUI() {
+                const cart = getCart();
+                const selectedItems = cart.filter(item => item.selected !== false);
+                const totalPrice = selectedItems.reduce((sum, item) => sum + (item.harga * item.jumlah), 0);
+                const allSelected = cart.every(item => item.selected !== false);
+
+                const totalEl = document.getElementById('cartDrawerTotal');
+                if (totalEl) totalEl.textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
+
+                const selectAllCheck = document.getElementById('cartSelectAll');
+                if (selectAllCheck) selectAllCheck.checked = allSelected;
+
+                const selectAllLabel = document.querySelector('.cart-select-all-label span');
+                if (selectAllLabel) {
+                    selectAllLabel.textContent = `Pilih Semua (${selectedItems.length}/${cart.length})`;
+                }
+            }
+
+            function updateCartItemRowUI(id, harga, qty) {
+                const row = document.querySelector(`.cart-item-row[data-id="${id}"][data-harga="${harga}"]`);
+                if (row) {
+                    const input = row.querySelector('.item-qty-input');
+                    if (input) input.value = qty;
+
+                    const subtotalEl = row.querySelector('.item-subtotal');
+                    if (subtotalEl) {
+                        const cartItem = getCart().find(c => c.id_menu == id && c.harga == harga);
+                        if (cartItem) {
+                            subtotalEl.textContent = 'Rp ' + (cartItem.harga * qty).toLocaleString('id-ID');
+                        }
+                    }
+                }
+                updateCartSummaryUI();
+            }
+
             function updateCartItemNote(id, harga, val) {
                 const cart = getCart();
                 const item = cart.find(c => Number(c.id_menu) === Number(id) && Number(c.harga) === Number(harga));
                 if (item) {
                     item.catatan = val.trim();
-                    saveCart(cart);
+                    saveCart(cart, true);
                 }
             }
 
-            function updateCartQtyToko(id_menu, harga, delta) {
+            function updateCartQtyToko(id_menu, harga, delta, event) {
+                if (event) event.stopPropagation();
                 let cart = getCart();
-                const existingIndex = cart.findIndex(item => Number(item.id_menu) === Number(id_menu) && Number(item.harga) === Number(harga));
-                if (existingIndex !== -1) {
+                const item = cart.find(c => Number(c.id_menu) === Number(id_menu) && Number(c.harga) === Number(harga));
+                if (item) {
                     if (delta > 0) {
-                        const item = cart[existingIndex];
                         const stok = item.stok || 999;
                         if (item.jumlah >= stok) {
                             showToast('Stok tidak mencukupi! Maksimum stok: ' + stok, 'error');
                             return;
                         }
                     }
-                    cart[existingIndex].jumlah += delta;
-                    if (cart[existingIndex].jumlah <= 0) {
-                        cart.splice(existingIndex, 1);
+                    item.jumlah += delta;
+                    if (item.jumlah <= 0) {
+                        cart.splice(cart.indexOf(item), 1);
+                        saveCart(cart);
+                    } else {
+                        saveCart(cart, true);
+                        updateCartItemRowUI(id_menu, harga, item.jumlah);
                     }
-                    saveCart(cart);
                 }
             }
 
             function manualUpdateCartQtyToko(id_menu, harga, value, maxStock) {
                 let qty = parseInt(value);
                 let cart = getCart();
-                const existingIndex = cart.findIndex(item => Number(item.id_menu) === Number(id_menu) && Number(item.harga) === Number(harga));
-                if (existingIndex !== -1) {
-                    if (isNaN(qty) || qty < 0) {
-                        qty = 1; // Default fallback for invalid/empty inputs
-                    }
+                const item = cart.find(c => Number(c.id_menu) === Number(id_menu) && Number(c.harga) === Number(harga));
+                if (!item) return;
 
-                    if (qty === 0) {
-                        cart.splice(existingIndex, 1);
-                    } else {
-                        if (qty > maxStock) {
-                            showToast('Stok tidak mencukupi! Maksimum stok: ' + maxStock, 'error');
-                            qty = maxStock;
-                        }
-                        cart[existingIndex].jumlah = qty;
-                    }
+                if (isNaN(qty) || qty < 0) {
+                    qty = 1;
+                }
+
+                if (qty === 0) {
+                    cart.splice(cart.indexOf(item), 1);
                     saveCart(cart);
+                } else {
+                    if (qty > maxStock) {
+                        showToast('Stok tidak mencukupi! Maksimum stok: ' + maxStock, 'error');
+                        qty = maxStock;
+                    }
+                    item.jumlah = qty;
+                    saveCart(cart, true);
+                    updateCartItemRowUI(id_menu, harga, qty);
                 }
             }
 
@@ -1407,7 +1447,8 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                 if (item) {
                     item.selected = item.selected === false ? true : false;
                 }
-                saveCart(cart);
+                saveCart(cart, true);
+                updateCartSummaryUI();
             }
 
             // ── Toggle Select All Items in Cart ──
@@ -1416,7 +1457,15 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                 cart.forEach(item => {
                     item.selected = isChecked;
                 });
-                saveCart(cart);
+                saveCart(cart, true);
+                
+                const checkboxes = document.querySelectorAll('.cart-item-checkbox');
+                checkboxes.forEach(cb => {
+                    if (cb.id !== 'cartSelectAll') {
+                        cb.checked = isChecked;
+                    }
+                });
+                updateCartSummaryUI();
             }
 
             // ── Clear Selected Items in Cart ──

@@ -308,7 +308,7 @@
 const prosesKantinUrl = '<?= $base_path ?>/views/penjual/actions/proses_kantin.php';
 const exportCsvUrl = '<?= $base_path ?>/views/penjual/owner/sections/export_csv.php';
 
-/* ── Fungsi ekspor CSV ─────────────────────────────── */
+/* ── Fungsi ekspor CSV (Mengunduh 3 File Sekaligus) ─────────────────────────────── */
 function exportDashboardCSV() {
     const btn = document.getElementById('btnCetakCSV');
     const originalHTML = btn.innerHTML;
@@ -318,70 +318,157 @@ function exportDashboardCSV() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:15px;"></i> Menyiapkan...';
     btn.style.opacity = '0.8';
 
-    // Buka URL download di tab sama (browser langsung unduh)
-    const link = document.createElement('a');
-    link.href = exportCsvUrl;
-    link.download = '';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const reportTypes = ['dashboard', 'tren', 'distribusi'];
 
-    // Kembalikan tombol ke semula setelah 2 detik
+    // Unduh 3 file dengan jeda waktu singkat untuk mencegah pemblokiran unduhan oleh browser
+    reportTypes.forEach((type, index) => {
+        setTimeout(() => {
+            const link = document.createElement('a');
+            link.href = exportCsvUrl + '?type=' + type;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }, index * 400);
+    });
+
+    // Kembalikan tombol ke semula setelah proses unduh dimulai
     setTimeout(() => {
         btn.disabled = false;
         btn.innerHTML = originalHTML;
         btn.style.opacity = '1';
-    }, 2000);
+    }, 1500);
 }
 
-/* ── Fungsi ganti status kantin via AJAX ─────────────────────────────── */
+/* ── Fungsi ganti status kantin via AJAX dengan Konfirmasi ─────────────────────────────── */
 function toggleStatusKantin() {
     const btn = document.getElementById('btnToggleStatusKantin');
     const currentStatus = btn.getAttribute('data-status');
     const nextStatus = currentStatus === 'buka' ? 'tutup' : 'buka';
     
-    // Disable button during AJAX request
-    btn.disabled = true;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengubah...';
+    // Tampilkan modal konfirmasi kustom
+    let existingModal = document.getElementById('statusConfirmModal');
+    if (existingModal) existingModal.remove();
     
-    const formData = new FormData();
-    formData.append('action', 'toggle_status_ajax');
-    formData.append('status', nextStatus);
+    const modal = document.createElement('div');
+    modal.id = 'statusConfirmModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        opacity: 0;
+        transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    `;
     
-    fetch(prosesKantinUrl, {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        btn.disabled = false;
-        if (data.success) {
-            // Update button data-status and text
-            btn.setAttribute('data-status', data.status);
-            btn.style.background = data.status === 'buka' ? '#dc2626' : '#22c55e';
-            btn.style.boxShadow = `0 2px 6px ${data.status === 'buka' ? 'rgba(220,38,38,0.2)' : 'rgba(34,197,94,0.2)'}`;
-            btn.innerHTML = `<i class="fa-solid fa-power-off"></i> <span>${data.status === 'buka' ? 'Tutup Kantin' : 'Buka Kantin'}</span>`;
-            
-            // Update label and dot indicator
-            const dot = document.getElementById('statusIndikatorDot');
-            const label = document.getElementById('statusTeksLabel');
-            
-            dot.style.background = data.status === 'buka' ? '#22c55e' : '#dc2626';
-            dot.style.boxShadow = `0 0 8px ${data.status === 'buka' ? 'rgba(34,197,94,0.4)' : 'rgba(220,38,38,0.4)'}`;
-            
-            label.textContent = data.status === 'buka' ? 'Buka' : 'Tutup';
-            label.style.color = data.status === 'buka' ? '#16a34a' : '#dc2626';
-        } else {
-            alert('Gagal mengubah status kantin: ' + (data.message || 'Error tidak diketahui'));
+    const card = document.createElement('div');
+    card.style.cssText = `
+        background: #ffffff;
+        padding: 30px 24px;
+        border-radius: 24px;
+        width: 90%;
+        max-width: 380px;
+        text-align: center;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        transform: scale(0.9);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    `;
+    
+    const isClosing = currentStatus === 'buka';
+    const accentColor = isClosing ? '#ef4444' : '#22c55e';
+    const bgAccentColor = isClosing ? '#fee2e2' : '#dcfce7';
+    const titleText = isClosing ? 'Tutup Kantin?' : 'Buka Kantin?';
+    const descText = isClosing 
+        ? 'Apakah Anda yakin ingin menutup kantin? Pembeli tidak akan dapat memesan menu dari kantin ini sampai dibuka kembali.'
+        : 'Apakah Anda yakin ingin membuka kantin? Pembeli akan dapat memesan menu kembali.';
+    const confirmBtnText = isClosing ? 'Tutup Kantin' : 'Buka Kantin';
+    const confirmBtnShadow = isClosing ? 'rgba(239, 68, 68, 0.25)' : 'rgba(34, 197, 94, 0.25)';
+    
+    card.innerHTML = `
+        <div style="width: 56px; height: 56px; background: ${bgAccentColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+            <i class="fa-solid fa-power-off" style="font-size: 24px; color: ${accentColor};"></i>
+        </div>
+        <h3 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 750; color: #1e293b;">${titleText}</h3>
+        <p style="margin: 0 0 24px; font-family: 'Poppins', sans-serif; font-size: 13.5px; color: #64748b; line-height: 1.5;">${descText}</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="statusCancelBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Batal</button>
+            <button id="statusConfirmBtn" style="flex: 1; padding: 11px; border-radius: 12px; border: none; background: ${accentColor}; color: #ffffff; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px ${confirmBtnShadow};">${confirmBtnText}</button>
+        </div>
+    `;
+    
+    modal.appendChild(card);
+    document.body.appendChild(modal);
+    
+    setTimeout(() => {
+        modal.style.opacity = '1';
+        card.style.transform = 'scale(1)';
+    }, 10);
+    
+    function closeModal() {
+        modal.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => modal.remove(), 300);
+    }
+    
+    document.getElementById('statusCancelBtn').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    document.getElementById('statusConfirmBtn').addEventListener('click', () => {
+        closeModal();
+        
+        // Jalankan AJAX toggle status
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengubah...';
+        
+        const formData = new FormData();
+        formData.append('action', 'toggle_status_ajax');
+        formData.append('status', nextStatus);
+        
+        fetch(prosesKantinUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            if (data.success) {
+                // Update button data-status and text
+                btn.setAttribute('data-status', data.status);
+                btn.style.background = data.status === 'buka' ? '#dc2626' : '#22c55e';
+                btn.style.boxShadow = `0 2px 6px ${data.status === 'buka' ? 'rgba(220,38,38,0.2)' : 'rgba(34,197,94,0.2)'}`;
+                btn.innerHTML = `<i class="fa-solid fa-power-off"></i> <span>${data.status === 'buka' ? 'Tutup Kantin' : 'Buka Kantin'}</span>`;
+                
+                // Update label and dot indicator
+                const dot = document.getElementById('statusIndikatorDot');
+                const label = document.getElementById('statusTeksLabel');
+                
+                dot.style.background = data.status === 'buka' ? '#22c55e' : '#dc2626';
+                dot.style.boxShadow = `0 0 8px ${data.status === 'buka' ? 'rgba(34,197,94,0.4)' : 'rgba(220,38,38,0.4)'}`;
+                
+                label.textContent = data.status === 'buka' ? 'Buka' : 'Tutup';
+                label.style.color = data.status === 'buka' ? '#16a34a' : '#dc2626';
+            } else {
+                alert('Gagal mengubah status kantin: ' + (data.message || 'Error tidak diketahui'));
+                btn.innerHTML = originalText;
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
             btn.innerHTML = originalText;
-        }
-    })
-    .catch(err => {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        console.error(err);
-        alert('Koneksi gagal atau sesi habis!');
+            console.error(err);
+            alert('Koneksi gagal atau sesi habis!');
+        });
     });
 }
 </script>

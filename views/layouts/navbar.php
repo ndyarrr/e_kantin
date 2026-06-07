@@ -61,7 +61,7 @@
         text-decoration: none;
         font-size: 13px;
         font-weight: 500;
-        font-family: sans-serif;
+        font-family: 'Poppins', sans-serif;
         letter-spacing: 0.02em;
         transition: all 0.2s ease;
         background: transparent;
@@ -175,7 +175,7 @@
 
     @media (max-width: 768px) {
         .site-navbar {
-            padding: 12px 16px;
+            padding: 10px 16px;
         }
 
         .nav-links {
@@ -183,7 +183,11 @@
         }
 
         .navbar-btn-login {
-            display: none;
+            display: inline-flex;
+            padding: 6px 14px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-left: auto;
         }
 
         .navbar-hamburger {

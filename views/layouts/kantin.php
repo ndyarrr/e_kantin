@@ -3,14 +3,14 @@
 $kantins = mysqli_fetch_all(mysqli_query(
     $conn,
     "SELECT t.id_toko, t.nama_toko, t.deskripsi, t.foto_toko, t.urutan,
-            s.nomor AS nomor_lapak,
+            MIN(s.nomor) AS nomor_lapak,
             COUNT(DISTINCT tp.id_penjual) as jumlah_penjual
     FROM toko t
     LEFT JOIN slot_stand_kantin s ON s.id_toko = t.id_toko
     LEFT JOIN toko_penjual tp ON tp.id_toko = t.id_toko AND tp.status = 'aktif'
     WHERE t.deleted_at IS NULL
     GROUP BY t.id_toko
-    ORDER BY COALESCE(s.nomor, t.urutan + 1) ASC, t.dibuat_pada ASC"
+    ORDER BY COALESCE(MIN(s.nomor), t.urutan + 1) ASC, t.dibuat_pada ASC"
 ), MYSQLI_ASSOC);
 ?>
 

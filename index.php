@@ -9,6 +9,10 @@ error_reporting(E_ALL);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./assets/css/styles.css?v=7">
     <title>E-Kantin</title>
 
@@ -28,12 +32,7 @@ error_reporting(E_ALL);
     <?php include 'views/layouts/navbar.php'; ?>
     <section id="home">
         <?php include 'views/layouts/hero.php'; ?>
-        <div class="btn-ps">
-            <p>Masuk untuk memulai</p>
-            <div class="btn-wrapper">
-                <button onclick="window.location.href='./auth/login.php'" class="btn-login">Login</button>
-            </div>
-        </div>
+
         <div class="collage-wrapper">
             <!-- Foto makanan mengambang -->
             <img class="col-food col-food-left" src="./assets/img/ayam.png" alt="" />
