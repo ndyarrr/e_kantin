@@ -3852,7 +3852,8 @@ select.form-staf-control {
     background: #1d4ed8;
 }
 
-.pcard-btn-selesai-locked {
+.pcard-btn-selesai-locked,
+.pcard-btn-proses-locked {
     opacity: .4;
     cursor: not-allowed !important;
 }

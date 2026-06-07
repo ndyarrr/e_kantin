@@ -125,9 +125,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'konfirmasi_pembayaran_tunai') {
         $id_pesanan = (int)($_POST['id_pesanan'] ?? 0);
         if ($id_pesanan > 0) {
-            // Validasi kepemilikan pesanan: pastikan pesanan ini milik toko penjual ini
-            $cekPesanan = mysqli_query($conn, "SELECT status FROM pesanan WHERE id_pesanan = $id_pesanan AND id_toko = $idToko LIMIT 1");
-            if (mysqli_num_rows($cekPesanan) > 0) {
+            // Validasi kepemilikan pesanan dan status menunggu
+            $cekPesanan = mysqli_query($conn, "
+                SELECT p.status, pb.metode, pb.status AS status_bayar
+                FROM pesanan p
+                LEFT JOIN pembayaran pb ON pb.id_pesanan = p.id_pesanan
+                WHERE p.id_pesanan = $id_pesanan AND p.id_toko = $idToko
+                LIMIT 1
+            ");
+            if ($cekPesanan && mysqli_num_rows($cekPesanan) > 0) {
+                $rowPesanan = mysqli_fetch_assoc($cekPesanan);
+                if ($rowPesanan['status'] !== 'menunggu') {
+                    $ajaxResponse = [
+                        'success' => false,
+                        'message' => 'Konfirmasi tunai hanya dapat dilakukan saat pesanan masih menunggu.'
+                    ];
+                    if (!$isAjax) {
+                        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+                    }
+                } elseif (($rowPesanan['metode'] ?? '') !== 'tunai') {
+                    $ajaxResponse = ['success' => false, 'message' => 'Pesanan ini bukan pembayaran tunai.'];
+                    if (!$isAjax) {
+                        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+                    }
+                } elseif (($rowPesanan['status_bayar'] ?? '') === 'lunas') {
+                    $ajaxResponse = ['success' => false, 'message' => 'Pembayaran tunai pesanan ini sudah dikonfirmasi.'];
+                    if (!$isAjax) {
+                        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+                    }
+                } else {
                 mysqli_begin_transaction($conn);
                 try {
                     // Update status pembayaran menjadi lunas
@@ -189,6 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
                     }
                 }
+                }
             } else {
                 $ajaxResponse = ['success' => false, 'message' => 'Akses ditolak atau pesanan tidak ditemukan.'];
                 if (!$isAjax) {
@@ -211,10 +238,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($id_pesanan > 0 && in_array($status_baru, $statusValid)) {
             
             // Validasi kepemilikan pesanan: pastikan pesanan ini milik toko penjual ini
-            $cekPesanan = mysqli_query($conn, "SELECT status FROM pesanan WHERE id_pesanan = $id_pesanan AND id_toko = $idToko LIMIT 1");
+            $cekPesanan = mysqli_query($conn, "
+                SELECT p.status, pb.metode, pb.status AS status_bayar
+                FROM pesanan p
+                LEFT JOIN pembayaran pb ON pb.id_pesanan = p.id_pesanan
+                WHERE p.id_pesanan = $id_pesanan AND p.id_toko = $idToko
+                LIMIT 1
+            ");
             if (mysqli_num_rows($cekPesanan) > 0) {
                 $r_pesanan = mysqli_fetch_assoc($cekPesanan);
                 $status_lama = $r_pesanan['status'];
+
+                if (
+                    $status_baru === 'dikonfirmasi'
+                    && $status_lama === 'menunggu'
+                    && ($r_pesanan['metode'] ?? '') === 'tunai'
+                    && ($r_pesanan['status_bayar'] ?? '') !== 'lunas'
+                ) {
+                    $ajaxResponse = [
+                        'success' => false,
+                        'message' => 'Konfirmasi pembayaran tunai terlebih dahulu sebelum memproses pesanan.'
+                    ];
+                    if (!$isAjax) {
+                        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
+                    }
+                } else {
                 
                 // Mulai transaksi untuk integritas data
                 mysqli_begin_transaction($conn);
@@ -364,6 +412,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!$isAjax) {
                         $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
                     }
+                }
                 }
             } else {
                 $ajaxResponse = ['success' => false, 'message' => 'Akses ditolak atau pesanan tidak ditemukan.'];
