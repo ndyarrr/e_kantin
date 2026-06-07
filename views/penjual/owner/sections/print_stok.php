@@ -83,6 +83,11 @@ if ($searchStok !== '') $filterDescParts[] = "Pencarian: \"$searchStok\"";
 if ($kategoriStok !== 'semua') $filterDescParts[] = "Kategori: " . ucfirst($kategoriStok);
 if ($statusStok !== 'semua') $filterDescParts[] = "Status: Stok " . ucfirst($statusStok);
 $filterText = empty($filterDescParts) ? 'Semua Menu' : implode(', ', $filterDescParts);
+
+$backUrl = '../index.php?section=laporan_stok'
+    . '&search_stok=' . urlencode($searchStok)
+    . '&kategori_stok=' . urlencode($kategoriStok)
+    . '&status_stok=' . urlencode($statusStok);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -309,24 +314,45 @@ $filterText = empty($filterDescParts) ? 'Semua Menu' : implode(', ', $filterDesc
             height: 60px;
         }
 
-        .btn-print-floating {
+        .floating-actions {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            background: #5aab55;
+            display: flex;
+            gap: 12px;
+            z-index: 9999;
+        }
+
+        .btn-back-floating,
+        .btn-print-floating {
             color: #ffffff;
             border: none;
             padding: 12px 24px;
             border-radius: 50px;
             font-weight: 700;
             font-size: 13.5px;
-            box-shadow: 0 4px 12px rgba(90, 171, 85, 0.3);
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
             transition: all 0.2s;
-            z-index: 9999;
+            text-decoration: none;
+        }
+
+        .btn-back-floating {
+            background: #64748b;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+        }
+
+        .btn-back-floating:hover {
+            background: #475569;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(100, 116, 139, 0.4);
+        }
+
+        .btn-print-floating {
+            background: #5aab55;
+            box-shadow: 0 4px 12px rgba(90, 171, 85, 0.3);
         }
 
         .btn-print-floating:hover {
@@ -339,7 +365,7 @@ $filterText = empty($filterDescParts) ? 'Semua Menu' : implode(', ', $filterDesc
             body {
                 padding: 10px;
             }
-            .btn-print-floating {
+            .floating-actions {
                 display: none !important;
             }
         }
@@ -347,9 +373,14 @@ $filterText = empty($filterDescParts) ? 'Semua Menu' : implode(', ', $filterDesc
 </head>
 <body>
 
-    <button class="btn-print-floating" onclick="window.print()">
-        <i class="fa-solid fa-print"></i> Cetak Laporan
-    </button>
+    <div class="floating-actions">
+        <button type="button" class="btn-back-floating" onclick="kembaliKeLaporan()">
+            <i class="fa-solid fa-arrow-left"></i> Kembali
+        </button>
+        <button type="button" class="btn-print-floating" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> Cetak Laporan
+        </button>
+    </div>
 
     <div class="report-header">
         <div class="report-header-left">
@@ -473,6 +504,16 @@ $filterText = empty($filterDescParts) ? 'Semua Menu' : implode(', ', $filterDesc
     </div>
 
     <script>
+        const backUrl = <?= json_encode($backUrl) ?>;
+
+        function kembaliKeLaporan() {
+            if (window.opener && !window.opener.closed) {
+                window.close();
+                return;
+            }
+            window.location.href = backUrl;
+        }
+
         // Trigger browser print dialog automatically
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
