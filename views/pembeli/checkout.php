@@ -21,6 +21,21 @@ $avatar_file = $_SESSION['user_foto'] ?? '';
 $has_avatar  = !empty($avatar_file) && file_exists(__DIR__ . '/../../assets/img/' . $avatar_file);
 $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
 
+// Cek apakah pembeli memiliki pesanan berstatus 'tidak_diambil' yang status pembayarannya 'belum_bayar'
+$restrict_tunai = false;
+$col_pembeli = ($user_role === 'siswa') ? 'nisn_pembeli' : 'nuptk_pembeli';
+$q_check_no_show = mysqli_query($conn, "
+    SELECT 1 FROM pesanan p
+    JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
+    WHERE p.$col_pembeli = '$user_id'
+      AND p.status = 'tidak_diambil'
+      AND pb.status = 'belum_bayar'
+    LIMIT 1
+");
+if ($q_check_no_show && mysqli_num_rows($q_check_no_show) > 0) {
+    $restrict_tunai = true;
+}
+
 // ── PROSES POST: BUAT PESANAN BARU ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'buat_pesanan') {
     header('Content-Type: application/json');
@@ -34,6 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $metode_pembayaran = $_POST['metode_pembayaran'] ?? 'tunai';
         if (!in_array($metode_pembayaran, ['tunai', 'transfer', 'dompet_digital'])) {
             $metode_pembayaran = 'tunai';
+        }
+        
+        if ($metode_pembayaran === 'tunai' && $restrict_tunai) {
+            throw new Exception("Anda tidak dapat menggunakan pembayaran Tunai karena memiliki tunggakan pesanan yang tidak diambil. Silakan hubungi kasir kantin untuk melunasi.");
         }
         
         if (empty($cart_data)) {
@@ -1549,12 +1568,13 @@ if ($q_toko_qris) {
 
         // Canteen QRIS database data
         const canteenQrisData = <?= json_encode($tokos_qris); ?>;
-        let selectedPaymentMethod = 'tunai';
+        const restrictTunai = <?= $restrict_tunai ? 'true' : 'false'; ?>;
+        let selectedPaymentMethod = restrictTunai ? 'transfer' : 'tunai';
 
         function getAvailablePaymentMethods() {
             const cart = getCart();
             const selectedItems = cart.filter(item => item.selected !== false);
-            if (selectedItems.length === 0) return { methods: ['tunai'], noQrisCanteens: [] };
+            if (selectedItems.length === 0) return { methods: restrictTunai ? [] : ['tunai'], noQrisCanteens: [] };
 
             // Kumpulkan kantin yang tidak punya QRIS
             const noQrisCanteens = [];
@@ -1568,7 +1588,14 @@ if ($q_toko_qris) {
             });
 
             const allHaveQris = noQrisCanteens.length === 0;
-            return { methods: allHaveQris ? ['tunai', 'qris'] : ['tunai'], noQrisCanteens };
+            const methods = [];
+            if (!restrictTunai) {
+                methods.push('tunai');
+            }
+            if (allHaveQris) {
+                methods.push('qris');
+            }
+            return { methods, noQrisCanteens };
         }
 
         function initPaymentMethodSelection() {
@@ -1582,6 +1609,53 @@ if ($q_toko_qris) {
                 selectedPaymentMethod = 'tunai';
             }
             
+            if (restrictTunai) {
+                if (methods.includes('qris')) {
+                    selectedPaymentMethod = 'transfer';
+                    container.innerHTML = `
+                        <div class="payment-method-options" style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="font-size: 12px; color: #b91c1c; background: #fee2e2; border: 1px solid #fca5a5; padding: 12px 14px; border-radius: 12px; text-align: left; display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
+                                <i class="fa-solid fa-triangle-exclamation" style="margin-top: 3px; font-size: 14px; flex-shrink: 0;"></i>
+                                <span><strong>Pemberitahuan:</strong> Metode Tunai dinonaktifkan sementara karena Anda memiliki pesanan yang tidak diambil (No-Show). Anda hanya dapat membayar menggunakan QRIS.</span>
+                            </div>
+                            <label class="payment-option-card active" id="pay-qris-label" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 16px; border: 2.5px solid #16a34a; background: #f0fdf4; cursor: pointer; transition: all 0.2s; text-align: left;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 40px; height: 40px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 18px; flex-shrink: 0;">
+                                        <i class="fa-solid fa-qrcode"></i>
+                                    </div>
+                                    <div>
+                                        <span style="font-weight: 700; color: #1e293b; display: block; font-size: 14px;">QRIS (Transfer)</span>
+                                        <span style="font-size: 12px; color: #64748b;">Scan barcode QRIS kantin</span>
+                                    </div>
+                                </div>
+                                <input type="radio" name="payment_method_input" value="transfer" checked onclick="selectPaymentMethod('transfer')" style="accent-color: #16a34a; transform: scale(1.15); flex-shrink: 0;">
+                            </label>
+                        </div>
+                        <div id="qrisContainer" style="display: flex; margin-top: 14px; padding: 14px 16px; text-align: left; border: 1.5px solid #3b82f6; background: #eff6ff; border-radius: 16px; box-sizing: border-box; align-items: flex-start; gap: 8px;">
+                            <i class="fa-solid fa-circle-info" style="color: #3b82f6; font-size: 16px; margin-top: 2px; flex-shrink: 0;"></i>
+                            <span style="font-size: 12px; color: #1e3a8a; line-height: 1.4;">Metode QRIS dipilih. Barcode pembayaran QRIS akan ditampilkan setelah Anda memproses pesanan ini.</span>
+                        </div>
+                    `;
+                    selectPaymentMethod('transfer');
+                } else {
+                    const namaKantin = noQrisCanteens.join(', ');
+                    container.innerHTML = `
+                        <div style="font-size: 12.5px; color: #b91c1c; background: #fee2e2; border: 1px solid #fca5a5; padding: 16px; border-radius: 16px; text-align: left; display: flex; align-items: flex-start; gap: 10px;">
+                            <i class="fa-solid fa-circle-xmark" style="margin-top: 3px; font-size: 18px; flex-shrink: 0;"></i>
+                            <span>Metode Tunai ditangguhkan karena pelanggaran No-Show, dan Kantin <strong>${namaKantin}</strong> tidak mendukung QRIS. Silakan lunasi tunggakan Anda di kantin terlebih dahulu untuk dapat memesan kembali.</span>
+                        </div>
+                    `;
+                    const checkoutBtn = document.querySelector('.btn-submit-order');
+                    if (checkoutBtn) {
+                        checkoutBtn.disabled = true;
+                        checkoutBtn.style.opacity = '0.5';
+                        checkoutBtn.style.cursor = 'not-allowed';
+                        checkoutBtn.textContent = 'Pembayaran Diblokir';
+                    }
+                }
+                return;
+            }
+
             if (methods.includes('qris')) {
                 const isTunai = (selectedPaymentMethod === 'tunai');
                 container.innerHTML = `

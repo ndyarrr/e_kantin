@@ -1,3 +1,12 @@
+<style>
+.status-tidak-diambil {
+    background: #fee2e2 !important;
+    color: #be123c !important;
+}
+.bar-tidak-diambil {
+    border-left-color: #f43f5e !important;
+}
+</style>
 <?php
 /** @var array $tabs */
 /** @var string $filterStatus */
@@ -43,12 +52,13 @@
                 'dikonfirmasi' => ['class' => 'status-proses',   'label' => 'Diproses',     'icon' => 'fa-fire-burner',    'bar' => 'bar-proses'],
                 'siap_diambil' => ['class' => 'status-siap',     'label' => 'Siap Diambil', 'icon' => 'fa-bell-concierge', 'bar' => 'bar-siap'],
                 'selesai'      => ['class' => 'status-selesai',  'label' => 'Selesai',      'icon' => 'fa-circle-check',   'bar' => 'bar-selesai'],
+                'tidak_diambil'=> ['class' => 'status-tidak-diambil', 'label' => 'Tidak Diambil', 'icon' => 'fa-circle-exclamation', 'bar' => 'bar-tidak-diambil'],
                 'dibatalkan'   => ['class' => 'status-batal',    'label' => 'Dibatalkan',   'icon' => 'fa-circle-xmark',   'bar' => 'bar-batal'],
             ];
             $st = $statusMap[$ps['status']] ?? ['class' => 'status-menunggu', 'label' => ucfirst($ps['status']), 'icon' => 'fa-clock', 'bar' => 'bar-menunggu'];
 
-            $tunai_belum_lunas = ($ps['metode_pembayaran'] === 'tunai' && $ps['status_pembayaran'] !== 'lunas');
-            $bisa_proses = !$tunai_belum_lunas;
+            // Untuk metode QRIS (transfer), penjual harus mengonfirmasi lunas terlebih dahulu sebelum memproses
+            $bisa_proses = ($ps['metode_pembayaran'] !== 'transfer' || $ps['status_pembayaran'] === 'lunas');
 
             $notaItems = [];
             foreach ($ps['items'] as $item) {
@@ -220,11 +230,11 @@
                                 <i class="fa-solid fa-check"></i> Proses
                             </button>
                             <?php else: ?>
-                            <button type="button" class="pcard-btn pcard-btn-proses pcard-btn-proses-locked" disabled
-                                title="Konfirmasi pembayaran tunai terlebih dahulu"
-                                onclick="alert('Konfirmasi pembayaran tunai terlebih dahulu sebelum memproses pesanan.')">
-                                <i class="fa-solid fa-check"></i> Proses
-                            </button>
+                             <button type="button" class="pcard-btn pcard-btn-proses pcard-btn-proses-locked" disabled
+                                 title="Konfirmasi pembayaran QRIS terlebih dahulu"
+                                 onclick="alert('Konfirmasi pembayaran QRIS terlebih dahulu sebelum memproses pesanan.')">
+                                 <i class="fa-solid fa-check"></i> Proses
+                             </button>
                             <?php endif; ?>
                             <button type="button" class="pcard-btn pcard-btn-batal"
                                 data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="dibatalkan" data-confirm="Batalkan pesanan ini?">
@@ -242,6 +252,21 @@
                                 data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="selesai">
                                 <i class="fa-solid fa-circle-check"></i> Selesai
                             </button>
+
+                            <button type="button" class="pcard-btn"
+                                style="background: #f43f5e; color: #ffffff; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.15);"
+                                data-action="update_status" data-id="<?= (int) $ps['id_pesanan'] ?>" data-status="tidak_diambil"
+                                data-confirm="Tandai pesanan ini sebagai Tidak Diambil (No-Show)? Siswa akan dicatat melakukan pelanggaran dan fitur pembayaran tunai akan dibatasi.">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Tidak Diambil
+                            </button>
+                        <?php elseif ($ps['status'] === 'tidak_diambil'): ?>
+                            <?php if ($ps['metode_pembayaran'] === 'tunai' && $ps['status_pembayaran'] === 'belum_bayar'): ?>
+                                <button type="button" class="pcard-btn" 
+                                    style="background: #10b981; color: #ffffff; border: none; border-radius: 12px; padding: 8px 14px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);"
+                                    onclick="konfirmasiPembayaranTunai(<?= (int)$ps['id_pesanan'] ?>)">
+                                    <i class="fa-solid fa-hand-holding-dollar"></i> Lunasi Tunggakan
+                                </button>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>

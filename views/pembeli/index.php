@@ -16,6 +16,92 @@ $user_nama = $_SESSION['user_nama'] ?? 'Pembeli';
 $user_role = $_SESSION['user_role'] ?? 'siswa';
 $user_id = $_SESSION['user_id'] ?? '';
 
+// Cek pelanggaran no-show (tidak diambil & belum bayar)
+$has_no_show_penalty = false;
+$unpaid_no_shows = [];
+if (!empty($user_id)) {
+    $col_pembeli = ($user_role === 'siswa') ? 'nisn_pembeli' : 'nuptk_pembeli';
+    $q_check_no_show = mysqli_query($koneksi, "
+        SELECT p.id_pesanan, p.total_harga, p.waktu_pesan, t.nama_toko, t.foto_toko, pb.metode 
+        FROM pesanan p
+        JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
+        JOIN toko t ON p.id_toko = t.id_toko
+        WHERE p.$col_pembeli = '$user_id'
+          AND p.status = 'tidak_diambil'
+          AND pb.status = 'belum_bayar'
+    ");
+    if ($q_check_no_show && mysqli_num_rows($q_check_no_show) > 0) {
+        $has_no_show_penalty = true;
+        while ($r = mysqli_fetch_assoc($q_check_no_show)) {
+            $id_pes = (int)$r['id_pesanan'];
+            
+            // Ambil detail item
+            $items_list = [];
+            $q_items = mysqli_query($koneksi, "
+                SELECT dp.jumlah, dp.harga, m.nama_menu 
+                FROM detail_pesanan dp
+                JOIN menu m ON dp.id_menu = m.id_menu
+                WHERE dp.id_pesanan = $id_pes
+            ");
+            if ($q_items) {
+                while ($it = mysqli_fetch_assoc($q_items)) {
+                    $items_list[] = [
+                        'nama' => $it['nama_menu'],
+                        'jumlah' => (int)$it['jumlah'],
+                        'harga' => (int)$it['harga']
+                    ];
+                }
+            }
+            
+            // Resolve info pembeli
+            $col_nama = ($user_role === 'siswa') ? 'nama_siswa' : 'nama_guru';
+            $tbl_pembeli = ($user_role === 'siswa') ? 'siswa' : 'guru';
+            $col_kelas = ($user_role === 'siswa') ? 'kelas' : 'nuptk';
+            $col_id_tbl = ($user_role === 'siswa') ? 'nisn' : 'nuptk';
+            $q_nama = mysqli_query($koneksi, "SELECT $col_nama, $col_kelas FROM $tbl_pembeli WHERE $col_id_tbl = '$user_id' LIMIT 1");
+            $data_pembeli = $q_nama ? mysqli_fetch_assoc($q_nama) : [];
+            $nama_pembeli = $data_pembeli[$col_nama] ?? $user_nama;
+            $kelas_pembeli = $data_pembeli[$col_kelas] ?? '-';
+            
+            // Resolve kasir & shift dari log
+            $kasirNama = '';
+            $kasirShift = '';
+            $q_log = mysqli_query($koneksi, "
+                SELECT l.user_nama, tp.shift
+                FROM log_sistem l
+                LEFT JOIN toko_penjual tp ON tp.id_penjual = l.user_id AND tp.status = 'aktif'
+                WHERE l.keterangan LIKE '%pesanan #$id_pes%'
+                  AND l.user_role = 'penjual'
+                ORDER BY l.dibuat_pada DESC
+                LIMIT 1
+            ");
+            if ($q_log && $r_log = mysqli_fetch_assoc($q_log)) {
+                $kasirNama  = $r_log['user_nama'];
+                $kasirShift = $r_log['shift'] ?? 'Bebas';
+            }
+            
+            $foto_toko_url = '';
+            if (!empty($r['foto_toko'])) {
+                $foto_toko_url = '../../assets/img/kantin/' . $r['foto_toko'];
+            }
+            
+            $unpaid_no_shows[] = [
+                'id' => $id_pes,
+                'toko' => $r['nama_toko'],
+                'foto' => $foto_toko_url,
+                'pembeli' => $nama_pembeli,
+                'kelas' => $kelas_pembeli,
+                'waktu' => $r['waktu_pesan'],
+                'kasir' => $kasirNama,
+                'shift' => $kasirShift,
+                'metode' => ucfirst($r['metode']),
+                'total' => (int)$r['total_harga'],
+                'items' => $items_list
+            ];
+        }
+    }
+}
+
 $active_tab = $_GET['tab'] ?? 'beranda';
 $allowed_tabs = ['beranda', 'pesanan', 'favorit', 'kantin', 'chat', 'profil'];
 if (!in_array($active_tab, $allowed_tabs)) {
@@ -237,6 +323,11 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                                         $bg_color = 'bg-red';
                                         $title = 'Pesanan Dibatalkan';
                                         $desc = "Maaf, pesananmu #$id_pesanan di $toko dibatalkan oleh kantin.";
+                                    } elseif ($status === 'tidak_diambil') {
+                                        $icon = 'fa-triangle-exclamation';
+                                        $bg_color = 'bg-red';
+                                        $title = 'Pesanan Tidak Diambil';
+                                        $desc = "Pesananmu #$id_pesanan di $toko ditandai tidak diambil (No-Show). Metode pembayaran tunai Anda dibatasi.";
                                     }
                                     
                                     // Hitung waktu relatif sederhana

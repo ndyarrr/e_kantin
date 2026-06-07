@@ -1,6 +1,37 @@
 <!-- ═══════ SECTION: BERANDA ═══════ -->
 <div class="page-section <?= $active_tab === 'beranda' ? 'active' : '' ?>" id="section-beranda">
 
+    <?php if (isset($has_no_show_penalty) && $has_no_show_penalty): ?>
+        <!-- Warning Pelanggaran No-Show -->
+        <div style="background: linear-gradient(135deg, #fff1f2, #ffe4e6); border: 1.5px solid #fecaca; border-radius: 16px; padding: 16px 20px; margin: 10px 16px 20px 16px; display: flex; align-items: flex-start; gap: 14px; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.08); font-family: 'Poppins', sans-serif;">
+            <div style="background: #f43f5e; color: #ffffff; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; box-shadow: 0 4px 10px rgba(244, 63, 94, 0.25);">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div style="flex: 1;">
+                <h4 style="margin: 0 0 4px 0; color: #9f1239; font-size: 14px; font-weight: 800;">Akun Anda Terkena Pelanggaran!</h4>
+                <p style="margin: 0 0 10px 0; color: #e11d48; font-size: 12.5px; font-weight: 600; line-height: 1.5;">Anda memiliki <?= count($unpaid_no_shows) ?> pesanan tidak diambil yang belum dilunasi. Metode pembayaran <strong>Tunai</strong> dikunci sementara.</p>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <?php foreach ($unpaid_no_shows as $no_show): ?>
+                        <div onclick="bukaNotaPembeli(<?= htmlspecialchars(json_encode($no_show), ENT_QUOTES, 'UTF-8') ?>)"
+                             style="background: rgba(255, 255, 255, 0.85); border: 1px solid #fda4af; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-family: 'Poppins', sans-serif; cursor: pointer; transition: all 0.2s;"
+                             onmouseover="this.style.background='#ffffff'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(244, 63, 94, 0.1)';"
+                             onmouseout="this.style.background='rgba(255, 255, 255, 0.85)'; this.style.transform='none'; this.style.boxShadow='none';">
+                            <span style="color: #475569; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-receipt" style="color: #f43f5e;"></i>
+                                #<?= (int)$no_show['id'] ?> - <?= htmlspecialchars($no_show['toko']) ?>
+                            </span>
+                            <span style="color: #be123c; font-weight: 800; display: inline-flex; align-items: center; gap: 8px;">
+                                Rp <?= number_format($no_show['total'], 0, ',', '.') ?>
+                                <i class="fa-solid fa-chevron-right" style="font-size: 10px; color: #fda4af;"></i>
+                            </span>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <p style="margin: 10px 0 0 0; color: #475569; font-size: 11px; font-weight: 500; line-height: 1.4;">Silakan kunjungi kasir kantin bersangkutan untuk melakukan pelunasan agar dapat bertransaksi tunai kembali.</p>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- Search Results (hidden by default) -->
     <section class="section-block search-results-section" id="searchResultsSection" style="display:none">
         <div class="search-header-row">

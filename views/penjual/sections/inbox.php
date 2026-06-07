@@ -17,6 +17,7 @@ $tabs = [
     'dikonfirmasi' => ['label' => 'Diproses',     'icon' => 'fa-fire-burner'],
     'siap_diambil' => ['label' => 'Siap Diambil', 'icon' => 'fa-bell-concierge'],
     'selesai'      => ['label' => 'Selesai',      'icon' => 'fa-circle-check'],
+    'tidak_diambil'=> ['label' => 'Tidak Diambil', 'icon' => 'fa-circle-exclamation'],
     'dibatalkan'   => ['label' => 'Dibatalkan',   'icon' => 'fa-circle-xmark'],
 ];
 

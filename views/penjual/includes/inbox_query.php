@@ -2,7 +2,7 @@
 
 function inbox_get_data(mysqli $conn, int $idToko, string $filterStatus = 'semua', string $inboxSearch = ''): array
 {
-    $statusValid = ['menunggu', 'dikonfirmasi', 'siap_diambil', 'selesai', 'dibatalkan'];
+    $statusValid = ['menunggu', 'dikonfirmasi', 'siap_diambil', 'selesai', 'dibatalkan', 'tidak_diambil'];
     if (!in_array($filterStatus, $statusValid, true)) {
         $filterStatus = 'semua';
     }
@@ -31,7 +31,8 @@ function inbox_get_data(mysqli $conn, int $idToko, string $filterStatus = 'semua
                 WHEN 'dikonfirmasi' THEN 2
                 WHEN 'siap_diambil' THEN 3
                 WHEN 'selesai'      THEN 4
-                WHEN 'dibatalkan'   THEN 5
+                WHEN 'tidak_diambil' THEN 5
+                WHEN 'dibatalkan'   THEN 6
             END, p.waktu_pesan DESC
             LIMIT 50";
 
@@ -54,7 +55,8 @@ function inbox_get_data(mysqli $conn, int $idToko, string $filterStatus = 'semua
                                     WHEN 'dikonfirmasi' THEN 2
                                     WHEN 'siap_diambil' THEN 3
                                     WHEN 'selesai'      THEN 4
-                                    WHEN 'dibatalkan'   THEN 5
+                                    WHEN 'tidak_diambil' THEN 5
+                                    WHEN 'dibatalkan'   THEN 6
                                 END,
                                 p.waktu_pesan DESC
                              LIMIT 50";
@@ -71,7 +73,8 @@ function inbox_get_data(mysqli $conn, int $idToko, string $filterStatus = 'semua
                                     WHEN 'dikonfirmasi' THEN 2
                                     WHEN 'siap_diambil' THEN 3
                                     WHEN 'selesai'      THEN 4
-                                    WHEN 'dibatalkan'   THEN 5
+                                    WHEN 'tidak_diambil' THEN 5
+                                    WHEN 'dibatalkan'   THEN 6
                                 END,
                                 p.waktu_pesan DESC
                              LIMIT 50";

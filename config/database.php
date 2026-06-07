@@ -127,6 +127,15 @@ if ($checkTokoTable && mysqli_num_rows($checkTokoTable) > 0) {
         mysqli_query($conn, "UPDATE `toko` SET `urutan` = `id_toko` WHERE `deleted_at` IS NULL");
     }
 
+    // Migrasi kolom status di tabel pesanan untuk mendukung 'tidak_diambil'
+    $checkColPesananStatus = mysqli_query($conn, "SHOW COLUMNS FROM `pesanan` LIKE 'status'");
+    if ($checkColPesananStatus) {
+        $row = mysqli_fetch_assoc($checkColPesananStatus);
+        if ($row && !str_contains($row['Type'], 'tidak_diambil')) {
+            mysqli_query($conn, "ALTER TABLE `pesanan` MODIFY `status` ENUM('menunggu','dikonfirmasi','siap_diambil','selesai','dibatalkan','tidak_diambil') NOT NULL DEFAULT 'menunggu'");
+        }
+    }
+
     require_once __DIR__ . '/kantin_slot.php';
     kantinSlotMigrate($conn);
 }
@@ -178,80 +187,150 @@ if ($conn && php_sapi_name() !== 'cli') {
     }
 }
 
-// Otomatisasi pembatalan pesanan yang melewati pukul 15:30 WIB (Asia/Jakarta)
+// Otomatisasi pembatalan dan penyesuaian pesanan yang melewati pukul 15:30 WIB (Asia/Jakarta)
 if ($conn && php_sapi_name() !== 'cli') {
     $currentTime = date('H:i');
     $currentDate = date('Y-m-d');
     
-    // Tentukan batas waktu pemesanan
-    $isPastCancelTime = ($currentTime >= '15:30');
-    $limitTimestamp = $isPastCancelTime ? $currentDate . ' 23:59:59' : $currentDate . ' 00:00:00';
-    
-    // Ambil pesanan berstatus 'menunggu' atau 'dikonfirmasi' yang melewati batas waktu
-    $sqlCek = "SELECT id_pesanan FROM pesanan 
-               WHERE status IN ('menunggu', 'dikonfirmasi') 
-                 AND waktu_pesan < '$limitTimestamp'";
-                 
-    $resCek = mysqli_query($conn, $sqlCek);
-    if ($resCek && mysqli_num_rows($resCek) > 0) {
-        while ($row = mysqli_fetch_assoc($resCek)) {
-            $id_pes = (int)$row['id_pesanan'];
-            
-            mysqli_begin_transaction($conn);
-            try {
-                // 1. Kembalikan stok menu
-                $resItems = mysqli_query($conn, "SELECT id_menu, jumlah FROM detail_pesanan WHERE id_pesanan = $id_pes");
-                if ($resItems) {
-                    while ($item = mysqli_fetch_assoc($resItems)) {
-                        $id_menu = (int)$item['id_menu'];
-                        $jumlah = (int)$item['jumlah'];
-                        mysqli_query($conn, "UPDATE menu SET stok = stok + $jumlah WHERE id_menu = $id_menu");
-                    }
-                }
+    if ($currentTime >= '15:30') {
+        $limitTimestamp = $currentDate . ' 23:59:59';
+        
+        // A. Proses pesanan yang masih 'menunggu' -> Dibatalkan (dan refund jika QRIS sudah upload bukti)
+        $sqlMenunggu = "SELECT p.id_pesanan, pb.metode, pb.bukti_foto, pb.status AS status_pembayaran
+                        FROM pesanan p
+                        LEFT JOIN pembayaran pb ON pb.id_pesanan = p.id_pesanan
+                        WHERE p.status = 'menunggu' 
+                          AND p.waktu_pesan < '$limitTimestamp'";
+        $resMenunggu = mysqli_query($conn, $sqlMenunggu);
+        if ($resMenunggu && mysqli_num_rows($resMenunggu) > 0) {
+            while ($row = mysqli_fetch_assoc($resMenunggu)) {
+                $id_pes = (int)$row['id_pesanan'];
                 
-                // 2. Ubah status pesanan menjadi dibatalkan
-                mysqli_query($conn, "UPDATE pesanan SET status = 'dibatalkan' WHERE id_pesanan = $id_pes");
-                
-                // 3. Kirim pesan chat otomatis pembatalan ke pembeli
-                $q_pesanan_info = mysqli_query($conn, "SELECT nisn_pembeli, nuptk_pembeli, id_toko FROM pesanan WHERE id_pesanan = $id_pes LIMIT 1");
-                if ($q_pesanan_info && mysqli_num_rows($q_pesanan_info) > 0) {
-                    $r_p = mysqli_fetch_assoc($q_pesanan_info);
-                    $id_tok = (int)$r_p['id_toko'];
-                    $penerima_chat = '';
-                    if (!empty($r_p['nisn_pembeli'])) {
-                        $penerima_chat = 'murid_' . $r_p['nisn_pembeli'];
-                    } elseif (!empty($r_p['nuptk_pembeli'])) {
-                        $penerima_chat = 'guru_' . $r_p['nuptk_pembeli'];
+                mysqli_begin_transaction($conn);
+                try {
+                    // Kembalikan stok menu
+                    $resItems = mysqli_query($conn, "SELECT id_menu, jumlah FROM detail_pesanan WHERE id_pesanan = $id_pes");
+                    if ($resItems) {
+                        while ($item = mysqli_fetch_assoc($resItems)) {
+                            $id_menu = (int)$item['id_menu'];
+                            $jumlah = (int)$item['jumlah'];
+                            mysqli_query($conn, "UPDATE menu SET stok = stok + $jumlah WHERE id_menu = $id_menu");
+                        }
                     }
+                    
+                    // Ubah status pesanan menjadi dibatalkan
+                    mysqli_query($conn, "UPDATE pesanan SET status = 'dibatalkan' WHERE id_pesanan = $id_pes");
+                    
+                    // Jika QRIS (transfer) dan ada bukti upload atau sudah lunas -> Tandai sebagai 'dikembalikan' (Refunded)
+                    $refund_info = "";
+                    if ($row['metode'] === 'transfer' && (!empty($row['bukti_foto']) || $row['status_pembayaran'] === 'lunas')) {
+                        mysqli_query($conn, "UPDATE pembayaran SET status = 'dikembalikan' WHERE id_pesanan = $id_pes");
+                        $refund_info = " Uang QRIS akan dikembalikan (refund).";
+                    }
+                    
+                    // Kirim pesan chat otomatis pembatalan ke pembeli
+                    $q_pesanan_info = mysqli_query($conn, "SELECT nisn_pembeli, nuptk_pembeli, id_toko FROM pesanan WHERE id_pesanan = $id_pes LIMIT 1");
+                    if ($q_pesanan_info && mysqli_num_rows($q_pesanan_info) > 0) {
+                        $r_p = mysqli_fetch_assoc($q_pesanan_info);
+                        $id_tok = (int)$r_p['id_toko'];
+                        $penerima_chat = '';
+                        if (!empty($r_p['nisn_pembeli'])) {
+                            $penerima_chat = 'murid_' . $r_p['nisn_pembeli'];
+                        } elseif (!empty($r_p['nuptk_pembeli'])) {
+                            $penerima_chat = 'guru_' . $r_p['nuptk_pembeli'];
+                        }
 
-                    if (!empty($penerima_chat)) {
-                        $pengirim_chat = 'toko_' . $id_tok;
-                        $auto_status_msg = '[AUTO_REPLY_STATUS]
-                        <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;padding:4px;">
-                            <div style="font-weight:800;font-size:14px;color:#f43f5e;margin-bottom:6px;">Pesanan #' . $id_pes . ' Dibatalkan Otomatis</div>
-                            <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Pesanan Anda dibatalkan otomatis oleh sistem karena telah melewati batas waktu operasional (pukul 15:30 WIB).</div>
-                            <div style="padding:10px 12px;background:#fff1f2;border-radius:10px;border:1px solid #fecaca;display:flex;justify-content:space-between;align-items:center;">
-                                <span style="font-size:12px;font-weight:600;color:#f43f5e;">Status Terbaru</span>
-                                <span style="font-size:12px;font-weight:800;color:#e11d48;">Dibatalkan ❌</span>
-                            </div>
-                        </div>';
+                        if (!empty($penerima_chat)) {
+                            $pengirim_chat = 'toko_' . $id_tok;
+                            $auto_status_msg = '[AUTO_REPLY_STATUS]
+                            <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;padding:4px;">
+                                <div style="font-weight:800;font-size:14px;color:#f43f5e;margin-bottom:6px;">Pesanan #' . $id_pes . ' Dibatalkan Otomatis</div>
+                                <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Pesanan Anda dibatalkan otomatis oleh sistem karena telah melewati batas waktu operasional (pukul 15:30 WIB) dan belum diproses.' . $refund_info . '</div>
+                                <div style="padding:10px 12px;background:#fff1f2;border-radius:10px;border:1px solid #fecaca;display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-size:12px;font-weight:600;color:#f43f5e;">Status Terbaru</span>
+                                    <span style="font-size:12px;font-weight:800;color:#e11d48;">Dibatalkan ❌</span>
+                                </div>
+                            </div>';
 
-                        $msg_escaped = mysqli_real_escape_string($conn, $auto_status_msg);
-                        mysqli_query($conn, "INSERT INTO pesan_chat (id_pengirim, id_penerima, isi_pesan, waktu_kirim, sudah_dibaca)
-                                             VALUES ('$pengirim_chat', '$penerima_chat', '$msg_escaped', NOW(), 0)");
+                            $msg_escaped = mysqli_real_escape_string($conn, $auto_status_msg);
+                            mysqli_query($conn, "INSERT INTO pesan_chat (id_pengirim, id_penerima, isi_pesan, waktu_kirim, sudah_dibaca)
+                                                 VALUES ('$pengirim_chat', '$penerima_chat', '$msg_escaped', NOW(), 0)");
+                        }
                     }
+                    
+                    // Catat ke log sistem
+                    $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+                    mysqli_query($conn, "INSERT INTO log_sistem (user_role, user_id, user_nama, aksi, keterangan, ip_address)
+                                         VALUES ('admin','0','Auto-Cancel System','Batal Otomatis','Pesanan #$id_pes dibatalkan otomatis (Menunggu) karena melewati pukul 15:30 WIB.','$ip')");
+                    
+                    mysqli_commit($conn);
+                } catch (Exception $e) {
+                    mysqli_rollback($conn);
                 }
+            }
+        }
+        
+        // B. Proses pesanan yang masih 'siap_diambil' -> Tidak Diambil (No-Show, stok TIDAK dikembalikan, tidak ada refund)
+        $sqlSiap = "SELECT p.id_pesanan, pb.status AS status_pembayaran 
+                    FROM pesanan p
+                    LEFT JOIN pembayaran pb ON pb.id_pesanan = p.id_pesanan
+                    WHERE p.status = 'siap_diambil' 
+                      AND p.waktu_pesan < '$limitTimestamp'";
+        $resSiap = mysqli_query($conn, $sqlSiap);
+        if ($resSiap && mysqli_num_rows($resSiap) > 0) {
+            while ($row = mysqli_fetch_assoc($resSiap)) {
+                $id_pes = (int)$row['id_pesanan'];
+                $status_bayar = $row['status_pembayaran'] ?? 'belum_bayar';
                 
-                // 4. Catat ke log sistem
-                $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-                mysqli_query($conn, "INSERT INTO log_sistem (user_role, user_id, user_nama, aksi, keterangan, ip_address)
-                                     VALUES ('admin','0','Auto-Cancel System','Batal Otomatis','Pesanan #$id_pes dibatalkan otomatis karena melewati pukul 15:30 WIB.','$ip')");
-                
-                mysqli_commit($conn);
-            } catch (Exception $e) {
-                mysqli_rollback($conn);
+                mysqli_begin_transaction($conn);
+                try {
+                    // Ubah status pesanan menjadi tidak_diambil
+                    mysqli_query($conn, "UPDATE pesanan SET status = 'tidak_diambil' WHERE id_pesanan = $id_pes");
+                    
+                    // Kirim pesan chat otomatis pembatalan ke pembeli
+                    $q_pesanan_info = mysqli_query($conn, "SELECT nisn_pembeli, nuptk_pembeli, id_toko FROM pesanan WHERE id_pesanan = $id_pes LIMIT 1");
+                    if ($q_pesanan_info && mysqli_num_rows($q_pesanan_info) > 0) {
+                        $r_p = mysqli_fetch_assoc($q_pesanan_info);
+                        $id_tok = (int)$r_p['id_toko'];
+                        $penerima_chat = '';
+                        if (!empty($r_p['nisn_pembeli'])) {
+                            $penerima_chat = 'murid_' . $r_p['nisn_pembeli'];
+                        } elseif (!empty($r_p['nuptk_pembeli'])) {
+                            $penerima_chat = 'guru_' . $r_p['nuptk_pembeli'];
+                        }
+
+                        if (!empty($penerima_chat)) {
+                            $pengirim_chat = 'toko_' . $id_tok;
+                            $msg_detail = ($status_bayar === 'lunas')
+                                ? 'Pesanan Anda tidak diambil sampai batas operasional berakhir. Karena pembayaran Anda sudah lunas (QRIS/Transfer), Anda tidak dikenakan sanksi pembatasan metode tunai.'
+                                : 'Pesanan Anda tidak diambil sampai batas operasional berakhir. Akun Anda dicatat melakukan pelanggaran no-show dan fitur pembayaran tunai akan dibatasi sampai pesanan ini dilunasi.';
+
+                            $auto_status_msg = '[AUTO_REPLY_STATUS]
+                            <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;padding:4px;">
+                                <div style="font-weight:800;font-size:14px;color:#e11d48;margin-bottom:6px;">Pesanan #' . $id_pes . ' Tidak Diambil!</div>
+                                <div style="font-size:12px;color:#64748b;margin-bottom:12px;">' . $msg_detail . '</div>
+                                <div style="padding:10px 12px;background:#fff1f2;border-radius:10px;border:1px solid #fecaca;display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-size:12px;font-weight:600;color:#e11d48;">Status Terbaru</span>
+                                    <span style="font-size:12px;font-weight:800;color:#be123c;">Tidak Diambil ⚠️</span>
+                                </div>
+                            </div>';
+
+                            $msg_escaped = mysqli_real_escape_string($conn, $auto_status_msg);
+                            mysqli_query($conn, "INSERT INTO pesan_chat (id_pengirim, id_penerima, isi_pesan, waktu_kirim, sudah_dibaca)
+                                                 VALUES ('$pengirim_chat', '$penerima_chat', '$msg_escaped', NOW(), 0)");
+                        }
+                    }
+                    
+                    // Catat ke log sistem
+                    $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+                    mysqli_query($conn, "INSERT INTO log_sistem (user_role, user_id, user_nama, aksi, keterangan, ip_address)
+                                         VALUES ('admin','0','Auto-Cancel System','Tidak Diambil','Pesanan #$id_pes ditandai Tidak Diambil (No-Show) karena melewati pukul 15:30 WIB.','$ip')");
+                    
+                    mysqli_commit($conn);
+                } catch (Exception $e) {
+                    mysqli_rollback($conn);
+                }
             }
         }
     }
 }
-

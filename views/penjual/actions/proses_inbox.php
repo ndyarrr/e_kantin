@@ -125,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'konfirmasi_pembayaran_tunai') {
         $id_pesanan = (int)($_POST['id_pesanan'] ?? 0);
         if ($id_pesanan > 0) {
-            // Validasi kepemilikan pesanan dan status menunggu
+            // Validasi kepemilikan pesanan
             $cekPesanan = mysqli_query($conn, "
                 SELECT p.status, pb.metode, pb.status AS status_bayar
                 FROM pesanan p
@@ -135,10 +135,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             if ($cekPesanan && mysqli_num_rows($cekPesanan) > 0) {
                 $rowPesanan = mysqli_fetch_assoc($cekPesanan);
-                if ($rowPesanan['status'] !== 'menunggu') {
+                if ($rowPesanan['status'] !== 'menunggu' && $rowPesanan['status'] !== 'tidak_diambil') {
                     $ajaxResponse = [
                         'success' => false,
-                        'message' => 'Konfirmasi tunai hanya dapat dilakukan saat pesanan masih menunggu.'
+                        'message' => 'Konfirmasi tunai hanya dapat dilakukan saat pesanan masih menunggu atau tidak diambil.'
                     ];
                     if (!$isAjax) {
                         $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
@@ -173,9 +173,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if (!empty($penerima_chat)) {
                             $pengirim_chat = 'toko_' . $idToko;
                             $auto_status_msg = '[AUTO_REPLY_STATUS]
-                            <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;padding:4px;">
-                                <div style="font-weight:800;font-size:14px;color:#16a34a;margin-bottom:6px;">Pembayaran Tunai Diterima!</div>
-                                <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Pembayaran tunai Anda untuk Pesanan #' . $id_pesanan . ' telah diterima oleh penjual. Terima kasih! 🙏</div>
+                            <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:320px;padding:4px;">';
+                            
+                            if ($rowPesanan['status'] === 'tidak_diambil') {
+                                $auto_status_msg .= '
+                                    <div style="font-weight:800;font-size:14px;color:#16a34a;margin-bottom:6px;">Tunggakan Dilunasi!</div>
+                                    <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Tunggakan pembayaran tunai Anda untuk Pesanan #' . $id_pesanan . ' telah dilunasi ke kantin. Pembatasan metode pembayaran tunai Anda kini telah dicabut. Terima kasih! 🙏</div>';
+                            } else {
+                                $auto_status_msg .= '
+                                    <div style="font-weight:800;font-size:14px;color:#16a34a;margin-bottom:6px;">Pembayaran Tunai Diterima!</div>
+                                    <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Pembayaran tunai Anda untuk Pesanan #' . $id_pesanan . ' telah diterima oleh penjual. Terima kasih! 🙏</div>';
+                            }
+                            
+                            $auto_status_msg .= '
                                 <div style="padding:10px 12px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0;display:flex;justify-content:space-between;align-items:center;">
                                     <span style="font-size:12px;font-weight:600;color:#16a34a;">Status Pembayaran</span>
                                     <span style="font-size:12px;font-weight:800;color:#15803d;">LUNAS ✅</span>
@@ -192,7 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $roleLabel = (isset($_SESSION['user_sub_role']) && $_SESSION['user_sub_role'] === 'staf') ? 'Staf' : 'Owner';
                     if (function_exists('catatLog')) {
-                        catatLog($conn, 'Konfirmasi Pembayaran Tunai', "$roleLabel mengonfirmasi pembayaran tunai untuk pesanan #$id_pesanan menjadi lunas");
+                        catatLog($conn, 'Konfirmasi Pembayaran Tunai', "$roleLabel mengonfirmasi pembayaran/pelunasan tunai untuk pesanan #$id_pesanan menjadi lunas");
                     }
 
                     $ajaxResponse = [
@@ -234,7 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_pesanan = (int)($_POST['id_pesanan'] ?? 0);
         $status_baru = mysqli_real_escape_string($conn, $_POST['status_baru'] ?? '');
         
-        $statusValid = ['menunggu', 'dikonfirmasi', 'siap_diambil', 'selesai', 'dibatalkan'];
+        $statusValid = ['menunggu', 'dikonfirmasi', 'siap_diambil', 'selesai', 'dibatalkan', 'tidak_diambil'];
         if ($id_pesanan > 0 && in_array($status_baru, $statusValid)) {
             
             // Validasi kepemilikan pesanan: pastikan pesanan ini milik toko penjual ini
@@ -249,21 +259,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $r_pesanan = mysqli_fetch_assoc($cekPesanan);
                 $status_lama = $r_pesanan['status'];
 
-                if (
-                    $status_baru === 'dikonfirmasi'
-                    && $status_lama === 'menunggu'
-                    && ($r_pesanan['metode'] ?? '') === 'tunai'
-                    && ($r_pesanan['status_bayar'] ?? '') !== 'lunas'
-                ) {
-                    $ajaxResponse = [
-                        'success' => false,
-                        'message' => 'Konfirmasi pembayaran tunai terlebih dahulu sebelum memproses pesanan.'
-                    ];
-                    if (!$isAjax) {
-                        $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
-                    }
-                } else {
-                
                 // Mulai transaksi untuk integritas data
                 mysqli_begin_transaction($conn);
                 try {
@@ -303,6 +298,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $status_teks_chat = 'Pesanan #' . $id_pesanan . ' Dibatalkan!';
                                 $status_sub = 'Maaf, pesananmu dibatalkan/ditolak oleh pihak kantin.';
                                 $status_status = 'Dibatalkan ❌';
+                            } elseif ($status_baru === 'tidak_diambil') {
+                                $status_teks_chat = 'Pesanan #' . $id_pesanan . ' Tidak Diambil!';
+                                if (($r_pesanan['status_bayar'] ?? '') === 'lunas') {
+                                    $status_sub = 'Pesanan Anda tidak diambil di kantin. Karena pembayaran sudah lunas (QRIS/Transfer), Anda tidak dikenakan sanksi pembatasan metode tunai.';
+                                } else {
+                                    $status_sub = 'Pesanan Anda tidak diambil di kantin. Akun Anda dicatat melakukan pelanggaran no-show dan fitur pembayaran tunai akan dibatasi sampai pesanan ini dilunasi.';
+                                }
+                                $status_status = 'Tidak Diambil ⚠️';
                             }
 
                             if (!empty($status_teks_chat)) {
@@ -412,7 +415,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!$isAjax) {
                         $_SESSION['feedback'] = ['type' => 'danger', 'msg' => $ajaxResponse['message']];
                     }
-                }
                 }
             } else {
                 $ajaxResponse = ['success' => false, 'message' => 'Akses ditolak atau pesanan tidak ditemukan.'];

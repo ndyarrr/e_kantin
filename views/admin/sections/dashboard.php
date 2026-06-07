@@ -1,4 +1,4 @@
-<div class="stats-grid col3">
+<div class="stats-grid col2">
     <div class="stat-card">
         <div class="stat-label">Total Pembeli Terdaftar</div>
         <div class="stat-row">
@@ -11,13 +11,6 @@
         <div class="stat-row">
             <div class="stat-value"><?= $tokoAktif ?><span class="sub"> / <?= $totalToko ?></span></div>
             <i class="fa-solid fa-store stat-icon"></i>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Total Menu Tersedia</div>
-        <div class="stat-row">
-            <div class="stat-value"><?= number_format($totalMenu) ?></div>
-            <i class="fa-solid fa-burger stat-icon"></i>
         </div>
     </div>
 </div>
