@@ -85,7 +85,13 @@ if (!empty($user_id)) {
 
 // ── Ambil SEMUA toko ──
 $all_tokos = [];
-$q_all_toko = mysqli_query($koneksi, "SELECT * FROM toko WHERE deleted_at IS NULL ORDER BY FIELD(status, 'buka', 'tutup'), urutan ASC, nama_toko ASC");
+$q_all_toko = mysqli_query($koneksi, "
+    SELECT t.*, s.nomor AS nomor_lapak
+    FROM toko t
+    LEFT JOIN slot_stand_kantin s ON s.id_toko = t.id_toko
+    WHERE t.deleted_at IS NULL
+    ORDER BY FIELD(t.status, 'buka', 'tutup'), COALESCE(s.nomor, t.urutan + 1) ASC, t.nama_toko ASC
+");
 if ($q_all_toko) {
     while ($r = mysqli_fetch_assoc($q_all_toko))
         $all_tokos[] = $r;
@@ -398,12 +404,17 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
         }, $all_menus)); ?>;
 
         const ALL_TOKOS = <?= json_encode(array_map(function ($t) {
+            $nomor_lapak = (int) ($t['nomor_lapak'] ?? 0);
+            if ($nomor_lapak < 1) {
+                $nomor_lapak = (int) ($t['urutan'] ?? 0) + 1;
+            }
             return [
                 'id_toko' => (int) $t['id_toko'],
                 'nama_toko' => $t['nama_toko'],
                 'deskripsi' => $t['deskripsi'] ?? '',
                 'status' => strtolower($t['status'] ?? 'tutup'),
                 'foto_toko' => resolveTokoImg($t['foto_toko'] ?? ''),
+                'nomor_lapak' => $nomor_lapak,
             ];
         }, $all_tokos)); ?>;
 
@@ -1728,6 +1739,7 @@ function renderPromoSlides(array $banners, int $activeIndex = 0): void
                 <div class="kantin-info">
                     <h3>${t.nama_toko}</h3>
                     <p>${desk}</p>
+                    <span class="lapak-badge">lapak no.${t.nomor_lapak}</span>
                     <span class="status-indicator ${statusClass}">${statusText}</span>
                     <a href="toko.php?id=${t.id_toko}" class="btn-lihat-menu" ${btnDisabled}>
                         ${btnText}

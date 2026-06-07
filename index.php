@@ -9,7 +9,7 @@ error_reporting(E_ALL);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./assets/css/styles.css?v=6">
+    <link rel="stylesheet" href="./assets/css/styles.css?v=7">
     <title>E-Kantin</title>
 
     <style>
@@ -97,7 +97,8 @@ error_reporting(E_ALL);
             <!-- Konten teks -->
             <div style="padding:20px 20px 8px;">
                 <h2 id="modalNama" class="modal-title" style="margin:0 0 4px;">Nama Kantin</h2>
-                <p id="modalDesc" class="modal-desc" style="font-size:13px; color:#6b7280; margin:0 0 14px;"></p>
+                <p id="modalDesc" class="modal-desc" style="font-size:13px; color:#6b7280; margin:0 0 8px;"></p>
+                <span id="modalLapak" class="lapak-badge" style="display:none;"></span>
 
                 <!-- Deskripsi panjang -->
                 <div id="modalDescPanjangWrap"
@@ -218,6 +219,11 @@ error_reporting(E_ALL);
             modal.style.display = 'flex';
             document.getElementById('modalNama').textContent = "Memuat data...";
             document.getElementById('modalDesc').textContent = "";
+            const modalLapak = document.getElementById('modalLapak');
+            if (modalLapak) {
+                modalLapak.style.display = 'none';
+                modalLapak.textContent = '';
+            }
             foto.style.display = 'none';
             fotoPlaceholder.style.display = 'block';
             containerMenu.innerHTML = '<p style="text-align:center; color:#888;">Sedang mengambil menu...</p>';
@@ -228,6 +234,10 @@ error_reporting(E_ALL);
 
                 document.getElementById('modalNama').textContent = data.toko.nama_toko;
                 document.getElementById('modalDesc').textContent = data.toko.deskripsi || '';
+                if (modalLapak && data.toko.nomor_lapak) {
+                    modalLapak.textContent = 'lapak no.' + data.toko.nomor_lapak;
+                    modalLapak.style.display = 'inline-block';
+                }
 
                 // Update info pembayaran
                 const infoPembayaran = document.getElementById('modalKantinInfoPembayaran');

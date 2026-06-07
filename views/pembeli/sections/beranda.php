@@ -219,6 +219,10 @@
                 $status_teks = $is_buka ? 'Buka' : 'Tutup';
                 $btn_disabled = !$is_buka ? 'style="background-color:#94a3b8;pointer-events:none;box-shadow:none"' : '';
                 $toko_img = resolveTokoImg($toko['foto_toko'] ?? '');
+                $nomor_lapak = (int) ($toko['nomor_lapak'] ?? 0);
+                if ($nomor_lapak < 1) {
+                    $nomor_lapak = (int) ($toko['urutan'] ?? 0) + 1;
+                }
                 ?>
                 <div class="kantin-card" data-nama="<?= strtolower($toko['nama_toko']); ?>">
                     <?php if (!empty($toko_img)): ?>
@@ -238,6 +242,7 @@
                     <div class="kantin-info">
                         <h3><?= htmlspecialchars($toko['nama_toko']); ?></h3>
                         <p><?= htmlspecialchars($toko['deskripsi'] ?? 'Makanan, Snack, & Minuman'); ?></p>
+                        <span class="lapak-badge">lapak no.<?= $nomor_lapak ?></span>
                         <span class="status-indicator <?= $status_kelas; ?>"><?= $status_teks; ?></span>
                         <a href="toko.php?id=<?= $toko['id_toko']; ?>" class="btn-lihat-menu" <?= $btn_disabled; ?>>
                             <?= $is_buka ? 'Lihat Menu' : 'Sedang Tutup'; ?>

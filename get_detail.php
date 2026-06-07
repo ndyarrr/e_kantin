@@ -9,13 +9,24 @@ if ($id <= 0) {
 }
 
 // Ambil data toko
-$queryToko = mysqli_query($conn, "SELECT * FROM toko WHERE id_toko = $id");
+$queryToko = mysqli_query($conn, "
+    SELECT t.*, s.nomor AS nomor_lapak
+    FROM toko t
+    LEFT JOIN slot_stand_kantin s ON s.id_toko = t.id_toko
+    WHERE t.id_toko = $id
+");
 $toko = mysqli_fetch_assoc($queryToko);
 
 if (!$toko) {
     echo json_encode(['toko' => null, 'menus' => []]);
     exit;
 }
+
+$nomor_lapak = (int) ($toko['nomor_lapak'] ?? 0);
+if ($nomor_lapak < 1) {
+    $nomor_lapak = (int) ($toko['urutan'] ?? 0) + 1;
+}
+$toko['nomor_lapak'] = $nomor_lapak;
 
 // Ambil daftar menu
 $queryMenu = mysqli_query($conn, "SELECT * FROM menu WHERE id_toko = $id AND tersedia = 1 AND deleted_at IS NULL");

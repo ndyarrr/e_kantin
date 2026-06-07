@@ -16,7 +16,12 @@ if ($id_toko <= 0) {
     $error_message = 'ID toko tidak valid.';
 } else {
     // ── Ambil data toko ──
-    $stmt = mysqli_prepare($conn, "SELECT * FROM toko WHERE id_toko = ?");
+    $stmt = mysqli_prepare($conn, "
+        SELECT t.*, s.nomor AS nomor_lapak
+        FROM toko t
+        LEFT JOIN slot_stand_kantin s ON s.id_toko = t.id_toko
+        WHERE t.id_toko = ?
+    ");
     mysqli_stmt_bind_param($stmt, "i", $id_toko);
     mysqli_stmt_execute($stmt);
     $result_toko = mysqli_stmt_get_result($stmt);
@@ -55,6 +60,11 @@ if ($id_toko <= 0) {
         $is_buka = (strtolower($toko['status'] ?? '') === 'buka');
         $status_kelas = $is_buka ? 'online' : 'offline';
         $status_teks = $is_buka ? 'Buka' : 'Tutup';
+
+        $nomor_lapak = (int) ($toko['nomor_lapak'] ?? 0);
+        if ($nomor_lapak < 1) {
+            $nomor_lapak = (int) ($toko['urutan'] ?? 0) + 1;
+        }
 
         // ── Ambil menu toko ──
         $stmt_menu = mysqli_prepare($conn, "SELECT * FROM menu WHERE id_toko = ? AND deleted_at IS NULL ORDER BY kategori ASC, nama_menu ASC");
@@ -244,6 +254,7 @@ $avatar_path = $has_avatar ? '../../assets/img/' . $avatar_file : '';
                             <h1><?= htmlspecialchars($toko['nama_toko']); ?></h1>
                             <p class="toko-desc"><?= htmlspecialchars($toko['deskripsi'] ?? 'Belum ada deskripsi.'); ?>
                             </p>
+                            <span class="lapak-badge">lapak no.<?= $nomor_lapak ?></span>
                             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                                 <span class="toko-status-badge <?= $is_buka ? 'buka' : 'tutup'; ?>">
                                     <?= $status_teks; ?>

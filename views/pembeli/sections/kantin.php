@@ -16,24 +16,30 @@
                     <?php
                         $toko_img = resolveTokoImg($t['foto_toko'] ?? '');
                         $is_buka = ($t['status'] === 'buka');
+                        $nomor_lapak = (int) ($t['nomor_lapak'] ?? 0);
+                        if ($nomor_lapak < 1) {
+                            $nomor_lapak = (int) ($t['urutan'] ?? 0) + 1;
+                        }
                     ?>
                     <div class="kantin-card" data-nama="<?= strtolower($t['nama_toko']) ?>">
-                        
-                        <!-- Foto Kantin -->
-                        <?php if ($toko_img): ?>
-                            <img src="<?= $toko_img ?>" alt="<?= $t['nama_toko'] ?>" class="blank-image-square">
-                        <?php else: ?>
-                            <div class="toko-img-placeholder">
-                                <i class="fa-solid fa-shop"></i>
-                                <span><?= $t['nama_toko'] ?></span>
-                            </div>
-                        <?php endif; ?>
+
+                        <div class="kantin-thumb-wrap">
+                            <?php if ($toko_img): ?>
+                                <img src="<?= $toko_img ?>" alt="<?= $t['nama_toko'] ?>" class="blank-image-square">
+                            <?php else: ?>
+                                <div class="toko-img-placeholder">
+                                    <i class="fa-solid fa-shop"></i>
+                                    <span><?= $t['nama_toko'] ?></span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
                         <!-- Info Kantin -->
                         <div class="kantin-info">
                             <h3><?= htmlspecialchars($t['nama_toko']) ?></h3>
                             <p><?= htmlspecialchars($t['deskripsi'] ?? 'Menyediakan berbagai menu makanan dan minuman pilihan.') ?></p>
-                            
+                            <span class="lapak-badge">lapak no.<?= $nomor_lapak ?></span>
+
                             <!-- Indikator Buka / Tutup -->
                             <div class="status-indicator <?= $is_buka ? 'online' : 'offline' ?>">
                                 <?= $is_buka ? 'Buka' : 'Tutup' ?>
